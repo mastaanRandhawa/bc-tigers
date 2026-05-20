@@ -11,6 +11,31 @@ export const queryKeys = {
     byTournament: (tournamentSlug: string) => ['divisions', 'tournament', tournamentSlug] as const,
     detail: (tournamentSlug: string, divisionSlug: string) =>
       ['divisions', tournamentSlug, divisionSlug] as const,
+    bySlugGlobal: (divisionSlug: string) => ['divisions', 'by-slug', divisionSlug] as const,
+    resources: {
+      teams: (tournamentSlug: string, divisionSlug: string) =>
+        ['divisions', tournamentSlug, divisionSlug, 'teams'] as const,
+      team: (tournamentSlug: string, divisionSlug: string, teamSlug: string) =>
+        ['divisions', tournamentSlug, divisionSlug, 'teams', teamSlug] as const,
+      players: (tournamentSlug: string, divisionSlug: string) =>
+        ['divisions', tournamentSlug, divisionSlug, 'players'] as const,
+      matches: (tournamentSlug: string, divisionSlug: string, params?: object) =>
+        ['divisions', tournamentSlug, divisionSlug, 'matches', params ?? {}] as const,
+      standings: (tournamentSlug: string, divisionSlug: string) =>
+        ['divisions', tournamentSlug, divisionSlug, 'standings'] as const,
+      topScorers: (tournamentSlug: string, divisionSlug: string, limit?: number) =>
+        ['divisions', tournamentSlug, divisionSlug, 'stats', 'top-scorers', limit ?? 20] as const,
+      topAssists: (tournamentSlug: string, divisionSlug: string, limit?: number) =>
+        ['divisions', tournamentSlug, divisionSlug, 'stats', 'top-assists', limit ?? 20] as const,
+      discipline: (tournamentSlug: string, divisionSlug: string, limit?: number) =>
+        ['divisions', tournamentSlug, divisionSlug, 'stats', 'discipline', limit ?? 20] as const,
+      bracket: (tournamentSlug: string, divisionSlug: string) =>
+        ['divisions', tournamentSlug, divisionSlug, 'bracket'] as const,
+      venues: (tournamentSlug: string, divisionSlug: string) =>
+        ['divisions', tournamentSlug, divisionSlug, 'venues'] as const,
+      venue: (tournamentSlug: string, divisionSlug: string, venueSlug: string) =>
+        ['divisions', tournamentSlug, divisionSlug, 'venues', venueSlug] as const,
+    },
   },
   teams: {
     all: (params?: object) => ['teams', params ?? {}] as const,
@@ -47,10 +72,6 @@ export const queryKeys = {
   },
   media: {
     all: (params?: object) => ['media', params ?? {}] as const,
-  },
-  announcements: {
-    all: ['announcements'] as const,
-    detail: (slug: string) => ['announcements', slug] as const,
   },
   settings: {
     public: ['settings', 'public'] as const,

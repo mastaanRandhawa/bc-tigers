@@ -1,5 +1,6 @@
 import PageLayout from '@/components/PageLayout';
 import PageHeader from '@/components/shared/PageHeader';
+import PageContent from '@/components/shared/PageContent';
 import QueryState from '@/components/shared/QueryState';
 import StatsLeaderboard from '@/components/shared/StatsLeaderboard';
 import { useTopScorers } from '@/hooks/useStats';
@@ -12,8 +13,7 @@ export default function TopScorersPage() {
     <PageLayout>
       <PageHeader title="Top Scorers" icon={TrendingUp} />
 
-      <section className="py-8 px-4 bg-gray-50">
-        <div className="max-w-3xl mx-auto">
+      <PageContent innerClassName="max-w-3xl">
           <QueryState
             isLoading={isLoading}
             isError={isError}
@@ -23,8 +23,7 @@ export default function TopScorersPage() {
           >
             <StatsLeaderboard stats={stats} statField="goals" statLabel="Goals" />
           </QueryState>
-        </div>
-      </section>
+        </PageContent>
     </PageLayout>
   );
 }

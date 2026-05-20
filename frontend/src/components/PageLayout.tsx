@@ -1,18 +1,22 @@
 import type { ReactNode } from 'react';
-import Navbar from './Navbar';
-import Footer from './Footer';
+import AppShell from '@/components/layouts/AppShell';
 
 interface PageLayoutProps {
   children: ReactNode;
   className?: string;
+  showFooter?: boolean;
+  heroTheme?: boolean;
 }
 
-export default function PageLayout({ children, className }: PageLayoutProps) {
+export default function PageLayout({
+  children,
+  className,
+  showFooter = true,
+  heroTheme = false,
+}: PageLayoutProps) {
   return (
-    <div className="min-h-dvh min-h-screen flex flex-col w-full overflow-x-hidden">
-      <Navbar />
-      <main className={`flex-1 w-full min-w-0 ${className ?? ''}`}>{children}</main>
-      <Footer />
-    </div>
+    <AppShell className={className} showFooter={showFooter} heroTheme={heroTheme}>
+      {children}
+    </AppShell>
   );
 }

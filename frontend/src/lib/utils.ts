@@ -37,17 +37,42 @@ export function getInitials(name: string): string {
     .slice(0, 2);
 }
 
+export type MatchStatusBadgeVariant =
+  | 'live'
+  | 'success'
+  | 'scheduled'
+  | 'warning'
+  | 'cancelled'
+  | 'default';
+
+export function getMatchStatusBadgeVariant(status: string): MatchStatusBadgeVariant {
+  switch (status) {
+    case 'LIVE':
+      return 'live';
+    case 'COMPLETED':
+      return 'success';
+    case 'SCHEDULED':
+      return 'scheduled';
+    case 'POSTPONED':
+      return 'warning';
+    case 'CANCELLED':
+      return 'cancelled';
+    default:
+      return 'default';
+  }
+}
+
 export function getStatusColor(status: string): string {
   const map: Record<string, string> = {
-    LIVE: 'bg-red-500',
-    SCHEDULED: 'bg-blue-500',
-    COMPLETED: 'bg-green-600',
-    POSTPONED: 'bg-yellow-500',
-    CANCELLED: 'bg-gray-500',
-    UPCOMING: 'bg-blue-500',
-    ACTIVE: 'bg-green-500',
+    LIVE: 'bg-red-600 text-white',
+    SCHEDULED: 'bg-primary text-white',
+    COMPLETED: 'bg-green-700 text-white',
+    POSTPONED: 'bg-amber-600 text-white',
+    CANCELLED: 'bg-gray-600 text-white',
+    UPCOMING: 'bg-primary text-white',
+    ACTIVE: 'bg-green-700 text-white',
   };
-  return map[status] ?? 'bg-gray-400';
+  return map[status] ?? 'bg-gray-600 text-white';
 }
 
 export function getFormColor(result: 'W' | 'D' | 'L'): string {

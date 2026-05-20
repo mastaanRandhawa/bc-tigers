@@ -15,8 +15,8 @@ const columns = [
     label: 'Tournament',
     render: (t: Tournament) => (
       <div>
-        <p className="font-bold text-gray-900">{t.name}</p>
-        <p className="text-xs text-gray-400">{t.slug}</p>
+        <p className="font-bold text-foreground">{t.name}</p>
+        <p className="text-xs text-muted-foreground">{t.slug}</p>
       </div>
     ),
   },
@@ -34,7 +34,7 @@ const columns = [
     key: 'start_date',
     label: 'Dates',
     render: (t: Tournament) => (
-      <span className="text-xs text-gray-600">
+      <span className="text-xs text-muted-foreground">
         {formatDate(t.start_date)} – {formatDate(t.end_date)}
       </span>
     ),

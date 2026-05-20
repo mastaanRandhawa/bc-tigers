@@ -1,19 +1,21 @@
-import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import PageLayout from '@/components/PageLayout';
 import PageHeader from '@/components/shared/PageHeader';
+import PageContent from '@/components/shared/PageContent';
 import QueryState from '@/components/shared/QueryState';
 import MatchCard from '@/components/MatchCard';
+import DivisionDirectoryCard from '@/components/shared/DivisionDirectoryCard';
 import { useMatches } from '@/hooks/useMatches';
 import { useDivisions } from '@/hooks/useDivisions';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { getDivisionSchedulePath } from '@/lib/division-routes';
 import { Calendar } from 'lucide-react';
 import { formatDate } from '@/lib/utils';
 
 export default function SchedulePage() {
-  const [divisionFilter, setDivisionFilter] = useState('ALL');
+  const navigate = useNavigate();
   const { data: divisions = [] } = useDivisions();
-  const matchParams = divisionFilter === 'ALL' ? undefined : { divisionId: divisionFilter };
-  const { data: matches = [], isLoading, isError, refetch } = useMatches(matchParams);
+  const { data: matches = [], isLoading, isError, refetch } = useMatches();
 
   const grouped = matches.reduce<Record<string, typeof matches>>((acc, match) => {
     const date = match.scheduled_start.split('T')[0];
@@ -22,55 +24,67 @@ export default function SchedulePage() {
     return acc;
   }, {});
 
+  const handleDivisionChange = (value: string) => {
+    if (value === 'ALL') return;
+    const division = divisions.find((d) => d.id === value);
+    if (!division) return;
+    const path = getDivisionSchedulePath(division);
+    if (path) navigate(path);
+  };
+
   return (
     <PageLayout>
-      <PageHeader title="Schedule" subtitle="Full fixture list across all divisions" icon={Calendar} />
+      <PageHeader title="Schedule" subtitle="Browse by division or view all fixtures" icon={Calendar} />
 
-      <section className="py-8 px-4 bg-gray-50">
-        <div className="max-w-4xl mx-auto">
-          <div className="flex items-center gap-3 mb-6">
-            <Select value={divisionFilter} onValueChange={setDivisionFilter}>
-              <SelectTrigger className="w-48">
-                <SelectValue placeholder="All Divisions" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="ALL">All Divisions</SelectItem>
-                {divisions.map((d) => (
-                  <SelectItem key={d.id} value={d.id}>
-                    {d.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+      <PageContent innerClassName="max-w-4xl">
+        <div className="mb-8">
+          <p className="text-sm font-bold uppercase text-gray-600 mb-3">Jump to division</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
+            {divisions.map((division) => (
+              <DivisionDirectoryCard key={division.id} division={division} />
+            ))}
           </div>
-
-          <QueryState
-            isLoading={isLoading}
-            isError={isError}
-            isEmpty={matches.length === 0}
-            onRetry={() => refetch()}
-            emptyMessage="No scheduled matches."
-          >
-            <div className="space-y-8">
-              {Object.entries(grouped)
-                .sort(([a], [b]) => a.localeCompare(b))
-                .map(([date, dayMatches]) => (
-                  <div key={date}>
-                    <div className="flex items-center gap-2 mb-3">
-                      <Calendar className="w-4 h-4 text-[#0038FF]" />
-                      <h2 className="font-black text-gray-900 text-lg">{formatDate(date)}</h2>
-                    </div>
-                    <div className="space-y-3">
-                      {dayMatches.map((m) => (
-                        <MatchCard key={m.id} match={m} />
-                      ))}
-                    </div>
-                  </div>
-                ))}
-            </div>
-          </QueryState>
+          <Select onValueChange={handleDivisionChange}>
+            <SelectTrigger className="w-full max-w-xs">
+              <SelectValue placeholder="Open division schedule…" />
+            </SelectTrigger>
+            <SelectContent>
+              {divisions.map((d) => (
+                <SelectItem key={d.id} value={d.id}>
+                  {d.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
-      </section>
+
+        <h2 className="text-lg font-black uppercase mb-4">All divisions</h2>
+        <QueryState
+          isLoading={isLoading}
+          isError={isError}
+          isEmpty={matches.length === 0}
+          onRetry={() => refetch()}
+          emptyMessage="No scheduled matches."
+        >
+          <div className="space-y-8">
+            {Object.entries(grouped)
+              .sort(([a], [b]) => a.localeCompare(b))
+              .map(([date, dayMatches]) => (
+                <div key={date}>
+                  <div className="flex items-center gap-2 mb-3">
+                    <Calendar className="w-4 h-4 text-primary" />
+                    <h3 className="font-bold text-foreground">{formatDate(date)}</h3>
+                  </div>
+                  <div className="space-y-3">
+                    {dayMatches.map((m) => (
+                      <MatchCard key={m.id} match={m} />
+                    ))}
+                  </div>
+                </div>
+              ))}
+          </div>
+        </QueryState>
+      </PageContent>
     </PageLayout>
   );
 }

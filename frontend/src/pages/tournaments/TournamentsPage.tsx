@@ -1,5 +1,6 @@
 import PageLayout from '@/components/PageLayout';
 import PageHeader from '@/components/shared/PageHeader';
+import PageContent from '@/components/shared/PageContent';
 import QueryState from '@/components/shared/QueryState';
 import { Link } from 'react-router-dom';
 import { useTournaments } from '@/hooks/useTournaments';
@@ -14,8 +15,7 @@ export default function TournamentsPage() {
     <PageLayout>
       <PageHeader title="Tournaments" subtitle="All BC Tigers soccer competitions" icon={Trophy} />
 
-      <section className="py-12 px-4 bg-gray-50">
-        <div className="max-w-7xl mx-auto">
+      <PageContent innerClassName="max-w-7xl">
           <QueryState
             isLoading={isLoading}
             isError={isError}
@@ -26,11 +26,11 @@ export default function TournamentsPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
               {tournaments.map((t) => (
                 <Link key={t.id} to={`/tournaments/${t.slug}`} className="group">
-                  <div className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-xl transition-all overflow-hidden h-full flex flex-col">
-                    <div className="h-44 bg-[#0038FF] relative overflow-hidden">
+                  <div className="rounded-lg border border-border bg-card shadow-sm hover:shadow-xl transition-all overflow-hidden h-full flex flex-col">
+                    <div className="h-44 bg-primary relative overflow-hidden">
                       <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff10_1px,transparent_1px),linear-gradient(to_bottom,#ffffff10_1px,transparent_1px)] bg-[size:2rem_2rem]" />
                       <div className="absolute inset-0 flex items-center justify-center">
-                        <div className="bg-[#CCFF00] p-4 rounded-2xl shadow-xl group-hover:scale-110 transition-transform duration-300">
+                        <div className="bg-primary-muted p-4 rounded-2xl shadow-xl group-hover:scale-110 transition-transform duration-300">
                           <Trophy className="w-12 h-12 text-black" />
                         </div>
                       </div>
@@ -45,25 +45,25 @@ export default function TournamentsPage() {
                     </div>
 
                     <div className="p-6 flex flex-col flex-1">
-                      <h2 className="font-black text-gray-900 text-xl leading-tight group-hover:text-[#0038FF] transition-colors">
+                      <h2 className="font-semibold text-foreground text-xl leading-tight group-hover:text-primary transition-colors">
                         {t.name}
                       </h2>
-                      <p className="text-sm text-gray-500 mt-3 flex-1 line-clamp-2">{t.description}</p>
+                      <p className="text-sm text-muted-foreground mt-3 flex-1 line-clamp-2">{t.description}</p>
 
                       <div className="mt-5 space-y-2">
-                        <div className="flex items-center gap-2 text-sm text-gray-500">
-                          <Calendar className="w-4 h-4 text-[#0038FF]" />
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <Calendar className="w-4 h-4 text-primary" />
                           <span>{formatDate(t.start_date)} – {formatDate(t.end_date)}</span>
                         </div>
-                        <div className="flex items-center gap-2 text-sm text-gray-500">
-                          <MapPin className="w-4 h-4 text-[#0038FF]" />
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <MapPin className="w-4 h-4 text-primary" />
                           <span>{t.location}</span>
                         </div>
                       </div>
 
                       <div className="mt-4 pt-4 border-t border-gray-50 flex items-center justify-between">
-                        <span className="text-xs text-gray-400 font-medium">View divisions & schedule</span>
-                        <ChevronRight className="w-4 h-4 text-gray-400 group-hover:text-[#0038FF] group-hover:translate-x-1 transition-all" />
+                        <span className="text-xs text-muted-foreground font-medium">View divisions & schedule</span>
+                        <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-1 transition-all" />
                       </div>
                     </div>
                   </div>
@@ -71,8 +71,7 @@ export default function TournamentsPage() {
               ))}
             </div>
           </QueryState>
-        </div>
-      </section>
+        </PageContent>
     </PageLayout>
   );
 }

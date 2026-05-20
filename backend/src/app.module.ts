@@ -15,8 +15,6 @@ import { MediaModule } from './modules/media/media.module';
 import { UsersModule } from './modules/users/users.module';
 import { GatewaysModule } from './gateways/gateways.module';
 import { CoachesModule } from './modules/coaches/coaches.module';
-import { AnnouncementsModule } from './modules/announcements/announcements.module';
-import { ContactModule } from './modules/contact/contact.module';
 import { SettingsModule } from './modules/settings/settings.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 
@@ -37,8 +35,6 @@ import { NotificationsModule } from './modules/notifications/notifications.modul
     MediaModule,
     UsersModule,
     CoachesModule,
-    AnnouncementsModule,
-    ContactModule,
     SettingsModule,
     NotificationsModule,
     GatewaysModule,

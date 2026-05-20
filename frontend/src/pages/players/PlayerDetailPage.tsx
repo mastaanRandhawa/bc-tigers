@@ -24,7 +24,7 @@ export default function PlayerDetailPage() {
       >
         {player && (
           <>
-            <div className="bg-[#0038FF] py-16 px-4 relative overflow-hidden">
+            <div className="bg-primary py-16 px-4 relative overflow-hidden">
               <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff10_1px,transparent_1px),linear-gradient(to_bottom,#ffffff10_1px,transparent_1px)] bg-[size:3rem_3rem]" />
               <div className="max-w-4xl mx-auto relative z-10 flex flex-col md:flex-row items-center md:items-end gap-6">
                 {player.profile_image ? (
@@ -35,10 +35,10 @@ export default function PlayerDetailPage() {
                   </div>
                 )}
                 <div>
-                  <div className="bg-[#CCFF00] text-black text-lg font-black px-3 py-1 rounded-xl inline-block mb-2">
+                  <div className="bg-white text-black text-lg font-black px-3 py-1 rounded-xl inline-block mb-2">
                     #{player.jersey_number ?? '?'}
                   </div>
-                  <h1 className="text-4xl md:text-6xl font-black uppercase text-white tracking-tighter" style={{ fontFamily: '"Arial Black", Impact, sans-serif', textShadow: '3px 3px 0 #001A99' }}>
+                  <h1 className="text-4xl md:text-6xl text-display text-white">
                     {player.first_name} {player.last_name}
                   </h1>
                   <div className="flex items-center gap-4 mt-2 text-white/70 text-sm">
@@ -60,16 +60,16 @@ export default function PlayerDetailPage() {
                     { label: 'Yellow Cards', value: stats.yellow_cards },
                     { label: 'Red Cards', value: stats.red_cards },
                   ].map((s) => (
-                    <div key={s.label} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 text-center">
-                      <p className="text-3xl font-black text-[#0038FF]">{s.value}</p>
-                      <p className="text-xs text-gray-400 font-medium mt-1">{s.label}</p>
+                    <div key={s.label} className="rounded-lg border border-border bg-card shadow-sm p-5 text-center">
+                      <p className="text-3xl font-black text-primary">{s.value}</p>
+                      <p className="text-xs text-muted-foreground font-medium mt-1">{s.label}</p>
                     </div>
                   ))}
                 </div>
               )}
 
-              <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-                <h2 className="font-black text-gray-900 uppercase mb-4">Player Info</h2>
+              <div className="rounded-lg border border-border bg-card shadow-sm p-6">
+                <h2 className="font-semibold text-foreground uppercase mb-4">Player Info</h2>
                 <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-sm">
                   {player.nationality && <InfoItem label="Nationality" value={player.nationality} />}
                   {player.preferred_position && <InfoItem label="Position" value={player.preferred_position} />}
@@ -87,9 +87,9 @@ export default function PlayerDetailPage() {
 
 function InfoItem({ label, value }: { label: string; value: string }) {
   return (
-    <div className="bg-gray-50 rounded-xl p-3">
-      <p className="text-xs text-gray-400 font-medium">{label}</p>
-      <p className="font-bold text-gray-900 mt-0.5">{value}</p>
+    <div className="bg-muted rounded-xl p-3">
+      <p className="text-xs text-muted-foreground font-medium">{label}</p>
+      <p className="font-bold text-foreground mt-0.5">{value}</p>
     </div>
   );
 }

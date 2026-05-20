@@ -22,10 +22,10 @@ export default function AdminSettings() {
   };
 
   const Section = ({ icon: Icon, title, children }: { icon: React.ElementType; title: string; children: React.ReactNode }) => (
-    <div className="bg-white rounded-2xl border border-gray-200 shadow-sm">
-      <div className="flex items-center gap-2 p-5 border-b border-gray-100">
-        <Icon className="w-4 h-4 text-[#0038FF]" />
-        <h2 className="font-black text-gray-900">{title}</h2>
+    <div className="rounded-lg border border-border bg-card shadow-sm">
+      <div className="flex items-center gap-2 p-5 border-b border-border">
+        <Icon className="w-4 h-4 text-primary" />
+        <h2 className="font-semibold text-foreground">{title}</h2>
       </div>
       <div className="p-5 space-y-4">{children}</div>
     </div>
@@ -34,13 +34,13 @@ export default function AdminSettings() {
   const Toggle = ({ label, description, value, onChange }: { label: string; description: string; value: boolean; onChange: (v: boolean) => void }) => (
     <div className="flex items-center justify-between">
       <div>
-        <p className="font-semibold text-gray-900 text-sm">{label}</p>
-        <p className="text-xs text-gray-400">{description}</p>
+        <p className="font-semibold text-foreground text-sm">{label}</p>
+        <p className="text-xs text-muted-foreground">{description}</p>
       </div>
       <button
         type="button"
         onClick={() => onChange(!value)}
-        className={`w-11 h-6 rounded-full transition-colors ${value ? 'bg-[#0038FF]' : 'bg-gray-200'} relative`}
+        className={`w-11 h-6 rounded-full transition-colors ${value ? 'bg-primary' : 'bg-gray-200'} relative`}
       >
         <span className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${value ? 'translate-x-5 left-0.5' : 'left-0.5'}`} />
       </button>
@@ -51,23 +51,11 @@ export default function AdminSettings() {
     <AdminLayout title="Settings">
       <QueryState isLoading={isLoading} isEmpty={!settings}>
         <div className="max-w-3xl space-y-6">
-          <Section icon={Globe} title="General Settings">
+          <Section icon={Globe} title="Tournament">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-1.5">
                 <Label>Site Name</Label>
                 <Input value={form.site_name ?? ''} onChange={(e) => setForm({ ...form, site_name: e.target.value })} />
-              </div>
-              <div className="space-y-1.5">
-                <Label>Contact Email</Label>
-                <Input type="email" value={form.contact_email ?? ''} onChange={(e) => setForm({ ...form, contact_email: e.target.value })} />
-              </div>
-              <div className="space-y-1.5">
-                <Label>Contact Phone</Label>
-                <Input value={form.contact_phone ?? ''} onChange={(e) => setForm({ ...form, contact_phone: e.target.value })} />
-              </div>
-              <div className="space-y-1.5">
-                <Label>Contact Address</Label>
-                <Input value={form.contact_address ?? ''} onChange={(e) => setForm({ ...form, contact_address: e.target.value })} />
               </div>
               <div className="space-y-1.5">
                 <Label>Timezone</Label>

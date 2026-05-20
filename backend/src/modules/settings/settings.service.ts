@@ -24,9 +24,6 @@ export class SettingsService {
     const settings = await this.getOrCreate();
     return {
       site_name: settings.site_name,
-      contact_email: settings.contact_email,
-      contact_phone: settings.contact_phone,
-      contact_address: settings.contact_address,
     };
   }
 

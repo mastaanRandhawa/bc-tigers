@@ -24,6 +24,35 @@ export class VenuesService {
     return v;
   }
 
+  findByDivision(divisionId: string) {
+    return prisma.venue.findMany({
+      where: {
+        matches: { some: { division_id: divisionId } },
+      },
+      include: { fields: true },
+      orderBy: { name: 'asc' },
+    });
+  }
+
+  async findOneInDivision(divisionId: string, slug: string) {
+    const venue = await prisma.venue.findFirst({
+      where: {
+        slug,
+        matches: { some: { division_id: divisionId } },
+      },
+      include: {
+        fields: true,
+        matches: {
+          where: { division_id: divisionId },
+          include: { home_team: true, away_team: true, division: true },
+          orderBy: { scheduled_start: 'asc' },
+        },
+      },
+    });
+    if (!venue) throw new NotFoundException('Venue not found in this division');
+    return venue;
+  }
+
   create(data: unknown) {
     return prisma.venue.create({ data: data as Prisma.VenueCreateInput });
   }

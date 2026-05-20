@@ -28,8 +28,6 @@ export type BracketStage = 'ROUND_OF_16' | 'QUARTER_FINAL' | 'SEMI_FINAL' | 'FIN
 
 export type MediaType = 'PHOTO' | 'VIDEO' | 'DOCUMENT';
 
-export type AnnouncementCategory = 'ANNOUNCEMENT' | 'RESULTS' | 'NEWS' | 'REGISTRATION';
-
 // ─── Entities ────────────────────────────────────────────────────────────────
 
 export interface User {
@@ -97,6 +95,7 @@ export interface Team {
   primary_color?: string;
   secondary_color?: string;
   players?: Player[];
+  rosters?: TeamRoster[];
 }
 
 export interface Player {
@@ -110,6 +109,8 @@ export interface Player {
   preferred_position?: string;
   profile_image?: string;
   team?: Team;
+  rosters?: TeamRoster[];
+  player_stats?: PlayerStat[];
 }
 
 export interface TeamRoster {
@@ -155,6 +156,7 @@ export interface Venue {
   parking_info?: string;
   photos?: string[];
   fields?: Field[];
+  matches?: Match[];
 }
 
 export interface Field {
@@ -278,19 +280,6 @@ export interface Media {
   created_at: string;
 }
 
-export interface Announcement {
-  id: string;
-  title: string;
-  slug: string;
-  excerpt: string;
-  content: string;
-  category: AnnouncementCategory;
-  image_url?: string;
-  published_at: string;
-  created_at: string;
-  updated_at?: string;
-}
-
 export interface SiteSettings {
   id: string;
   site_name: string;
@@ -310,9 +299,6 @@ export interface SiteSettings {
 
 export interface PublicSiteSettings {
   site_name: string;
-  contact_email: string;
-  contact_phone?: string;
-  contact_address?: string;
 }
 
 export interface StatsSummary {
@@ -324,16 +310,6 @@ export interface StatsSummary {
   coaches: number;
   live_matches: number;
   top_scorer: { name: string; goals: number } | null;
-}
-
-export interface ContactMessage {
-  id: string;
-  name: string;
-  email: string;
-  subject: string;
-  message: string;
-  read: boolean;
-  created_at: string;
 }
 
 // ─── API Response Types ───────────────────────────────────────────────────────

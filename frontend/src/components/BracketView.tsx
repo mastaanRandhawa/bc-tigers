@@ -17,33 +17,33 @@ interface BracketMatchProps {
 function BracketMatch({ node }: BracketMatchProps) {
   const isFinal = node.stage === 'FINAL';
   return (
-    <div className={cn('bg-white rounded-xl border-2 shadow-sm min-w-[180px]', isFinal ? 'border-[#CCFF00]' : 'border-gray-100')}>
+    <div className={cn('bg-surface rounded-lg border border-border shadow-sm min-w-[180px]', isFinal ? 'border-primary/30' : '')}>
       <div className={cn(
         'flex items-center gap-2 px-3 py-2 border-b',
-        node.winner_id === node.home_team_id ? 'bg-blue-50' : ''
+        node.winner_id === node.home_team_id ? 'bg-primary-muted' : ''
       )}>
         {node.home_team?.logo && (
           <img src={node.home_team.logo} alt="" className="w-5 h-5 rounded-full object-cover" />
         )}
-        <span className={cn('text-sm flex-1 truncate', node.winner_id === node.home_team_id ? 'font-black text-[#0038FF]' : 'font-medium text-gray-700')}>
+        <span className={cn('text-sm flex-1 truncate', node.winner_id === node.home_team_id ? 'font-black text-primary' : 'font-medium text-gray-700')}>
           {node.home_team?.name ?? 'TBD'}
         </span>
         {node.match && (
-          <span className="text-sm font-bold text-gray-900">{node.match.home_score}</span>
+          <span className="text-sm font-bold text-foreground">{node.match.home_score}</span>
         )}
       </div>
       <div className={cn(
         'flex items-center gap-2 px-3 py-2',
-        node.winner_id === node.away_team_id ? 'bg-blue-50' : ''
+        node.winner_id === node.away_team_id ? 'bg-primary-muted' : ''
       )}>
         {node.away_team?.logo && (
           <img src={node.away_team.logo} alt="" className="w-5 h-5 rounded-full object-cover" />
         )}
-        <span className={cn('text-sm flex-1 truncate', node.winner_id === node.away_team_id ? 'font-black text-[#0038FF]' : 'font-medium text-gray-700')}>
+        <span className={cn('text-sm flex-1 truncate', node.winner_id === node.away_team_id ? 'font-black text-primary' : 'font-medium text-gray-700')}>
           {node.away_team?.name ?? 'TBD'}
         </span>
         {node.match && (
-          <span className="text-sm font-bold text-gray-900">{node.match.away_score}</span>
+          <span className="text-sm font-bold text-foreground">{node.match.away_score}</span>
         )}
       </div>
     </div>
@@ -60,7 +60,7 @@ export default function BracketView({ nodes }: BracketViewProps) {
 
   if (nodes.length === 0) {
     return (
-      <div className="text-center py-16 text-gray-400">
+      <div className="text-center py-16 text-muted-foreground">
         <Trophy className="w-12 h-12 mx-auto mb-3 opacity-30" />
         <p className="font-semibold">Bracket not yet generated</p>
       </div>
@@ -72,7 +72,7 @@ export default function BracketView({ nodes }: BracketViewProps) {
       <div className="flex gap-8 min-w-max">
         {stagesPresent.map((stage) => (
           <div key={stage} className="flex flex-col">
-            <h3 className="text-xs font-black uppercase tracking-wider text-gray-400 text-center mb-4">
+            <h3 className="text-xs font-black uppercase tracking-wider text-muted-foreground text-center mb-4">
               {STAGE_LABELS[stage]}
             </h3>
             <div className="flex flex-col gap-4 justify-around flex-1">

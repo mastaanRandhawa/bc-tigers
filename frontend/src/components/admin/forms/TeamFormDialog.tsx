@@ -29,8 +29,8 @@ export default function TeamFormDialog({ open, onOpenChange, team }: TeamFormDia
       name: '',
       slug: '',
       city: '',
-      primary_color: '#0038FF',
-      secondary_color: '#CCFF00',
+      primary_color: '#F48735',
+      secondary_color: '#F48735',
       logo: '',
     },
   });
@@ -43,7 +43,7 @@ export default function TeamFormDialog({ open, onOpenChange, team }: TeamFormDia
         name: team.name,
         slug: team.slug,
         city: team.city ?? '',
-        primary_color: team.primary_color ?? '#0038FF',
+        primary_color: team.primary_color ?? '#F48735',
         secondary_color: team.secondary_color ?? '',
         logo: team.logo ?? '',
       });
@@ -53,8 +53,8 @@ export default function TeamFormDialog({ open, onOpenChange, team }: TeamFormDia
         name: '',
         slug: '',
         city: '',
-        primary_color: '#0038FF',
-        secondary_color: '#CCFF00',
+        primary_color: '#F48735',
+        secondary_color: '#F48735',
         logo: '',
       });
     }

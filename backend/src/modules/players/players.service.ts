@@ -16,6 +16,25 @@ export class PlayersService {
     });
   }
 
+  findByDivision(divisionId: string) {
+    return prisma.player.findMany({
+      where: {
+        rosters: { some: { team: { division_id: divisionId } } },
+      },
+      include: {
+        rosters: {
+          where: { team: { division_id: divisionId } },
+          include: { team: true },
+        },
+        player_stats: {
+          where: { division_id: divisionId },
+          include: { tournament: true, team: true },
+        },
+      },
+      orderBy: [{ last_name: 'asc' }, { first_name: 'asc' }],
+    });
+  }
+
   async findOne(slug: string) {
     const player = await prisma.player.findUnique({
       where: { slug },

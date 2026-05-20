@@ -24,10 +24,10 @@ const columns = [
     label: 'User',
     render: (u: User) => (
       <div>
-        <p className="font-bold text-gray-900">
+        <p className="font-bold text-foreground">
           {u.first_name} {u.last_name}
         </p>
-        <p className="text-xs text-gray-400">{u.email}</p>
+        <p className="text-xs text-muted-foreground">{u.email}</p>
       </div>
     ),
   },
@@ -39,7 +39,7 @@ const columns = [
   {
     key: 'created_at',
     label: 'Joined',
-    render: (u: User) => <span className="text-xs text-gray-500">{formatDate(u.created_at)}</span>,
+    render: (u: User) => <span className="text-xs text-muted-foreground">{formatDate(u.created_at)}</span>,
   },
 ];
 

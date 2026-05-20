@@ -73,18 +73,18 @@ export default function ProfilePage() {
 
   return (
     <PageLayout>
-      <section className="py-12 px-4 bg-gray-50 min-h-[60vh]">
+      <section className="py-12 px-4 bg-muted min-h-[60vh]">
         <div className="max-w-2xl mx-auto space-y-6">
           <div>
-            <h1 className="text-3xl font-black text-gray-900">Profile Settings</h1>
-            <p className="text-gray-500 mt-1">{user.email} · {getRoleLabel(user.role)}</p>
+            <h1 className="text-3xl font-semibold text-foreground">Profile Settings</h1>
+            <p className="text-muted-foreground mt-1">{user.email} · {getRoleLabel(user.role)}</p>
           </div>
 
           {message && <div className="p-3 rounded-xl bg-green-50 text-green-700 text-sm">{message}</div>}
           {error && <div className="p-3 rounded-xl bg-red-50 text-red-700 text-sm">{error}</div>}
 
-          <form onSubmit={handleProfileSave} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-4">
-            <h2 className="font-black text-gray-900">Personal Information</h2>
+          <form onSubmit={handleProfileSave} className="rounded-lg border border-border bg-card shadow-sm p-6 space-y-4">
+            <h2 className="font-semibold text-foreground">Personal Information</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-1.5">
                 <Label>First Name</Label>
@@ -108,8 +108,8 @@ export default function ProfilePage() {
             </Button>
           </form>
 
-          <form onSubmit={handlePasswordSave} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 space-y-4">
-            <h2 className="font-black text-gray-900">Change Password</h2>
+          <form onSubmit={handlePasswordSave} className="rounded-lg border border-border bg-card shadow-sm p-6 space-y-4">
+            <h2 className="font-semibold text-foreground">Change Password</h2>
             <div className="space-y-1.5">
               <Label>Current Password</Label>
               <Input type="password" value={passwords.current} onChange={(e) => setPasswords({ ...passwords, current: e.target.value })} required />
@@ -124,9 +124,9 @@ export default function ProfilePage() {
           </form>
 
           {user.role === 'COACH' && user.coach?.team_coaches?.[0]?.team && (
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">
-              <h2 className="font-black text-gray-900 mb-2">Your Team</h2>
-              <Link to={`/teams/${user.coach.team_coaches[0].team!.slug}`} className="text-[#0038FF] font-semibold hover:underline">
+            <div className="rounded-lg border border-border bg-card shadow-sm p-6">
+              <h2 className="font-semibold text-foreground mb-2">Your Team</h2>
+              <Link to={`/teams/${user.coach.team_coaches[0].team!.slug}`} className="text-primary font-semibold hover:underline">
                 {user.coach.team_coaches[0].team!.name}
               </Link>
             </div>

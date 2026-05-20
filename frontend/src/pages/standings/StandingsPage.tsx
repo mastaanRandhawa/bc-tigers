@@ -1,35 +1,37 @@
 import PageLayout from '@/components/PageLayout';
 import PageHeader from '@/components/shared/PageHeader';
+import PageContent from '@/components/shared/PageContent';
 import QueryState from '@/components/shared/QueryState';
 import StandingsTable from '@/components/StandingsTable';
 import { useDivisions } from '@/hooks/useDivisions';
 import { useStandings } from '@/hooks/useStandings';
 import { Link } from 'react-router-dom';
 import { ChevronRight, Trophy } from 'lucide-react';
+import type { Division } from '@/types';
+import { getDivisionStandingsPath } from '@/lib/division-routes';
 
-function DivisionStandingsPreview({ divisionId, divisionName, divisionSlug }: {
-  divisionId: string;
-  divisionName: string;
-  divisionSlug: string;
-}) {
-  const { data: standings = [], isLoading } = useStandings(divisionId);
+function DivisionStandingsPreview({ division }: { division: Division }) {
+  const { data: standings = [], isLoading } = useStandings(division.id);
+  const fullPath = getDivisionStandingsPath(division);
 
   if (isLoading) {
     return (
-      <div className="animate-pulse bg-white rounded-2xl h-48 border border-gray-100" />
+      <div className="animate-pulse bg-white rounded-2xl h-48 border border-border" />
     );
   }
 
   return (
-    <div>
+    <div className="home-section">
       <div className="flex items-center justify-between mb-4">
-        <h2 className="text-xl font-black text-gray-900 uppercase tracking-tight">{divisionName}</h2>
-        <Link
-          to={`/standings/${divisionSlug}`}
-          className="text-sm text-[#0038FF] font-semibold flex items-center gap-1 hover:underline"
-        >
-          Full Table <ChevronRight className="w-4 h-4" />
-        </Link>
+        <h2 className="text-xl font-black uppercase tracking-tight">{division.name}</h2>
+        {fullPath && (
+          <Link
+            to={fullPath}
+            className="text-sm text-primary font-bold flex items-center gap-1 hover:underline"
+          >
+            Full Table <ChevronRight className="w-4 h-4" />
+          </Link>
+        )}
       </div>
       <StandingsTable standings={standings} compact />
     </div>
@@ -43,8 +45,7 @@ export default function StandingsPage() {
     <PageLayout>
       <PageHeader title="Standings" subtitle="League tables across all divisions" icon={Trophy} />
 
-      <section className="py-10 px-4 bg-gray-50">
-        <div className="max-w-7xl mx-auto">
+      <PageContent innerClassName="max-w-7xl">
           <QueryState
             isLoading={isLoading}
             isError={isError}
@@ -54,17 +55,11 @@ export default function StandingsPage() {
           >
             <div className="space-y-10">
               {divisions.map((division) => (
-                <DivisionStandingsPreview
-                  key={division.id}
-                  divisionId={division.id}
-                  divisionName={division.name}
-                  divisionSlug={division.slug}
-                />
+                <DivisionStandingsPreview key={division.id} division={division} />
               ))}
             </div>
           </QueryState>
-        </div>
-      </section>
+        </PageContent>
     </PageLayout>
   );
 }

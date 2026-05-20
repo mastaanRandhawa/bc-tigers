@@ -11,13 +11,13 @@ const columns = [
   {
     key: 'name',
     label: 'Division',
-    render: (d: Division) => <span className="font-bold text-gray-900">{d.name}</span>,
+    render: (d: Division) => <span className="font-bold text-foreground">{d.name}</span>,
   },
   {
     key: 'tournament_id',
     label: 'Tournament',
     render: (d: Division) => (
-      <span className="text-xs text-gray-600">{d.tournament?.name ?? '—'}</span>
+      <span className="text-xs text-muted-foreground">{d.tournament?.name ?? '—'}</span>
     ),
   },
   { key: 'age_group', label: 'Age Group' },

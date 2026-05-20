@@ -16,6 +16,18 @@ export class DivisionsService {
   }
 
   async findOne(tournamentSlug: string, divisionSlug: string) {
+    return this.resolveDivision(tournamentSlug, divisionSlug, {
+      teams: true,
+      standings: { include: { team: true }, orderBy: { rank: 'asc' } },
+      matches: { include: { home_team: true, away_team: true } },
+    });
+  }
+
+  async resolveDivision(
+    tournamentSlug: string,
+    divisionSlug: string,
+    include?: Parameters<typeof prisma.division.findUnique>[0]['include'],
+  ) {
     const tournament = await prisma.tournament.findUnique({
       where: { slug: tournamentSlug },
     });
@@ -27,11 +39,7 @@ export class DivisionsService {
           slug: divisionSlug,
         },
       },
-      include: {
-        teams: true,
-        standings: { include: { team: true }, orderBy: { rank: 'asc' } },
-        matches: { include: { home_team: true, away_team: true } },
-      },
+      include: include ?? { tournament: true },
     });
     if (!division) throw new NotFoundException('Division not found');
     return division;
@@ -39,6 +47,18 @@ export class DivisionsService {
 
   findAll() {
     return prisma.division.findMany({ include: { tournament: true } });
+  }
+
+  async findBySlugGlobal(divisionSlug: string) {
+    const divisions = await prisma.division.findMany({
+      where: { slug: divisionSlug },
+      include: { tournament: true },
+    });
+    if (divisions.length === 0) throw new NotFoundException('Division not found');
+    if (divisions.length > 1) {
+      return divisions;
+    }
+    return divisions[0];
   }
 
   create(data: Prisma.DivisionCreateInput) {

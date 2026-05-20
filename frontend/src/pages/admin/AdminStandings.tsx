@@ -23,7 +23,7 @@ function DivisionStandingsSection({ division }: { division: Division }) {
   return (
     <div>
       <div className="flex items-center justify-between mb-3">
-        <h2 className="font-black text-gray-900 text-lg">{division.name}</h2>
+        <h2 className="font-semibold text-foreground text-lg">{division.name}</h2>
         <Button
           size="sm"
           variant="outline"

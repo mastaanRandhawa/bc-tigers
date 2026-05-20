@@ -18,12 +18,12 @@ const columns = [
           <img src={v.photos[0]} alt="" className="w-10 h-10 rounded-xl object-cover" />
         ) : (
           <div className="w-10 h-10 rounded-xl bg-gray-100 flex items-center justify-center">
-            <MapPin className="w-5 h-5 text-gray-400" />
+            <MapPin className="w-5 h-5 text-muted-foreground" />
           </div>
         )}
         <div>
-          <p className="font-bold text-gray-900">{v.name}</p>
-          <p className="text-xs text-gray-400">{v.slug}</p>
+          <p className="font-bold text-foreground">{v.name}</p>
+          <p className="text-xs text-muted-foreground">{v.slug}</p>
         </div>
       </div>
     ),
@@ -34,7 +34,7 @@ const columns = [
     key: 'parking_info',
     label: 'Parking',
     render: (v: Venue) => (
-      <span className="text-xs text-gray-600 line-clamp-1">{v.parking_info ?? '—'}</span>
+      <span className="text-xs text-muted-foreground line-clamp-1">{v.parking_info ?? '—'}</span>
     ),
   },
 ];

@@ -10,7 +10,5 @@ export * from './useReferees';
 export * from './useStats';
 export * from './useMedia';
 export * from './useUsers';
-export * from './useAnnouncements';
 export * from './useSettings';
 export * from './useCoaches';
-export * from './useContact';

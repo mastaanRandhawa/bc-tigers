@@ -1,4 +1,5 @@
 import type { LucideIcon } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface PageHeaderProps {
   title: string;
@@ -8,22 +9,43 @@ interface PageHeaderProps {
 }
 
 export default function PageHeader({ title, subtitle, icon: Icon, children }: PageHeaderProps) {
+  const words = title.split(' ');
+  const firstWord = words[0] ?? title;
+  const restWords = words.slice(1).join(' ');
+
   return (
-    <div className="bg-[#0038FF] text-white py-12 sm:py-16 px-4 relative overflow-hidden">
-      <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff10_1px,transparent_1px),linear-gradient(to_bottom,#ffffff10_1px,transparent_1px)] bg-[size:3rem_3rem]" />
-      <div className="max-w-4xl mx-auto relative z-10">
-        <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-          {Icon && <Icon className="w-8 h-8 sm:w-10 sm:h-10 text-[#CCFF00] flex-shrink-0" />}
-          <div className="flex-1 min-w-0">
-            <h1
-              className="text-3xl sm:text-4xl md:text-6xl font-black uppercase tracking-tighter text-[#CCFF00] break-words"
-              style={{ fontFamily: '"Arial Black", Impact, sans-serif', textShadow: '4px 4px 0 #001A99' }}
-            >
-              {title}
-            </h1>
-            {subtitle && <p className="text-white/80 text-base sm:text-lg mt-2 sm:mt-3">{subtitle}</p>}
+    <div className="relative bg-primary overflow-hidden">
+      <div className="absolute inset-0 bg-brand-grid pointer-events-none" />
+      <div className="relative max-w-[1440px] mx-auto px-6 md:px-10 py-10 md:py-14 safe-x">
+        <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-6 min-w-0">
+          <div className="min-w-0 flex-1">
+            {Icon && (
+              <div className="mb-4 inline-flex rounded-full bg-white/15 p-2.5 border border-white/30">
+                <Icon className="w-5 h-5 text-primary-muted" aria-hidden />
+              </div>
+            )}
+            <div className="space-y-1 md:space-y-2">
+              <h1
+                className={cn(
+                  'hero-headline text-[clamp(2.5rem,8vw,5rem)] text-primary-muted m-0',
+                  !restWords && 'text-white'
+                )}
+              >
+                {firstWord.toUpperCase()}
+              </h1>
+              {restWords && (
+                <h1 className="hero-headline text-[clamp(2.75rem,9vw,5.5rem)] text-white m-0 pl-[5%] md:pl-[10%]">
+                  {restWords.toUpperCase()}
+                </h1>
+              )}
+            </div>
+            {subtitle && (
+              <p className="mt-4 text-sm md:text-base text-white/85 font-medium max-w-2xl">
+                {subtitle}
+              </p>
+            )}
           </div>
-          {children}
+          {children && <div className="shrink-0">{children}</div>}
         </div>
       </div>
     </div>

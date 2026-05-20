@@ -43,8 +43,8 @@ export default function ResetPasswordPage() {
       {done ? (
         <div className="text-center py-8">
           <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
-          <h3 className="font-black text-gray-900">Password Updated!</h3>
-          <p className="text-sm text-gray-500 mt-2">Redirecting to sign in...</p>
+          <h3 className="font-semibold text-foreground">Password Updated!</h3>
+          <p className="text-sm text-muted-foreground mt-2">Redirecting to sign in...</p>
         </div>
       ) : (
         <>
@@ -69,8 +69,8 @@ export default function ResetPasswordPage() {
               {isLoading ? 'Updating...' : 'Update Password'}
             </Button>
           </form>
-          <p className="text-center text-sm text-gray-500 mt-6">
-            <Link to="/login" className="text-[#0038FF] font-semibold hover:underline">Back to Sign In</Link>
+          <p className="text-center text-sm text-muted-foreground mt-6">
+            <Link to="/login" className="text-primary font-semibold hover:underline">Back to Sign In</Link>
           </p>
         </>
       )}

@@ -48,31 +48,31 @@ export default function RefereeDashboard() {
     .slice(0, 8);
 
   return (
-    <PortalLayout title="Referee Portal" subtitle="Match Assignments" nav={nav} accentColor="#7C3AED">
+    <PortalLayout title="Referee Portal" subtitle="Match Assignments" nav={nav}>
       <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
         {[
           { label: "Today's Matches", value: todayMatches.length, icon: Calendar },
           { label: 'Live Now', value: live.length, icon: Zap },
           { label: 'Upcoming', value: upcoming.length, icon: ClipboardList },
         ].map((stat) => (
-          <div key={stat.label} className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5 flex items-center gap-4">
+          <div key={stat.label} className="rounded-lg border border-border bg-card shadow-sm p-5 flex items-center gap-4">
             <div className="bg-violet-600 p-3 rounded-xl">
               <stat.icon className="w-5 h-5 text-white" />
             </div>
             <div>
-              <p className="text-2xl font-black text-gray-900">{stat.value}</p>
-              <p className="text-sm text-gray-400 font-medium">{stat.label}</p>
+              <p className="text-2xl font-semibold text-foreground">{stat.value}</p>
+              <p className="text-sm text-muted-foreground font-medium">{stat.label}</p>
             </div>
           </div>
         ))}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm">
-          <div className="flex items-center justify-between p-5 border-b border-gray-100">
+        <div className="rounded-lg border border-border bg-card shadow-sm">
+          <div className="flex items-center justify-between p-5 border-b border-border">
             <div className="flex items-center gap-2">
               <Calendar className="w-4 h-4 text-violet-600" />
-              <h2 className="font-black text-gray-900">Today's Schedule</h2>
+              <h2 className="font-semibold text-foreground">Today's Schedule</h2>
             </div>
           </div>
           <QueryState isLoading={isLoading} isEmpty={todayMatches.length === 0} emptyMessage="No matches scheduled today">
@@ -81,13 +81,13 @@ export default function RefereeDashboard() {
                 <Link
                   key={m.id}
                   to={`/matches/${m.id}`}
-                  className="flex items-start gap-3 p-4 hover:bg-gray-50 transition-colors"
+                  className="flex items-start gap-3 p-4 hover:bg-muted transition-colors"
                 >
                   <div className="flex-1 text-sm">
-                    <p className="font-bold text-gray-900">
+                    <p className="font-bold text-foreground">
                       {m.home_team?.name} vs {m.away_team?.name}
                     </p>
-                    <p className="text-gray-400 text-xs mt-0.5">
+                    <p className="text-muted-foreground text-xs mt-0.5">
                       {formatTime(m.scheduled_start)}
                       {m.venue && (
                         <>
@@ -106,11 +106,11 @@ export default function RefereeDashboard() {
           </QueryState>
         </div>
 
-        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm">
-          <div className="flex items-center justify-between p-5 border-b border-gray-100">
+        <div className="rounded-lg border border-border bg-card shadow-sm">
+          <div className="flex items-center justify-between p-5 border-b border-border">
             <div className="flex items-center gap-2">
               <Zap className="w-4 h-4 text-red-500" />
-              <h2 className="font-black text-gray-900">Live Matches</h2>
+              <h2 className="font-semibold text-foreground">Live Matches</h2>
               {live.length > 0 && <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />}
             </div>
             <Link to="/matches" className="text-xs text-violet-600 font-semibold hover:underline">
@@ -123,13 +123,13 @@ export default function RefereeDashboard() {
                 <Link
                   key={m.id}
                   to={`/matches/${m.id}`}
-                  className="flex items-center gap-3 p-4 hover:bg-gray-50 transition-colors"
+                  className="flex items-center gap-3 p-4 hover:bg-muted transition-colors"
                 >
                   <div className="flex-1 text-sm">
-                    <p className="font-bold text-gray-900">
+                    <p className="font-bold text-foreground">
                       {m.home_team?.name} vs {m.away_team?.name}
                     </p>
-                    <p className="text-gray-400 text-xs">{formatDate(m.scheduled_start)}</p>
+                    <p className="text-muted-foreground text-xs">{formatDate(m.scheduled_start)}</p>
                   </div>
                   <div className="text-lg font-black text-red-600">
                     {m.home_score} – {m.away_score}

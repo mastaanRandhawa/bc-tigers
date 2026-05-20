@@ -51,7 +51,7 @@ export default function LoginPage() {
         <div className="space-y-1.5">
           <div className="flex items-center justify-between">
             <Label htmlFor="password">Password</Label>
-            <Link to="/forgot-password" className="text-xs text-[#0038FF] font-semibold hover:underline">
+            <Link to="/forgot-password" className="text-xs text-primary font-semibold hover:underline">
               Forgot password?
             </Link>
           </div>
@@ -69,7 +69,7 @@ export default function LoginPage() {
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-muted-foreground"
             >
               {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
             </button>
@@ -82,9 +82,9 @@ export default function LoginPage() {
         </Button>
       </form>
 
-      <p className="text-center text-sm text-gray-500 mt-6">
+      <p className="text-center text-sm text-muted-foreground mt-6">
         Don't have an account?{' '}
-        <Link to="/register" className="text-[#0038FF] font-semibold hover:underline">
+        <Link to="/register" className="text-primary font-semibold hover:underline">
           Sign Up
         </Link>
       </p>

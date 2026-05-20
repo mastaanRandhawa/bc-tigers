@@ -73,9 +73,9 @@ export default function RegisterPage() {
         </Button>
       </form>
 
-      <p className="text-center text-sm text-gray-500 mt-6">
+      <p className="text-center text-sm text-muted-foreground mt-6">
         Already have an account?{' '}
-        <Link to="/login" className="text-[#0038FF] font-semibold hover:underline">Sign In</Link>
+        <Link to="/login" className="text-primary font-semibold hover:underline">Sign In</Link>
       </p>
     </AuthLayout>
   );

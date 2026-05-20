@@ -33,7 +33,7 @@ export default function TeamDetailPage() {
       >
         {team && (
           <>
-            <div className="h-48 relative overflow-hidden" style={{ backgroundColor: team.primary_color ?? '#0038FF' }}>
+            <div className="h-48 relative overflow-hidden" style={{ backgroundColor: team.primary_color ?? '#E9700B' }}>
               <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff10_1px,transparent_1px),linear-gradient(to_bottom,#ffffff10_1px,transparent_1px)] bg-[size:3rem_3rem]" />
               <div className="absolute inset-0 flex flex-col items-center justify-center">
                 {team.logo ? (
@@ -43,7 +43,7 @@ export default function TeamDetailPage() {
                     <Shield className="w-10 h-10 text-white" />
                   </div>
                 )}
-                <h1 className="text-3xl font-black text-white uppercase tracking-tight" style={{ textShadow: '2px 2px 0 rgba(0,0,0,0.3)' }}>{team.name}</h1>
+                <h1 className="text-3xl font-black text-white uppercase tracking-tight">{team.name}</h1>
                 <p className="text-white/70 text-sm">{team.city}</p>
               </div>
             </div>
@@ -58,58 +58,58 @@ export default function TeamDetailPage() {
                       { label: 'Points', value: standing.points },
                       { label: 'GD', value: standing.goal_difference > 0 ? `+${standing.goal_difference}` : String(standing.goal_difference) },
                     ].map((s) => (
-                      <div key={s.label} className="bg-white rounded-2xl border border-gray-100 shadow-sm p-4 text-center">
-                        <p className="text-2xl font-black text-[#0038FF]">{s.value}</p>
-                        <p className="text-xs text-gray-400 font-medium mt-0.5">{s.label}</p>
+                      <div key={s.label} className="rounded-lg border border-border bg-card shadow-sm p-4 text-center">
+                        <p className="text-2xl font-black text-primary">{s.value}</p>
+                        <p className="text-xs text-muted-foreground font-medium mt-0.5">{s.label}</p>
                       </div>
                     ))}
                   </div>
                 )}
 
-                <section className="bg-white rounded-2xl border border-gray-100 shadow-sm">
+                <section className="rounded-lg border border-border bg-card shadow-sm">
                   <div className="flex items-center gap-2 p-5 border-b border-gray-50">
-                    <Users className="w-4 h-4 text-[#0038FF]" />
-                    <h2 className="font-black text-gray-900 uppercase">Roster</h2>
+                    <Users className="w-4 h-4 text-primary" />
+                    <h2 className="font-semibold text-foreground uppercase">Roster</h2>
                   </div>
                   {players.length > 0 ? (
                     <div className="divide-y divide-gray-50">
                       {players.map((player) => (
                         <div key={player.id} className="flex items-center gap-4 px-5 py-3">
-                          <div className="w-8 h-8 rounded-full bg-[#0038FF] flex items-center justify-center text-white text-xs font-black">
+                          <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-white text-xs font-black">
                             {player.jersey_number ?? '-'}
                           </div>
                           <div className="flex-1">
-                            <p className="font-semibold text-gray-900 text-sm">{player.first_name} {player.last_name}</p>
-                            <p className="text-xs text-gray-400">{player.preferred_position} · {player.nationality}</p>
+                            <p className="font-semibold text-foreground text-sm">{player.first_name} {player.last_name}</p>
+                            <p className="text-xs text-muted-foreground">{player.preferred_position} · {player.nationality}</p>
                           </div>
                         </div>
                       ))}
                     </div>
                   ) : (
-                    <p className="px-5 py-6 text-sm text-gray-400">No players on roster yet.</p>
+                    <p className="px-5 py-6 text-sm text-muted-foreground">No players on roster yet.</p>
                   )}
                 </section>
 
                 <section>
                   <div className="flex items-center gap-2 mb-4">
-                    <Calendar className="w-4 h-4 text-[#0038FF]" />
-                    <h2 className="font-black text-gray-900 uppercase">Match History</h2>
+                    <Calendar className="w-4 h-4 text-primary" />
+                    <h2 className="font-semibold text-foreground uppercase">Match History</h2>
                   </div>
                   {teamMatches.length > 0 ? (
                     <div className="space-y-3">
                       {teamMatches.map((m) => <MatchCard key={m.id} match={m} />)}
                     </div>
                   ) : (
-                    <p className="text-sm text-gray-400">No matches yet.</p>
+                    <p className="text-sm text-muted-foreground">No matches yet.</p>
                   )}
                 </section>
               </div>
 
               <div className="space-y-5">
-                <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5">
+                <div className="rounded-lg border border-border bg-card shadow-sm p-5">
                   <div className="flex items-center gap-2 mb-4">
-                    <BarChart2 className="w-4 h-4 text-[#0038FF]" />
-                    <h3 className="font-black text-gray-900 uppercase">Team Info</h3>
+                    <BarChart2 className="w-4 h-4 text-primary" />
+                    <h3 className="font-semibold text-foreground uppercase">Team Info</h3>
                   </div>
                   <div className="space-y-3 text-sm">
                     {team.city && <InfoRow label="City" value={team.city} />}
@@ -135,7 +135,7 @@ export default function TeamDetailPage() {
 function InfoRow({ label, value }: { label: string; value: string }) {
   return (
     <div className="flex justify-between">
-      <span className="text-gray-400">{label}</span>
+      <span className="text-muted-foreground">{label}</span>
       <span className="font-semibold text-gray-800">{value}</span>
     </div>
   );

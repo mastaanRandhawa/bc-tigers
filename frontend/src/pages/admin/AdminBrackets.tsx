@@ -41,17 +41,17 @@ export default function AdminBrackets() {
                 <button
                   key={d.id}
                   onClick={() => setSelectedId(d.id)}
-                  className={`px-4 py-2 rounded-full text-sm font-semibold transition-colors ${(selectedId ?? divisions[0]?.id) === d.id ? 'bg-[#0038FF] text-white' : 'bg-white border border-gray-200 text-gray-600 hover:border-[#0038FF]'}`}
+                  className={`px-4 py-2 rounded-full text-sm font-semibold transition-colors ${(selectedId ?? divisions[0]?.id) === d.id ? 'bg-primary text-white' : 'bg-white border border-border text-muted-foreground hover:border-primary'}`}
                 >
                   {d.name}
                 </button>
               ))}
             </div>
 
-            <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6">
+            <div className="rounded-lg border border-border bg-card shadow-sm p-6">
               <div className="flex items-center justify-between mb-6">
-                <h2 className="font-black text-gray-900 flex items-center gap-2">
-                  <GitBranch className="w-5 h-5 text-[#0038FF]" /> {division.name} Bracket
+                <h2 className="font-semibold text-foreground flex items-center gap-2">
+                  <GitBranch className="w-5 h-5 text-primary" /> {division.name} Bracket
                 </h2>
                 <Button size="sm" onClick={handleGenerate} disabled={generateMutation.isPending}>
                   Generate Bracket

@@ -2,6 +2,16 @@ import { Link } from 'react-router-dom';
 import type { Standing } from '@/types';
 import { getFormColor } from '@/lib/utils';
 import { cn } from '@/lib/utils';
+import { Badge } from '@/components/ui/badge';
+import { Card } from '@/components/ui/card';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 
 interface StandingsTableProps {
   standings: Standing[];
@@ -10,88 +20,96 @@ interface StandingsTableProps {
 
 export default function StandingsTable({ standings, compact = false }: StandingsTableProps) {
   return (
-    <div className="overflow-x-auto rounded-2xl border border-gray-100 bg-white shadow-sm -mx-4 sm:mx-0 px-4 sm:px-0">
-      <table className="w-full min-w-[640px] text-sm">
-        <thead>
-          <tr className="bg-gray-50 border-b border-gray-100">
-            <th className="text-left px-4 py-3 font-semibold text-gray-500 w-8">#</th>
-            <th className="text-left px-4 py-3 font-semibold text-gray-500">Team</th>
-            <th className="text-center px-3 py-3 font-semibold text-gray-500">P</th>
-            <th className="text-center px-3 py-3 font-semibold text-gray-500">W</th>
-            <th className="text-center px-3 py-3 font-semibold text-gray-500">D</th>
-            <th className="text-center px-3 py-3 font-semibold text-gray-500">L</th>
-            {!compact && (
-              <>
-                <th className="text-center px-3 py-3 font-semibold text-gray-500">GF</th>
-                <th className="text-center px-3 py-3 font-semibold text-gray-500">GA</th>
-              </>
-            )}
-            <th className="text-center px-3 py-3 font-semibold text-gray-500">GD</th>
-            <th className="text-center px-3 py-3 font-bold text-gray-700">Pts</th>
-            {!compact && <th className="text-center px-3 py-3 font-semibold text-gray-500">Form</th>}
-          </tr>
-        </thead>
-        <tbody>
-          {standings.map((s, idx) => (
-            <tr
-              key={s.id}
-              className={cn(
-                'border-b border-gray-50 hover:bg-gray-50 transition-colors',
-                idx === 0 && 'bg-blue-50/50',
-                idx < 3 && idx > 0 && 'bg-green-50/30'
-              )}
-            >
-              <td className="px-4 py-3 text-gray-500 font-medium">{s.rank}</td>
-              <td className="px-4 py-3">
-                {s.team ? (
-                  <Link
-                    to={`/teams/${s.team.slug}`}
-                    className="flex items-center gap-2 hover:text-[#0038FF] transition-colors"
-                  >
-                    {s.team.logo && (
-                      <img src={s.team.logo} alt={s.team.name} className="w-6 h-6 rounded-full object-cover" />
-                    )}
-                    <span className="font-semibold text-gray-900">{s.team.name}</span>
-                    {idx === 0 && (
-                      <span className="text-[10px] bg-[#CCFF00] text-black font-bold px-1.5 py-0.5 rounded-full">Leader</span>
-                    )}
-                  </Link>
-                ) : (
-                  <span className="text-gray-400">Unknown</span>
-                )}
-              </td>
-              <td className="text-center px-3 py-3 text-gray-700">{s.played}</td>
-              <td className="text-center px-3 py-3 text-green-700 font-semibold">{s.wins}</td>
-              <td className="text-center px-3 py-3 text-yellow-600 font-semibold">{s.draws}</td>
-              <td className="text-center px-3 py-3 text-red-600 font-semibold">{s.losses}</td>
+    <Card className="overflow-hidden -mx-4 sm:mx-0">
+      <div className="overflow-x-auto px-4 sm:px-0">
+        <Table className="min-w-[640px]">
+          <TableHeader>
+            <TableRow className="hover:bg-transparent">
+              <TableHead className="w-8">#</TableHead>
+              <TableHead>Team</TableHead>
+              <TableHead className="text-center">P</TableHead>
+              <TableHead className="text-center">W</TableHead>
+              <TableHead className="text-center">D</TableHead>
+              <TableHead className="text-center">L</TableHead>
               {!compact && (
                 <>
-                  <td className="text-center px-3 py-3 text-gray-700">{s.goals_for}</td>
-                  <td className="text-center px-3 py-3 text-gray-700">{s.goals_against}</td>
+                  <TableHead className="text-center">GF</TableHead>
+                  <TableHead className="text-center">GA</TableHead>
                 </>
               )}
-              <td className={cn('text-center px-3 py-3 font-semibold', s.goal_difference > 0 ? 'text-green-600' : s.goal_difference < 0 ? 'text-red-600' : 'text-gray-500')}>
-                {s.goal_difference > 0 ? '+' : ''}{s.goal_difference}
-              </td>
-              <td className="text-center px-3 py-3 font-black text-[#0038FF] text-base">{s.points}</td>
-              {!compact && (
-                <td className="text-center px-3 py-3">
-                  <div className="flex items-center justify-center gap-1">
-                    {s.form?.map((f, i) => (
-                      <span
-                        key={i}
-                        className={cn('w-5 h-5 rounded-full text-[9px] font-black text-white flex items-center justify-center', getFormColor(f))}
-                      >
-                        {f}
-                      </span>
-                    ))}
-                  </div>
-                </td>
-              )}
-            </tr>
-          ))}
-        </tbody>
-      </table>
-    </div>
+              <TableHead className="text-center">GD</TableHead>
+              <TableHead className="text-center">Pts</TableHead>
+              {!compact && <TableHead className="text-center">Form</TableHead>}
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {standings.map((s, idx) => (
+              <TableRow
+                key={s.id}
+                className={cn(
+                  idx === 0 && 'bg-primary-muted/60',
+                  idx > 0 && idx < 3 && 'bg-primary-muted/30'
+                )}
+              >
+                <TableCell className="text-muted-foreground font-medium">{s.rank}</TableCell>
+                <TableCell>
+                  {s.team ? (
+                    <Link
+                      to={`/teams/${s.team.slug}`}
+                      className="flex items-center gap-2 hover:text-primary transition-colors min-w-0"
+                    >
+                      {s.team.logo && (
+                        <img src={s.team.logo} alt="" className="w-6 h-6 rounded-full object-cover shrink-0" />
+                      )}
+                      <span className="font-semibold text-foreground truncate">{s.team.name}</span>
+                      {idx === 0 && <Badge variant="default" className="shrink-0">Leader</Badge>}
+                    </Link>
+                  ) : (
+                    <span className="text-muted-foreground">Unknown</span>
+                  )}
+                </TableCell>
+                <TableCell className="text-center">{s.played}</TableCell>
+                <TableCell className="text-center text-green-700 font-semibold">{s.wins}</TableCell>
+                <TableCell className="text-center text-amber-600 font-semibold">{s.draws}</TableCell>
+                <TableCell className="text-center text-red-600 font-semibold">{s.losses}</TableCell>
+                {!compact && (
+                  <>
+                    <TableCell className="text-center">{s.goals_for}</TableCell>
+                    <TableCell className="text-center">{s.goals_against}</TableCell>
+                  </>
+                )}
+                <TableCell
+                  className={cn(
+                    'text-center font-semibold',
+                    s.goal_difference > 0 ? 'text-green-600' : s.goal_difference < 0 ? 'text-red-600' : 'text-muted-foreground'
+                  )}
+                >
+                  {s.goal_difference > 0 ? '+' : ''}
+                  {s.goal_difference}
+                </TableCell>
+                <TableCell className="text-center font-bold text-primary text-base">{s.points}</TableCell>
+                {!compact && (
+                  <TableCell className="text-center">
+                    <div className="flex items-center justify-center gap-1">
+                      {s.form?.map((f, i) => (
+                        <span
+                          key={i}
+                          className={cn(
+                            'w-5 h-5 rounded-md text-[9px] font-bold text-white flex items-center justify-center',
+                            getFormColor(f)
+                          )}
+                        >
+                          {f}
+                        </span>
+                      ))}
+                    </div>
+                  </TableCell>
+                )}
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+    </Card>
   );
 }

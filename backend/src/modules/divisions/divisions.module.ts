@@ -1,10 +1,28 @@
 import { Module } from '@nestjs/common';
 import { DivisionsController } from './divisions.controller';
+import { DivisionResourcesController } from './division-resources.controller';
 import { DivisionsService } from './divisions.service';
+import { DivisionResourcesService } from './division-resources.service';
+import { TeamsModule } from '../teams/teams.module';
+import { PlayersModule } from '../players/players.module';
+import { MatchesModule } from '../matches/matches.module';
+import { StandingsModule } from '../standings/standings.module';
+import { StatsModule } from '../stats/stats.module';
+import { BracketsModule } from '../brackets/brackets.module';
+import { VenuesModule } from '../venues/venues.module';
 
 @Module({
-  controllers: [DivisionsController],
-  providers: [DivisionsService],
+  imports: [
+    TeamsModule,
+    PlayersModule,
+    MatchesModule,
+    StandingsModule,
+    StatsModule,
+    BracketsModule,
+    VenuesModule,
+  ],
+  controllers: [DivisionsController, DivisionResourcesController],
+  providers: [DivisionsService, DivisionResourcesService],
   exports: [DivisionsService],
 })
 export class DivisionsModule {}

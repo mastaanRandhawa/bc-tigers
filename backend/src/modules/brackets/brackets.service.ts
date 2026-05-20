@@ -16,8 +16,12 @@ export class BracketsService {
       where: { slug: divisionSlug },
     });
     if (!division) return [];
+    return this.getByDivisionId(division.id);
+  }
+
+  getByDivisionId(divisionId: string) {
     return prisma.bracketNode.findMany({
-      where: { division_id: division.id },
+      where: { division_id: divisionId },
       include: {
         home_team: true,
         away_team: true,

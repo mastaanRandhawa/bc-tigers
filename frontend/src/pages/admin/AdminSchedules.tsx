@@ -31,8 +31,8 @@ export default function AdminSchedules() {
           {sortedDates.map((date) => (
             <div key={date}>
               <div className="flex items-center gap-2 mb-3">
-                <Calendar className="w-4 h-4 text-[#0038FF]" />
-                <h2 className="font-black text-gray-900">{formatDate(date)}</h2>
+                <Calendar className="w-4 h-4 text-primary" />
+                <h2 className="font-semibold text-foreground">{formatDate(date)}</h2>
               </div>
               <div className="space-y-3">
                 {grouped[date].map((m) => <MatchCard key={m.id} match={m} />)}

@@ -33,11 +33,11 @@ export default function ForgotPasswordPage() {
       {sent ? (
         <div className="text-center py-8">
           <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
-          <h3 className="font-black text-gray-900 text-lg">Check Your Email</h3>
-          <p className="text-sm text-gray-500 mt-2">
+          <h3 className="font-semibold text-foreground text-lg">Check Your Email</h3>
+          <p className="text-sm text-muted-foreground mt-2">
             If <strong>{email}</strong> is registered, you'll receive a reset link shortly.
           </p>
-          <Link to="/login" className="block mt-6 text-sm text-[#0038FF] font-semibold hover:underline">
+          <Link to="/login" className="block mt-6 text-sm text-primary font-semibold hover:underline">
             Back to Sign In
           </Link>
         </div>
@@ -62,8 +62,8 @@ export default function ForgotPasswordPage() {
               <Mail className="w-4 h-4" /> {isLoading ? 'Sending...' : 'Send Reset Link'}
             </Button>
           </form>
-          <p className="text-center text-sm text-gray-500 mt-6">
-            <Link to="/login" className="text-[#0038FF] font-semibold hover:underline">
+          <p className="text-center text-sm text-muted-foreground mt-6">
+            <Link to="/login" className="text-primary font-semibold hover:underline">
               Back to Sign In
             </Link>
           </p>

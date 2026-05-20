@@ -18,14 +18,14 @@ const columns = [
         ) : (
           <div
             className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-black"
-            style={{ backgroundColor: t.primary_color ?? '#0038FF' }}
+            style={{ backgroundColor: t.primary_color ?? '#F48735' }}
           >
             {t.name[0]}
           </div>
         )}
         <div>
-          <p className="font-bold text-gray-900">{t.name}</p>
-          <p className="text-xs text-gray-400">{t.city}</p>
+          <p className="font-bold text-foreground">{t.name}</p>
+          <p className="text-xs text-muted-foreground">{t.city}</p>
         </div>
       </div>
     ),
@@ -34,7 +34,7 @@ const columns = [
     key: 'division_id',
     label: 'Division',
     render: (t: Team) => (
-      <span className="text-xs text-gray-600">{t.division?.name ?? '—'}</span>
+      <span className="text-xs text-muted-foreground">{t.division?.name ?? '—'}</span>
     ),
   },
   { key: 'city', label: 'City' },
@@ -44,10 +44,10 @@ const columns = [
     render: (t: Team) => (
       <div className="flex items-center gap-2">
         <div
-          className="w-5 h-5 rounded-full border border-gray-200"
+          className="w-5 h-5 rounded-full border border-border"
           style={{ backgroundColor: t.primary_color ?? '#ccc' }}
         />
-        <span className="text-xs text-gray-500">{t.primary_color ?? '—'}</span>
+        <span className="text-xs text-muted-foreground">{t.primary_color ?? '—'}</span>
       </div>
     ),
   },

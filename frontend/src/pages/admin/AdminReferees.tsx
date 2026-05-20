@@ -13,10 +13,10 @@ const columns = [
     label: 'Referee',
     render: (r: Referee) => (
       <div>
-        <p className="font-bold text-gray-900">
+        <p className="font-bold text-foreground">
           {r.first_name} {r.last_name}
         </p>
-        <p className="text-xs text-gray-400">{r.email ?? '—'}</p>
+        <p className="text-xs text-muted-foreground">{r.email ?? '—'}</p>
       </div>
     ),
   },
@@ -25,7 +25,7 @@ const columns = [
     key: 'certification',
     label: 'Certification',
     render: (r: Referee) => (
-      <span className="text-xs bg-[#CCFF00] text-black font-bold px-2 py-0.5 rounded-full">
+      <span className="text-xs bg-primary-muted text-black font-bold px-2 py-0.5 rounded-full">
         {r.certification ?? 'N/A'}
       </span>
     ),

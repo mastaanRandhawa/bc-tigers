@@ -9,7 +9,7 @@ import { useMatches, useDeleteMatch } from '@/hooks/useMatches';
 import type { Match } from '@/types';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { formatDate, formatTime } from '@/lib/utils';
+import { formatDate, formatTime, getMatchStatusBadgeVariant } from '@/lib/utils';
 import { getApiErrorMessage } from '@/lib/errors';
 import { Zap } from 'lucide-react';
 
@@ -19,10 +19,10 @@ const columns = (onScore: (m: Match) => void) => [
     label: 'Match',
     render: (m: Match) => (
       <div>
-        <p className="font-bold text-gray-900">
+        <p className="font-bold text-foreground">
           {m.home_team?.name ?? 'TBD'} vs {m.away_team?.name ?? 'TBD'}
         </p>
-        <p className="text-xs text-gray-400">
+        <p className="text-xs text-muted-foreground">
           {formatDate(m.scheduled_start)} · {formatTime(m.scheduled_start)}
         </p>
       </div>
@@ -32,7 +32,7 @@ const columns = (onScore: (m: Match) => void) => [
     key: 'status',
     label: 'Status',
     render: (m: Match) => (
-      <Badge variant={m.status === 'LIVE' ? 'live' : m.status === 'COMPLETED' ? 'success' : 'default'}>
+      <Badge variant={getMatchStatusBadgeVariant(m.status)}>
         {m.status}
       </Badge>
     ),
@@ -42,7 +42,7 @@ const columns = (onScore: (m: Match) => void) => [
     label: 'Score',
     render: (m: Match) => (
       <div className="flex items-center gap-2">
-        <span className="font-bold text-gray-900">
+        <span className="font-bold text-foreground">
           {m.status !== 'SCHEDULED' ? `${m.home_score} – ${m.away_score}` : '–'}
         </span>
         <Button

@@ -11,7 +11,5 @@ export * from './referees.service';
 export * from './stats.service';
 export * from './media.service';
 export * from './users.service';
-export * from './announcements.service';
-export * from './contact.service';
 export * from './settings.service';
 export * from './coaches.service';

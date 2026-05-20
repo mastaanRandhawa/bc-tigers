@@ -22,15 +22,15 @@ export default function AdminMedia() {
   };
 
   return (
-    <AdminLayout title="Media">
+    <AdminLayout title="Division Media">
       <div className="space-y-6">
         <div
-          className="bg-white rounded-2xl border-2 border-dashed border-gray-200 p-10 text-center hover:border-[#0038FF] transition-colors cursor-pointer"
+          className="bg-white rounded-2xl border-2 border-dashed border-border p-10 text-center hover:border-primary transition-colors cursor-pointer"
           onClick={() => setFormOpen(true)}
         >
           <Upload className="w-10 h-10 text-gray-300 mx-auto mb-3" />
-          <p className="font-bold text-gray-600">Add media by URL</p>
-          <p className="text-xs text-gray-400 mt-1">Photos, videos, and documents</p>
+          <p className="font-bold text-muted-foreground">Add media by URL</p>
+          <p className="text-xs text-muted-foreground mt-1">Photos, videos, and documents</p>
           <Button size="sm" className="mt-4" onClick={() => setFormOpen(true)}>
             <Upload className="w-4 h-4" /> Add Media
           </Button>
@@ -47,7 +47,7 @@ export default function AdminMedia() {
             {media.map((item) => (
               <div
                 key={item.id}
-                className="group relative bg-white rounded-2xl overflow-hidden border border-gray-100 shadow-sm hover:shadow-md transition-all"
+                className="group relative bg-white rounded-2xl overflow-hidden border border-border shadow-sm hover:shadow-md transition-all"
               >
                 <div className="aspect-video overflow-hidden">
                   <img
@@ -59,7 +59,7 @@ export default function AdminMedia() {
                 <div className="p-3">
                   <p className="text-xs font-semibold text-gray-700 truncate">{item.title ?? 'Untitled'}</p>
                   <div className="flex items-center justify-between mt-1">
-                    <span className="text-[10px] text-gray-400 flex items-center gap-0.5">
+                    <span className="text-[10px] text-muted-foreground flex items-center gap-0.5">
                       <Image className="w-3 h-3" /> {item.type}
                     </span>
                     <button

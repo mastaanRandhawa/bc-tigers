@@ -52,7 +52,7 @@ export default function CoachDashboard() {
   const live = myMatches.filter((m) => m.status === 'LIVE');
 
   return (
-    <PortalLayout title="Coach Portal" subtitle="Team Management" nav={nav} accentColor="#059669">
+    <PortalLayout title="Coach Portal" subtitle="Team Management" nav={nav}>
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         {[
           { label: 'Teams', value: myTeams.length, icon: Users, href: '/teams' },
@@ -61,13 +61,13 @@ export default function CoachDashboard() {
           { label: 'Tournaments', value: tournaments.length, icon: Trophy, href: '/tournaments' },
         ].map((stat) => (
           <Link key={stat.label} to={stat.href} className="group">
-            <div className="bg-white rounded-2xl border border-gray-200 shadow-sm hover:shadow-md transition-all p-5 flex items-center gap-4">
+            <div className="rounded-lg border border-border bg-card shadow-sm hover:shadow-md transition-all p-5 flex items-center gap-4">
               <div className="bg-emerald-600 p-3 rounded-xl group-hover:scale-110 transition-transform">
                 <stat.icon className="w-5 h-5 text-white" />
               </div>
               <div>
-                <p className="text-2xl font-black text-gray-900">{stat.value}</p>
-                <p className="text-sm text-gray-400 font-medium">{stat.label}</p>
+                <p className="text-2xl font-semibold text-foreground">{stat.value}</p>
+                <p className="text-sm text-muted-foreground font-medium">{stat.label}</p>
               </div>
             </div>
           </Link>
@@ -75,11 +75,11 @@ export default function CoachDashboard() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm">
-          <div className="flex items-center justify-between p-5 border-b border-gray-100">
+        <div className="rounded-lg border border-border bg-card shadow-sm">
+          <div className="flex items-center justify-between p-5 border-b border-border">
             <div className="flex items-center gap-2">
               <Clock className="w-4 h-4 text-emerald-600" />
-              <h2 className="font-black text-gray-900">Upcoming Matches</h2>
+              <h2 className="font-semibold text-foreground">Upcoming Matches</h2>
             </div>
             <Link to="/schedule" className="text-xs text-emerald-600 font-semibold hover:underline">
               Full Schedule →
@@ -91,13 +91,13 @@ export default function CoachDashboard() {
                 <Link
                   key={m.id}
                   to={`/matches/${m.id}`}
-                  className="flex items-center gap-3 p-4 hover:bg-gray-50 transition-colors"
+                  className="flex items-center gap-3 p-4 hover:bg-muted transition-colors"
                 >
                   <div className="flex-1 text-sm">
-                    <p className="font-bold text-gray-900">
+                    <p className="font-bold text-foreground">
                       {m.home_team?.name} vs {m.away_team?.name}
                     </p>
-                    <p className="text-gray-400 text-xs">
+                    <p className="text-muted-foreground text-xs">
                       {formatDate(m.scheduled_start)} · {formatTime(m.scheduled_start)}
                     </p>
                   </div>
@@ -107,11 +107,11 @@ export default function CoachDashboard() {
           </QueryState>
         </div>
 
-        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm">
-          <div className="flex items-center justify-between p-5 border-b border-gray-100">
+        <div className="rounded-lg border border-border bg-card shadow-sm">
+          <div className="flex items-center justify-between p-5 border-b border-border">
             <div className="flex items-center gap-2">
               <Users className="w-4 h-4 text-emerald-600" />
-              <h2 className="font-black text-gray-900">Teams</h2>
+              <h2 className="font-semibold text-foreground">Teams</h2>
             </div>
             <Link to="/teams" className="text-xs text-emerald-600 font-semibold hover:underline">
               Browse All →
@@ -123,7 +123,7 @@ export default function CoachDashboard() {
                 <Link
                   key={team.id}
                   to={`/teams/${team.slug}`}
-                  className="flex items-center gap-3 p-4 hover:bg-gray-50 transition-colors"
+                  className="flex items-center gap-3 p-4 hover:bg-muted transition-colors"
                 >
                   <div
                     className="w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-black"
@@ -132,8 +132,8 @@ export default function CoachDashboard() {
                     {team.name.slice(0, 2).toUpperCase()}
                   </div>
                   <div className="flex-1 text-sm">
-                    <p className="font-bold text-gray-900">{team.name}</p>
-                    <p className="text-gray-400 text-xs">{team.division?.name ?? 'Division'}</p>
+                    <p className="font-bold text-foreground">{team.name}</p>
+                    <p className="text-muted-foreground text-xs">{team.division?.name ?? 'Division'}</p>
                   </div>
                 </Link>
               ))}

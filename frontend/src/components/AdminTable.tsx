@@ -2,6 +2,16 @@ import { useState } from 'react';
 import { Search, Plus, Edit2, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { Card, CardContent } from '@/components/ui/card';
+import { EmptyState } from '@/components/ui/empty-state';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 import { cn } from '@/lib/utils';
 
 export interface Column<T> {
@@ -36,30 +46,33 @@ export default function AdminTable<T extends { id: string }>({
   const [page, setPage] = useState(1);
   const pageSize = 10;
 
-  const filtered = search && searchKeys.length > 0
-    ? data.filter((row) =>
-        searchKeys.some((key) =>
-          String(row[key] ?? '').toLowerCase().includes(search.toLowerCase())
+  const filtered =
+    search && searchKeys.length > 0
+      ? data.filter((row) =>
+          searchKeys.some((key) =>
+            String(row[key] ?? '').toLowerCase().includes(search.toLowerCase())
+          )
         )
-      )
-    : data;
+      : data;
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
   const paginated = filtered.slice((page - 1) * pageSize, page * pageSize);
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden">
-      {/* Toolbar */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-5 border-b border-gray-100">
-        <h2 className="font-black text-gray-900 text-lg">{title}</h2>
+    <Card className="overflow-hidden">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-5 border-b border-border">
+        <h2 className="font-semibold text-foreground text-lg">{title}</h2>
         <div className="flex items-center gap-2 w-full sm:w-auto">
           {searchable && (
             <div className="relative flex-1 sm:w-64">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
                 placeholder="Search..."
                 value={search}
-                onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+                onChange={(e) => {
+                  setSearch(e.target.value);
+                  setPage(1);
+                }}
                 className="pl-9 h-9"
               />
             </div>
@@ -72,92 +85,100 @@ export default function AdminTable<T extends { id: string }>({
         </div>
       </div>
 
-      {/* Table */}
-      <div className="overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="bg-gray-50 border-b border-gray-100">
-              {columns.map((col) => (
-                <th key={col.key} className={cn('text-left px-4 py-3 font-semibold text-gray-500 text-xs uppercase tracking-wider', col.className)}>
-                  {col.label}
-                </th>
-              ))}
-              {(onEdit || onDelete) && (
-                <th className="text-right px-4 py-3 font-semibold text-gray-500 text-xs uppercase tracking-wider">
-                  Actions
-                </th>
-              )}
-            </tr>
-          </thead>
-          <tbody>
-            {paginated.length > 0 ? (
-              paginated.map((row) => (
-                <tr key={row.id} className="border-b border-gray-50 hover:bg-gray-50 transition-colors">
+      {paginated.length === 0 ? (
+        <EmptyState title="No records found" message="Try adjusting your search or add a new record." />
+      ) : (
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow className="hover:bg-transparent">
+                {columns.map((col) => (
+                  <TableHead key={col.key} className={col.className}>
+                    {col.label}
+                  </TableHead>
+                ))}
+                {(onEdit || onDelete) && <TableHead className="text-right">Actions</TableHead>}
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {paginated.map((row) => (
+                <TableRow key={row.id}>
                   {columns.map((col) => (
-                    <td key={col.key} className={cn('px-4 py-3', col.className)}>
+                    <TableCell key={col.key} className={col.className}>
                       {col.render ? col.render(row) : String((row as Record<string, unknown>)[col.key] ?? '—')}
-                    </td>
+                    </TableCell>
                   ))}
                   {(onEdit || onDelete) && (
-                    <td className="px-4 py-3 text-right">
+                    <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-1">
                         {onEdit && (
                           <button
+                            type="button"
                             onClick={() => onEdit(row)}
-                            className="p-1.5 text-gray-400 hover:text-[#0038FF] hover:bg-blue-50 rounded-lg transition-colors"
+                            className="p-1.5 text-muted-foreground hover:text-primary hover:bg-primary-muted rounded-lg transition-colors"
+                            aria-label="Edit"
                           >
                             <Edit2 className="w-4 h-4" />
                           </button>
                         )}
                         {onDelete && (
                           <button
+                            type="button"
                             onClick={() => onDelete(row)}
-                            className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                            className="p-1.5 text-muted-foreground hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                            aria-label="Delete"
                           >
                             <Trash2 className="w-4 h-4" />
                           </button>
                         )}
                       </div>
-                    </td>
+                    </TableCell>
                   )}
-                </tr>
-              ))
-            ) : (
-              <tr>
-                <td colSpan={columns.length + 1} className="px-4 py-12 text-center text-gray-400 text-sm">
-                  No records found
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </div>
+      )}
 
-      {/* Pagination */}
       {totalPages > 1 && (
-        <div className="flex items-center justify-between px-5 py-3 border-t border-gray-100">
-          <span className="text-xs text-gray-400">
+        <div className="flex items-center justify-between px-5 py-3 border-t border-border">
+          <span className="text-xs text-muted-foreground">
             Showing {(page - 1) * pageSize + 1}–{Math.min(page * pageSize, filtered.length)} of {filtered.length}
           </span>
           <div className="flex items-center gap-1">
-            <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} className="p-1 text-gray-400 hover:text-gray-700 disabled:opacity-30">
+            <button
+              type="button"
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={page === 1}
+              className="p-1 text-muted-foreground hover:text-foreground disabled:opacity-30"
+            >
               <ChevronLeft className="w-4 h-4" />
             </button>
             {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
               <button
                 key={p}
+                type="button"
                 onClick={() => setPage(p)}
-                className={cn('w-7 h-7 rounded-lg text-xs font-semibold', p === page ? 'bg-[#0038FF] text-white' : 'text-gray-500 hover:bg-gray-100')}
+                className={cn(
+                  'w-7 h-7 rounded-md text-xs font-semibold',
+                  p === page ? 'bg-primary text-white' : 'text-muted-foreground hover:bg-muted'
+                )}
               >
                 {p}
               </button>
             ))}
-            <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages} className="p-1 text-gray-400 hover:text-gray-700 disabled:opacity-30">
+            <button
+              type="button"
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              disabled={page === totalPages}
+              className="p-1 text-muted-foreground hover:text-foreground disabled:opacity-30"
+            >
               <ChevronRight className="w-4 h-4" />
             </button>
           </div>
         </div>
       )}
-    </div>
+    </Card>
   );
 }

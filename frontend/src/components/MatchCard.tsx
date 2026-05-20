@@ -2,7 +2,8 @@ import { Link } from 'react-router-dom';
 import { MapPin, Clock, User } from 'lucide-react';
 import type { Match } from '@/types';
 import { Badge } from '@/components/ui/badge';
-import { formatDate, formatTime, getStatusColor } from '@/lib/utils';
+import { Card, CardContent } from '@/components/ui/card';
+import { formatDate, formatTime, getMatchStatusBadgeVariant } from '@/lib/utils';
 
 interface MatchCardProps {
   match: Match;
@@ -17,25 +18,25 @@ export default function MatchCard({ match, compact = false }: MatchCardProps) {
   if (compact) {
     return (
       <Link to={`/matches/${match.id}`} className="block group min-w-0">
-        <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2 py-2 rounded-lg hover:bg-gray-50 transition-colors min-w-0">
-          <p className="text-sm font-bold text-gray-900 truncate text-right min-w-0">
+        <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2 py-2 rounded-lg hover:bg-muted transition-colors min-w-0">
+          <p className="text-sm font-semibold text-foreground truncate text-right min-w-0">
             {match.home_team?.name ?? 'TBD'}
           </p>
           <div className="shrink-0 text-center px-1">
             {showScore ? (
-              <span className={`text-sm font-black whitespace-nowrap ${isLive ? 'text-red-600' : 'text-gray-900'}`}>
+              <span className={`text-sm font-bold whitespace-nowrap ${isLive ? 'text-red-600' : 'text-foreground'}`}>
                 {match.home_score} – {match.away_score}
               </span>
             ) : (
-              <span className="text-xs font-semibold text-gray-500 whitespace-nowrap">
+              <span className="text-xs font-medium text-muted-foreground whitespace-nowrap">
                 {formatTime(match.scheduled_start)}
               </span>
             )}
             {isLive && (
-              <span className="text-[9px] text-red-500 font-bold uppercase animate-pulse block">LIVE</span>
+              <span className="text-[9px] text-red-500 font-bold uppercase animate-pulse block">Live</span>
             )}
           </div>
-          <p className="text-sm font-bold text-gray-900 truncate text-left min-w-0">
+          <p className="text-sm font-semibold text-foreground truncate text-left min-w-0">
             {match.away_team?.name ?? 'TBD'}
           </p>
         </div>
@@ -45,67 +46,63 @@ export default function MatchCard({ match, compact = false }: MatchCardProps) {
 
   return (
     <Link to={`/matches/${match.id}`} className="block group">
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md transition-all p-5">
-        {/* Status + Date */}
-        <div className="flex items-center justify-between mb-4">
-          <Badge variant={isLive ? 'live' : isCompleted ? 'success' : 'default'} className={getStatusColor(match.status)}>
-            {isLive ? '● LIVE' : match.status}
-          </Badge>
-          <span className="text-xs text-gray-400 font-medium">{formatDate(match.scheduled_start)}</span>
-        </div>
-
-        {/* Teams + Score */}
-        <div className="flex items-center gap-4">
-          {/* Home Team */}
-          <div className="flex-1 text-right">
-            {match.home_team?.logo && (
-              <img src={match.home_team.logo} alt={match.home_team.name} className="w-10 h-10 rounded-full object-cover ml-auto mb-1" />
-            )}
-            <p className="font-bold text-gray-900 text-sm">{match.home_team?.name ?? 'TBD'}</p>
+      <Card className="hover:shadow-md transition-shadow">
+        <CardContent className="p-5">
+          <div className="flex items-center justify-between mb-4">
+            <Badge variant={getMatchStatusBadgeVariant(match.status)}>
+              {isLive ? '● LIVE' : match.status}
+            </Badge>
+            <span className="text-xs text-muted-foreground font-medium">{formatDate(match.scheduled_start)}</span>
           </div>
 
-          {/* Score */}
-          <div className="flex flex-col items-center min-w-[80px]">
-            {showScore ? (
-              <div className={`text-3xl font-black tracking-tight ${isLive ? 'text-red-600' : 'text-gray-900'}`}>
-                {match.home_score} <span className="text-gray-300">–</span> {match.away_score}
-              </div>
-            ) : (
-              <div className="text-center">
-                <p className="text-lg font-black text-gray-300">VS</p>
-                <p className="text-xs text-gray-400 font-semibold mt-0.5">{formatTime(match.scheduled_start)}</p>
-              </div>
-            )}
+          <div className="flex items-center gap-4">
+            <div className="flex-1 text-right min-w-0">
+              {match.home_team?.logo && (
+                <img src={match.home_team.logo} alt="" className="w-10 h-10 rounded-full object-cover ml-auto mb-1" />
+              )}
+              <p className="font-semibold text-foreground text-sm truncate">{match.home_team?.name ?? 'TBD'}</p>
+            </div>
+
+            <div className="flex flex-col items-center min-w-[80px] shrink-0">
+              {showScore ? (
+                <div className={`text-2xl font-bold tracking-tight ${isLive ? 'text-red-600' : 'text-foreground'}`}>
+                  {match.home_score} <span className="text-muted-foreground">–</span> {match.away_score}
+                </div>
+              ) : (
+                <div className="text-center">
+                  <p className="text-base font-bold text-muted-foreground">VS</p>
+                  <p className="text-xs text-muted-foreground font-medium mt-0.5">{formatTime(match.scheduled_start)}</p>
+                </div>
+              )}
+            </div>
+
+            <div className="flex-1 text-left min-w-0">
+              {match.away_team?.logo && (
+                <img src={match.away_team.logo} alt="" className="w-10 h-10 rounded-full object-cover mr-auto mb-1" />
+              )}
+              <p className="font-semibold text-foreground text-sm truncate">{match.away_team?.name ?? 'TBD'}</p>
+            </div>
           </div>
 
-          {/* Away Team */}
-          <div className="flex-1 text-left">
-            {match.away_team?.logo && (
-              <img src={match.away_team.logo} alt={match.away_team.name} className="w-10 h-10 rounded-full object-cover mr-auto mb-1" />
+          <div className="mt-4 flex flex-wrap items-center justify-center gap-4 text-xs text-muted-foreground">
+            {match.venue && (
+              <span className="flex items-center gap-1">
+                <MapPin className="w-3 h-3" /> {match.venue.name}
+              </span>
             )}
-            <p className="font-bold text-gray-900 text-sm">{match.away_team?.name ?? 'TBD'}</p>
+            {match.round !== undefined && (
+              <span className="flex items-center gap-1">
+                <Clock className="w-3 h-3" /> Round {match.round}
+              </span>
+            )}
+            {match.referee && (
+              <span className="flex items-center gap-1">
+                <User className="w-3 h-3" /> {match.referee.first_name} {match.referee.last_name}
+              </span>
+            )}
           </div>
-        </div>
-
-        {/* Meta */}
-        <div className="mt-4 flex items-center justify-center gap-4 text-xs text-gray-400">
-          {match.venue && (
-            <span className="flex items-center gap-1">
-              <MapPin className="w-3 h-3" /> {match.venue.name}
-            </span>
-          )}
-          {match.round !== undefined && (
-            <span className="flex items-center gap-1">
-              <Clock className="w-3 h-3" /> Round {match.round}
-            </span>
-          )}
-          {match.referee && (
-            <span className="flex items-center gap-1">
-              <User className="w-3 h-3" /> {match.referee.first_name} {match.referee.last_name}
-            </span>
-          )}
-        </div>
-      </div>
+        </CardContent>
+      </Card>
     </Link>
   );
 }

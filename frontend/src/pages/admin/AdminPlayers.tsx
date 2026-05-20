@@ -13,10 +13,10 @@ const columns = [
     label: 'Player',
     render: (p: Player) => (
       <div>
-        <p className="font-bold text-gray-900">
+        <p className="font-bold text-foreground">
           {p.first_name} {p.last_name}
         </p>
-        <p className="text-xs text-gray-400">{p.slug}</p>
+        <p className="text-xs text-muted-foreground">{p.slug}</p>
       </div>
     ),
   },
@@ -24,7 +24,7 @@ const columns = [
     key: 'jersey_number',
     label: '#',
     render: (p: Player) => (
-      <span className="w-7 h-7 bg-[#0038FF] text-white text-xs font-black rounded-full flex items-center justify-center">
+      <span className="w-7 h-7 bg-primary text-white text-xs font-black rounded-full flex items-center justify-center">
         {p.jersey_number ?? '?'}
       </span>
     ),

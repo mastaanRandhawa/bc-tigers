@@ -1,9 +1,12 @@
 import { useState } from 'react';
 import PageLayout from '@/components/PageLayout';
 import PageHeader from '@/components/shared/PageHeader';
+import PageContent from '@/components/shared/PageContent';
 import QueryState from '@/components/shared/QueryState';
+import DivisionDirectoryCard from '@/components/shared/DivisionDirectoryCard';
 import MatchCard from '@/components/MatchCard';
 import { useMatches } from '@/hooks/useMatches';
+import { useDivisions } from '@/hooks/useDivisions';
 import type { MatchStatus } from '@/types';
 import { Swords } from 'lucide-react';
 
@@ -17,14 +20,19 @@ const statusFilters: { label: string; value: MatchStatus | 'ALL' }[] = [
 export default function MatchesPage() {
   const [filter, setFilter] = useState<MatchStatus | 'ALL'>('ALL');
   const params = filter === 'ALL' ? undefined : { status: filter };
+  const { data: divisions = [] } = useDivisions();
   const { data: matches = [], isLoading, isError, refetch } = useMatches(params);
 
   return (
     <PageLayout>
       <PageHeader title="Matches" subtitle="All fixtures, results and live scores" icon={Swords} />
 
-      <section className="py-8 px-4 bg-gray-50">
-        <div className="max-w-4xl mx-auto">
+      <PageContent innerClassName="max-w-4xl">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-8">
+            {divisions.map((division) => (
+              <DivisionDirectoryCard key={division.id} division={division} />
+            ))}
+          </div>
           <div className="flex gap-2 mb-6 flex-wrap">
             {statusFilters.map((f) => (
               <button
@@ -32,8 +40,8 @@ export default function MatchesPage() {
                 onClick={() => setFilter(f.value)}
                 className={`px-5 py-2 rounded-full text-sm font-semibold transition-colors ${
                   filter === f.value
-                    ? 'bg-[#0038FF] text-white'
-                    : 'bg-white text-gray-600 border border-gray-200 hover:border-[#0038FF] hover:text-[#0038FF]'
+                    ? 'bg-primary text-white'
+                    : 'bg-white text-muted-foreground border border-border hover:border-primary hover:text-primary'
                 }`}
               >
                 {f.label}
@@ -57,8 +65,7 @@ export default function MatchesPage() {
               ))}
             </div>
           </QueryState>
-        </div>
-      </section>
+      </PageContent>
     </PageLayout>
   );
 }

@@ -97,8 +97,6 @@ async function main() {
 
   // ── Wipe existing data (order matters due to FK constraints)
   await prisma.passwordResetToken.deleteMany();
-  await prisma.contactMessage.deleteMany();
-  await prisma.announcement.deleteMany();
   await prisma.siteSettings.deleteMany();
   await prisma.auditLog.deleteMany();
   await prisma.notification.deleteMany();
@@ -111,6 +109,7 @@ async function main() {
   await prisma.match.deleteMany();
   await prisma.teamRoster.deleteMany();
   await prisma.teamCoach.deleteMany();
+  await prisma.coach.deleteMany();
   await prisma.stage.deleteMany();
   await prisma.player.deleteMany();
   await prisma.team.deleteMany();
@@ -139,9 +138,6 @@ async function main() {
     data: {
       id: 'default',
       site_name: 'BC Tigers Soccer',
-      contact_email: 'info@bctigers.ca',
-      contact_phone: '+1 (604) 555-0100',
-      contact_address: '3883 Imperial St, Burnaby, BC V5S 3V5',
     },
   });
 
@@ -184,55 +180,6 @@ async function main() {
     },
   });
   console.log(`  Created tournament: ${tournament.name}`);
-
-  const announcements = [
-    {
-      title: 'BC Tigers Summer Cup 2025 Kicks Off This Weekend',
-      slug: 'summer-cup-2025-kicks-off',
-      category: 'ANNOUNCEMENT' as const,
-      excerpt: 'The highly anticipated Summer Classic begins this weekend with 12 teams competing across 2 divisions at venues across the Lower Mainland.',
-      content: 'The BC Tigers Summer Classic 2025 opens with round-robin play across Boys U18 Open and Girls U16 Select divisions. All matches will be updated live on the platform.',
-      image_url: 'https://images.unsplash.com/photo-1551698618-1dfe5d97d256?w=800',
-    },
-    {
-      title: 'FC Coastal United Dominates Opening Round',
-      slug: 'fc-coastal-united-opening-round',
-      category: 'RESULTS' as const,
-      excerpt: 'FC Coastal United opened their campaign with strong performances in the Boys U18 Open division.',
-      content: 'Early results from the Boys U18 Open division show FC Coastal United leading the standings after the first round of fixtures.',
-      image_url: 'https://images.unsplash.com/photo-1579952363873-27f3bade9f55?w=800',
-    },
-    {
-      title: 'Referee Certification Program Launched',
-      slug: 'referee-certification-program',
-      category: 'NEWS' as const,
-      excerpt: 'BC Tigers partners with BC Soccer Referees Association for a new certification pathway.',
-      content: 'Registered referees can now access match assignments through the referee portal after completing certification requirements.',
-      image_url: 'https://images.unsplash.com/photo-1575361204480-aadea25e6e68?w=800',
-    },
-    {
-      title: 'Registration Open for Fall League 2025',
-      slug: 'fall-league-2025-registration',
-      category: 'REGISTRATION' as const,
-      excerpt: 'Teams can register for the BC Tigers Fall League 2025. Early bird discounts available.',
-      content: 'Registration is now open for the Fall League. Contact info@bctigers.ca for division placement and scheduling.',
-      image_url: 'https://images.unsplash.com/photo-1540747913346-19212a4cf528?w=800',
-    },
-  ];
-  await prisma.announcement.createMany({ data: announcements });
-  console.log(`  Created ${announcements.length} announcements.`);
-
-  await prisma.media.createMany({
-    data: [
-      { tournament_id: tournament.id, type: 'PHOTO', url: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=800', title: 'Match Action' },
-      { tournament_id: tournament.id, type: 'PHOTO', url: 'https://images.unsplash.com/photo-1579952363873-27f3bade9f55?w=800', title: 'Goal Celebration' },
-      { tournament_id: tournament.id, type: 'PHOTO', url: 'https://images.unsplash.com/photo-1551698618-1dfe5d97d256?w=800', title: 'Kickoff' },
-      { tournament_id: tournament.id, type: 'PHOTO', url: 'https://images.unsplash.com/photo-1540747913346-19212a4cf528?w=800', title: 'Team Huddle' },
-      { tournament_id: tournament.id, type: 'PHOTO', url: 'https://images.unsplash.com/photo-1575361204480-aadea25e6e68?w=800', title: 'Referee Briefing' },
-      { tournament_id: tournament.id, type: 'PHOTO', url: 'https://images.unsplash.com/photo-1506629082955-511b1aa562c8?w=800', title: 'Stadium View' },
-    ],
-  });
-  console.log('  Created gallery media.');
 
   // ── Divisions, Teams, Players, Matches
   for (const divConfig of DIVISIONS_CONFIG) {

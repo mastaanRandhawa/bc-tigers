@@ -30,6 +30,22 @@ export class TeamsService {
     return team;
   }
 
+  async findOneInDivision(divisionId: string, slug: string) {
+    const team = await prisma.team.findUnique({
+      where: {
+        division_id_slug: { division_id: divisionId, slug },
+      },
+      include: {
+        division: { include: { tournament: true } },
+        rosters: { include: { player: true } },
+        team_coaches: { include: { coach: true } },
+        standings: true,
+      },
+    });
+    if (!team) throw new NotFoundException('Team not found');
+    return team;
+  }
+
   create(data: unknown) {
     return prisma.team.create({ data: data as Prisma.TeamCreateInput });
   }
