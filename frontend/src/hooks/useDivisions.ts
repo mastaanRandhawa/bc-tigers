@@ -1,0 +1,59 @@
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { queryKeys } from '@/lib/query-keys';
+import { divisionsService } from '@/services/divisions.service';
+import type { Division } from '@/types';
+
+export function useDivisions() {
+  return useQuery({
+    queryKey: queryKeys.divisions.all(),
+    queryFn: async () => (await divisionsService.getAll()).data,
+  });
+}
+
+export function useDivisionsByTournament(tournamentSlug?: string) {
+  return useQuery({
+    queryKey: queryKeys.divisions.byTournament(tournamentSlug ?? ''),
+    queryFn: async () => (await divisionsService.getByTournament(tournamentSlug!)).data,
+    enabled: !!tournamentSlug,
+  });
+}
+
+export function useDivision(tournamentSlug?: string, divisionSlug?: string) {
+  return useQuery({
+    queryKey: queryKeys.divisions.detail(tournamentSlug ?? '', divisionSlug ?? ''),
+    queryFn: async () =>
+      (await divisionsService.getOne(tournamentSlug!, divisionSlug!)).data,
+    enabled: !!tournamentSlug && !!divisionSlug,
+  });
+}
+
+export function useDivisionBySlug(divisionSlug?: string) {
+  const { data: divisions, ...rest } = useDivisions();
+  const division = divisions?.find((d) => d.slug === divisionSlug);
+  return { data: division, divisions, ...rest };
+}
+
+export function useCreateDivision() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (data: Partial<Division>) => divisionsService.create(data),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['divisions'] }),
+  });
+}
+
+export function useUpdateDivision() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, data }: { id: string; data: Partial<Division> }) =>
+      divisionsService.update(id, data),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['divisions'] }),
+  });
+}
+
+export function useDeleteDivision() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => divisionsService.delete(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['divisions'] }),
+  });
+}
