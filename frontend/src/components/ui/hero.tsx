@@ -152,19 +152,19 @@ export function TournamentHubHeader() {
         <div className="relative w-full max-w-5xl mx-auto flex flex-col items-center text-center z-10">
           <div className="w-full flex flex-col items-center relative z-10 space-y-1 md:space-y-4">
             <div className="w-full flex justify-start pl-[8%] md:pl-[25%] relative z-30">
-              <h1 className="hero-headline text-[clamp(3rem,14vw,160px)] text-primary-muted m-0 p-0">
+              <h1 className="hero-headline hero-headline-shadow text-[clamp(3rem,14vw,160px)] text-primary-muted m-0 p-0">
                 BC
               </h1>
             </div>
 
             <div className="w-full flex justify-center relative z-20">
-              <h1 className="hero-headline text-[clamp(3.25rem,16vw,220px)] text-white m-0 p-0">
+              <h1 className="hero-headline hero-headline-shadow text-[clamp(3.25rem,16vw,220px)] text-white m-0 p-0">
                 TIGERS
               </h1>
             </div>
 
             <div className="w-full flex justify-start pl-[12%] md:pl-[30%] relative z-10">
-              <h1 className="hero-headline text-[clamp(3rem,14vw,160px)] text-white m-0 p-0">
+              <h1 className="hero-headline hero-headline-shadow text-[clamp(3rem,14vw,160px)] text-white m-0 p-0">
                 SOCCER
               </h1>
             </div>
@@ -197,7 +197,6 @@ export function TournamentHubHeader() {
             </div>
           )}
 
-          {/* Mobile: stacked live cards — no absolute overlap */}
           {featuredLive.length > 0 && (
             <div className="md:hidden relative z-20 w-full mt-5">
               <p className="text-xs font-bold uppercase tracking-wider text-white/90 mb-3">
@@ -219,7 +218,6 @@ export function TournamentHubHeader() {
             View Schedule
           </Link>
 
-          {/* Desktop: floating overlays */}
           <div className="hidden md:block absolute inset-0 w-full h-full pointer-events-none min-h-[420px]">
             {featuredLive[0] && (
               <motion.div
