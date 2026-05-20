@@ -36,21 +36,6 @@ Set the API base URL in frontend env if needed (see `frontend` Vite config / ser
 
 ---
 
-## Demo logins (after seed)
-
-| Role | Email | Password |
-|------|--------|----------|
-| Admin | `admin@bctigers.ca` | `Admin1234!` |
-| Coach | `coach@bctigers.ca` | `demo1234` |
-| Referee | `referee@bctigers.ca` | `demo1234` |
-| Player | `player@bctigers.ca` | `demo1234` |
-| Viewer | `viewer@bctigers.ca` | `demo1234` |
-
-**Featured tournament (seed):** [14th Annual Miri Piri Soccer Tournament](http://localhost:5173/tournaments/miri-piri-2026)  
-July 3–5, 2026 · Newton Athletic Park, Surrey · 20 divisions · 80 teams · sample matches in featured divisions
-
----
-
 ## User roles
 
 | Role | Access |
