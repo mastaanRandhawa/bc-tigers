@@ -25,6 +25,8 @@ const navLinks = [{ label: 'Tournaments', href: '/tournaments' }];
 
 interface SiteHeaderProps {
   variant?: 'site' | 'hero' | 'minimal' | 'admin';
+  /** Hide embedded live ticker (e.g. home hero shows scores in the banner). */
+  showLiveTicker?: boolean;
 }
 
 function UserMenu({ onDark = true }: { onDark?: boolean }) {
@@ -120,7 +122,7 @@ function UserMenu({ onDark = true }: { onDark?: boolean }) {
   );
 }
 
-export default function SiteHeader({ variant = 'site' }: SiteHeaderProps) {
+export default function SiteHeader({ variant = 'site', showLiveTicker = true }: SiteHeaderProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const { isAuthenticated, user } = useAuthStore();
   const isHero = variant === 'hero';
@@ -204,17 +206,24 @@ export default function SiteHeader({ variant = 'site' }: SiteHeaderProps) {
       )}
 
       <div className="page-container relative">
-        <div className="flex min-w-0 items-center gap-3 py-2.5">
+        <div
+          className={cn(
+            'flex min-w-0 items-center gap-3',
+            isHero ? 'py-3.5 sm:py-3' : 'py-2.5',
+          )}
+        >
           <BrandLogo compact />
 
-          <div
-            className={cn(
-              'hidden min-w-0 flex-1 md:flex',
-              isHero ? 'border-l border-white/15 pl-3' : 'border-l border-border pl-3',
-            )}
-          >
-            <LiveScoreTicker embedded alwaysShow variant={isHero ? 'dark' : 'light'} />
-          </div>
+          {showLiveTicker && (
+            <div
+              className={cn(
+                'hidden min-w-0 flex-1 md:flex',
+                isHero ? 'border-l border-white/15 pl-3' : 'border-l border-border pl-3',
+              )}
+            >
+              <LiveScoreTicker embedded alwaysShow variant={isHero ? 'dark' : 'light'} />
+            </div>
+          )}
 
           <div className="ml-auto flex shrink-0 items-center gap-2">
             <nav aria-label="Main navigation" className="hidden items-center gap-1 lg:flex">
@@ -256,14 +265,16 @@ export default function SiteHeader({ variant = 'site' }: SiteHeaderProps) {
           </div>
         </div>
 
-        <div
-          className={cn(
-            'border-t pb-2.5 pt-2 md:hidden',
-            isHero ? 'border-white/10' : 'border-border',
-          )}
-        >
-          <LiveScoreTicker embedded alwaysShow variant={isHero ? 'dark' : 'light'} />
-        </div>
+        {showLiveTicker && (
+          <div
+            className={cn(
+              'border-t pb-2.5 pt-2 md:hidden',
+              isHero ? 'border-white/10' : 'border-border',
+            )}
+          >
+            <LiveScoreTicker embedded alwaysShow variant={isHero ? 'dark' : 'light'} />
+          </div>
+        )}
       </div>
 
       {mobileOpen && (

@@ -40,11 +40,21 @@ const ArrowAccentRight = () => (
   </svg>
 );
 
-function CircularBadge({ schedulePath }: { schedulePath: string }) {
+function CircularBadge({
+  schedulePath,
+  className,
+}: {
+  schedulePath: string;
+  className?: string;
+}) {
   return (
     <Link
       to={schedulePath}
-      className="relative w-28 h-28 md:w-36 md:h-36 bg-primary-muted rounded-full flex items-center justify-center shadow-xl rotate-12 hover:scale-105 transition-transform border-[3px] border-white/20"
+      className={cn(
+        "relative bg-primary-muted rounded-full flex items-center justify-center shadow-xl rotate-12 hover:scale-105 transition-transform border-[3px] border-white/20",
+        "w-24 h-24 sm:w-28 sm:h-28 md:w-36 md:h-36",
+        className,
+      )}
     >
       <div className="absolute inset-1 animate-[spin_10s_linear_infinite]">
         <svg viewBox="0 0 100 100" className="w-full h-full">
@@ -145,42 +155,42 @@ export function TournamentHubHeader() {
   const featuredLive = liveMatches.slice(0, 2);
 
   return (
-    <section className="relative bg-primary overflow-hidden w-full">
+    <section className="relative bg-primary overflow-x-hidden w-full">
       <div className="absolute inset-0 bg-brand-grid pointer-events-none z-0" />
 
-      <div className="relative z-10 pt-2 pb-6 md:pt-8 md:pb-48 px-4 flex flex-col items-center w-full max-w-[1440px] mx-auto">
-        <div className="relative w-full max-w-5xl mx-auto flex flex-col items-center text-center z-10">
-          <div className="w-full flex flex-col items-center relative z-10 space-y-1 md:space-y-4">
+      <div className="relative z-10 px-4 pt-6 pb-10 sm:pt-8 sm:pb-12 md:pt-10 md:pb-48 flex flex-col items-center w-full max-w-[1440px] mx-auto">
+        <div className="relative w-full max-w-5xl mx-auto flex flex-col items-center text-center md:min-h-[420px]">
+          <div className="hero-headline-stack w-full flex flex-col items-center relative z-10 pointer-events-none">
             <div className="w-full flex justify-start pl-[8%] md:pl-[25%] relative z-30">
-              <h1 className="hero-headline hero-headline-shadow text-[clamp(3rem,14vw,160px)] text-primary-muted m-0 p-0">
+              <h1 className="hero-headline hero-headline-shadow text-[clamp(2.75rem,14vw,160px)] text-primary-muted m-0 p-0">
                 BC
               </h1>
             </div>
 
             <div className="w-full flex justify-center relative z-20">
-              <h1 className="hero-headline hero-headline-shadow text-[clamp(3.25rem,16vw,220px)] text-white m-0 p-0">
+              <h1 className="hero-headline hero-headline-shadow text-[clamp(3rem,16vw,220px)] text-white m-0 p-0">
                 TIGERS
               </h1>
             </div>
 
             <div className="w-full flex justify-start pl-[12%] md:pl-[30%] relative z-10">
-              <h1 className="hero-headline hero-headline-shadow text-[clamp(3rem,14vw,160px)] text-white m-0 p-0">
+              <h1 className="hero-headline hero-headline-shadow text-[clamp(2.75rem,14vw,160px)] text-white m-0 p-0">
                 SOCCER
               </h1>
             </div>
           </div>
 
           {featuredTournament && (
-            <div className="relative z-20 mt-5 md:mt-8 w-full max-w-xl mx-auto rounded-2xl bg-black/30 backdrop-blur-sm border border-white/25 px-4 py-3 text-sm text-white shadow-lg">
-              <div className="flex flex-col items-center gap-2">
+            <div className="relative z-20 mt-8 md:mt-10 w-full max-w-xl mx-auto rounded-2xl bg-black/30 backdrop-blur-sm border border-white/25 px-4 py-4 sm:px-5 sm:py-4 text-sm text-white shadow-lg pointer-events-auto">
+              <div className="flex flex-col items-center gap-3">
                 <Link
                   to={schedulePath}
-                  className="inline-flex items-center gap-1.5 font-bold text-white hover:text-primary-muted transition-colors"
+                  className="inline-flex items-center gap-1.5 font-bold text-white hover:text-primary-muted transition-colors text-center"
                 >
                   <Trophy className="w-4 h-4 text-primary-muted shrink-0" />
                   {featuredTournament.name}
                 </Link>
-                <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-white/95">
+                <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-white/95 text-xs sm:text-sm">
                   <span className="inline-flex items-center gap-1.5 font-medium">
                     <Calendar className="w-4 h-4 text-primary-muted shrink-0" />
                     {formatDate(featuredTournament.start_date)} –{" "}
@@ -197,22 +207,9 @@ export function TournamentHubHeader() {
             </div>
           )}
 
-          {featuredLive.length > 0 && (
-            <div className="md:hidden relative z-20 w-full mt-5">
-              <p className="text-xs font-bold uppercase tracking-wider text-white/90 mb-3">
-                Live Now
-              </p>
-              <div className="flex gap-3 overflow-x-auto no-scrollbar pb-1 -mx-1 px-1">
-                {featuredLive.map((match) => (
-                  <LiveMatchCard key={match.id} match={match} compact />
-                ))}
-              </div>
-            </div>
-          )}
-
           <Link
             to={schedulePath}
-            className="md:hidden relative z-20 mt-4 inline-flex items-center gap-2 rounded-full border-2 border-white bg-white/10 px-5 py-2.5 text-sm font-bold text-white hover:bg-white hover:text-primary transition-colors"
+            className="md:hidden relative z-20 mt-6 mb-1 inline-flex items-center gap-2 rounded-full border-2 border-white bg-white/10 px-6 py-3 text-sm font-bold text-white hover:bg-white hover:text-primary transition-colors pointer-events-auto"
           >
             <Calendar className="w-4 h-4" />
             View Schedule

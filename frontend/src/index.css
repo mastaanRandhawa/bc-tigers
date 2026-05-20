@@ -351,6 +351,37 @@
       14px 14px 0 var(--hero-shadow);
   }
 
+  .hero-headline-stack {
+    gap: 0.35rem;
+    padding-top: 0.25rem;
+    padding-bottom: 0.5rem;
+  }
+
+  @media (min-width: 768px) {
+    .hero-headline-stack {
+      gap: 1rem;
+      padding-top: 0;
+      padding-bottom: 0;
+    }
+  }
+
+  @media (max-width: 767px) {
+    .hero-headline-shadow {
+      text-shadow:
+        1px 1px 0 var(--hero-shadow),
+        2px 2px 0 var(--hero-shadow),
+        3px 3px 0 var(--hero-shadow),
+        4px 4px 0 var(--hero-shadow),
+        5px 5px 0 var(--hero-shadow),
+        6px 6px 0 var(--hero-shadow);
+    }
+
+    .hero-headline-stack h1 {
+      line-height: 1.05;
+      padding-bottom: 0.2em;
+    }
+  }
+
   @keyframes live-ticker {
     0% { transform: translateX(0); }
     100% { transform: translateX(-50%); }

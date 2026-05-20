@@ -11,6 +11,7 @@ interface AppShellProps {
   showFooter?: boolean;
   heroTheme?: boolean;
   headerMode?: 'site' | 'hero' | 'minimal' | 'admin';
+  showLiveTicker?: boolean;
 }
 
 export default function AppShell({
@@ -20,8 +21,10 @@ export default function AppShell({
   showFooter = true,
   heroTheme = false,
   headerMode,
+  showLiveTicker,
 }: AppShellProps) {
   const headerVariant = headerMode ?? (heroTheme ? 'hero' : 'site');
+  const tickerVisible = showLiveTicker ?? !heroTheme;
 
   return (
     <div
@@ -30,7 +33,7 @@ export default function AppShell({
         heroTheme ? 'bg-primary' : 'bg-surface-muted',
       )}
     >
-      <SiteHeader variant={headerVariant} />
+      <SiteHeader variant={headerVariant} showLiveTicker={tickerVisible} />
       {subNav}
       <main className={cn('flex-1 w-full min-w-0', className)}>{children}</main>
       {showFooter && <Footer />}

@@ -1,7 +1,7 @@
 import { Link } from 'react-router-dom';
 import QueryState from '@/components/shared/QueryState';
 import MatchCard from '@/components/MatchCard';
-import StatCard from '@/components/shared/StatCard';
+import DivisionQuickStats from '@/components/divisions/DivisionQuickStats';
 import SectionHeader from '@/components/shared/SectionHeader';
 import Section from '@/components/shared/Section';
 import StandingsTable from '@/components/StandingsTable';
@@ -12,7 +12,7 @@ import {
   useDivisionStandingsResource,
   useDivisionTeams,
 } from '@/hooks/useDivisionResources';
-import { Calendar, MapPin, Swords, Trophy, Users, Zap } from 'lucide-react';
+import { Calendar, MapPin } from 'lucide-react';
 import { formatDate } from '@/lib/utils';
 
 export default function DivisionOverviewPage() {
@@ -33,25 +33,23 @@ export default function DivisionOverviewPage() {
         subtitle="Division snapshot, live action, and standings"
       />
 
-      {/* Quick stats — 2-col on mobile, 4-col on lg */}
-      <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4 sm:gap-3">
-        <StatCard value={teams.length} label="Teams" icon={Users} theme={theme} />
-        <StatCard value={matches.length} label="Matches" icon={Swords} theme={theme} />
-        <StatCard
-          value={liveMatches.length}
-          label="Live now"
-          icon={Zap}
-          accent={liveMatches.length > 0}
-          theme={theme}
-        />
-        <StatCard
-          value={standings[0]?.points ?? '—'}
-          label="Leader pts"
-          icon={Trophy}
-          trend={standings[0]?.team?.name}
-          theme={theme}
-        />
-      </div>
+      <DivisionQuickStats
+        theme={theme}
+        stats={[
+          { value: teams.length, label: 'Teams' },
+          { value: matches.length, label: 'Matches' },
+          {
+            value: liveMatches.length,
+            label: 'Live now',
+            accent: liveMatches.length > 0,
+          },
+          {
+            value: standings[0]?.points ?? '—',
+            label: 'Leader pts',
+            sublabel: standings[0]?.team?.name,
+          },
+        ]}
+      />
 
       {/* Live — full prominence */}
       {liveMatches.length > 0 && (
