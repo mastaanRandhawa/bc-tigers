@@ -40,7 +40,7 @@ export default function PageHeader({ title, subtitle, icon: Icon, children }: Pa
               )}
             </div>
             {subtitle && (
-              <p className="mt-4 text-sm md:text-base text-white/85 font-medium max-w-2xl">
+              <p className="mt-4 text-body max-w-2xl text-white/90">
                 {subtitle}
               </p>
             )}

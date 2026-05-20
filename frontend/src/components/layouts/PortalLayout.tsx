@@ -20,7 +20,7 @@ export default function PortalLayout({ children, title, subtitle, nav }: PortalL
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 safe-x w-full">
         <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
-          <h1 className="text-display text-2xl md:text-3xl">{title}</h1>
+          <h1 className="text-page-title m-0">{title}</h1>
           <Link
             to="/"
             className="inline-flex h-9 items-center px-4 rounded-lg bg-primary text-white text-sm font-semibold hover:bg-primary-hover transition-colors"

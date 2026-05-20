@@ -6,7 +6,7 @@ interface PageLayoutProps {
   className?: string;
   showFooter?: boolean;
   heroTheme?: boolean;
-  headerMode?: 'site' | 'hero' | 'minimal';
+  headerMode?: 'site' | 'hero' | 'minimal' | 'admin';
 }
 
 export default function PageLayout({

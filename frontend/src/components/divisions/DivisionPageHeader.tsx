@@ -10,8 +10,8 @@ export default function DivisionPageHeader({ title, subtitle, action }: Division
   return (
     <div className="division-page-header flex flex-wrap items-start justify-between gap-4">
       <div>
-        <h2>{title}</h2>
-        {subtitle && <p className="text-sm text-gray-600 font-medium mt-1">{subtitle}</p>}
+        <h2 className="text-section m-0">{title}</h2>
+        {subtitle && <p className="text-body-sm mt-1.5">{subtitle}</p>}
       </div>
       {action}
     </div>

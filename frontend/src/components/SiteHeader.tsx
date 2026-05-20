@@ -8,6 +8,7 @@ import {
   LogOut,
   Settings,
   LayoutDashboard,
+  ExternalLink,
 } from 'lucide-react';
 import LiveScoreTicker from '@/components/LiveScoreTicker';
 import { useAuthStore } from '@/store/authStore';
@@ -22,7 +23,7 @@ import { cn } from '@/lib/utils';
 const navLinks = [{ label: 'Tournaments', href: '/tournaments' }];
 
 interface SiteHeaderProps {
-  variant?: 'site' | 'hero' | 'minimal';
+  variant?: 'site' | 'hero' | 'minimal' | 'admin';
 }
 
 function SiteLogo({ compact = false, onDark = true }: { compact?: boolean; onDark?: boolean }) {
@@ -30,7 +31,7 @@ function SiteLogo({ compact = false, onDark = true }: { compact?: boolean; onDar
     <Link to="/" className="flex items-center gap-1 flex-shrink-0">
       <div
         className={cn(
-          'font-black tracking-tight rounded-2xl rounded-bl-sm relative shadow-sm',
+          'font-black tracking-tight rounded-2xl rounded-bl-sm relative shadow-sm font-display',
           compact ? 'text-xs px-2.5 py-1' : 'text-xs md:text-sm px-3 py-1.5',
           onDark ? 'bg-white text-black' : 'bg-primary-muted text-foreground',
         )}
@@ -45,7 +46,7 @@ function SiteLogo({ compact = false, onDark = true }: { compact?: boolean; onDar
       </div>
       <div
         className={cn(
-          'font-black rounded-full shadow-sm',
+          'font-black rounded-full shadow-sm font-display',
           compact ? 'text-xs px-2.5 py-1' : 'text-xs md:text-sm px-3 py-1.5',
           onDark
             ? 'bg-primary-muted text-primary border-[1.5px] border-white'
@@ -58,14 +59,12 @@ function SiteLogo({ compact = false, onDark = true }: { compact?: boolean; onDar
   );
 }
 
-export default function SiteHeader({ variant = 'site' }: SiteHeaderProps) {
-  const [mobileOpen, setMobileOpen] = useState(false);
+function UserMenu({ onDark = true }: { onDark?: boolean }) {
   const [userMenuOpen, setUserMenuOpen] = useState(false);
-  const { isAuthenticated, user, logout } = useAuthStore();
+  const { user, logout } = useAuthStore();
   const navigate = useNavigate();
-  const isHero = variant === 'hero';
-  const isMinimal = variant === 'minimal';
-  const onDark = !isMinimal;
+
+  if (!user) return null;
 
   const handleLogout = () => {
     logout();
@@ -73,21 +72,135 @@ export default function SiteHeader({ variant = 'site' }: SiteHeaderProps) {
     setUserMenuOpen(false);
   };
 
+  return (
+    <div className="relative">
+      <button
+        type="button"
+        aria-expanded={userMenuOpen}
+        aria-haspopup="menu"
+        onClick={() => setUserMenuOpen(!userMenuOpen)}
+        className={cn(
+          'flex items-center gap-1.5 px-2.5 py-1.5 rounded-full transition-colors',
+          onDark
+            ? 'border border-white/30 text-white hover:bg-white/10'
+            : 'border border-border bg-white hover:bg-muted',
+        )}
+      >
+        <div
+          className={cn(
+            'w-7 h-7 rounded-full flex items-center justify-center',
+            onDark ? 'bg-white/20' : 'bg-primary-muted',
+          )}
+        >
+          <User className={cn('w-3.5 h-3.5', onDark ? 'text-white' : 'text-primary')} />
+        </div>
+        <span className={cn('text-sm font-medium hidden sm:block', onDark ? 'text-white' : 'text-foreground')}>
+          {user.first_name}
+        </span>
+        <ChevronDown
+          className={cn('w-3 h-3 hidden sm:block', onDark ? 'text-white/70' : 'text-muted-foreground')}
+        />
+      </button>
+      {userMenuOpen && (
+        <>
+          <div
+            role="menu"
+            className="absolute right-0 top-full mt-1.5 w-52 bg-white rounded-xl shadow-lg border border-border overflow-hidden z-50"
+          >
+            {(['COACH', 'REFEREE', 'PLAYER'] as UserRole[]).includes(user.role) && (
+              <Link
+                role="menuitem"
+                to={getRoleDashboardPath(user.role)}
+                onClick={() => setUserMenuOpen(false)}
+                className="flex items-center gap-2 px-4 py-2.5 text-sm text-foreground hover:bg-muted transition-colors"
+              >
+                <LayoutDashboard className="w-4 h-4" />
+                {getRoleLabel(user.role)} Portal
+              </Link>
+            )}
+            {isAdminRole(user.role) && (
+              <Link
+                role="menuitem"
+                to="/admin/dashboard"
+                onClick={() => setUserMenuOpen(false)}
+                className="flex items-center gap-2 px-4 py-2.5 text-sm text-foreground hover:bg-muted transition-colors"
+              >
+                <LayoutDashboard className="w-4 h-4" /> Admin Dashboard
+              </Link>
+            )}
+            <Link
+              role="menuitem"
+              to="/profile"
+              onClick={() => setUserMenuOpen(false)}
+              className="flex items-center gap-2 px-4 py-2.5 text-sm text-foreground hover:bg-muted transition-colors"
+            >
+              <Settings className="w-4 h-4" /> Settings
+            </Link>
+            <button
+              type="button"
+              role="menuitem"
+              onClick={handleLogout}
+              className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors"
+            >
+              <LogOut className="w-4 h-4" /> Sign Out
+            </button>
+          </div>
+          <div className="fixed inset-0 z-40" onClick={() => setUserMenuOpen(false)} aria-hidden />
+        </>
+      )}
+    </div>
+  );
+}
+
+export default function SiteHeader({ variant = 'site' }: SiteHeaderProps) {
+  const [mobileOpen, setMobileOpen] = useState(false);
+  const { isAuthenticated, user } = useAuthStore();
+  const isHero = variant === 'hero';
+  const isMinimal = variant === 'minimal';
+  const isAdmin = variant === 'admin';
+  const onDark = !isMinimal;
+
   const navLinkClass = ({ isActive }: { isActive: boolean }) =>
     cn(
-      'inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold transition-colors whitespace-nowrap shrink-0',
+      'nav-pill text-xs sm:text-sm',
       onDark
         ? isActive
-          ? 'bg-white text-primary'
-          : 'border border-white/30 text-white hover:bg-white/10'
+          ? 'nav-pill-light-active'
+          : 'nav-pill-light'
         : isActive
-          ? 'bg-primary-muted text-primary'
-          : 'text-muted-foreground hover:text-foreground hover:bg-muted',
+          ? 'nav-pill-dark-active'
+          : 'nav-pill-dark',
     );
+
+  if (isAdmin) {
+    return (
+      <header className="sticky top-0 z-50 w-full bg-primary text-white shadow-md">
+        <div className="absolute inset-0 bg-brand-grid pointer-events-none opacity-80" />
+        <div className="relative max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 safe-x">
+          <div className="flex items-center justify-between gap-4 h-14">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <SiteLogo compact />
+              <span className="text-[10px] sm:text-xs font-semibold uppercase tracking-wider bg-white/15 px-2.5 py-1 rounded-full border border-white/25 shrink-0">
+                Admin
+              </span>
+            </div>
+
+            <div className="flex items-center gap-2 shrink-0">
+              <Link to="/tournaments" className="nav-pill-light hidden sm:inline-flex">
+                <ExternalLink className="w-3.5 h-3.5" aria-hidden />
+                View Site
+              </Link>
+              {isAuthenticated && user && <UserMenu onDark />}
+            </div>
+          </div>
+        </div>
+      </header>
+    );
+  }
 
   if (isMinimal) {
     return (
-      <header className="sticky top-0 z-50 w-full bg-surface border-b border-border shadow-sm">
+      <header className="sticky top-0 z-50 w-full bg-white border-b border-border shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 safe-x">
           <div className="flex items-center justify-between h-14 gap-4">
             <SiteLogo compact onDark={false} />
@@ -111,9 +224,10 @@ export default function SiteHeader({ variant = 'site' }: SiteHeaderProps) {
         isHero ? 'relative' : 'sticky top-0 shadow-md',
       )}
     >
+      <div className="absolute inset-0 bg-brand-grid pointer-events-none opacity-60" />
       <div className="absolute inset-x-0 bottom-0 h-px bg-white/10 pointer-events-none" />
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 safe-x">
+      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 safe-x">
         <div className="flex items-center gap-3 py-2.5 min-w-0">
           <SiteLogo compact />
 
@@ -131,70 +245,9 @@ export default function SiteHeader({ variant = 'site' }: SiteHeaderProps) {
             </nav>
 
             {isAuthenticated && user ? (
-              <div className="relative">
-                <button
-                  type="button"
-                  aria-expanded={userMenuOpen}
-                  aria-haspopup="menu"
-                  onClick={() => setUserMenuOpen(!userMenuOpen)}
-                  className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full border border-white/30 text-white hover:bg-white/10 transition-colors"
-                >
-                  <div className="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center">
-                    <User className="w-3.5 h-3.5 text-white" />
-                  </div>
-                  <span className="text-sm font-medium hidden sm:block">{user.first_name}</span>
-                  <ChevronDown className="w-3 h-3 text-white/70 hidden sm:block" />
-                </button>
-                {userMenuOpen && (
-                  <div
-                    role="menu"
-                    className="absolute right-0 top-full mt-1 w-48 bg-surface rounded-lg shadow-lg border border-border overflow-hidden z-50"
-                  >
-                    {(['COACH', 'REFEREE', 'PLAYER'] as UserRole[]).includes(user.role) && (
-                      <Link
-                        role="menuitem"
-                        to={getRoleDashboardPath(user.role)}
-                        onClick={() => setUserMenuOpen(false)}
-                        className="flex items-center gap-2 px-4 py-2.5 text-sm text-foreground hover:bg-muted"
-                      >
-                        <LayoutDashboard className="w-4 h-4" />
-                        {getRoleLabel(user.role)} Portal
-                      </Link>
-                    )}
-                    {isAdminRole(user.role) && (
-                      <Link
-                        role="menuitem"
-                        to="/admin/dashboard"
-                        onClick={() => setUserMenuOpen(false)}
-                        className="flex items-center gap-2 px-4 py-2.5 text-sm text-foreground hover:bg-muted"
-                      >
-                        <LayoutDashboard className="w-4 h-4" /> Admin Dashboard
-                      </Link>
-                    )}
-                    <Link
-                      role="menuitem"
-                      to="/profile"
-                      onClick={() => setUserMenuOpen(false)}
-                      className="flex items-center gap-2 px-4 py-2.5 text-sm text-foreground hover:bg-muted"
-                    >
-                      <Settings className="w-4 h-4" /> Settings
-                    </Link>
-                    <button
-                      type="button"
-                      role="menuitem"
-                      onClick={handleLogout}
-                      className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50"
-                    >
-                      <LogOut className="w-4 h-4" /> Sign Out
-                    </button>
-                  </div>
-                )}
-              </div>
+              <UserMenu onDark />
             ) : (
-              <Link
-                to="/login"
-                className="hidden sm:inline-flex items-center px-4 py-1.5 rounded-full text-xs font-semibold border border-white text-white hover:bg-white hover:text-primary transition-colors"
-              >
+              <Link to="/login" className="nav-pill-light hidden sm:inline-flex">
                 Sign In
               </Link>
             )}
@@ -219,7 +272,7 @@ export default function SiteHeader({ variant = 'site' }: SiteHeaderProps) {
       {mobileOpen && (
         <nav
           aria-label="Mobile navigation"
-          className="lg:hidden border-t border-white/20 bg-primary"
+          className="lg:hidden relative border-t border-white/20 bg-primary"
         >
           <div className="px-4 py-3 space-y-1 safe-x">
             {navLinks.map((link) => (
@@ -228,10 +281,7 @@ export default function SiteHeader({ variant = 'site' }: SiteHeaderProps) {
                 to={link.href}
                 onClick={() => setMobileOpen(false)}
                 className={({ isActive }) =>
-                  cn(
-                    'block px-4 py-2.5 rounded-full text-sm font-medium',
-                    isActive ? 'bg-white text-primary' : 'text-white hover:bg-white/10',
-                  )
+                  cn('block nav-pill w-full justify-center', isActive ? 'nav-pill-light-active' : 'nav-pill-light')
                 }
               >
                 {link.label}
@@ -241,17 +291,13 @@ export default function SiteHeader({ variant = 'site' }: SiteHeaderProps) {
               <Link
                 to="/login"
                 onClick={() => setMobileOpen(false)}
-                className="block px-4 py-2.5 rounded-full text-sm font-semibold text-white border border-white/30"
+                className="block nav-pill-light w-full justify-center"
               >
                 Sign In
               </Link>
             )}
           </div>
         </nav>
-      )}
-
-      {userMenuOpen && (
-        <div className="fixed inset-0 z-40" onClick={() => setUserMenuOpen(false)} aria-hidden />
       )}
     </header>
   );

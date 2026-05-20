@@ -7,6 +7,7 @@ import { useMatches } from '@/hooks/useMatches';
 import { getDivisionPublicPath } from '@/lib/division-routes';
 import { getDivisionTheme } from '@/lib/division-theme';
 import { ExternalLink, Shield, Calendar } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 export default function AdminDashboard() {
   const { data: divisions = [], isLoading, isError, refetch } = useDivisions();
@@ -16,24 +17,24 @@ export default function AdminDashboard() {
   const liveMatches = matches.filter((m) => m.status === 'LIVE');
 
   return (
-    <AdminLayout title="Dashboard">
-      <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
-        <div className="rounded-lg border border-border bg-card shadow-sm p-5">
-          <p className="text-2xl font-semibold text-foreground">{divisions.length}</p>
-          <p className="text-sm text-muted-foreground font-medium">Divisions</p>
+    <AdminLayout title="Dashboard" description="Overview of divisions, teams, and live activity">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+        <div className="ds-stat-card">
+          <p className="ds-stat-value">{divisions.length}</p>
+          <p className="ds-stat-label">Divisions</p>
         </div>
-        <div className="rounded-lg border border-border bg-card shadow-sm p-5">
-          <p className="text-2xl font-semibold text-foreground">{teams.length}</p>
-          <p className="text-sm text-muted-foreground font-medium">Teams</p>
+        <div className="ds-stat-card">
+          <p className="ds-stat-value">{teams.length}</p>
+          <p className="ds-stat-label">Teams</p>
         </div>
-        <div className="rounded-lg border border-border bg-card shadow-sm p-5">
-          <p className="text-2xl font-semibold text-foreground">{liveMatches.length}</p>
-          <p className="text-sm text-muted-foreground font-medium">Live matches</p>
+        <div className="ds-stat-card">
+          <p className="ds-stat-value">{liveMatches.length}</p>
+          <p className="ds-stat-label">Live matches</p>
         </div>
       </div>
 
       <QueryState isLoading={isLoading} isError={isError} onRetry={() => refetch()}>
-        <h2 className="text-lg font-semibold text-foreground mb-4">Divisions</h2>
+        <h2 className="text-subsection mb-4">Divisions</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {divisions.map((division) => {
             const theme = getDivisionTheme(division);
@@ -46,29 +47,24 @@ export default function AdminDashboard() {
             const matchCount = matches.filter((m) => m.division_id === division.id).length;
 
             return (
-              <div
-                key={division.id}
-                className="rounded-[2rem] border-2 border-gray-200 bg-white p-5 shadow-sm hover:shadow-md transition-shadow"
-              >
+              <div key={division.id} className="ds-card-hover p-5 md:p-6">
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex items-start gap-3 min-w-0">
                     <div
-                      className="w-10 h-10 rounded-lg shrink-0"
+                      className="w-10 h-10 rounded-lg shrink-0 ring-2 ring-white shadow-sm"
                       style={{ backgroundColor: theme.primary }}
                     />
                     <div className="min-w-0">
-                      <h3 className="font-black uppercase truncate" style={{ color: theme.primary }}>
+                      <h3 className="text-base font-semibold truncate font-display" style={{ color: theme.primary }}>
                         {division.name}
                       </h3>
-                      <p className="text-sm text-muted-foreground truncate">
-                        {division.tournament?.name}
-                      </p>
-                      <div className="flex gap-3 mt-2 text-xs text-muted-foreground">
+                      <p className="text-body-sm truncate mt-0.5">{division.tournament?.name}</p>
+                      <div className="flex gap-3 mt-2 text-caption">
                         <span className="inline-flex items-center gap-1">
-                          <Shield className="w-3 h-3" /> {teamCount}
+                          <Shield className="w-3 h-3" /> {teamCount} teams
                         </span>
                         <span className="inline-flex items-center gap-1">
-                          <Calendar className="w-3 h-3" /> {matchCount}
+                          <Calendar className="w-3 h-3" /> {matchCount} matches
                         </span>
                       </div>
                     </div>
@@ -78,7 +74,7 @@ export default function AdminDashboard() {
                       href={publicPath}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-semibold shrink-0 border border-border hover:bg-muted"
+                      className="nav-pill-dark border border-border bg-white shrink-0 text-xs"
                       style={{ color: theme.primary }}
                     >
                       <ExternalLink className="w-3.5 h-3.5" />
@@ -86,25 +82,20 @@ export default function AdminDashboard() {
                     </a>
                   )}
                 </div>
-                <div className="flex flex-wrap gap-2 mt-4 pt-3 border-t border-gray-100">
-                  <Link
-                    to="/admin/teams"
-                    className="text-xs font-semibold text-muted-foreground hover:text-foreground"
-                  >
-                    Manage teams
-                  </Link>
-                  <Link
-                    to="/admin/matches"
-                    className="text-xs font-semibold text-muted-foreground hover:text-foreground"
-                  >
-                    Manage matches
-                  </Link>
-                  <Link
-                    to="/admin/divisions"
-                    className="text-xs font-semibold text-muted-foreground hover:text-foreground"
-                  >
-                    Edit division
-                  </Link>
+                <div className="flex flex-wrap gap-x-4 gap-y-1 mt-4 pt-4 border-t border-border">
+                  {[
+                    { to: '/admin/teams', label: 'Manage teams' },
+                    { to: '/admin/matches', label: 'Manage matches' },
+                    { to: '/admin/divisions', label: 'Edit division' },
+                  ].map((link) => (
+                    <Link
+                      key={link.to}
+                      to={link.to}
+                      className={cn('text-xs font-medium text-muted-foreground hover:text-primary transition-colors')}
+                    >
+                      {link.label}
+                    </Link>
+                  ))}
                 </div>
               </div>
             );

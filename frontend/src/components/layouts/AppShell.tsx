@@ -10,7 +10,7 @@ interface AppShellProps {
   subNav?: React.ReactNode;
   showFooter?: boolean;
   heroTheme?: boolean;
-  headerMode?: 'site' | 'hero' | 'minimal';
+  headerMode?: 'site' | 'hero' | 'minimal' | 'admin';
 }
 
 export default function AppShell({
