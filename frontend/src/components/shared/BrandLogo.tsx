@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import logoUrl from '@/assets/logo.webp';
+import logoUrl from '@/assets/logo.png';
 import { cn } from '@/lib/utils';
 
 interface BrandLogoProps {
