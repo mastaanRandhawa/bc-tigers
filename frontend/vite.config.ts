@@ -3,7 +3,12 @@ import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 import path from 'path';
 
+/** GitHub Pages project site: https://<user>.github.io/bc-tigers/ */
+const githubPagesBase =
+  process.env.GITHUB_PAGES === 'true' ? '/bc-tigers/' : '/';
+
 export default defineConfig({
+  base: githubPagesBase,
   plugins: [react(), tailwindcss()],
   resolve: {
     alias: {

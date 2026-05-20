@@ -266,7 +266,23 @@ bc-tigers/
 - `DATABASE_URL` — PostgreSQL connection string
 - JWT and other secrets as required by `auth` module
 
-**Frontend:** API proxy or base URL pointing at the backend (typically port 3000 in development).
+**Frontend** (`frontend/.env.production`):
+
+- `VITE_API_URL` — e.g. `https://bc-tigers.onrender.com/api`
+- `VITE_SOCKET_URL` — e.g. `https://bc-tigers.onrender.com`
+
+Dev uses Vite proxy (`/api` → `localhost:3000`); production build targets Render.
+
+### GitHub Pages + Render
+
+| | URL |
+|--|-----|
+| **Frontend** | https://mastaanrandhawa.github.io/bc-tigers/ |
+| **API** | https://bc-tigers.onrender.com/api |
+
+1. **Render:** set `CORS_ORIGIN` to `https://mastaanrandhawa.github.io,https://mastaanrandhawa.github.io/bc-tigers` (Origin header is usually without path; include both to be safe).
+2. **GitHub:** Settings → Pages → Source: **GitHub Actions**.
+3. Push to `main`; workflow `.github/workflows/deploy-frontend.yml` builds with `GITHUB_PAGES=true` (base `/bc-tigers/`).
 
 ---
 

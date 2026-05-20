@@ -18,8 +18,17 @@ async function bootstrap() {
     }),
   );
 
+  const defaultOrigins = [
+    'http://localhost:5173',
+    'http://localhost:3001',
+    'https://mastaanrandhawa.github.io',
+  ];
+  const corsOrigins = process.env.CORS_ORIGIN
+    ? process.env.CORS_ORIGIN.split(',').map((o) => o.trim()).filter(Boolean)
+    : defaultOrigins;
+
   app.enableCors({
-    origin: ['http://localhost:5173', 'http://localhost:3001'],
+    origin: corsOrigins,
     credentials: true,
   });
 

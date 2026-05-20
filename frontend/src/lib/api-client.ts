@@ -1,7 +1,8 @@
 import axios from 'axios';
+import { apiBaseUrl, toAppPath } from '@/lib/env';
 
 export const apiClient = axios.create({
-  baseURL: '/api',
+  baseURL: apiBaseUrl,
   headers: { 'Content-Type': 'application/json' },
 });
 
@@ -17,8 +18,9 @@ apiClient.interceptors.response.use(
     if (error.response?.status === 401) {
       localStorage.removeItem('bc_token');
       localStorage.removeItem('bc-auth');
-      if (!window.location.pathname.startsWith('/login')) {
-        window.location.href = '/login';
+      const loginPath = toAppPath('/login');
+      if (!window.location.pathname.endsWith('/login')) {
+        window.location.href = loginPath;
       }
     }
     return Promise.reject(error);
