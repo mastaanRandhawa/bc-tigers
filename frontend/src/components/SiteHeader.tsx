@@ -18,45 +18,13 @@ import {
   getRoleLabel,
 } from '@/lib/auth-utils';
 import type { UserRole } from '@/types';
+import BrandLogo from '@/components/shared/BrandLogo';
 import { cn } from '@/lib/utils';
 
 const navLinks = [{ label: 'Tournaments', href: '/tournaments' }];
 
 interface SiteHeaderProps {
   variant?: 'site' | 'hero' | 'minimal' | 'admin';
-}
-
-function SiteLogo({ compact = false, onDark = true }: { compact?: boolean; onDark?: boolean }) {
-  return (
-    <Link to="/" className="flex items-center gap-1 flex-shrink-0">
-      <div
-        className={cn(
-          'font-black tracking-tight rounded-2xl rounded-bl-sm relative shadow-sm font-display',
-          compact ? 'text-xs px-2.5 py-1' : 'text-xs md:text-sm px-3 py-1.5',
-          onDark ? 'bg-white text-black' : 'bg-primary-muted text-foreground',
-        )}
-      >
-        BC
-        {onDark && (
-          <div
-            className="absolute -bottom-1.5 left-0 w-3 h-3 bg-white"
-            style={{ clipPath: 'polygon(0 0, 100% 0, 0 100%)' }}
-          />
-        )}
-      </div>
-      <div
-        className={cn(
-          'font-black rounded-full shadow-sm font-display',
-          compact ? 'text-xs px-2.5 py-1' : 'text-xs md:text-sm px-3 py-1.5',
-          onDark
-            ? 'bg-primary-muted text-primary border-[1.5px] border-white'
-            : 'bg-primary text-white',
-        )}
-      >
-        TIGERS
-      </div>
-    </Link>
-  );
 }
 
 function UserMenu({ onDark = true }: { onDark?: boolean }) {
@@ -178,7 +146,7 @@ export default function SiteHeader({ variant = 'site' }: SiteHeaderProps) {
         <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 safe-x">
           <div className="flex h-14 items-center justify-between gap-4">
             <div className="flex min-w-0 items-center gap-2.5">
-              <SiteLogo compact onDark={false} />
+              <BrandLogo compact />
               <span className="shrink-0 rounded-md border border-border bg-zinc-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-zinc-600 sm:text-xs">
                 Admin
               </span>
@@ -205,7 +173,7 @@ export default function SiteHeader({ variant = 'site' }: SiteHeaderProps) {
       <header className="sticky top-0 z-50 w-full bg-white border-b border-border shadow-sm">
         <div className="page-container">
           <div className="flex items-center justify-between h-14 gap-4">
-            <SiteLogo compact onDark={false} />
+            <BrandLogo compact />
             <nav aria-label="Main navigation" className="flex items-center gap-2">
               {navLinks.map((link) => (
                 <NavLink key={link.href} to={link.href} className={navLinkClass}>
@@ -237,7 +205,7 @@ export default function SiteHeader({ variant = 'site' }: SiteHeaderProps) {
 
       <div className="page-container relative">
         <div className="flex min-w-0 items-center gap-3 py-2.5">
-          <SiteLogo compact onDark={isHero} />
+          <BrandLogo compact />
 
           <div
             className={cn(

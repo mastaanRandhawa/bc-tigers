@@ -1,7 +1,6 @@
 import type { ReactNode } from 'react';
-import { Link } from 'react-router-dom';
-import { Trophy } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
+import BrandLogo from '@/components/shared/BrandLogo';
 import AppShell from '@/components/layouts/AppShell';
 
 interface AuthLayoutProps {
@@ -13,15 +12,7 @@ interface AuthLayoutProps {
 export default function AuthLayout({ children, title, subtitle }: AuthLayoutProps) {
   return (
     <AppShell showFooter={false} headerMode="minimal" className="flex flex-col items-center justify-center px-4 py-12">
-      <Link to="/" className="flex items-center gap-2.5 mb-8">
-        <div className="bg-primary-muted p-2 rounded-lg">
-          <Trophy className="w-6 h-6 text-primary" />
-        </div>
-        <div className="flex items-center">
-          <span className="font-bold text-foreground text-2xl tracking-tight">BC</span>
-          <span className="font-bold text-primary text-2xl tracking-tight">TIGERS</span>
-        </div>
-      </Link>
+      <BrandLogo className="mb-8" imageClassName="h-14" />
 
       <Card className="w-full max-w-md shadow-md">
         <CardContent className="p-8">

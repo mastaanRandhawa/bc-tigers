@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
-import { Trophy } from 'lucide-react';
 import { usePublicSettings } from '@/hooks/useSettings';
+import BrandLogo from '@/components/shared/BrandLogo';
 import { cn } from '@/lib/utils';
 
 const tournamentLinks = [{ label: 'Tournaments', href: '/tournaments' }];
@@ -23,15 +23,7 @@ export default function Footer({ className }: FooterProps) {
       <div className="page-container py-10 md:py-12">
         <div className="grid w-full grid-cols-1 gap-8 md:grid-cols-2">
           <div className="min-w-0">
-            <Link to="/" className="mb-4 flex items-center gap-2">
-              <div className="rounded-lg bg-primary-muted p-1.5">
-                <Trophy className="h-5 w-5 text-primary" aria-hidden />
-              </div>
-              <div className="flex items-center">
-                <span className="text-lg font-bold tracking-tight text-foreground">BC</span>
-                <span className="text-lg font-bold tracking-tight text-primary">TIGERS</span>
-              </div>
-            </Link>
+            <BrandLogo className="mb-4" imageClassName="h-10" />
             <p className="max-w-md text-sm leading-relaxed text-zinc-500">
               {siteName} Tournament Hub — pick a tournament, then browse each division for
               schedules, scores, and standings.

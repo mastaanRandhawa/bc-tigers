@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import LiveScoreTicker from '@/components/LiveScoreTicker';
+import BrandLogo from '@/components/shared/BrandLogo';
 import PageContent from '@/components/shared/PageContent';
 import PillNav, { type PillNavItem } from '@/components/shared/PillNav';
 import DivisionHero from '@/components/divisions/DivisionHero';
@@ -69,21 +70,7 @@ export default function DivisionShell({
 
         <div className="page-container relative z-10 border-b border-border/50 py-2">
           <div className="flex min-w-0 items-center gap-3">
-            <Link to="/" className="inline-flex shrink-0 items-center gap-1">
-              <div className="rounded-md bg-zinc-900 px-2 py-0.5 text-xs font-bold tracking-tight text-white">
-                BC
-              </div>
-              <div
-                className="rounded-md px-2 py-0.5 text-xs font-bold"
-                style={{
-                  backgroundColor: theme.accent,
-                  color: theme.primary,
-                  border: `1px solid color-mix(in srgb, ${theme.primary} 20%, transparent)`,
-                }}
-              >
-                TIGERS
-              </div>
-            </Link>
+            <BrandLogo compact />
             <div className="min-w-0 flex-1 border-l border-border pl-3">
               <LiveScoreTicker embedded alwaysShow divisionId={division.id} variant="light" />
             </div>
