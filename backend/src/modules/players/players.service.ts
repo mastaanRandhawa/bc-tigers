@@ -1,6 +1,18 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import type { Prisma } from '@prisma/client';
 import prisma from '../../prisma/prisma';
+import {
+  ensureUniquePlayerSlug,
+  playerLookupWhere,
+  slugifyPlayerName,
+} from '../../common/player-slug';
+
+type PlayerWriteInput = {
+  first_name?: string;
+  last_name?: string;
+  slug?: string;
+  [key: string]: unknown;
+};
 
 @Injectable()
 export class PlayersService {
@@ -35,9 +47,9 @@ export class PlayersService {
     });
   }
 
-  async findOne(slug: string) {
+  async findOne(idOrSlug: string) {
     const player = await prisma.player.findUnique({
-      where: { slug },
+      where: playerLookupWhere(idOrSlug),
       include: {
         rosters: { include: { team: true } },
         player_stats: { include: { tournament: true } },
@@ -47,14 +59,34 @@ export class PlayersService {
     return player;
   }
 
-  create(data: unknown) {
-    return prisma.player.create({ data: data as Prisma.PlayerCreateInput });
+  async create(data: unknown) {
+    const input = data as PlayerWriteInput;
+    const first_name = String(input.first_name ?? '').trim();
+    const last_name = String(input.last_name ?? '').trim();
+    if (!first_name || !last_name) {
+      throw new BadRequestException('First and last name are required');
+    }
+
+    const { slug: _ignored, ...rest } = input;
+    const base = slugifyPlayerName(first_name, last_name);
+    const slug = await ensureUniquePlayerSlug(prisma, base);
+
+    return prisma.player.create({
+      data: {
+        ...(rest as Prisma.PlayerCreateInput),
+        first_name,
+        last_name,
+        slug,
+      },
+    });
   }
 
-  update(id: string, data: unknown) {
+  async update(id: string, data: unknown) {
+    const input = data as PlayerWriteInput;
+    const { slug: _ignored, ...rest } = input;
     return prisma.player.update({
       where: { id },
-      data: data as Prisma.PlayerUpdateInput,
+      data: rest as Prisma.PlayerUpdateInput,
     });
   }
 

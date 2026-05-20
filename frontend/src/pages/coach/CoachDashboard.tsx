@@ -15,7 +15,11 @@ import {
   Clock,
   Zap,
 } from 'lucide-react';
-import { useEffect } from 'react';
+import { useCallback, useEffect } from 'react';
+import SearchField from '@/components/shared/SearchField';
+import SearchEmpty from '@/components/shared/SearchEmpty';
+import { useListSearch } from '@/hooks/useListSearch';
+import { matchSearchText, teamSearchText } from '@/lib/search-text';
 
 const nav = [
   { label: 'Dashboard', href: '/coach', icon: LayoutDashboard },
@@ -53,6 +57,24 @@ export default function CoachDashboard() {
   const live = myMatches.filter((m) => m.status === 'LIVE');
   const livePath = live[0] ? getMatchPath(live[0]) : schedulePath ?? '/tournaments';
 
+  const getMatchText = useCallback((m: (typeof upcoming)[0]) => matchSearchText(m), []);
+  const {
+    search: matchSearch,
+    setSearch: setMatchSearch,
+    filtered: filteredUpcoming,
+    debouncedSearch: debouncedMatchSearch,
+    hasQuery: hasMatchQuery,
+  } = useListSearch(upcoming, getMatchText);
+
+  const getTeamText = useCallback((t: (typeof myTeams)[0]) => teamSearchText(t), []);
+  const {
+    search: teamSearch,
+    setSearch: setTeamSearch,
+    filtered: filteredTeams,
+    debouncedSearch: debouncedTeamSearch,
+    hasQuery: hasTeamQuery,
+  } = useListSearch(myTeams, getTeamText);
+
   return (
     <PortalLayout title="Coach Portal" subtitle="Team Management" nav={nav}>
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
@@ -87,9 +109,26 @@ export default function CoachDashboard() {
               Full Schedule →
             </Link>
           </div>
-          <QueryState isLoading={matchesLoading} isEmpty={upcoming.length === 0} emptyMessage="No upcoming matches">
+          {upcoming.length > 3 && (
+            <div className="border-b border-border px-4 py-2">
+              <SearchField
+                value={matchSearch}
+                onChange={setMatchSearch}
+                placeholder="Search matches…"
+                className="max-w-full"
+              />
+            </div>
+          )}
+          <QueryState
+            isLoading={matchesLoading}
+            isEmpty={upcoming.length === 0}
+            emptyMessage="No upcoming matches"
+          >
+            {hasMatchQuery && filteredUpcoming.length === 0 ? (
+              <SearchEmpty query={debouncedMatchSearch} entityLabel="matches" />
+            ) : (
             <div className="divide-y divide-gray-50">
-              {upcoming.map((m) => (
+              {filteredUpcoming.map((m) => (
                 <Link
                   key={m.id}
                   to={getMatchPath(m)}
@@ -106,6 +145,7 @@ export default function CoachDashboard() {
                 </Link>
               ))}
             </div>
+            )}
           </QueryState>
         </div>
 
@@ -119,9 +159,22 @@ export default function CoachDashboard() {
               Browse Tournaments →
             </Link>
           </div>
+          {myTeams.length > 3 && (
+            <div className="border-b border-border px-4 py-2">
+              <SearchField
+                value={teamSearch}
+                onChange={setTeamSearch}
+                placeholder="Search teams…"
+                className="max-w-full"
+              />
+            </div>
+          )}
           <QueryState isLoading={teamsLoading} isEmpty={myTeams.length === 0} emptyMessage="No teams assigned">
+            {hasTeamQuery && filteredTeams.length === 0 ? (
+              <SearchEmpty query={debouncedTeamSearch} entityLabel="teams" />
+            ) : (
             <div className="divide-y divide-gray-50">
-              {myTeams.slice(0, 6).map((team) => (
+              {filteredTeams.slice(0, 6).map((team) => (
                 <Link
                   key={team.id}
                   to={getTeamPath(team) ?? '/tournaments'}
@@ -140,6 +193,7 @@ export default function CoachDashboard() {
                 </Link>
               ))}
             </div>
+            )}
           </QueryState>
         </div>
       </div>

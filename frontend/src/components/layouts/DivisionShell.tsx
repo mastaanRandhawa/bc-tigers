@@ -1,7 +1,6 @@
-import { Link, NavLink, Outlet } from 'react-router-dom';
+import { Link, Outlet } from 'react-router-dom';
 import {
   Users,
-  UserCircle,
   Calendar,
   Swords,
   Trophy,
@@ -13,17 +12,12 @@ import {
 import type { LucideIcon } from 'lucide-react';
 import LiveScoreTicker from '@/components/LiveScoreTicker';
 import PageContent from '@/components/shared/PageContent';
+import PillNav, { type PillNavItem } from '@/components/shared/PillNav';
 import DivisionHero from '@/components/divisions/DivisionHero';
 import { divisionThemeStyle, type DivisionTheme } from '@/lib/division-theme';
 import type { Division } from '@/types';
-import { cn } from '@/lib/utils';
 
-export interface DivisionNavItem {
-  label: string;
-  href: string;
-  icon: LucideIcon;
-  end?: boolean;
-}
+export type DivisionNavItem = PillNavItem & { icon: LucideIcon };
 
 interface DivisionShellProps {
   division: Division;
@@ -37,7 +31,6 @@ export function buildDivisionNavItems(basePath: string): DivisionNavItem[] {
   return [
     { label: 'Overview', href: basePath, icon: LayoutDashboard, end: true },
     { label: 'Teams', href: `${basePath}/teams`, icon: Users },
-    { label: 'Players', href: `${basePath}/players`, icon: UserCircle },
     { label: 'Schedule', href: `${basePath}/schedule`, icon: Calendar },
     { label: 'Matches', href: `${basePath}/matches`, icon: Swords },
     { label: 'Standings', href: `${basePath}/standings`, icon: Trophy },
@@ -45,36 +38,6 @@ export function buildDivisionNavItems(basePath: string): DivisionNavItem[] {
     { label: 'Brackets', href: `${basePath}/brackets`, icon: GitBranch },
     { label: 'Venues', href: `${basePath}/venues`, icon: MapPin },
   ];
-}
-
-function DivisionNavbar({ items }: { items: DivisionNavItem[] }) {
-  return (
-    <nav
-      aria-label="Division navigation"
-      className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 safe-x"
-    >
-      <div className="flex gap-1 overflow-x-auto no-scrollbar py-2 snap-x snap-mandatory bg-zinc-100/80 rounded-xl px-1">
-        {items.map((item) => (
-          <NavLink
-            key={item.href}
-            to={item.href}
-            end={item.end ?? false}
-            title={item.label}
-            aria-label={item.label}
-            className={({ isActive }) =>
-              cn(
-                'division-nav-pill inline-flex items-center gap-1.5 shrink-0 snap-start',
-                isActive && 'division-nav-pill-active',
-              )
-            }
-          >
-            <item.icon className="w-3.5 h-3.5 shrink-0" />
-            <span className="hidden sm:inline">{item.label}</span>
-          </NavLink>
-        ))}
-      </div>
-    </nav>
-  );
 }
 
 export default function DivisionShell({
@@ -86,40 +49,57 @@ export default function DivisionShell({
 
   return (
     <div
-      className="min-h-dvh min-h-screen flex flex-col w-full overflow-x-hidden division-theme-root bg-surface-muted"
+      className="division-theme-root flex min-h-dvh min-h-screen w-full flex-col overflow-x-hidden bg-zinc-50"
       style={divisionThemeStyle(theme)}
     >
-      <header className="relative bg-hero-gradient border-b border-border shrink-0 overflow-hidden">
-        <div className="absolute inset-0 bg-brand-grid pointer-events-none opacity-60" />
-        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary/80 via-primary to-primary/60" />
+      <div
+        className="h-0.5 w-full shrink-0"
+        style={{ backgroundColor: theme.primary }}
+        aria-hidden
+      />
 
-        <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-3 pb-2 safe-x">
-          <div className="flex flex-col sm:flex-row sm:items-center gap-3 min-w-0">
-            <Link to="/" className="inline-flex items-center gap-1 shrink-0">
-              <div className="font-bold tracking-tight text-xs px-2 py-0.5 rounded-lg bg-foreground text-white">
+      <header className="relative shrink-0 overflow-hidden border-b border-border bg-white">
+        <div
+          className="pointer-events-none absolute inset-0"
+          style={{
+            background: `linear-gradient(180deg, color-mix(in srgb, ${theme.accent} 45%, white) 0%, white 100%)`,
+          }}
+          aria-hidden
+        />
+
+        <div className="page-container relative z-10 border-b border-border/50 py-2">
+          <div className="flex min-w-0 items-center gap-3">
+            <Link to="/" className="inline-flex shrink-0 items-center gap-1">
+              <div className="rounded-md bg-zinc-900 px-2 py-0.5 text-xs font-bold tracking-tight text-white">
                 BC
               </div>
-              <div className="font-bold text-xs px-2 py-0.5 rounded-lg bg-primary-muted text-primary border border-primary/20">
+              <div
+                className="rounded-md px-2 py-0.5 text-xs font-bold"
+                style={{
+                  backgroundColor: theme.accent,
+                  color: theme.primary,
+                  border: `1px solid color-mix(in srgb, ${theme.primary} 20%, transparent)`,
+                }}
+              >
                 TIGERS
               </div>
             </Link>
-
-            <div className="flex-1 min-w-0 sm:border-l sm:border-border sm:pl-4">
+            <div className="min-w-0 flex-1 border-l border-border pl-3">
               <LiveScoreTicker embedded alwaysShow divisionId={division.id} variant="light" />
             </div>
           </div>
         </div>
 
-        <DivisionHero division={division} />
+        <DivisionHero division={division} theme={theme} />
       </header>
 
-      <div className="sticky top-0 z-40 bg-white/95 backdrop-blur-sm border-b border-border shadow-sm shrink-0">
+      <div className="sticky top-0 z-40 shrink-0 border-b border-border bg-white/95 shadow-sm backdrop-blur-sm">
         <div className="py-2">
-          <DivisionNavbar items={navItems} />
+          <PillNav items={navItems} theme={theme} ariaLabel="Division navigation" />
         </div>
       </div>
 
-      <main className="flex-1 w-full min-w-0">
+      <main className="min-w-0 w-full flex-1">
         <PageContent className="-mt-2 md:-mt-3">
           <Outlet />
         </PageContent>

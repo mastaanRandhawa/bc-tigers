@@ -14,7 +14,11 @@ import {
   Clock,
   Target,
 } from 'lucide-react';
-import { useEffect } from 'react';
+import { useCallback, useEffect } from 'react';
+import SearchField from '@/components/shared/SearchField';
+import SearchEmpty from '@/components/shared/SearchEmpty';
+import { useListSearch } from '@/hooks/useListSearch';
+import { matchSearchText, playerStatSearchText } from '@/lib/search-text';
 
 const nav = [
   { label: 'Dashboard', href: '/player', icon: LayoutDashboard },
@@ -45,16 +49,35 @@ export default function PlayerDashboard() {
     ? matches.filter((m) => myTeamIds.has(m.home_team_id) || myTeamIds.has(m.away_team_id))
     : matches;
 
-  const upcoming = myMatches
+  const upcomingAll = myMatches
     .filter((m) => m.status === 'SCHEDULED')
-    .sort((a, b) => new Date(a.scheduled_start).getTime() - new Date(b.scheduled_start).getTime())
-    .slice(0, 5);
+    .sort((a, b) => new Date(a.scheduled_start).getTime() - new Date(b.scheduled_start).getTime());
+
+  const getMatchText = useCallback((m: (typeof upcomingAll)[0]) => matchSearchText(m), []);
+  const {
+    search: matchSearch,
+    setSearch: setMatchSearch,
+    filtered: filteredUpcoming,
+    debouncedSearch: debouncedMatchSearch,
+    hasQuery: hasMatchQuery,
+  } = useListSearch(upcomingAll, getMatchText);
+
+  const displayUpcoming = hasMatchQuery ? filteredUpcoming : filteredUpcoming.slice(0, 5);
+
+  const getScorerText = useCallback((e: (typeof scorers)[0]) => playerStatSearchText(e), []);
+  const {
+    search: scorerSearch,
+    setSearch: setScorerSearch,
+    filtered: filteredScorers,
+    debouncedSearch: debouncedScorerSearch,
+    hasQuery: hasScorerQuery,
+  } = useListSearch(scorers, getScorerText);
 
   return (
     <PortalLayout title="Player Portal" subtitle="Your Tournament Hub" nav={nav}>
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         {[
-          { label: 'Upcoming', value: upcoming.length, icon: Clock, href: schedulePath ?? '/tournaments' },
+          { label: 'Upcoming', value: upcomingAll.length, icon: Clock, href: schedulePath ?? '/tournaments' },
           { label: 'My Teams', value: myTeamIds.size, icon: Calendar, href: '/tournaments' },
           { label: 'Top Scorers', value: scorers.length, icon: Target, href: statsPath },
           { label: 'Tournaments', value: tournaments.length, icon: Trophy, href: '/tournaments' },
@@ -84,9 +107,22 @@ export default function PlayerDashboard() {
               Schedule →
             </Link>
           </div>
-          <QueryState isLoading={matchesLoading} isEmpty={upcoming.length === 0} emptyMessage="No upcoming matches">
+          {upcomingAll.length > 3 && (
+            <div className="border-b border-border px-4 py-2">
+              <SearchField
+                value={matchSearch}
+                onChange={setMatchSearch}
+                placeholder="Search matches…"
+                className="max-w-full"
+              />
+            </div>
+          )}
+          <QueryState isLoading={matchesLoading} isEmpty={upcomingAll.length === 0} emptyMessage="No upcoming matches">
+            {hasMatchQuery && displayUpcoming.length === 0 ? (
+              <SearchEmpty query={debouncedMatchSearch} entityLabel="matches" />
+            ) : (
             <div className="divide-y divide-gray-50">
-              {upcoming.map((m) => (
+              {displayUpcoming.map((m) => (
                 <Link
                   key={m.id}
                   to={getMatchPath(m)}
@@ -103,6 +139,7 @@ export default function PlayerDashboard() {
                 </Link>
               ))}
             </div>
+            )}
           </QueryState>
         </div>
 
@@ -116,9 +153,22 @@ export default function PlayerDashboard() {
               Full Stats →
             </Link>
           </div>
+          {scorers.length > 3 && (
+            <div className="border-b border-border px-4 py-2">
+              <SearchField
+                value={scorerSearch}
+                onChange={setScorerSearch}
+                placeholder="Search scorers…"
+                className="max-w-full"
+              />
+            </div>
+          )}
           <QueryState isLoading={scorersLoading} isEmpty={scorers.length === 0} emptyMessage="No stats available">
+            {hasScorerQuery && filteredScorers.length === 0 ? (
+              <SearchEmpty query={debouncedScorerSearch} entityLabel="scorers" />
+            ) : (
             <div className="divide-y divide-gray-50">
-              {scorers.map((entry, i) => (
+              {filteredScorers.map((entry, i) => (
                 <div key={entry.player_id ?? i} className="flex items-center gap-3 p-4">
                   <span className="w-6 text-center text-sm font-black text-muted-foreground">{i + 1}</span>
                   <div className="flex-1 text-sm">
@@ -131,6 +181,7 @@ export default function PlayerDashboard() {
                 </div>
               ))}
             </div>
+            )}
           </QueryState>
         </div>
       </div>

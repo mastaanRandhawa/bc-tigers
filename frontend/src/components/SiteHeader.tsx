@@ -174,23 +174,25 @@ export default function SiteHeader({ variant = 'site' }: SiteHeaderProps) {
 
   if (isAdmin) {
     return (
-      <header className="sticky top-0 z-50 w-full bg-primary text-white shadow-md">
-        <div className="absolute inset-0 bg-brand-grid pointer-events-none opacity-80" />
-        <div className="relative max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 safe-x">
-          <div className="flex items-center justify-between gap-4 h-14">
-            <div className="flex items-center gap-2.5 min-w-0">
-              <SiteLogo compact />
-              <span className="text-[10px] sm:text-xs font-semibold uppercase tracking-wider bg-white/15 px-2.5 py-1 rounded-full border border-white/25 shrink-0">
+      <header className="admin-topbar">
+        <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 safe-x">
+          <div className="flex h-14 items-center justify-between gap-4">
+            <div className="flex min-w-0 items-center gap-2.5">
+              <SiteLogo compact onDark={false} />
+              <span className="shrink-0 rounded-md border border-border bg-zinc-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-zinc-600 sm:text-xs">
                 Admin
               </span>
             </div>
 
-            <div className="flex items-center gap-2 shrink-0">
-              <Link to="/tournaments" className="nav-pill-light hidden sm:inline-flex">
+            <div className="flex shrink-0 items-center gap-2">
+              <Link
+                to="/tournaments"
+                className="nav-pill-dark hidden items-center gap-1.5 sm:inline-flex"
+              >
                 <ExternalLink className="w-3.5 h-3.5" aria-hidden />
                 View Site
               </Link>
-              {isAuthenticated && user && <UserMenu onDark />}
+              {isAuthenticated && user && <UserMenu onDark={false} />}
             </div>
           </div>
         </div>
@@ -201,7 +203,7 @@ export default function SiteHeader({ variant = 'site' }: SiteHeaderProps) {
   if (isMinimal) {
     return (
       <header className="sticky top-0 z-50 w-full bg-white border-b border-border shadow-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 safe-x">
+        <div className="page-container">
           <div className="flex items-center justify-between h-14 gap-4">
             <SiteLogo compact onDark={false} />
             <nav aria-label="Main navigation" className="flex items-center gap-2">
@@ -220,23 +222,34 @@ export default function SiteHeader({ variant = 'site' }: SiteHeaderProps) {
   return (
     <header
       className={cn(
-        'z-50 w-full bg-primary text-white',
-        isHero ? 'relative' : 'sticky top-0 shadow-md',
+        'z-50 w-full',
+        isHero
+          ? 'relative bg-primary text-white'
+          : 'sticky top-0 border-b border-border bg-white/95 text-foreground shadow-sm backdrop-blur-sm',
       )}
     >
-      <div className="absolute inset-0 bg-brand-grid pointer-events-none opacity-60" />
-      <div className="absolute inset-x-0 bottom-0 h-px bg-white/10 pointer-events-none" />
+      {isHero && (
+        <>
+          <div className="absolute inset-0 bg-brand-grid pointer-events-none opacity-60" />
+          <div className="absolute inset-x-0 bottom-0 h-px bg-white/10 pointer-events-none" />
+        </>
+      )}
 
-      <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 safe-x">
-        <div className="flex items-center gap-3 py-2.5 min-w-0">
-          <SiteLogo compact />
+      <div className="page-container relative">
+        <div className="flex min-w-0 items-center gap-3 py-2.5">
+          <SiteLogo compact onDark={isHero} />
 
-          <div className="hidden md:flex flex-1 min-w-0 border-l border-white/15 pl-3">
-            <LiveScoreTicker embedded alwaysShow />
+          <div
+            className={cn(
+              'hidden min-w-0 flex-1 md:flex',
+              isHero ? 'border-l border-white/15 pl-3' : 'border-l border-border pl-3',
+            )}
+          >
+            <LiveScoreTicker embedded alwaysShow variant={isHero ? 'dark' : 'light'} />
           </div>
 
-          <div className="flex items-center gap-2 ml-auto shrink-0">
-            <nav aria-label="Main navigation" className="hidden lg:flex items-center gap-1">
+          <div className="ml-auto flex shrink-0 items-center gap-2">
+            <nav aria-label="Main navigation" className="hidden items-center gap-1 lg:flex">
               {navLinks.map((link) => (
                 <NavLink key={link.href} to={link.href} className={navLinkClass}>
                   {link.label}
@@ -245,9 +258,17 @@ export default function SiteHeader({ variant = 'site' }: SiteHeaderProps) {
             </nav>
 
             {isAuthenticated && user ? (
-              <UserMenu onDark />
+              <UserMenu onDark={isHero} />
             ) : (
-              <Link to="/login" className="nav-pill-light hidden sm:inline-flex">
+              <Link
+                to="/login"
+                className={cn(
+                  'hidden items-center rounded-lg px-4 py-1.5 text-sm font-semibold transition-all duration-200 sm:inline-flex',
+                  isHero
+                    ? 'border border-white/30 text-white hover:bg-white hover:text-primary'
+                    : 'bg-primary text-white hover:bg-primary-hover shadow-sm',
+                )}
+              >
                 Sign In
               </Link>
             )}
@@ -256,7 +277,10 @@ export default function SiteHeader({ variant = 'site' }: SiteHeaderProps) {
               type="button"
               aria-expanded={mobileOpen}
               aria-label={mobileOpen ? 'Close menu' : 'Open menu'}
-              className="lg:hidden p-2 rounded-full text-white hover:bg-white/10 transition-colors"
+              className={cn(
+                'rounded-lg p-2 transition-colors lg:hidden',
+                isHero ? 'text-white hover:bg-white/10' : 'text-foreground hover:bg-muted',
+              )}
               onClick={() => setMobileOpen(!mobileOpen)}
             >
               {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
@@ -264,24 +288,41 @@ export default function SiteHeader({ variant = 'site' }: SiteHeaderProps) {
           </div>
         </div>
 
-        <div className="md:hidden pb-2.5 border-t border-white/10 pt-2">
-          <LiveScoreTicker embedded alwaysShow />
+        <div
+          className={cn(
+            'border-t pb-2.5 pt-2 md:hidden',
+            isHero ? 'border-white/10' : 'border-border',
+          )}
+        >
+          <LiveScoreTicker embedded alwaysShow variant={isHero ? 'dark' : 'light'} />
         </div>
       </div>
 
       {mobileOpen && (
         <nav
           aria-label="Mobile navigation"
-          className="lg:hidden relative border-t border-white/20 bg-primary"
+          className={cn(
+            'relative border-t lg:hidden',
+            isHero ? 'border-white/20 bg-primary' : 'border-border bg-white',
+          )}
         >
-          <div className="px-4 py-3 space-y-1 safe-x">
+          <div className="space-y-1 px-4 py-3 safe-x">
             {navLinks.map((link) => (
               <NavLink
                 key={link.href}
                 to={link.href}
                 onClick={() => setMobileOpen(false)}
                 className={({ isActive }) =>
-                  cn('block nav-pill w-full justify-center', isActive ? 'nav-pill-light-active' : 'nav-pill-light')
+                  cn(
+                    'block w-full justify-center nav-pill',
+                    isHero
+                      ? isActive
+                        ? 'nav-pill-light-active'
+                        : 'nav-pill-light'
+                      : isActive
+                        ? 'nav-pill-dark-active'
+                        : 'nav-pill-dark',
+                  )
                 }
               >
                 {link.label}
@@ -291,7 +332,10 @@ export default function SiteHeader({ variant = 'site' }: SiteHeaderProps) {
               <Link
                 to="/login"
                 onClick={() => setMobileOpen(false)}
-                className="block nav-pill-light w-full justify-center"
+                className={cn(
+                  'block w-full justify-center nav-pill',
+                  isHero ? 'nav-pill-light' : 'nav-pill-dark',
+                )}
               >
                 Sign In
               </Link>

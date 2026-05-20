@@ -1,7 +1,11 @@
+import { useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import type { Division, Standing } from '@/types';
-import { getFormColor } from '@/lib/utils';
-import { cn } from '@/lib/utils';
+import SearchField from '@/components/shared/SearchField';
+import SearchEmpty from '@/components/shared/SearchEmpty';
+import { useListSearch } from '@/hooks/useListSearch';
+import { standingSearchText } from '@/lib/search-text';
+import { getFormColor, cn } from '@/lib/utils';
 import { getDivisionTeamPath } from '@/lib/division-routes';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
@@ -18,12 +22,37 @@ interface StandingsTableProps {
   standings: Standing[];
   compact?: boolean;
   division?: Division;
+  searchable?: boolean;
 }
 
-export default function StandingsTable({ standings, compact = false, division }: StandingsTableProps) {
+export default function StandingsTable({
+  standings,
+  compact = false,
+  division,
+  searchable = true,
+}: StandingsTableProps) {
+  const getText = useCallback((s: Standing) => standingSearchText(s), []);
+  const { search, setSearch, filtered, debouncedSearch, hasQuery } = useListSearch(
+    standings,
+    getText,
+  );
+  const rows = searchable ? filtered : standings;
+
   return (
-    <Card className="overflow-hidden -mx-4 sm:mx-0">
-      <div className="overflow-x-auto px-4 sm:px-0">
+    <div className="space-y-3">
+      {searchable && standings.length > 0 && (
+        <SearchField
+          value={search}
+          onChange={setSearch}
+          placeholder="Search teams…"
+          className="max-w-md"
+        />
+      )}
+      {hasQuery && rows.length === 0 ? (
+        <SearchEmpty query={debouncedSearch} entityLabel="teams" />
+      ) : (
+    <Card className="overflow-hidden mx-0">
+      <div className="overflow-x-auto">
         <Table className="min-w-[640px]">
           <TableHeader>
             <TableRow className="hover:bg-transparent">
@@ -45,7 +74,7 @@ export default function StandingsTable({ standings, compact = false, division }:
             </TableRow>
           </TableHeader>
           <TableBody>
-            {standings.map((s, idx) => (
+            {rows.map((s, idx) => (
               <TableRow
                 key={s.id}
                 className={cn(
@@ -64,7 +93,7 @@ export default function StandingsTable({ standings, compact = false, division }:
                           <img src={s.team.logo} alt="" className="w-6 h-6 rounded-full object-cover shrink-0" />
                         )}
                         <span className="font-semibold text-foreground truncate">{s.team.name}</span>
-                        {idx === 0 && <Badge variant="default" className="shrink-0">Leader</Badge>}
+                        {idx === 0 && <Badge variant="default" className="shrink-0 rounded-md">1st</Badge>}
                       </>
                     );
                     return teamPath ? (
@@ -100,7 +129,7 @@ export default function StandingsTable({ standings, compact = false, division }:
                   {s.goal_difference > 0 ? '+' : ''}
                   {s.goal_difference}
                 </TableCell>
-                <TableCell className="text-center font-bold text-primary text-base">{s.points}</TableCell>
+                <TableCell className="text-center text-base font-bold text-foreground tabular-nums">{s.points}</TableCell>
                 {!compact && (
                   <TableCell className="text-center">
                     <div className="flex items-center justify-center gap-1">
@@ -124,5 +153,7 @@ export default function StandingsTable({ standings, compact = false, division }:
         </Table>
       </div>
     </Card>
+      )}
+    </div>
   );
 }

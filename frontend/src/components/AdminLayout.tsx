@@ -21,7 +21,7 @@ export default function AdminLayout({ children, title, description, action }: Ad
           <AdminMobileNav />
 
           <main className="flex-1 w-full min-w-0">
-            <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-5 sm:py-6 safe-x w-full">
+            <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-5 safe-x w-full">
               {(title || action) && (
                 <div className="flex flex-wrap items-start justify-between gap-4 mb-5">
                   <div className="min-w-0">

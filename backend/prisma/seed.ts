@@ -3,103 +3,484 @@ import { PrismaClient } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 import * as bcrypt from 'bcrypt';
 
-// ── Prisma client (mirrors src/prisma/prisma.ts, standalone for seed) ──────
 const connectionString = process.env.DATABASE_URL!;
-const isRemote = !connectionString.includes('localhost') && !connectionString.includes('127.0.0.1');
-const adapter = new PrismaPg({ connectionString, ...(isRemote && { ssl: { rejectUnauthorized: false } }) });
+const isRemote =
+  !connectionString.includes('localhost') && !connectionString.includes('127.0.0.1');
+const adapter = new PrismaPg({
+  connectionString,
+  ...(isRemote && { ssl: { rejectUnauthorized: false } }),
+});
 const prisma = new PrismaClient({ adapter });
 
-// ── Helpers ─────────────────────────────────────────────────────────────────
-function slug(s: string) {
-  return s.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+function slugify(s: string) {
+  return s
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
 }
-function days(n: number) {
-  const d = new Date();
-  d.setDate(d.getDate() + n);
-  return d;
+
+/** Miri Piri 2026 — July 3–5 (local Pacific) */
+function cupDate(day: number, hour = 10, minute = 0) {
+  return new Date(2026, 6, day, hour, minute, 0);
 }
-function roundRobin(teams: string[]): [string, string][] {
+
+function roundRobin(teamIds: string[]): [string, string][] {
   const pairs: [string, string][] = [];
-  for (let i = 0; i < teams.length - 1; i++)
-    for (let j = i + 1; j < teams.length; j++)
-      pairs.push([teams[i], teams[j]]);
+  for (let i = 0; i < teamIds.length - 1; i++) {
+    for (let j = i + 1; j < teamIds.length; j++) {
+      pairs.push([teamIds[i], teamIds[j]]);
+    }
+  }
   return pairs;
 }
 
-// ── Data definitions ─────────────────────────────────────────────────────────
+const TOURNAMENT_RULES = `14th Annual Miri Piri Soccer Tournament (Miri Piri Canada Soccer Cup)
 
-const VENUES = [
-  { name: 'Swangard Stadium', address: '3883 Imperial St', city: 'Burnaby', slug: 'swangard-stadium' },
-  { name: 'Newton Athletic Park', address: '13730 72nd Ave', city: 'Surrey', slug: 'newton-athletic-park' },
-  { name: 'Burnaby Lake Sports Complex', address: '3676 Kensington Ave', city: 'Burnaby', slug: 'burnaby-lake-sports-complex' },
-];
+Host: BC Tigers FC (in association with BC Soccer)
+Dates: July 3, 4, and 5, 2026 — Friday evening kickoff July 3
+Location: Newton Athletic Park, 7395 128 St, Surrey, BC V3W 2M7
+
+Total prize pool: $70,000 (all prize money sponsored)
+Early bird registration deadline: May 15, 2026
+Registration deadline: June 15, 2026
+
+Division rules:
+• Maximum 16 teams per division
+• Age groups: Youth U6–U19, Adults, and Masters divisions
+• Youth U6–U19: minimum 3 games guaranteed
+
+Event perks:
+• Free appetizers / lunch for all on Saturday & Sunday
+• Free parking available
+• Refreshments available
+
+Contact: bctigersfc@gmail.com | www.bctigers.com
+Ajinderpal Mangat (604) 240-9742
+Rakesh Kumar — Youth Coordinator (778) 233-7338
+Vicky Virk — Adult Coordinator (604) 760-3506`;
+
+const VENUE = {
+  name: 'Newton Athletic Park',
+  slug: 'newton-athletic-park',
+  address: '7395 128 St',
+  city: 'Surrey, BC V3W 2M7',
+  parking_info: 'Free parking available on site.',
+};
+
+const FIELDS = ['Field 1', 'Field 2', 'Field 3', 'Field 4'];
 
 const REFEREES = [
+  { first_name: 'Ajinderpal', last_name: 'Mangat', email: 'ajinderpal@bctigers.ca', certification: 'Provincial' },
+  { first_name: 'Rakesh', last_name: 'Kumar', email: 'rakesh.kumar@bctigers.ca', certification: 'Youth Coordinator' },
+  { first_name: 'Vicky', last_name: 'Virk', email: 'vicky.virk@bctigers.ca', certification: 'Adult Coordinator' },
   { first_name: 'David', last_name: 'Chen', email: 'david.chen@bctigers.ca', certification: 'National A' },
   { first_name: 'Maria', last_name: 'Santos', email: 'maria.santos@bctigers.ca', certification: 'National A' },
-  { first_name: 'James', last_name: 'MacLeod', email: 'james.macleod@bctigers.ca', certification: 'Regional B' },
   { first_name: 'Priya', last_name: 'Sharma', email: 'priya.sharma@bctigers.ca', certification: 'Regional B' },
-  { first_name: 'Luc', last_name: 'Tremblay', email: 'luc.tremblay@bctigers.ca', certification: 'National B' },
-  { first_name: 'Amara', last_name: 'Osei', email: 'amara.osei@bctigers.ca', certification: 'Regional A' },
 ];
 
-const DIVISIONS_CONFIG = [
+const PALETTE = [
+  { primary: '#F48735', accent: '#FEF3EB' },
+  { primary: '#7C3AED', accent: '#F3E8FF' },
+  { primary: '#0D9488', accent: '#CCFBF1' },
+  { primary: '#DC2626', accent: '#FEE2E2' },
+  { primary: '#2563EB', accent: '#DBEAFE' },
+  { primary: '#CA8A04', accent: '#FEF9C3' },
+  { primary: '#DB2777', accent: '#FCE7F3' },
+  { primary: '#4F46E5', accent: '#E0E7FF' },
+];
+
+type Gender = 'MALE' | 'FEMALE' | 'MIXED';
+
+interface DivisionSeed {
+  name: string;
+  slug: string;
+  age_group: string;
+  gender: Gender;
+  format: string;
+  prize_note: string;
+  teams: { name: string; city: string; primaryColor: string }[];
+  seedMatches?: boolean;
+}
+
+function teamsFor(prefix: string, city = 'Surrey') {
+  return [
+    { name: `${prefix} Tigers`, city, primaryColor: '#F48735' },
+    { name: `${prefix} Khalsa FC`, city, primaryColor: '#1B1B1B' },
+    { name: `${prefix} United`, city: 'Vancouver', primaryColor: '#002D72' },
+    { name: `${prefix} Warriors`, city: 'Delta', primaryColor: '#006600' },
+  ];
+}
+
+const DIVISIONS: DivisionSeed[] = [
   {
-    name: 'Boys U18 Open',
-    slug: 'boys-u18-open',
-    age_group: 'U18',
-    gender: 'MALE' as const,
-    primary_color: '#F48735',
-    accent_color: '#FEF3EB',
-    teams: [
-      { name: 'FC Coastal United', city: 'Vancouver', primaryColor: '#002D72' },
-      { name: 'Pacific Strikers SC', city: 'Burnaby', primaryColor: '#CC0000' },
-      { name: 'North Shore United', city: 'North Vancouver', primaryColor: '#006600' },
-      { name: 'Fraser Valley Tigers', city: 'Abbotsford', primaryColor: '#FF6600' },
-      { name: 'Langley Lions FC', city: 'Langley', primaryColor: '#FFD700' },
-      { name: 'Burnaby FC', city: 'Burnaby', primaryColor: '#1B1B1B' },
-    ],
+    name: "Men's Premier Division",
+    slug: 'mens-premier',
+    age_group: 'Adult',
+    gender: 'MALE',
+    format: '11-a-side · Round Robin + Knockout',
+    prize_note: '1st $15,000 · 2nd $7,000 + trophies & medals',
+    teams: teamsFor('Premier'),
+    seedMatches: true,
   },
   {
-    name: 'Girls U16 Select',
-    slug: 'girls-u16-select',
-    age_group: 'U16',
-    gender: 'FEMALE' as const,
-    primary_color: '#7C3AED',
-    accent_color: '#F3E8FF',
-    teams: [
-      { name: 'Vancouver FC Girls', city: 'Vancouver', primaryColor: '#003DA5' },
-      { name: 'Richmond United Girls', city: 'Richmond', primaryColor: '#D4002C' },
-      { name: 'Surrey Storm FC', city: 'Surrey', primaryColor: '#2C7A2C' },
-      { name: 'Cloverdale Athletic', city: 'Surrey', primaryColor: '#6B2D8B' },
-      { name: 'White Rock Wanderers', city: 'White Rock', primaryColor: '#00A3E0' },
-      { name: 'Delta FC Academy', city: 'Delta', primaryColor: '#E8401A' },
-    ],
+    name: "Women's Premier Division",
+    slug: 'womens-premier',
+    age_group: 'Adult',
+    gender: 'FEMALE',
+    format: '11-a-side · Round Robin + Knockout',
+    prize_note: '1st $15,000 · 2nd $7,000 + trophies & medals',
+    teams: teamsFor('Premier', 'Burnaby'),
+    seedMatches: true,
+  },
+  {
+    name: "Men's Gold Division 1",
+    slug: 'mens-gold-1',
+    age_group: 'Adult',
+    gender: 'MALE',
+    format: '11-a-side · Round Robin + Knockout',
+    prize_note: '1st $5,000 · 2nd $3,000 + trophies & medals',
+    teams: teamsFor('Gold'),
+    seedMatches: true,
+  },
+  {
+    name: "Women's Gold Division 1",
+    slug: 'womens-gold-1',
+    age_group: 'Adult',
+    gender: 'FEMALE',
+    format: '11-a-side · Round Robin + Knockout',
+    prize_note: '1st $5,000 · 2nd $3,000 + trophies & medals',
+    teams: teamsFor('Gold', 'Richmond'),
+  },
+  {
+    name: "Men's Silver Division 2",
+    slug: 'mens-silver-2',
+    age_group: 'Adult',
+    gender: 'MALE',
+    format: '11-a-side',
+    prize_note: '1st $2,000 · 2nd $1,000 + trophies & medals',
+    teams: teamsFor('Silver'),
+  },
+  {
+    name: "Women's Silver Division 2",
+    slug: 'womens-silver-2',
+    age_group: 'Adult',
+    gender: 'FEMALE',
+    format: '11-a-side',
+    prize_note: '1st $2,000 · 2nd $1,000 + trophies & medals',
+    teams: teamsFor('Silver', 'Langley'),
+  },
+  {
+    name: "Men's Bronze Division 3",
+    slug: 'mens-bronze-3',
+    age_group: 'Adult',
+    gender: 'MALE',
+    format: '11-a-side',
+    prize_note: '1st $750 · 2nd $400 + trophies & medals',
+    teams: teamsFor('Bronze'),
+  },
+  {
+    name: "Women's Bronze Division 3",
+    slug: 'womens-bronze-3',
+    age_group: 'Adult',
+    gender: 'FEMALE',
+    format: '11-a-side',
+    prize_note: '1st $750 · 2nd $400 + trophies & medals',
+    teams: teamsFor('Bronze', 'Abbotsford'),
+  },
+  {
+    name: "Men's U19 Division",
+    slug: 'mens-u19',
+    age_group: 'U19',
+    gender: 'MALE',
+    format: '11-a-side · Min. 3 games',
+    prize_note: '1st $500 · 2nd $300 + trophies & medals',
+    teams: teamsFor('U19'),
+    seedMatches: true,
+  },
+  {
+    name: "Women's U19 Division",
+    slug: 'womens-u19',
+    age_group: 'U19',
+    gender: 'FEMALE',
+    format: '11-a-side · Min. 3 games',
+    prize_note: '1st $500 · 2nd $300 + trophies & medals',
+    teams: teamsFor('U19', 'North Vancouver'),
+  },
+  {
+    name: 'Boys U14–U18',
+    slug: 'boys-u14-u18',
+    age_group: 'U14-U18',
+    gender: 'MALE',
+    format: '11-a-side · Min. 3 games',
+    prize_note: 'Trophies & medals (1st & 2nd)',
+    teams: teamsFor('Boys Academy'),
+  },
+  {
+    name: 'Girls U14–U18',
+    slug: 'girls-u14-u18',
+    age_group: 'U14-U18',
+    gender: 'FEMALE',
+    format: '11-a-side · Min. 3 games',
+    prize_note: 'Trophies & medals (1st & 2nd)',
+    teams: teamsFor('Girls Academy', 'Surrey'),
+  },
+  {
+    name: 'Boys U6–U13',
+    slug: 'boys-u6-u13',
+    age_group: 'U6-U13',
+    gender: 'MALE',
+    format: 'Youth · Min. 3 games',
+    prize_note: 'Participation medals for all',
+    teams: teamsFor('Junior Boys'),
+  },
+  {
+    name: 'Girls U6–U13',
+    slug: 'girls-u6-u13',
+    age_group: 'U6-U13',
+    gender: 'FEMALE',
+    format: 'Youth · Min. 3 games',
+    prize_note: 'Participation medals for all',
+    teams: teamsFor('Junior Girls'),
+  },
+  {
+    name: 'Recreational 6-a-side',
+    slug: 'rec-6aside',
+    age_group: 'Adult',
+    gender: 'MALE',
+    format: '6-a-side recreational',
+    prize_note: 'Trophies & medals (1st & 2nd)',
+    teams: teamsFor('Rec'),
+  },
+  {
+    name: 'Co-Ed 6-a-side',
+    slug: 'coed-6aside',
+    age_group: 'Adult',
+    gender: 'MIXED',
+    format: '6-a-side co-ed',
+    prize_note: 'Trophies & medals (1st & 2nd)',
+    teams: teamsFor('Co-Ed'),
+  },
+  {
+    name: "Men's Over 35",
+    slug: 'mens-over-35',
+    age_group: '35+',
+    gender: 'MALE',
+    format: '11-a-side masters',
+    prize_note: 'Trophies & medals (1st & 2nd)',
+    teams: teamsFor('Masters 35'),
+  },
+  {
+    name: "Women's Over 35",
+    slug: 'womens-over-35',
+    age_group: '35+',
+    gender: 'FEMALE',
+    format: '11-a-side masters',
+    prize_note: 'Trophies & medals (1st & 2nd)',
+    teams: teamsFor('Masters 35', 'Burnaby'),
+  },
+  {
+    name: "Over 40 Men's",
+    slug: 'mens-over-40',
+    age_group: '40+',
+    gender: 'MALE',
+    format: '8-a-side',
+    prize_note: 'Trophies & medals (1st & 2nd)',
+    teams: teamsFor('Masters 40'),
+  },
+  {
+    name: "Over 50 Men's",
+    slug: 'mens-over-50',
+    age_group: '50+',
+    gender: 'MALE',
+    format: '8-a-side',
+    prize_note: 'Trophies & medals (1st & 2nd)',
+    teams: teamsFor('Masters 50'),
   },
 ];
 
-const FIRST_NAMES_M = ['James', 'Carlos', 'Omar', 'Aiden', 'Lucas', 'Marcus', 'Dylan', 'Ryan', 'Connor', 'Ethan', 'Noah', 'Liam'];
-const FIRST_NAMES_F = ['Sofia', 'Emma', 'Zara', 'Maya', 'Claire', 'Leila', 'Ava', 'Chloe', 'Nadia', 'Isabelle', 'Jade', 'Priya'];
-const LAST_NAMES = ['Martinez', 'Silva', 'Park', 'Hassan', 'Wilson', 'Chen', 'Nguyen', 'Brown', 'Kim', 'Anderson', 'Taylor', 'Patel', 'Garcia', 'Thompson', 'White', 'Lee', 'Davis', 'Johnson', 'Williams', 'Jones'];
+const FIRST_NAMES_M = [
+  'Harjot', 'Gurpreet', 'Jasleen', 'Aman', 'Navdeep', 'Karan', 'Ravi', 'Simran',
+  'Arjun', 'Dev', 'Raj', 'Vikram',
+];
+const FIRST_NAMES_F = [
+  'Simran', 'Priya', 'Ananya', 'Kiran', 'Meera', 'Sonia', 'Neha', 'Riya',
+  'Aisha', 'Emma', 'Maya', 'Leila',
+];
+const LAST_NAMES = [
+  'Singh', 'Kaur', 'Gill', 'Sandhu', 'Bains', 'Dhaliwal', 'Mangat', 'Virk',
+  'Kumar', 'Sharma', 'Patel', 'Chen', 'Nguyen', 'Williams', 'Martinez', 'Johnson',
+];
+
+function slugifySeedName(first: string, last: string, teamSlug: string, index: number) {
+  const base = `${first}-${last}`
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+  return `${base}-${teamSlug}-${index}`;
+}
 
 function makePlayers(teamSlug: string, count: number, female: boolean) {
   const firstNames = female ? FIRST_NAMES_F : FIRST_NAMES_M;
-  return Array.from({ length: count }, (_, i) => ({
-    first_name: firstNames[i % firstNames.length],
-    last_name: LAST_NAMES[(i + (female ? 7 : 0)) % LAST_NAMES.length],
-    slug: `${firstNames[i % firstNames.length].toLowerCase()}-${LAST_NAMES[(i + (female ? 7 : 0)) % LAST_NAMES.length].toLowerCase()}-${teamSlug}-${i}`,
-    jersey_number: i + 1,
-    preferred_position: ['GK', 'CB', 'CB', 'LB', 'RB', 'CM', 'CM', 'CAM', 'LW', 'RW', 'ST', 'ST'][i % 12],
-    nationality: ['Canadian', 'Canadian', 'Canadian', 'Canadian', 'Canadian', 'Brazilian', 'Mexican', 'Colombian', 'South Korean', 'Ghanaian', 'Indian', 'Vietnamese'][i % 12],
-  }));
+  return Array.from({ length: count }, (_, i) => {
+    const first_name = firstNames[i % firstNames.length];
+    const last_name = LAST_NAMES[(i + (female ? 5 : 0)) % LAST_NAMES.length];
+    return {
+      first_name,
+      last_name,
+      slug: slugifySeedName(first_name, last_name, teamSlug, i),
+      jersey_number: i + 1,
+      preferred_position: ['GK', 'CB', 'CB', 'LB', 'RB', 'CM', 'CM', 'CAM', 'LW', 'RW', 'ST', 'ST'][i % 12],
+      nationality: 'Canadian',
+    };
+  });
 }
 
-// ── Main seed ────────────────────────────────────────────────────────────────
+async function recalculateStandings(divisionId: string) {
+  const division = await prisma.division.findUniqueOrThrow({ where: { id: divisionId } });
+  const completedMatches = await prisma.match.findMany({
+    where: { division_id: divisionId, status: 'COMPLETED' },
+  });
+
+  const statsMap = new Map<
+    string,
+    {
+      played: number;
+      wins: number;
+      draws: number;
+      losses: number;
+      goals_for: number;
+      goals_against: number;
+      points: number;
+    }
+  >();
+  const init = () => ({
+    played: 0,
+    wins: 0,
+    draws: 0,
+    losses: 0,
+    goals_for: 0,
+    goals_against: 0,
+    points: 0,
+  });
+
+  for (const m of completedMatches) {
+    if (!statsMap.has(m.home_team_id)) statsMap.set(m.home_team_id, init());
+    if (!statsMap.has(m.away_team_id)) statsMap.set(m.away_team_id, init());
+    const home = statsMap.get(m.home_team_id)!;
+    const away = statsMap.get(m.away_team_id)!;
+    home.played++;
+    away.played++;
+    home.goals_for += m.home_score;
+    home.goals_against += m.away_score;
+    away.goals_for += m.away_score;
+    away.goals_against += m.home_score;
+    if (m.home_score > m.away_score) {
+      home.wins++;
+      home.points += division.points_win;
+      away.losses++;
+      away.points += division.points_loss;
+    } else if (m.home_score < m.away_score) {
+      away.wins++;
+      away.points += division.points_win;
+      home.losses++;
+      home.points += division.points_loss;
+    } else {
+      home.draws++;
+      away.draws++;
+      home.points += division.points_draw;
+      away.points += division.points_draw;
+    }
+  }
+
+  const sorted = Array.from(statsMap.entries()).sort(
+    ([, a], [, b]) =>
+      b.points - a.points ||
+      b.goals_for - b.goals_against - (a.goals_for - a.goals_against) ||
+      b.goals_for - a.goals_for,
+  );
+
+  for (const [team_id, stats] of sorted) {
+    await prisma.standing.updateMany({
+      where: { division_id: divisionId, team_id },
+      data: {
+        ...stats,
+        goal_difference: stats.goals_for - stats.goals_against,
+        rank: sorted.findIndex(([id]) => id === team_id) + 1,
+      },
+    });
+  }
+}
+
+async function seedDivisionMatches(
+  tournamentId: string,
+  divisionId: string,
+  teamIds: string[],
+  venueId: string,
+  refereeIds: string[],
+  fieldIds: string[],
+) {
+  const fixtures = roundRobin(teamIds);
+  const results = [
+    { homeScore: 2, awayScore: 1 },
+    { homeScore: 0, awayScore: 0 },
+    { homeScore: 3, awayScore: 2 },
+    { homeScore: 1, awayScore: 1 },
+    { homeScore: 2, awayScore: 0 },
+    { homeScore: 4, awayScore: 3 },
+  ];
+
+  const scheduleDays = [3, 4, 4, 5, 5, 5];
+
+  for (let i = 0; i < fixtures.length; i++) {
+    const [homeId, awayId] = fixtures[i];
+    const isCompleted = i < 4;
+    const isLive = i === 4;
+    const day = scheduleDays[i] ?? 5;
+    const hour = 9 + (i % 4) * 2;
+    const result = isCompleted ? results[i] : null;
+
+    const match = await prisma.match.create({
+      data: {
+        tournament_id: tournamentId,
+        division_id: divisionId,
+        home_team_id: homeId,
+        away_team_id: awayId,
+        venue_id: venueId,
+        field_id: fieldIds[i % fieldIds.length],
+        scheduled_start: cupDate(day, hour),
+        status: isCompleted ? 'COMPLETED' : isLive ? 'LIVE' : 'SCHEDULED',
+        round: Math.floor(i / 2) + 1,
+        home_score: result?.homeScore ?? (isLive ? 1 : 0),
+        away_score: result?.awayScore ?? 0,
+      },
+    });
+
+    await prisma.matchReferee.create({
+      data: {
+        match_id: match.id,
+        referee_id: refereeIds[i % refereeIds.length],
+        role: 'MAIN',
+      },
+    });
+
+    if (isCompleted && result) {
+      for (let g = 0; g < result.homeScore; g++) {
+        await prisma.matchEvent.create({
+          data: { match_id: match.id, team_id: homeId, type: 'GOAL', minute: 12 + g * 15 },
+        });
+      }
+      for (let g = 0; g < result.awayScore; g++) {
+        await prisma.matchEvent.create({
+          data: { match_id: match.id, team_id: awayId, type: 'GOAL', minute: 20 + g * 18 },
+        });
+      }
+    }
+  }
+}
 
 async function main() {
-  console.log('Seeding database...');
+  console.log('Seeding Miri Piri 2026 tournament data...');
 
-  // ── Wipe existing data (order matters due to FK constraints)
   await prisma.passwordResetToken.deleteMany();
   await prisma.siteSettings.deleteMany();
   await prisma.auditLog.deleteMany();
@@ -126,7 +507,6 @@ async function main() {
   await prisma.user.deleteMany();
   console.log('  Cleared existing data.');
 
-  // ── Admin user
   const adminUser = await prisma.user.create({
     data: {
       first_name: 'BC Tigers',
@@ -136,12 +516,16 @@ async function main() {
       role: 'ADMIN',
     },
   });
-  console.log(`  Created admin user: ${adminUser.email}`);
 
   await prisma.siteSettings.create({
     data: {
       id: 'default',
-      site_name: 'BC Tigers Soccer',
+      site_name: 'BC Tigers FC',
+      contact_email: 'bctigersfc@gmail.com',
+      contact_phone: '(604) 240-9742',
+      contact_address: '7395 128 St, Surrey, BC V3W 2M7',
+      max_teams_per_division: 16,
+      registration_open: true,
     },
   });
 
@@ -154,39 +538,44 @@ async function main() {
       role: 'VIEWER',
     },
   });
-  console.log(`  Created viewer user: ${viewerUser.email}`);
 
-  // ── Venues
-  const venues = await Promise.all(
-    VENUES.map((v) => prisma.venue.create({ data: v }))
+  const venue = await prisma.venue.create({ data: VENUE });
+  const fields = await Promise.all(
+    FIELDS.map((name) => prisma.field.create({ data: { venue_id: venue.id, name, surface: 'Grass' } })),
   );
-  console.log(`  Created ${venues.length} venues.`);
+  const referees = await Promise.all(REFEREES.map((r) => prisma.referee.create({ data: r })));
+  const refereeIds = referees.map((r) => r.id);
+  const fieldIds = fields.map((f) => f.id);
 
-  // ── Referees
-  const referees = await Promise.all(
-    REFEREES.map((r) => prisma.referee.create({ data: r }))
-  );
-  console.log(`  Created ${referees.length} referees.`);
+  console.log(`  Venue: ${venue.name} (${fields.length} fields)`);
+  console.log(`  Referees: ${referees.length}`);
 
-  // ── Tournament
   const tournament = await prisma.tournament.create({
     data: {
-      name: 'BC Tigers Summer Classic 2025',
-      slug: 'bc-tigers-summer-classic-2025',
-      description: 'The premier summer soccer tournament in British Columbia, bringing together the top youth clubs from across the province.',
-      start_date: days(-7),
-      end_date: days(21),
-      location: 'Metro Vancouver, BC',
-      status: 'ACTIVE',
+      name: '14th Annual Miri Piri Soccer Tournament',
+      slug: 'miri-piri-2026',
+      description:
+        'Miri Piri Canada Soccer Cup — hosted by BC Tigers FC in association with BC Soccer. ' +
+        '$70,000 total sponsored prize pool. Youth U6–U19, adult, and masters divisions. ' +
+        'Free lunch Saturday & Sunday, free parking, refreshments on site.',
+      start_date: cupDate(3, 18),
+      end_date: cupDate(5, 20),
+      location: 'Newton Athletic Park, Surrey, BC',
+      status: 'UPCOMING',
       tournament_type: 'GROUP_STAGE_PLUS_KNOCKOUT',
-      rules: 'FIFA Laws of the Game apply. 90-minute matches (45 min halves). Extra time and penalty shootout for knockout rounds.',
+      rules: TOURNAMENT_RULES,
       created_by: adminUser.id,
     },
   });
-  console.log(`  Created tournament: ${tournament.name}`);
+  console.log(`  Tournament: ${tournament.name}`);
 
-  // ── Divisions, Teams, Players, Matches
-  for (const divConfig of DIVISIONS_CONFIG) {
+  let divisionIndex = 0;
+  let totalTeams = 0;
+  let totalPlayers = 0;
+  let matchDivisions = 0;
+
+  for (const divConfig of DIVISIONS) {
+    const colors = PALETTE[divisionIndex % PALETTE.length];
     const division = await prisma.division.create({
       data: {
         tournament_id: tournament.id,
@@ -194,212 +583,84 @@ async function main() {
         slug: divConfig.slug,
         age_group: divConfig.age_group,
         gender: divConfig.gender,
-        max_teams: 8,
-        format: 'Round Robin + Knockout',
+        max_teams: 16,
+        format: `${divConfig.format} · ${divConfig.prize_note}`,
         points_win: 3,
         points_draw: 1,
         points_loss: 0,
-        primary_color: divConfig.primary_color,
-        accent_color: divConfig.accent_color,
+        primary_color: colors.primary,
+        accent_color: colors.accent,
       },
     });
 
     const isFemale = divConfig.gender === 'FEMALE';
+    const isMixed = divConfig.gender === 'MIXED';
 
-    // Create teams
     const teams = await Promise.all(
       divConfig.teams.map((t) =>
         prisma.team.create({
           data: {
             division_id: division.id,
             name: t.name,
-            slug: slug(t.name),
+            slug: slugify(`${divConfig.slug}-${t.name}`),
             city: t.city,
             primary_color: t.primaryColor,
             created_by: adminUser.id,
           },
-        })
-      )
+        }),
+      ),
     );
+    totalTeams += teams.length;
 
-    // Create players and rosters
     for (const team of teams) {
-      const playerDefs = makePlayers(team.slug, 12, isFemale);
-      for (const pd of playerDefs) {
-        const player = await prisma.player.create({ data: pd });
-        await prisma.teamRoster.create({
-          data: { team_id: team.id, player_id: player.id, season: '2025', active: true },
-        });
-      }
+      const playerDefs = makePlayers(team.slug, 12, isFemale || isMixed);
+      const players = await prisma.player.createManyAndReturn({ data: playerDefs });
+      await prisma.teamRoster.createMany({
+        data: players.map((player) => ({
+          team_id: team.id,
+          player_id: player.id,
+          season: '2026',
+          active: true,
+        })),
+      });
+      totalPlayers += players.length;
     }
 
-    console.log(`  Division "${division.name}": ${teams.length} teams, ${teams.length * 12} players.`);
-
-    // Create standings (empty, will be updated after matches)
     await Promise.all(
       teams.map((t) =>
         prisma.standing.create({
           data: { division_id: division.id, team_id: t.id, rank: 0 },
-        })
-      )
+        }),
+      ),
     );
 
-    // ── Generate round-robin match schedule
-    const teamIds = teams.map((t) => t.id);
-    const fixtures = roundRobin(teamIds);
-
-    const matchResults: { homeScore: number; awayScore: number }[] = [
-      { homeScore: 3, awayScore: 1 },
-      { homeScore: 0, awayScore: 0 },
-      { homeScore: 2, awayScore: 2 },
-      { homeScore: 1, awayScore: 0 },
-      { homeScore: 4, awayScore: 2 },
-    ];
-
-    for (let i = 0; i < fixtures.length; i++) {
-      const [homeId, awayId] = fixtures[i];
-      const isCompleted = i < 5;
-      const venueId = venues[i % venues.length].id;
-      const refereeId = referees[i % referees.length].id;
-      const scheduledStart = days(isCompleted ? -(5 - i) : i - 4);
-
-      const result = isCompleted ? matchResults[i] : null;
-
-      const match = await prisma.match.create({
-        data: {
-          tournament_id: tournament.id,
-          division_id: division.id,
-          home_team_id: homeId,
-          away_team_id: awayId,
-          venue_id: venueId,
-          scheduled_start: scheduledStart,
-          status: isCompleted ? 'COMPLETED' : i === 5 ? 'LIVE' : 'SCHEDULED',
-          round: Math.floor(i / 2) + 1,
-          home_score: result?.homeScore ?? (i === 5 ? 1 : 0),
-          away_score: result?.awayScore ?? (i === 5 ? 0 : 0),
-        },
-      });
-
-      // Assign referee
-      await prisma.matchReferee.create({
-        data: { match_id: match.id, referee_id: refereeId, role: 'MAIN' },
-      });
-
-      // Add events for completed matches
-      if (isCompleted && result) {
-        const homeTeam = teams.find((t) => t.id === homeId)!;
-        const awayTeam = teams.find((t) => t.id === awayId)!;
-
-        // Add goal events
-        for (let g = 0; g < result.homeScore; g++) {
-          await prisma.matchEvent.create({
-            data: {
-              match_id: match.id,
-              team_id: homeTeam.id,
-              type: 'GOAL',
-              minute: 15 + g * 18,
-            },
-          });
-        }
-        for (let g = 0; g < result.awayScore; g++) {
-          await prisma.matchEvent.create({
-            data: {
-              match_id: match.id,
-              team_id: awayTeam.id,
-              type: 'GOAL',
-              minute: 22 + g * 20,
-            },
-          });
-        }
-
-        // Add a yellow card
-        await prisma.matchEvent.create({
-          data: {
-            match_id: match.id,
-            team_id: homeTeam.id,
-            type: 'YELLOW_CARD',
-            minute: 38,
-          },
-        });
-      }
+    if (divConfig.seedMatches) {
+      await seedDivisionMatches(
+        tournament.id,
+        division.id,
+        teams.map((t) => t.id),
+        venue.id,
+        refereeIds,
+        fieldIds,
+      );
+      await recalculateStandings(division.id);
+      matchDivisions++;
     }
 
-    // ── Recalculate standings from completed matches
-    const completedMatches = await prisma.match.findMany({
-      where: { division_id: division.id, status: 'COMPLETED' },
-    });
-
-    const statsMap = new Map<string, { played: number; wins: number; draws: number; losses: number; goals_for: number; goals_against: number; points: number }>();
-    const init = () => ({ played: 0, wins: 0, draws: 0, losses: 0, goals_for: 0, goals_against: 0, points: 0 });
-
-    for (const m of completedMatches) {
-      if (!statsMap.has(m.home_team_id)) statsMap.set(m.home_team_id, init());
-      if (!statsMap.has(m.away_team_id)) statsMap.set(m.away_team_id, init());
-      const home = statsMap.get(m.home_team_id)!;
-      const away = statsMap.get(m.away_team_id)!;
-      home.played++; away.played++;
-      home.goals_for += m.home_score; home.goals_against += m.away_score;
-      away.goals_for += m.away_score; away.goals_against += m.home_score;
-      if (m.home_score > m.away_score) { home.wins++; home.points += 3; away.losses++; }
-      else if (m.home_score < m.away_score) { away.wins++; away.points += 3; home.losses++; }
-      else { home.draws++; away.draws++; home.points++; away.points++; }
-    }
-
-    const sorted = Array.from(statsMap.entries()).sort(([, a], [, b]) =>
-      b.points - a.points || (b.goals_for - b.goals_against) - (a.goals_for - a.goals_against)
-    );
-
-    for (const [team_id, stats] of sorted) {
-      await prisma.standing.updateMany({
-        where: { division_id: division.id, team_id },
-        data: { ...stats, goal_difference: stats.goals_for - stats.goals_against, rank: sorted.findIndex(([id]) => id === team_id) + 1 },
-      });
-    }
-
-    // ── PlayerStats (top scorers from goal events)
-    const goalEvents = await prisma.matchEvent.findMany({
-      where: { match: { division_id: division.id }, type: 'GOAL' },
-      include: { match: true },
-    });
-
-    const teamGoals = new Map<string, number>();
-    for (const ev of goalEvents) {
-      teamGoals.set(ev.team_id, (teamGoals.get(ev.team_id) ?? 0) + 1);
-    }
-
-    // Create a lead scorer stat per team
-    for (const team of teams) {
-      const roster = await prisma.teamRoster.findFirst({ where: { team_id: team.id }, include: { player: true } });
-      if (!roster) continue;
-      const goals = teamGoals.get(team.id) ?? 0;
-      await prisma.playerStat.upsert({
-        where: { player_id_tournament_id_division_id: { player_id: roster.player_id, tournament_id: tournament.id, division_id: division.id } },
-        create: {
-          player_id: roster.player_id,
-          tournament_id: tournament.id,
-          division_id: division.id,
-          team_id: team.id,
-          goals,
-          assists: Math.floor(goals / 2),
-          yellow_cards: 1,
-          matches_played: 3,
-        },
-        update: { goals, assists: Math.floor(goals / 2) },
-      });
-    }
-
-    console.log(`  Seeded ${fixtures.length} matches and standings for "${division.name}".`);
+    divisionIndex++;
   }
 
-  // ── Coaches and portal users (linked after teams/players/referees exist)
+  console.log(`  ${DIVISIONS.length} divisions, ${totalTeams} teams, ${totalPlayers} players.`);
+  console.log(`  Sample schedules in ${matchDivisions} featured divisions.`);
+
   const firstTeam = await prisma.team.findFirst({ include: { division: true } });
   const firstPlayer = await prisma.player.findFirst();
   const firstReferee = await prisma.referee.findFirst();
 
   const coachUser = await prisma.user.create({
     data: {
-      first_name: 'Alex',
-      last_name: 'Thompson',
+      first_name: 'Vicky',
+      last_name: 'Virk',
       email: 'coach@bctigers.ca',
       password_hash: await bcrypt.hash('demo1234', 12),
       role: 'COACH',
@@ -408,9 +669,9 @@ async function main() {
 
   const coach = await prisma.coach.create({
     data: {
-      first_name: 'Alex',
-      last_name: 'Thompson',
-      email: 'coach@bctigers.ca',
+      first_name: 'Vicky',
+      last_name: 'Virk',
+      email: 'vicky.virk@bctigers.ca',
       user_id: coachUser.id,
     },
   });
@@ -440,8 +701,8 @@ async function main() {
 
   const playerUser = await prisma.user.create({
     data: {
-      first_name: firstPlayer?.first_name ?? 'James',
-      last_name: firstPlayer?.last_name ?? 'Martinez',
+      first_name: firstPlayer?.first_name ?? 'Harjot',
+      last_name: firstPlayer?.last_name ?? 'Singh',
       email: 'player@bctigers.ca',
       password_hash: await bcrypt.hash('demo1234', 12),
       role: 'PLAYER',
@@ -460,27 +721,29 @@ async function main() {
       {
         user_id: adminUser.id,
         tournament_id: tournament.id,
-        title: 'Summer Classic is live',
-        message: 'Live scoring and standings are active for all divisions.',
+        title: 'Miri Piri 2026 registration open',
+        message: 'Early bird deadline May 15, 2026. Final registration June 15, 2026.',
         type: 'INFO',
       },
       {
-        user_id: coachUser.id,
+        user_id: viewerUser.id,
         tournament_id: tournament.id,
-        title: 'Upcoming match reminder',
-        message: 'Check your team schedule for this week\'s fixtures.',
+        title: 'Tournament weekend July 3–5',
+        message: 'Newton Athletic Park — free parking, lunch Sat & Sun for all participants.',
         type: 'INFO',
       },
     ],
   });
 
-  console.log('  Created portal users: coach@bctigers.ca, referee@bctigers.ca, player@bctigers.ca / demo1234');
-
   console.log('\nSeed complete.');
-  console.log('  Admin login: admin@bctigers.ca / Admin1234!');
-  console.log('  Portal logins: coach@bctigers.ca, referee@bctigers.ca, player@bctigers.ca, viewer@bctigers.ca / demo1234');
+  console.log('  Tournament: /tournaments/miri-piri-2026');
+  console.log('  Admin: admin@bctigers.ca / Admin1234!');
+  console.log('  Portal: coach@, referee@, player@, viewer@bctigers.ca / demo1234');
 }
 
 main()
-  .catch((e) => { console.error(e); process.exit(1); })
+  .catch((e) => {
+    console.error(e);
+    process.exit(1);
+  })
   .finally(() => prisma.$disconnect());

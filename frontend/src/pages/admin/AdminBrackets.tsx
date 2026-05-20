@@ -1,5 +1,9 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import AdminLayout from '@/components/AdminLayout';
+import SearchField from '@/components/shared/SearchField';
+import SearchEmpty from '@/components/shared/SearchEmpty';
+import { useListSearch } from '@/hooks/useListSearch';
+import { divisionSearchText } from '@/lib/search-text';
 import BracketView from '@/components/BracketView';
 import QueryState from '@/components/shared/QueryState';
 import { useDivisions } from '@/hooks/useDivisions';
@@ -11,7 +15,15 @@ import { getApiErrorMessage } from '@/lib/errors';
 export default function AdminBrackets() {
   const { data: divisions = [], isLoading, isError, refetch } = useDivisions();
   const [selectedId, setSelectedId] = useState<string | undefined>();
-  const division = divisions.find((d) => d.id === selectedId) ?? divisions[0];
+  const getText = useCallback((d: (typeof divisions)[0]) => divisionSearchText(d), []);
+  const { search, setSearch, filtered: filteredDivisions, debouncedSearch, hasQuery } =
+    useListSearch(divisions, getText);
+
+  const division =
+    filteredDivisions.find((d) => d.id === selectedId) ??
+    filteredDivisions[0] ??
+    divisions.find((d) => d.id === selectedId) ??
+    divisions[0];
   const { data: nodes = [] } = useBracket(division?.slug);
   const generateMutation = useGenerateBracket();
 
@@ -36,8 +48,19 @@ export default function AdminBrackets() {
       >
         {division && (
           <div className="space-y-4">
+            {divisions.length > 5 && (
+              <SearchField
+                value={search}
+                onChange={setSearch}
+                placeholder="Search divisions…"
+                className="max-w-md"
+              />
+            )}
+            {hasQuery && filteredDivisions.length === 0 ? (
+              <SearchEmpty query={debouncedSearch} entityLabel="divisions" />
+            ) : (
             <div className="flex flex-wrap gap-2">
-              {divisions.map((d) => (
+              {filteredDivisions.map((d) => (
                 <button
                   key={d.id}
                   onClick={() => setSelectedId(d.id)}
@@ -47,6 +70,7 @@ export default function AdminBrackets() {
                 </button>
               ))}
             </div>
+            )}
 
             <div className="rounded-lg border border-border bg-card shadow-sm p-6">
               <div className="flex items-center justify-between mb-6">

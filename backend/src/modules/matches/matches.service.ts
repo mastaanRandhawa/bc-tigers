@@ -3,7 +3,24 @@ import type { Prisma, MatchStatus, MatchEventType } from '@prisma/client';
 import prisma from '../../prisma/prisma';
 import { MatchesGateway } from '../../gateways/matches.gateway';
 
-const MATCH_INCLUDE = {
+/** Lightweight payload for lists, tickers, and home feed */
+const MATCH_LIST_INCLUDE = {
+  home_team: { select: { id: true, name: true, slug: true, logo: true } },
+  away_team: { select: { id: true, name: true, slug: true, logo: true } },
+  venue: { select: { id: true, name: true, slug: true } },
+  tournament: { select: { id: true, name: true, slug: true } },
+  division: {
+    select: {
+      id: true,
+      slug: true,
+      name: true,
+      tournament: { select: { id: true, name: true, slug: true } },
+    },
+  },
+} satisfies Prisma.MatchInclude;
+
+/** Full payload for match detail pages */
+const MATCH_DETAIL_INCLUDE = {
   home_team: true,
   away_team: true,
   venue: true,
@@ -25,6 +42,7 @@ export class MatchesService {
 
   findAll(params?: {
     status?: MatchStatus;
+    statuses?: MatchStatus[];
     tournamentId?: string;
     divisionId?: string;
     page?: number;
@@ -32,13 +50,17 @@ export class MatchesService {
   }) {
     const { page = 1, limit = 20 } = params ?? {};
     const where: Prisma.MatchWhereInput = {};
-    if (params?.status) where.status = params.status;
+    if (params?.statuses?.length) {
+      where.status = { in: params.statuses };
+    } else if (params?.status) {
+      where.status = params.status;
+    }
     if (params?.tournamentId) where.tournament_id = params.tournamentId;
     if (params?.divisionId) where.division_id = params.divisionId;
 
     return prisma.match.findMany({
       where,
-      include: MATCH_INCLUDE,
+      include: MATCH_LIST_INCLUDE,
       skip: (page - 1) * limit,
       take: limit,
       orderBy: { scheduled_start: 'desc' },
@@ -48,7 +70,7 @@ export class MatchesService {
   async findOne(id: string) {
     const match = await prisma.match.findUnique({
       where: { id },
-      include: MATCH_INCLUDE,
+      include: MATCH_DETAIL_INCLUDE,
     });
     if (!match) throw new NotFoundException('Match not found');
     return match;
@@ -57,7 +79,7 @@ export class MatchesService {
   create(data: unknown) {
     return prisma.match.create({
       data: data as Prisma.MatchCreateInput,
-      include: MATCH_INCLUDE,
+      include: MATCH_DETAIL_INCLUDE,
     });
   }
 
@@ -67,7 +89,7 @@ export class MatchesService {
     const match = await prisma.match.update({
       where: { id },
       data: updateData,
-      include: MATCH_INCLUDE,
+      include: MATCH_DETAIL_INCLUDE,
     });
 
     if (updateData.status === 'LIVE' && existing.status !== 'LIVE') {
@@ -86,7 +108,7 @@ export class MatchesService {
     const match = await prisma.match.update({
       where: { id },
       data: { home_score: homeScore, away_score: awayScore },
-      include: MATCH_INCLUDE,
+      include: MATCH_DETAIL_INCLUDE,
     });
 
     this.gateway.emitScoreUpdate(id, homeScore, awayScore);
@@ -143,7 +165,7 @@ export class MatchesService {
 
     return prisma.matchReferee.create({
       data: { match_id: matchId, referee_id: refereeId, role },
-      include: { referee: true, match: { include: MATCH_INCLUDE } },
+      include: { referee: true, match: { include: MATCH_DETAIL_INCLUDE } },
     });
   }
 

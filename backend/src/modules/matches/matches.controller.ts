@@ -21,14 +21,19 @@ export class MatchesController {
     @Query()
     q: {
       status?: MatchStatus;
+      statuses?: string;
       tournamentId?: string;
       divisionId?: string;
       page?: string;
       limit?: string;
     },
   ) {
+    const statuses = q.statuses
+      ? (q.statuses.split(',').filter(Boolean) as MatchStatus[])
+      : undefined;
     return this.service.findAll({
       status: q.status,
+      statuses,
       tournamentId: q.tournamentId,
       divisionId: q.divisionId,
       page: Number(q.page ?? 1),

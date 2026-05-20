@@ -1,4 +1,7 @@
 export const queryKeys = {
+  hub: {
+    home: ['hub', 'home'] as const,
+  },
   auth: {
     me: ['auth', 'me'] as const,
   },

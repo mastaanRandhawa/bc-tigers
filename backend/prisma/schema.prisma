@@ -319,6 +319,10 @@ model Match {
   events        MatchEvent[]
   referees      MatchReferee[]
   bracket_nodes BracketNode[]
+
+  @@index([status, scheduled_start])
+  @@index([division_id, status])
+  @@index([tournament_id, status])
 }
 
 model MatchEvent {
@@ -397,6 +401,7 @@ model Standing {
   team     Team     @relation(fields: [team_id], references: [id], onDelete: Cascade)
 
   @@unique([division_id, team_id])
+  @@index([division_id, points])
 }
 
 model PlayerStat {

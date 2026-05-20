@@ -11,6 +11,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { formatDate, formatTime, getMatchStatusBadgeVariant } from '@/lib/utils';
 import { getApiErrorMessage } from '@/lib/errors';
+import { matchSearchText } from '@/lib/search-text';
 import { Zap } from 'lucide-react';
 
 const columns = (onScore: (m: Match) => void) => [
@@ -87,6 +88,8 @@ export default function AdminMatches() {
           onAdd={formDialog.openCreate}
           onEdit={formDialog.openEdit}
           onDelete={handleDelete}
+          getSearchText={matchSearchText}
+          searchPlaceholder="Search teams, division, venue…"
         />
       </QueryState>
 

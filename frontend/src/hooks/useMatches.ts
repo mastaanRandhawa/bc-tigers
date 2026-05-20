@@ -1,27 +1,44 @@
 import { useEffect } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient, type QueryClient } from '@tanstack/react-query';
 import { queryKeys } from '@/lib/query-keys';
+import { queryTiming } from '@/lib/query-options';
 import { matchesService } from '@/services/matches.service';
 import { getSocket, SOCKET_EVENTS } from '@/lib/socket';
 import type { Match, MatchEventType } from '@/types';
+
+function invalidateMatchLists(qc: QueryClient) {
+  qc.invalidateQueries({ queryKey: ['matches'] });
+  qc.invalidateQueries({ queryKey: queryKeys.matches.live });
+  qc.invalidateQueries({ queryKey: queryKeys.hub.home });
+}
 
 export function useMatches(params?: {
   status?: string;
   tournamentId?: string;
   divisionId?: string;
+  limit?: number;
 }) {
+  const isLive = params?.status === 'LIVE';
   return useQuery({
     queryKey: queryKeys.matches.all(params),
     queryFn: async () => (await matchesService.getAll(params)).data,
+    ...(isLive ? queryTiming.live : queryTiming.standard),
   });
 }
 
 export function useLiveMatches(params?: { divisionId?: string }) {
-  const query = useMatches({ status: 'LIVE', divisionId: params?.divisionId });
-  return {
-    ...query,
-    data: query.data?.filter((m) => m.status === 'LIVE') ?? [],
-  };
+  return useQuery({
+    queryKey: queryKeys.matches.live,
+    queryFn: async () =>
+      (
+        await matchesService.getAll({
+          status: 'LIVE',
+          divisionId: params?.divisionId,
+          limit: 20,
+        })
+      ).data,
+    ...queryTiming.live,
+  });
 }
 
 export function useMatch(id?: string) {
@@ -41,7 +58,7 @@ export function useMatch(id?: string) {
     const handleUpdate = (data: { matchId?: string; home_score?: number; away_score?: number }) => {
       if (data.matchId === id || !data.matchId) {
         qc.invalidateQueries({ queryKey: queryKeys.matches.detail(id) });
-        qc.invalidateQueries({ queryKey: ['matches'] });
+        invalidateMatchLists(qc);
       }
     };
 
@@ -64,7 +81,7 @@ export function useCreateMatch() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (data: Partial<Match>) => matchesService.create(data),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['matches'] }),
+    onSuccess: () => invalidateMatchLists(qc),
   });
 }
 
@@ -73,7 +90,7 @@ export function useUpdateMatch() {
   return useMutation({
     mutationFn: ({ id, data }: { id: string; data: Partial<Match> }) =>
       matchesService.update(id, data),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['matches'] }),
+    onSuccess: () => invalidateMatchLists(qc),
   });
 }
 
@@ -84,7 +101,7 @@ export function useUpdateMatchScore() {
       matchesService.updateScore(id, home, away),
     onSuccess: (_, { id }) => {
       qc.invalidateQueries({ queryKey: queryKeys.matches.detail(id) });
-      qc.invalidateQueries({ queryKey: ['matches'] });
+      invalidateMatchLists(qc);
     },
   });
 }
@@ -115,6 +132,6 @@ export function useDeleteMatch() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => matchesService.delete(id),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['matches'] }),
+    onSuccess: () => invalidateMatchLists(qc),
   });
 }

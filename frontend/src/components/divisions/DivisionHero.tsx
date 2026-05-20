@@ -1,21 +1,26 @@
 import { Link } from 'react-router-dom';
-import { Flag } from 'lucide-react';
 import type { Division } from '@/types';
+import type { DivisionTheme } from '@/lib/division-theme';
 
 interface DivisionHeroProps {
   division: Division;
+  theme: DivisionTheme;
 }
 
-export default function DivisionHero({ division }: DivisionHeroProps) {
+export default function DivisionHero({ division, theme }: DivisionHeroProps) {
   const tournament = division.tournament;
 
   return (
-    <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-4 md:py-5 safe-x">
+    <div className="page-container relative z-10 pt-3 pb-4">
+      {/* Breadcrumb */}
       <nav
         aria-label="Breadcrumb"
-        className="flex items-center gap-1.5 text-xs text-zinc-500 mb-3 min-w-0 overflow-x-auto no-scrollbar"
+        className="mb-3 flex min-w-0 items-center gap-1.5 overflow-x-auto text-xs no-scrollbar"
       >
-        <Link to="/tournaments" className="hover:text-foreground transition-colors shrink-0">
+        <Link
+          to="/tournaments"
+          className="shrink-0 text-zinc-500 transition-colors hover:text-foreground"
+        >
           Tournaments
         </Link>
         <span className="shrink-0 text-zinc-300">/</span>
@@ -23,7 +28,7 @@ export default function DivisionHero({ division }: DivisionHeroProps) {
           <>
             <Link
               to={`/tournaments/${tournament.slug}`}
-              className="hover:text-foreground transition-colors truncate max-w-[8rem] sm:max-w-xs"
+              className="max-w-[8rem] truncate text-zinc-500 transition-colors hover:text-foreground sm:max-w-xs"
               title={tournament.name}
             >
               {tournament.name}
@@ -31,18 +36,42 @@ export default function DivisionHero({ division }: DivisionHeroProps) {
             <span className="shrink-0 text-zinc-300">/</span>
           </>
         )}
-        <span className="text-foreground font-medium truncate">{division.name}</span>
+        <span className="truncate font-medium text-foreground">{division.name}</span>
       </nav>
 
-      <div className="flex items-center gap-4">
-        <div className="w-11 h-11 sm:w-12 sm:h-12 rounded-xl flex items-center justify-center shrink-0 bg-primary-muted border border-primary/15">
-          <Flag className="w-5 h-5 sm:w-6 sm:h-6 text-primary" />
+      {/* Division identity row */}
+      <div className="flex items-center gap-3">
+        {/* Division color swatch / icon */}
+        <div
+          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl shadow-sm sm:h-12 sm:w-12"
+          style={{
+            backgroundColor: theme.accent,
+            border: `1.5px solid color-mix(in srgb, ${theme.primary} 25%, transparent)`,
+          }}
+          aria-hidden
+        >
+          {/* Soccer-ball inspired dot pattern using division primary */}
+          <svg viewBox="0 0 24 24" className="h-6 w-6 sm:h-7 sm:w-7" fill="none">
+            <circle cx="12" cy="12" r="9" stroke={theme.primary} strokeWidth="1.5" />
+            <circle cx="12" cy="12" r="2.5" fill={theme.primary} />
+            <path
+              d="M12 3 L12 6.5M12 17.5 L12 21M3 12 L6.5 12M17.5 12 L21 12"
+              stroke={theme.primary}
+              strokeWidth="1.5"
+              strokeLinecap="round"
+              opacity="0.4"
+            />
+          </svg>
         </div>
+
         <div className="min-w-0 flex-1">
-          <h1 className="division-hero-headline text-2xl sm:text-3xl md:text-4xl truncate">
+          <h1
+            className="division-hero-headline truncate text-2xl sm:text-3xl md:text-4xl"
+            style={{ color: theme.primary }}
+          >
             {division.name}
           </h1>
-          <div className="flex flex-wrap gap-1.5 mt-2">
+          <div className="mt-2 flex flex-wrap gap-1.5">
             {division.age_group && (
               <span className="division-badge">{division.age_group}</span>
             )}

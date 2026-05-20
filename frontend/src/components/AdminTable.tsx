@@ -30,6 +30,9 @@ interface AdminTableProps<T extends { id: string }> {
   onDelete?: (row: T) => void;
   searchable?: boolean;
   searchKeys?: (keyof T)[];
+  /** Search nested fields (e.g. team names on matches) */
+  getSearchText?: (row: T) => string;
+  searchPlaceholder?: string;
 }
 
 export default function AdminTable<T extends { id: string }>({
@@ -41,18 +44,22 @@ export default function AdminTable<T extends { id: string }>({
   onDelete,
   searchable = true,
   searchKeys = [],
+  getSearchText,
+  searchPlaceholder = 'Search…',
 }: AdminTableProps<T>) {
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const pageSize = 10;
 
+  const q = search.trim().toLowerCase();
   const filtered =
-    search && searchKeys.length > 0
-      ? data.filter((row) =>
-          searchKeys.some((key) =>
-            String(row[key] ?? '').toLowerCase().includes(search.toLowerCase())
-          )
-        )
+    q && (getSearchText || searchKeys.length > 0)
+      ? data.filter((row) => {
+          if (getSearchText) return getSearchText(row).toLowerCase().includes(q);
+          return searchKeys.some((key) =>
+            String(row[key] ?? '').toLowerCase().includes(q),
+          );
+        })
       : data;
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
@@ -67,7 +74,7 @@ export default function AdminTable<T extends { id: string }>({
             <div className="relative flex-1 sm:w-64">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
-                placeholder="Search..."
+                placeholder={searchPlaceholder}
                 value={search}
                 onChange={(e) => {
                   setSearch(e.target.value);

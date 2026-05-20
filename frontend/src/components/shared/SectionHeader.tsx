@@ -1,6 +1,5 @@
 import { Link } from 'react-router-dom';
 import { ChevronRight } from 'lucide-react';
-import type { ReactNode } from 'react';
 import { cn } from '@/lib/utils';
 
 interface SectionHeaderProps {
@@ -8,7 +7,6 @@ interface SectionHeaderProps {
   subtitle?: string;
   href?: string;
   linkLabel?: string;
-  action?: ReactNode;
   className?: string;
 }
 
@@ -17,23 +15,25 @@ export default function SectionHeader({
   subtitle,
   href,
   linkLabel = 'View all',
-  action,
   className,
 }: SectionHeaderProps) {
   return (
-    <div className={cn('flex flex-wrap items-center justify-between gap-3 mb-4', className)}>
+    <div className={cn('mb-3 flex items-start justify-between gap-3', className)}>
       <div className="min-w-0">
-        <h2 className="text-section m-0">{title}</h2>
-        {subtitle && <p className="text-body-sm mt-1">{subtitle}</p>}
+        <h2 className="text-base font-semibold tracking-tight text-foreground font-display m-0">
+          {title}
+        </h2>
+        {subtitle && (
+          <p className="text-body-sm mt-0.5 m-0">{subtitle}</p>
+        )}
       </div>
-      {action}
-      {href && !action && (
+      {href && (
         <Link
           to={href}
-          className="inline-flex items-center gap-1 text-sm font-medium text-primary hover:text-primary-hover transition-colors shrink-0"
+          className="section-link inline-flex shrink-0 items-center gap-0.5 text-xs font-medium text-primary transition-colors hover:text-primary-hover"
         >
           {linkLabel}
-          <ChevronRight className="w-4 h-4" />
+          <ChevronRight className="h-3.5 w-3.5" aria-hidden />
         </Link>
       )}
     </div>

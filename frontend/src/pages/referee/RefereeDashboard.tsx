@@ -6,7 +6,11 @@ import { useAuthStore } from '@/store/authStore';
 import { formatDate, formatTime, getStatusColor } from '@/lib/utils';
 import { getMatchPath } from '@/lib/division-routes';
 import { LayoutDashboard, Calendar, Zap, MapPin, ClipboardList, Trophy } from 'lucide-react';
-import { useEffect } from 'react';
+import { useCallback, useEffect } from 'react';
+import SearchField from '@/components/shared/SearchField';
+import SearchEmpty from '@/components/shared/SearchEmpty';
+import { useListSearch } from '@/hooks/useListSearch';
+import { matchSearchText } from '@/lib/search-text';
 
 const nav = [
   { label: 'Dashboard', href: '/referee', icon: LayoutDashboard },
@@ -44,6 +48,24 @@ export default function RefereeDashboard() {
   const live = myMatches.filter((m) => m.status === 'LIVE');
   const livePath = live[0] ? getMatchPath(live[0]) : '/tournaments';
 
+  const getMatchText = useCallback((m: (typeof todayMatches)[0]) => matchSearchText(m), []);
+  const {
+    search,
+    setSearch,
+    filtered: filteredToday,
+    debouncedSearch,
+    hasQuery,
+  } = useListSearch(todayMatches, getMatchText);
+
+  const getLiveText = useCallback((m: (typeof live)[0]) => matchSearchText(m), []);
+  const {
+    search: liveSearch,
+    setSearch: setLiveSearch,
+    filtered: filteredLive,
+    debouncedSearch: debouncedLiveSearch,
+    hasQuery: hasLiveQuery,
+  } = useListSearch(live, getLiveText);
+
   return (
     <PortalLayout title="Referee Portal" subtitle="Match Assignments" nav={nav}>
       <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
@@ -72,9 +94,22 @@ export default function RefereeDashboard() {
               <h2 className="font-semibold text-foreground">Today's Schedule</h2>
             </div>
           </div>
+          {todayMatches.length > 3 && (
+            <div className="border-b border-border px-4 py-2">
+              <SearchField
+                value={search}
+                onChange={setSearch}
+                placeholder="Search today's matches…"
+                className="max-w-full"
+              />
+            </div>
+          )}
           <QueryState isLoading={isLoading} isEmpty={todayMatches.length === 0} emptyMessage="No matches scheduled today">
+            {hasQuery && filteredToday.length === 0 ? (
+              <SearchEmpty query={debouncedSearch} entityLabel="matches" />
+            ) : (
             <div className="divide-y divide-gray-50">
-              {todayMatches.map((m) => (
+              {filteredToday.map((m) => (
                 <Link
                   key={m.id}
                   to={getMatchPath(m)}
@@ -100,6 +135,7 @@ export default function RefereeDashboard() {
                 </Link>
               ))}
             </div>
+            )}
           </QueryState>
         </div>
 
@@ -114,9 +150,22 @@ export default function RefereeDashboard() {
               View Live →
             </Link>
           </div>
+          {live.length > 3 && (
+            <div className="border-b border-border px-4 py-2">
+              <SearchField
+                value={liveSearch}
+                onChange={setLiveSearch}
+                placeholder="Search live matches…"
+                className="max-w-full"
+              />
+            </div>
+          )}
           <QueryState isEmpty={live.length === 0} emptyMessage="No live matches">
+            {hasLiveQuery && filteredLive.length === 0 ? (
+              <SearchEmpty query={debouncedLiveSearch} entityLabel="matches" />
+            ) : (
             <div className="divide-y divide-gray-50">
-              {live.map((m) => (
+              {filteredLive.map((m) => (
                 <Link
                   key={m.id}
                   to={getMatchPath(m)}
@@ -134,6 +183,7 @@ export default function RefereeDashboard() {
                 </Link>
               ))}
             </div>
+            )}
           </QueryState>
         </div>
       </div>

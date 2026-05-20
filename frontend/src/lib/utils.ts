@@ -1,22 +1,10 @@
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
+export { formatDate, formatDateTime, formatScheduleDay, formatTime } from '@/lib/date';
+
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
-}
-
-export function formatDate(date: string | Date, options?: Intl.DateTimeFormatOptions): string {
-  const d = typeof date === 'string' ? new Date(date) : date;
-  return d.toLocaleDateString('en-US', options ?? { month: 'short', day: 'numeric', year: 'numeric' });
-}
-
-export function formatTime(date: string | Date): string {
-  const d = typeof date === 'string' ? new Date(date) : date;
-  return d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
-}
-
-export function formatDateTime(date: string | Date): string {
-  return `${formatDate(date)} • ${formatTime(date)}`;
 }
 
 export function slugify(text: string): string {

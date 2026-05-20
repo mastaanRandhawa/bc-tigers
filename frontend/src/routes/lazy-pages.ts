@@ -28,11 +28,20 @@ export const DivisionTeamsPage = lazyPage(
 export const DivisionTeamDetailPage = lazyPage(
   () => import("@/pages/divisions/DivisionTeamDetailPage"),
 );
-export const DivisionPlayersPage = lazyPage(
-  () => import("@/pages/divisions/DivisionPlayersPage"),
-);
 export const DivisionPlayerDetailPage = lazyPage(
   () => import("@/pages/divisions/DivisionPlayerDetailPage"),
+);
+export const DivisionPlayersListRedirect = lazyPage(
+  () =>
+    import("@/pages/divisions/DivisionPlayersRedirect").then((m) => ({
+      default: m.DivisionPlayersListRedirect,
+    })),
+);
+export const DivisionPlayerLegacyRedirect = lazyPage(
+  () =>
+    import("@/pages/divisions/DivisionPlayersRedirect").then((m) => ({
+      default: m.DivisionPlayerLegacyRedirect,
+    })),
 );
 export const DivisionSchedulePage = lazyPage(
   () => import("@/pages/divisions/DivisionSchedulePage"),
@@ -72,6 +81,10 @@ export const DivisionSlugRedirect = lazyPage(
   () => import("@/components/shared/DivisionSlugRedirect"),
 );
 
+// Legacy division player URLs (redirect only — no DivisionPlayersPage)
+// /players → teams list; /players/:slug → team-scoped player profile
+
+// Auth
 export const LoginPage = lazyPage(() => import("@/pages/auth/LoginPage"));
 export const RegisterPage = lazyPage(() => import("@/pages/auth/RegisterPage"));
 export const ForgotPasswordPage = lazyPage(
@@ -117,6 +130,7 @@ export const AdminSettings = lazyPage(
   () => import("@/pages/admin/AdminSettings"),
 );
 
+// Role portals
 export const CoachDashboard = lazyPage(
   () => import("@/pages/coach/CoachDashboard"),
 );

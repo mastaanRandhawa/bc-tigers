@@ -24,9 +24,10 @@ export class PlayersController {
     });
   }
 
-  @Get(':slug')
-  findOne(@Param('slug') slug: string) {
-    return this.service.findOne(slug);
+  /** Accepts player UUID or legacy slug */
+  @Get(':idOrSlug')
+  findOne(@Param('idOrSlug') idOrSlug: string) {
+    return this.service.findOne(idOrSlug);
   }
 
   @Post()

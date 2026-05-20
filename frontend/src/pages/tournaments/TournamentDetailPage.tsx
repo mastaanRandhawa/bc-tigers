@@ -1,13 +1,21 @@
+import { useCallback } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import SearchField from '@/components/shared/SearchField';
+import SearchEmpty from '@/components/shared/SearchEmpty';
+import { useListSearch } from '@/hooks/useListSearch';
+import { divisionSearchText } from '@/lib/search-text';
 import PageLayout from '@/components/PageLayout';
 import QueryState from '@/components/shared/QueryState';
 import MatchCard from '@/components/MatchCard';
 import StandingsTable from '@/components/StandingsTable';
+import SectionHeader from '@/components/shared/SectionHeader';
+import Section from '@/components/shared/Section';
+import DivisionDirectoryCard from '@/components/shared/DivisionDirectoryCard';
 import { useTournament } from '@/hooks/useTournaments';
 import { useMatches } from '@/hooks/useMatches';
 import { useTopScorers } from '@/hooks/useStats';
 import { useStandings } from '@/hooks/useStandings';
-import { Trophy, Calendar, MapPin, Flag, Users, ChevronRight } from 'lucide-react';
+import { Trophy, Calendar, MapPin, Flag, ChevronRight } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import {
   getDivisionStandingsPath,
@@ -21,14 +29,25 @@ export default function TournamentDetailPage() {
   const { data: tournament, isLoading, isError, refetch } = useTournament(tournamentSlug);
   const { data: matches = [] } = useMatches(tournament ? { tournamentId: tournament.id } : undefined);
   const { data: topScorers = [] } = useTopScorers(
-    tournament ? { tournamentId: tournament.id, limit: 5 } : undefined
+    tournament ? { tournamentId: tournament.id, limit: 5 } : undefined,
   );
   const firstDivision = tournament?.divisions?.[0];
   const { data: standings = [] } = useStandings(firstDivision?.id);
 
   const featured = matches.filter((m) => m.status === 'LIVE' || m.status === 'COMPLETED').slice(0, 2);
-  const upcoming = matches.filter((m) => m.status === 'SCHEDULED').slice(0, 2);
+  const upcoming = matches.filter((m) => m.status === 'SCHEDULED').slice(0, 3);
   const divisions = tournament?.divisions ?? [];
+  const getDivisionText = useCallback(
+    (d: (typeof divisions)[0]) => divisionSearchText(d),
+    [],
+  );
+  const {
+    search: divisionSearch,
+    setSearch: setDivisionSearch,
+    filtered: filteredDivisions,
+    debouncedSearch: debouncedDivisionSearch,
+    hasQuery: hasDivisionQuery,
+  } = useListSearch(divisions, getDivisionText);
   const primaryDivision = divisions[0];
   const standingsPath = primaryDivision
     ? getDivisionStandingsPath({ ...primaryDivision, tournament })
@@ -52,32 +71,34 @@ export default function TournamentDetailPage() {
       >
         {tournament && (
           <>
-            <div className="bg-hero-gradient border-b border-border py-8 sm:py-10 px-4 relative overflow-hidden">
-              <div className="absolute inset-0 bg-brand-grid pointer-events-none opacity-50" />
-              <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary/60 via-primary to-primary/40" />
-              <div className="max-w-6xl mx-auto relative z-10">
-                <div className="flex flex-col md:flex-row items-start md:items-center gap-5">
-                  <div className="bg-primary-muted p-3 rounded-xl flex-shrink-0 border border-primary/15">
-                    <Trophy className="w-10 h-10 text-primary" />
+            <div className="relative overflow-hidden border-b border-border bg-hero-gradient py-6 sm:py-8">
+              <div className="pointer-events-none absolute inset-0 bg-brand-grid opacity-40" />
+              <div className="relative z-10 mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+                <div className="flex flex-col items-start gap-4 md:flex-row md:items-center">
+                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-border bg-white shadow-sm">
+                    <Trophy className="h-6 w-6 text-primary" aria-hidden />
                   </div>
-                  <div className="flex-1">
-                    <Badge variant={tournament.status === 'ACTIVE' ? 'success' : 'default'} className="mb-2">
+                  <div className="min-w-0 flex-1">
+                    <Badge
+                      variant={tournament.status === 'ACTIVE' ? 'success' : 'default'}
+                      className="mb-2 rounded-md"
+                    >
                       {tournament.status}
                     </Badge>
-                    <h1 className="text-page-title m-0">
-                      {tournament.name}
-                    </h1>
-                    <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mt-3 text-zinc-500 text-sm">
-                      <span className="flex items-center gap-1">
-                        <Calendar className="w-4 h-4" />
+                    <h1 className="text-page-title m-0">{tournament.name}</h1>
+                    <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-zinc-500">
+                      <span className="inline-flex items-center gap-1">
+                        <Calendar className="h-4 w-4" aria-hidden />
                         {formatDate(tournament.start_date)} – {formatDate(tournament.end_date)}
                       </span>
-                      <span className="flex items-center gap-1">
-                        <MapPin className="w-4 h-4" />
-                        {tournament.location}
-                      </span>
-                      <span className="flex items-center gap-1">
-                        <Flag className="w-4 h-4" />
+                      {tournament.location && (
+                        <span className="inline-flex items-center gap-1">
+                          <MapPin className="h-4 w-4" aria-hidden />
+                          {tournament.location}
+                        </span>
+                      )}
+                      <span className="inline-flex items-center gap-1">
+                        <Flag className="h-4 w-4" aria-hidden />
                         {tournament.tournament_type.replace(/_/g, ' ')}
                       </span>
                     </div>
@@ -86,102 +107,107 @@ export default function TournamentDetailPage() {
               </div>
             </div>
 
-            <div className="max-w-6xl mx-auto px-4 py-6 sm:py-8 grid grid-cols-1 lg:grid-cols-3 gap-6">
-              <div className="lg:col-span-2 space-y-8">
+            <div className="mx-auto grid max-w-6xl grid-cols-1 gap-5 px-4 py-5 sm:px-6 sm:py-6 lg:grid-cols-3 lg:gap-6 lg:px-8">
+              <div className="space-y-5 lg:col-span-2">
                 {tournament.description && (
-                  <section className="rounded-lg border border-border bg-card shadow-sm p-6">
-                    <h2 className="text-lg font-semibold text-foreground uppercase mb-3">About This Tournament</h2>
-                    <p className="text-muted-foreground text-sm leading-relaxed">{tournament.description}</p>
-                  </section>
+                  <Section>
+                    <h2 className="text-subsection mb-2">About</h2>
+                    <p className="text-body m-0">{tournament.description}</p>
+                  </Section>
                 )}
 
                 <section>
-                  <h2 className="text-section mb-4">Divisions</h2>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    {divisions.map((div) => (
-                      <a
-                        key={div.id}
-                        href={`/tournaments/${tournament.slug}/divisions/${div.slug}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="group rounded-xl border border-border bg-white shadow-sm hover:shadow-md transition-all duration-200 hover:-translate-y-px p-4 flex items-center gap-3"
-                      >
-                        <div className="p-2 rounded-lg flex-shrink-0 bg-primary-muted border border-primary/10">
-                          <Flag className="w-5 h-5 text-primary" />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors truncate">
-                            {div.name}
-                          </h3>
-                          <div className="flex items-center gap-3 text-xs text-zinc-500 mt-1">
-                            {div.age_group && <span>{div.age_group}</span>}
-                            <span>{div.gender}</span>
-                            <span className="flex items-center gap-0.5">
-                              <Users className="w-3 h-3" /> {div.max_teams} max
-                            </span>
-                          </div>
-                        </div>
-                        <ChevronRight className="w-4 h-4 text-zinc-300 group-hover:text-primary transition-colors shrink-0" />
-                      </a>
-                    ))}
-                  </div>
+                  <SectionHeader title="Divisions" />
+                  {divisions.length > 3 && (
+                    <SearchField
+                      value={divisionSearch}
+                      onChange={setDivisionSearch}
+                      placeholder="Search divisions…"
+                      className="mb-3 max-w-md"
+                    />
+                  )}
+                  {hasDivisionQuery && filteredDivisions.length === 0 ? (
+                    <SearchEmpty query={debouncedDivisionSearch} entityLabel="divisions" />
+                  ) : (
+                    <div className="space-y-2">
+                      {filteredDivisions.map((div) => (
+                        <DivisionDirectoryCard
+                          key={div.id}
+                          division={{ ...div, tournament }}
+                        />
+                      ))}
+                    </div>
+                  )}
                 </section>
 
-                <section>
-                  <h2 className="text-section mb-4">Featured matches</h2>
-                  <div className="space-y-3">
-                    {featured.length > 0 ? (
-                      featured.map((m) => <MatchCard key={m.id} match={m} />)
-                    ) : (
-                      <p className="text-muted-foreground text-sm">No featured matches yet.</p>
-                    )}
-                  </div>
-                </section>
+                <Section>
+                  <SectionHeader title="Featured matches" />
+                  {featured.length > 0 ? (
+                    <div className="divide-y divide-border">
+                      {featured.map((m) => (
+                        <MatchCard key={m.id} match={m} flat />
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-sm text-zinc-500">No featured matches yet.</p>
+                  )}
+                </Section>
 
-                <section>
-                  <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-section">Standings</h2>
-                    <Link to={standingsPath ?? `/tournaments/${tournament.slug}`} className="text-sm text-primary font-semibold hover:underline flex items-center gap-1">
-                      Full Standings <ChevronRight className="w-4 h-4" />
-                    </Link>
-                  </div>
-                  <StandingsTable standings={standings} compact division={firstDivision} />
-                </section>
+                <Section>
+                  <SectionHeader
+                    title="Standings"
+                    href={standingsPath ?? `/tournaments/${tournament.slug}`}
+                    linkLabel="Full table"
+                  />
+                  <StandingsTable
+                    standings={standings}
+                    compact
+                    division={firstDivision}
+                    searchable={false}
+                  />
+                </Section>
               </div>
 
-              <div className="space-y-6">
-                <div className="rounded-lg border border-border bg-card shadow-sm p-5">
-                  <h3 className="font-semibold text-foreground uppercase mb-4">Upcoming Fixtures</h3>
-                  <div className="space-y-2">
+              <div className="space-y-4">
+                <section className="rounded-xl bg-white shadow-sm ring-1 ring-border/60 p-3.5">
+                  <SectionHeader
+                    title="Upcoming"
+                    href={schedulePath ?? `/tournaments/${tournament.slug}`}
+                    linkLabel="Schedule"
+                  />
+                  <div className="divide-y divide-border">
                     {upcoming.map((m) => (
                       <MatchCard key={m.id} match={m} compact />
                     ))}
                   </div>
-                  <Link to={schedulePath ?? `/tournaments/${tournament.slug}`} className="block text-center text-sm text-primary font-semibold mt-4 hover:underline">
-                    Full Schedule →
-                  </Link>
-                </div>
+                  {upcoming.length === 0 && (
+                    <p className="text-sm text-zinc-500">No upcoming fixtures.</p>
+                  )}
+                </section>
 
-                <div className="rounded-lg border border-border bg-card shadow-sm p-5">
-                  <h3 className="font-semibold text-foreground uppercase mb-4">Top Scorers</h3>
-                  <div className="space-y-3">
+                <Section>
+                  <SectionHeader
+                    title="Top scorers"
+                    href={statsPath ?? `/tournaments/${tournament.slug}`}
+                    linkLabel="All stats"
+                  />
+                  <div className="space-y-2.5">
                     {topScorers.map((stat, i) => (
                       <div key={stat.id} className="flex items-center gap-3">
-                        <span className="text-sm font-medium text-zinc-400 w-5 text-center tabular-nums">{i + 1}</span>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-sm font-bold text-foreground truncate">
+                        <span className="w-5 text-center text-sm font-medium tabular-nums text-zinc-400">
+                          {i + 1}
+                        </span>
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-sm font-semibold text-foreground">
                             {stat.player?.first_name} {stat.player?.last_name}
                           </p>
-                          <p className="text-xs text-muted-foreground truncate">{stat.team?.name}</p>
+                          <p className="truncate text-xs text-zinc-500">{stat.team?.name}</p>
                         </div>
-                        <span className="text-primary font-semibold text-sm tabular-nums">{stat.goals}G</span>
+                        <span className="text-sm font-bold tabular-nums text-primary">{stat.goals}G</span>
                       </div>
                     ))}
                   </div>
-                  <Link to={statsPath ?? `/tournaments/${tournament.slug}`} className="block text-center text-sm text-primary font-semibold mt-4 hover:underline">
-                    All Stats →
-                  </Link>
-                </div>
+                </Section>
               </div>
             </div>
           </>

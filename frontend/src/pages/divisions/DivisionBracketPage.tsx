@@ -21,9 +21,7 @@ export default function DivisionBracketPage() {
         onRetry={() => refetch()}
         emptyMessage="Bracket has not been generated yet."
       >
-        <div className="rounded-[2rem] border-2 border-gray-200 bg-gray-50 p-6 md:p-8">
-          <BracketView nodes={nodes} />
-        </div>
+        <BracketView nodes={nodes} />
       </QueryState>
     </>
   );

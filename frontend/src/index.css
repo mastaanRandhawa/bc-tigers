@@ -234,6 +234,27 @@
     padding-bottom: max(0px, env(safe-area-inset-bottom));
   }
 
+  /* Unified horizontal layout — one max-width + padding for header, content, footer */
+  .page-container {
+    @apply mx-auto w-full max-w-6xl;
+    padding-left: max(1rem, env(safe-area-inset-left));
+    padding-right: max(1rem, env(safe-area-inset-right));
+  }
+
+  @media (min-width: 640px) {
+    .page-container {
+      padding-left: max(1.5rem, env(safe-area-inset-left));
+      padding-right: max(1.5rem, env(safe-area-inset-right));
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .page-container {
+      padding-left: max(2rem, env(safe-area-inset-left));
+      padding-right: max(2rem, env(safe-area-inset-right));
+    }
+  }
+
   /* Subtle brand texture — no heavy text shadows */
   .bg-brand-grid {
     background-image:
@@ -250,50 +271,23 @@
     background: linear-gradient(180deg, #FEF3EB 0%, #ffffff 40%, #fafafa 100%);
   }
 
-  .sheet-top {
-    @apply bg-white text-foreground rounded-t-2xl md:rounded-t-3xl shadow-[0_-4px_24px_rgba(15,23,42,0.06)] relative z-20;
-  }
-
-  /* Design system cards */
-  .ds-card {
-    @apply rounded-xl border border-border bg-card shadow-sm transition-all duration-200;
-  }
-
+  /*
+   * Design tokens (utilities)
+   * - page-container: max-w-6xl + safe horizontal padding
+   * - Section component: ring-1 ring-border/60 panel (see Section.tsx)
+   * - feature-card / ds-card-hover: interactive list cards
+   * - StatCard: admin + division stat tiles
+   * - division-nav-pill*: division shell tabs (theme accent)
+   * - nav-pill-light*: SiteHeader on hero
+   * - nav-pill-dark*: admin mobile nav
+   */
   .ds-card-hover {
     @apply rounded-xl border border-border bg-card shadow-sm transition-all duration-200 hover:shadow-md hover:-translate-y-px;
-  }
-
-  .ds-stat-card {
-    @apply rounded-xl border border-border bg-card shadow-sm px-4 py-3;
-  }
-
-  .ds-stat-value {
-    @apply text-2xl font-bold tracking-tight text-foreground font-display leading-none;
-  }
-
-  .ds-stat-label {
-    @apply text-xs text-zinc-500 font-medium mt-1;
-  }
-
-  .ds-section {
-    @apply rounded-xl border border-border bg-white shadow-sm p-4 md:p-5;
-  }
-
-  .ds-panel {
-    @apply rounded-xl border border-border bg-white shadow-sm;
   }
 
   /* Pill navigation — light surfaces */
   .nav-pill {
     @apply inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 whitespace-nowrap;
-  }
-
-  .nav-pill-active {
-    @apply inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-semibold transition-all duration-200 whitespace-nowrap bg-white text-foreground shadow-sm border border-border;
-  }
-
-  .nav-pill-inactive {
-    @apply inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 whitespace-nowrap text-zinc-500 hover:text-foreground hover:bg-white/60;
   }
 
   .nav-pill-light {
@@ -312,12 +306,30 @@
     @apply inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-semibold transition-all duration-200 whitespace-nowrap bg-white text-foreground shadow-sm border border-border;
   }
 
-  .feature-card {
-    @apply bg-white rounded-xl p-5 flex flex-col border border-border shadow-sm hover:shadow-md transition-all duration-200 hover:-translate-y-px;
+  .page-fade-in {
+    animation: page-fade-in 0.2s ease-out both;
   }
 
-  .home-section {
-    @apply rounded-xl border border-border bg-white p-4 md:p-5 shadow-sm;
+  @keyframes page-fade-in {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  .feature-card {
+    @apply bg-white rounded-xl p-3.5 md:p-4 flex flex-col border border-border shadow-sm hover:shadow-md transition-all duration-200 hover:-translate-y-px;
+  }
+
+  .match-card-broadcast {
+    @apply rounded-xl border border-border bg-white shadow-sm transition-all duration-200 hover:shadow-md hover:border-zinc-300;
+  }
+
+  .hero-headline {
+    font-family: "Arial Black", Impact, var(--font-display), sans-serif;
+    @apply font-black leading-[0.85] tracking-tighter uppercase;
   }
 
   @keyframes live-ticker {
@@ -340,13 +352,17 @@
     }
   }
 
-  /* Admin — dashboard aesthetic */
+  /* Admin — dashboard aesthetic (neutral, not brand-orange) */
   .admin-shell {
     @apply bg-zinc-50;
   }
 
+  .admin-topbar {
+    @apply sticky top-0 z-50 w-full border-b border-border bg-white/95 backdrop-blur-sm shadow-sm;
+  }
+
   .admin-sidebar {
-    @apply hidden lg:flex lg:flex-col lg:w-56 xl:w-60 shrink-0 border-r border-border bg-white;
+    @apply hidden lg:flex lg:flex-col lg:w-52 xl:w-56 shrink-0 border-r border-border bg-white;
   }
 
   .admin-sidebar-link {
@@ -358,7 +374,7 @@
   }
 
   .admin-sidebar-link-active {
-    @apply bg-zinc-100 text-foreground font-medium border-l-2 border-primary pl-[calc(0.625rem-2px)];
+    @apply bg-zinc-100 text-foreground font-semibold border-l-2 border-zinc-900 pl-[calc(0.625rem-2px)];
   }
 
   .admin-mobile-nav {
@@ -369,7 +385,7 @@
     @apply rounded-xl border border-border bg-white shadow-sm;
   }
 
-  /* Division public theme */
+  /* Division public theme — CSS vars set per-division via inline style on .division-theme-root */
   .division-theme-root {
     --division-primary: #F48735;
     --division-primary-hover: #D66E1F;
@@ -383,64 +399,100 @@
     line-height: var(--leading-tight);
   }
 
+  /* Nav pill — uses CSS vars for per-division active color */
   .division-nav-pill {
-    @apply px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 whitespace-nowrap text-zinc-500 hover:text-foreground hover:bg-zinc-100;
+    @apply px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 whitespace-nowrap text-zinc-500 hover:text-foreground hover:bg-zinc-100/80;
   }
 
   .division-nav-pill-active {
-    @apply bg-white text-foreground font-semibold shadow-sm border border-border;
+    @apply font-semibold shadow-sm;
+    background-color: var(--division-accent);
+    color: var(--division-primary);
+    border: 1px solid color-mix(in srgb, var(--division-primary) 22%, transparent);
   }
 
+  /* Badges use division accent */
   .division-badge {
-    @apply text-xs font-medium px-2.5 py-0.5 rounded-md bg-zinc-100 text-zinc-600 border border-border;
+    @apply text-xs font-medium px-2 py-0.5 rounded-md;
+    background-color: var(--division-accent);
+    color: var(--division-accent-fg);
+    border: 1px solid color-mix(in srgb, var(--division-primary) 18%, transparent);
   }
 
-  .division-stat-card {
-    @apply rounded-xl border border-border bg-card shadow-sm px-4 py-3;
-  }
-
-  .division-stat-value {
-    @apply text-2xl font-bold tracking-tight font-display text-foreground leading-none;
-  }
-
-  .division-stat-label {
-    @apply text-xs text-zinc-500 font-medium mt-1;
-  }
-
-  .division-section-title {
-    @apply text-2xl font-semibold tracking-tight text-foreground font-display;
-  }
-
+  /* Links in division context use division primary */
   .division-link {
-    @apply font-medium text-primary hover:text-primary-hover transition-colors;
+    font-weight: 500;
+    color: var(--division-primary);
+    transition: color 0.15s;
+  }
+  .division-link:hover {
+    color: var(--division-primary-hover);
   }
 
+  /* Page header — left accent stripe using division color */
   .division-page-header {
-    @apply mb-5 pb-4 border-b border-border;
+    @apply mb-4 pl-3;
+    border-left: 3px solid var(--division-primary);
   }
 
   .division-page-header h2 {
-    @apply text-2xl font-semibold tracking-tight text-foreground font-display m-0;
+    @apply text-xl font-semibold tracking-tight text-foreground font-display m-0;
   }
 
-  /* Bracket */
+  /* Section header link uses division primary */
+  .division-theme-root .section-link {
+    color: var(--division-primary);
+  }
+  .division-theme-root .section-link:hover {
+    color: var(--division-primary-hover);
+  }
+
+  /* Bracket — compact tournament tree */
+  .bracket-shell {
+    @apply rounded-xl border border-border bg-zinc-50/80 p-3 md:p-4;
+  }
+
+  .bracket-track {
+    @apply flex items-stretch justify-center gap-0 min-w-max py-2 mx-auto;
+  }
+
   .bracket-round {
-    @apply flex flex-col gap-3 min-w-[200px];
+    @apply flex flex-col gap-2 min-w-[168px] sm:min-w-[180px];
   }
 
   .bracket-round-title {
-    @apply text-xs font-medium uppercase tracking-wider text-zinc-500 text-center mb-2;
+    @apply text-[10px] font-semibold uppercase tracking-[0.12em] text-zinc-400 text-center mb-1.5 px-1;
   }
 
   .bracket-match {
-    @apply rounded-lg border border-border bg-white shadow-sm min-w-[180px] overflow-hidden transition-all duration-200 hover:shadow-md hover:-translate-y-px;
+    @apply rounded-lg border border-border bg-white shadow-sm min-w-[168px] sm:min-w-[180px] overflow-hidden transition-all duration-200 hover:shadow-md hover:border-zinc-300;
   }
 
   .bracket-match-final {
-    @apply border-primary/30 ring-1 ring-primary/10;
+    @apply border-primary/25 shadow-md ring-1 ring-primary/10;
+  }
+
+  .bracket-match-row {
+    @apply flex items-center gap-2 px-2.5 py-2 min-h-[36px] border-b border-border last:border-b-0;
   }
 
   .bracket-connector-col {
-    @apply relative flex flex-col justify-around flex-1 min-w-[24px];
+    @apply relative flex flex-col justify-around w-6 sm:w-8 shrink-0 self-stretch;
+  }
+
+  .bracket-connector-slot {
+    @apply relative flex-1 flex items-center min-h-[40px];
+  }
+
+  .bracket-connector-h {
+    @apply absolute left-0 right-0 top-1/2 h-px bg-zinc-200 -translate-y-1/2;
+  }
+
+  .bracket-connector-v {
+    @apply absolute right-0 top-[20%] bottom-[20%] w-px bg-zinc-200;
+  }
+
+  .bracket-connector-bracket {
+    @apply absolute right-0 top-1/4 bottom-1/4 w-3 border-r border-t border-b border-zinc-200 rounded-r-sm;
   }
 }

@@ -1,53 +1,71 @@
-import { useParams } from 'react-router-dom';
+import { Link, useParams } from 'react-router-dom';
 import QueryState from '@/components/shared/QueryState';
-import MatchCard from '@/components/MatchCard';
 import { useDivisionRoute } from '@/context/DivisionContext';
-import { useDivisionPlayers } from '@/hooks/useDivisionResources';
-import { User } from 'lucide-react';
+import { useDivisionTeam } from '@/hooks/useDivisionResources';
+import { matchesPlayerRef } from '@/lib/player-routes';
+import { ChevronLeft, User } from 'lucide-react';
 
 export default function DivisionPlayerDetailPage() {
-  const { playerSlug = '' } = useParams();
-  const { tournamentSlug, divisionSlug } = useDivisionRoute();
-  const { data: players = [], isLoading, isError, refetch } = useDivisionPlayers(
+  const { teamSlug = '', playerId = '' } = useParams();
+  const { tournamentSlug, divisionSlug, basePath } = useDivisionRoute();
+  const { data: team, isLoading, isError, refetch } = useDivisionTeam(
     tournamentSlug,
     divisionSlug,
+    teamSlug,
   );
 
-  const player = players.find((p) => p.slug === playerSlug);
+  const player = team?.rosters
+    ?.map((r) => r.player)
+    .find((p) => p && matchesPlayerRef(p, playerId));
+
   const stats = player?.player_stats?.[0];
-  const team = player?.rosters?.[0]?.team;
+  const teamPath = `${basePath}/teams/${teamSlug}`;
 
   return (
     <>
       <QueryState
         isLoading={isLoading}
         isError={isError}
-        isEmpty={!player}
+        isEmpty={!player || !team}
         onRetry={() => refetch()}
-        emptyMessage="Player not found in this division."
+        emptyMessage="Player not found on this team."
       >
-        {player && (
+        {player && team && (
           <>
-            <div className="rounded-[2rem] bg-primary text-white p-8 text-center mb-8">
-              {player.profile_image ? (
-                <img
-                  src={player.profile_image}
-                  alt=""
-                  className="w-24 h-24 rounded-full mx-auto border-4 border-white/30 mb-4"
-                />
-              ) : (
-                <User className="w-20 h-20 mx-auto mb-4" />
-              )}
-              <h1 className="text-3xl font-black">
-                {player.first_name} {player.last_name}
-              </h1>
-              <p className="text-white/80 mt-1">
-                #{player.jersey_number ?? '—'} · {player.preferred_position}
-              </p>
-              {team && <p className="text-white/70 text-sm mt-2">{team.name}</p>}
+            <Link
+              to={teamPath}
+              className="division-link mb-4 inline-flex items-center gap-1 text-sm"
+            >
+              <ChevronLeft className="h-4 w-4" aria-hidden />
+              Back to {team.name}
+            </Link>
+
+            <div className="mb-6 overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-border/60">
+              <div
+                className="px-6 py-8 text-center text-white"
+                style={{ backgroundColor: team.primary_color ?? 'var(--division-primary)' }}
+              >
+                {player.profile_image ? (
+                  <img
+                    src={player.profile_image}
+                    alt=""
+                    className="mx-auto mb-4 h-24 w-24 rounded-full border-4 border-white/30 object-cover"
+                  />
+                ) : (
+                  <User className="mx-auto mb-4 h-20 w-20" aria-hidden />
+                )}
+                <h1 className="text-2xl font-bold tracking-tight font-display">
+                  {player.first_name} {player.last_name}
+                </h1>
+                <p className="mt-1 text-sm text-white/85">
+                  #{player.jersey_number ?? '—'} · {player.preferred_position ?? 'Player'}
+                </p>
+                <p className="mt-2 text-sm text-white/75">{team.name}</p>
+              </div>
             </div>
+
             {stats && (
-              <div className="grid grid-cols-4 gap-3 mb-8">
+              <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4 sm:gap-3">
                 {[
                   { label: 'Goals', value: stats.goals },
                   { label: 'Assists', value: stats.assists },
@@ -56,10 +74,17 @@ export default function DivisionPlayerDetailPage() {
                 ].map((s) => (
                   <div
                     key={s.label}
-                    className="rounded-2xl border-2 border-gray-200 bg-white p-4 text-center"
+                    className="rounded-xl bg-white px-3 py-3 text-center shadow-sm ring-1 ring-border/60"
                   >
-                    <p className="text-2xl font-black text-primary">{s.value}</p>
-                    <p className="text-xs font-bold uppercase text-gray-600">{s.label}</p>
+                    <p
+                      className="text-2xl font-bold tabular-nums font-display"
+                      style={{ color: 'var(--division-primary)' }}
+                    >
+                      {s.value}
+                    </p>
+                    <p className="mt-1 text-xs font-medium uppercase tracking-wide text-zinc-500">
+                      {s.label}
+                    </p>
                   </div>
                 ))}
               </div>

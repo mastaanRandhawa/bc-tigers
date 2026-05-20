@@ -1,76 +1,59 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useCallback } from 'react';
 import QueryState from '@/components/shared/QueryState';
+import SearchField from '@/components/shared/SearchField';
+import SearchEmpty from '@/components/shared/SearchEmpty';
+import TeamCard from '@/components/teams/TeamCard';
 import DivisionPageHeader from '@/components/divisions/DivisionPageHeader';
 import { useDivisionRoute } from '@/context/DivisionContext';
 import { useDivisionTeams } from '@/hooks/useDivisionResources';
-import { divisionTeamPath } from '@/lib/division-routes';
-import { Search, Shield } from 'lucide-react';
-import { Input } from '@/components/ui/input';
+import { useListSearch } from '@/hooks/useListSearch';
+import { teamSearchText } from '@/lib/search-text';
 
 export default function DivisionTeamsPage() {
   const { tournamentSlug, divisionSlug } = useDivisionRoute();
-  const [search, setSearch] = useState('');
   const { data: teams = [], isLoading, isError, refetch } = useDivisionTeams(
     tournamentSlug,
     divisionSlug,
   );
 
-  const filtered = teams.filter(
-    (t) =>
-      t.name.toLowerCase().includes(search.toLowerCase()) ||
-      (t.city ?? '').toLowerCase().includes(search.toLowerCase()),
+  const getText = useCallback((t: (typeof teams)[0]) => teamSearchText(t), []);
+  const { search, setSearch, filtered, debouncedSearch, hasQuery } = useListSearch(
+    teams,
+    getText,
   );
 
   return (
     <>
       <DivisionPageHeader title="Teams" subtitle="Registered squads in this division" />
-      <div className="relative max-w-md mb-6">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-        <Input
-          placeholder="Search teams..."
+      {teams.length > 0 && (
+        <SearchField
           value={search}
-          onChange={(e) => setSearch(e.target.value)}
-          className="pl-10"
+          onChange={setSearch}
+          placeholder="Search teams…"
+          className="mb-5"
         />
-      </div>
+      )}
       <QueryState
         isLoading={isLoading}
         isError={isError}
-        isEmpty={filtered.length === 0}
+        isEmpty={teams.length === 0}
         onRetry={() => refetch()}
         emptyMessage="No teams in this division."
       >
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-          {filtered.map((team) => (
-            <Link
-              key={team.id}
-              to={divisionTeamPath(tournamentSlug, divisionSlug, team.slug)}
-              className="group rounded-[2rem] border-2 border-gray-200 bg-white hover:shadow-lg transition-all overflow-hidden"
-            >
-              <div
-                className="h-24 flex items-center justify-center"
-                style={{ backgroundColor: team.primary_color ?? '#F48735' }}
-              >
-                {team.logo ? (
-                  <img
-                    src={team.logo}
-                    alt={team.name}
-                    className="w-16 h-16 rounded-full object-cover border-2 border-white/30"
-                  />
-                ) : (
-                  <Shield className="w-10 h-10 text-white" />
-                )}
-              </div>
-              <div className="p-4 text-center">
-                <h3 className="font-bold text-foreground group-hover:underline" style={{ color: 'inherit' }}>
-                  <span className="group-hover:[color:var(--division-primary)]">{team.name}</span>
-                </h3>
-                <p className="text-xs text-gray-600 mt-1">{team.city}</p>
-              </div>
-            </Link>
-          ))}
-        </div>
+        {hasQuery && filtered.length === 0 ? (
+          <SearchEmpty query={debouncedSearch} entityLabel="teams" />
+        ) : (
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {filtered.map((team) => (
+              <TeamCard
+                key={team.id}
+                team={team}
+                tournamentSlug={tournamentSlug}
+                divisionSlug={divisionSlug}
+              />
+            ))}
+          </div>
+        )}
       </QueryState>
     </>
   );

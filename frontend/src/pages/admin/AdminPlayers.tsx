@@ -16,7 +16,7 @@ const columns = [
         <p className="font-bold text-foreground">
           {p.first_name} {p.last_name}
         </p>
-        <p className="text-xs text-muted-foreground">{p.slug}</p>
+        <p className="font-mono text-xs text-muted-foreground">{p.id.slice(0, 8)}…</p>
       </div>
     ),
   },

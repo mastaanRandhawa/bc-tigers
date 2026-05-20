@@ -3,7 +3,11 @@ import { motion } from "motion/react";
 import { Calendar, MapPin, Trophy } from "lucide-react";
 import { useLiveMatches } from "@/hooks/useMatches";
 import { useTournaments } from "@/hooks/useTournaments";
-import { formatDate } from "@/lib/utils";
+import { formatDate } from "@/lib/date";
+import {
+  pickFeaturedTournament,
+  tournamentOverviewPath,
+} from "@/lib/featured-tournament";
 import { cn } from "@/lib/utils";
 import { getMatchPath } from "@/lib/division-routes";
 import type { Match } from "@/types";
@@ -135,15 +139,8 @@ export function TournamentHubHeader() {
   const { data: liveMatches = [] } = useLiveMatches();
   const { data: tournaments = [] } = useTournaments();
 
-  const activeTournament =
-    tournaments.find((t) => t.status === "ACTIVE") ?? tournaments[0];
-  const featuredDivision = activeTournament?.divisions?.[0];
-  const schedulePath =
-    featuredDivision?.slug && activeTournament?.slug
-      ? `/tournaments/${activeTournament.slug}/divisions/${featuredDivision.slug}/schedule`
-      : activeTournament
-        ? `/tournaments/${activeTournament.slug}`
-        : "/tournaments";
+  const featuredTournament = pickFeaturedTournament(tournaments);
+  const schedulePath = tournamentOverviewPath(featuredTournament);
 
   const featuredLive = liveMatches.slice(0, 2);
 
@@ -173,23 +170,26 @@ export function TournamentHubHeader() {
             </div>
           </div>
 
-          {activeTournament && (
+          {featuredTournament && (
             <div className="relative z-20 mt-5 md:mt-8 w-full max-w-xl mx-auto rounded-2xl bg-black/30 backdrop-blur-sm border border-white/25 px-4 py-3 text-sm text-white shadow-lg">
               <div className="flex flex-col items-center gap-2">
-                <span className="inline-flex items-center gap-1.5 font-bold text-white">
+                <Link
+                  to={schedulePath}
+                  className="inline-flex items-center gap-1.5 font-bold text-white hover:text-primary-muted transition-colors"
+                >
                   <Trophy className="w-4 h-4 text-primary-muted shrink-0" />
-                  {activeTournament.name}
-                </span>
+                  {featuredTournament.name}
+                </Link>
                 <div className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-white/95">
                   <span className="inline-flex items-center gap-1.5 font-medium">
                     <Calendar className="w-4 h-4 text-primary-muted shrink-0" />
-                    {formatDate(activeTournament.start_date)} –{" "}
-                    {formatDate(activeTournament.end_date)}
+                    {formatDate(featuredTournament.start_date)} –{" "}
+                    {formatDate(featuredTournament.end_date)}
                   </span>
-                  {activeTournament.location && (
+                  {featuredTournament.location && (
                     <span className="inline-flex items-center gap-1.5 font-medium">
                       <MapPin className="w-4 h-4 text-primary-muted shrink-0" />
-                      {activeTournament.location}
+                      {featuredTournament.location}
                     </span>
                   )}
                 </div>

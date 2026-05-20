@@ -17,6 +17,7 @@ import { GatewaysModule } from './gateways/gateways.module';
 import { CoachesModule } from './modules/coaches/coaches.module';
 import { SettingsModule } from './modules/settings/settings.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
+import { HubModule } from './modules/hub/hub.module';
 
 @Module({
   imports: [
@@ -38,6 +39,7 @@ import { NotificationsModule } from './modules/notifications/notifications.modul
     SettingsModule,
     NotificationsModule,
     GatewaysModule,
+    HubModule,
   ],
 })
 export class AppModule {}

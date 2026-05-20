@@ -16,8 +16,32 @@ export function divisionTeamPath(
   return `${divisionTeamsPath(tournamentSlug, divisionSlug)}/${teamSlug}`;
 }
 
-export function divisionPlayersPath(tournamentSlug: string, divisionSlug: string) {
-  return `${divisionBasePath(tournamentSlug, divisionSlug)}/players`;
+export function divisionTeamPlayerPath(
+  tournamentSlug: string,
+  divisionSlug: string,
+  teamSlug: string,
+  playerId: string,
+) {
+  return `${divisionTeamPath(tournamentSlug, divisionSlug, teamSlug)}/players/${playerId}`;
+}
+
+/** Legacy bookmark only — redirects resolve team slug via API. */
+export function divisionLegacyPlayerPath(
+  tournamentSlug: string,
+  divisionSlug: string,
+  playerId: string,
+) {
+  return `${divisionBasePath(tournamentSlug, divisionSlug)}/players/${playerId}`;
+}
+
+export function getDivisionTeamPlayerPath(
+  division: Division,
+  teamSlug: string,
+  playerId: string,
+) {
+  const tournamentSlug = division.tournament?.slug;
+  if (!tournamentSlug) return null;
+  return divisionTeamPlayerPath(tournamentSlug, division.slug, teamSlug, playerId);
 }
 
 export function divisionSchedulePath(tournamentSlug: string, divisionSlug: string) {

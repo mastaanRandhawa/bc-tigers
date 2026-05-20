@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { Link } from 'react-router-dom';
 import { MapPin, Clock, User } from 'lucide-react';
 import type { Match } from '@/types';
@@ -6,45 +7,81 @@ import { cn } from '@/lib/utils';
 import { formatDate, formatTime, getMatchStatusBadgeVariant } from '@/lib/utils';
 import { getMatchPath } from '@/lib/division-routes';
 
+/**
+ * compact  — slim inline row (team vs team, score, time) — for sidebar lists
+ * flat     — full layout but no card chrome; use inside bordered section panels
+ * card     — (default) standalone elevated card with border + shadow
+ */
 interface MatchCardProps {
   match: Match;
   compact?: boolean;
+  flat?: boolean;
 }
 
-export default function MatchCard({ match, compact = false }: MatchCardProps) {
+function TeamLogo({ logo, size = 'md' }: { logo?: string | null; size?: 'sm' | 'md' }) {
+  const dim = size === 'sm' ? 'h-6 w-6' : 'h-7 w-7';
+  return logo ? (
+    <img
+      src={logo}
+      alt=""
+      loading="lazy"
+      decoding="async"
+      className={cn(dim, 'shrink-0 rounded-full border border-border object-cover')}
+    />
+  ) : (
+    <div className={cn(dim, 'shrink-0 rounded-full bg-zinc-100')} />
+  );
+}
+
+function TeamLine({ name, logo, align }: { name: string; logo?: string | null; align: 'left' | 'right' }) {
+  return (
+    <div
+      className={cn(
+        'flex min-w-0 items-center gap-2',
+        align === 'right' ? 'flex-row-reverse text-right' : 'text-left',
+      )}
+    >
+      <TeamLogo logo={logo} />
+      <p className="truncate text-sm font-medium text-foreground leading-tight">{name}</p>
+    </div>
+  );
+}
+
+function MatchCard({ match, compact = false, flat = false }: MatchCardProps) {
   const isLive = match.status === 'LIVE';
   const isCompleted = match.status === 'COMPLETED';
   const showScore = isLive || isCompleted;
 
+  /* ── Compact row variant (sidebar upcoming lists) ─────────────────── */
   if (compact) {
     return (
-      <Link to={getMatchPath(match)} className="block group min-w-0">
-        <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2 py-2 rounded-lg hover:bg-zinc-50 transition-all duration-200 min-w-0">
-          <p className="text-sm font-medium text-foreground truncate text-right min-w-0">
+      <Link to={getMatchPath(match)} className="group block min-w-0">
+        <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2 rounded-lg px-1 py-2 transition-colors hover:bg-zinc-50">
+          <p className="truncate text-right text-sm font-medium text-foreground">
             {match.home_team?.name ?? 'TBD'}
           </p>
-          <div className="shrink-0 text-center px-1">
+          <div className="shrink-0 min-w-[52px] px-1 text-center">
             {showScore ? (
               <span
                 className={cn(
-                  'text-sm font-bold tabular-nums whitespace-nowrap',
+                  'whitespace-nowrap text-sm font-bold tabular-nums',
                   isLive ? 'text-primary' : 'text-foreground',
                 )}
               >
                 {match.home_score} – {match.away_score}
               </span>
             ) : (
-              <span className="text-xs font-medium text-zinc-500 whitespace-nowrap">
+              <span className="whitespace-nowrap text-xs font-medium text-zinc-500">
                 {formatTime(match.scheduled_start)}
               </span>
             )}
             {isLive && (
-              <span className="text-[9px] text-red-600 font-semibold uppercase block leading-none mt-0.5">
-                Live
+              <span className="mt-0.5 block text-[9px] font-semibold uppercase leading-none text-red-600">
+                LIVE
               </span>
             )}
           </div>
-          <p className="text-sm font-medium text-foreground truncate text-left min-w-0">
+          <p className="truncate text-left text-sm font-medium text-foreground">
             {match.away_team?.name ?? 'TBD'}
           </p>
         </div>
@@ -52,86 +89,96 @@ export default function MatchCard({ match, compact = false }: MatchCardProps) {
     );
   }
 
-  return (
-    <Link to={getMatchPath(match)} className="block group">
-      <div className="rounded-xl border border-border bg-white shadow-sm p-4 transition-all duration-200 hover:shadow-md hover:-translate-y-px">
-        <div className="flex items-center justify-between mb-3">
-          <Badge variant={getMatchStatusBadgeVariant(match.status)}>
-            {isLive ? '● LIVE' : match.status}
-          </Badge>
-          <span className="text-xs text-zinc-500">{formatDate(match.scheduled_start)}</span>
-        </div>
-
-        <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3">
-          <div className="text-right min-w-0">
-            {match.home_team?.logo && (
-              <img
-                src={match.home_team.logo}
-                alt=""
-                className="w-8 h-8 rounded-full object-cover ml-auto mb-1.5 border border-border"
-              />
-            )}
-            <p className="font-medium text-foreground text-sm truncate">
-              {match.home_team?.name ?? 'TBD'}
-            </p>
-          </div>
-
-          <div className="flex flex-col items-center min-w-[72px] shrink-0">
-            {showScore ? (
-              <div
-                className={cn(
-                  'text-xl font-bold tabular-nums tracking-tight',
-                  isLive ? 'text-primary' : 'text-foreground',
-                )}
-              >
-                {match.home_score}
-                <span className="text-zinc-300 mx-1 font-normal">–</span>
-                {match.away_score}
-              </div>
-            ) : (
-              <div className="text-center">
-                <p className="text-xs font-medium text-zinc-400 uppercase">vs</p>
-                <p className="text-sm font-semibold text-foreground mt-0.5">
-                  {formatTime(match.scheduled_start)}
-                </p>
-              </div>
-            )}
-          </div>
-
-          <div className="text-left min-w-0">
-            {match.away_team?.logo && (
-              <img
-                src={match.away_team.logo}
-                alt=""
-                className="w-8 h-8 rounded-full object-cover mr-auto mb-1.5 border border-border"
-              />
-            )}
-            <p className="font-medium text-foreground text-sm truncate">
-              {match.away_team?.name ?? 'TBD'}
-            </p>
-          </div>
-        </div>
-
-        {(match.venue || match.round !== undefined || match.referee) && (
-          <div className="mt-3 pt-3 border-t border-border flex flex-wrap items-center justify-center gap-3 text-xs text-zinc-500">
-            {match.venue && (
-              <span className="inline-flex items-center gap-1">
-                <MapPin className="w-3 h-3" /> {match.venue.name}
-              </span>
-            )}
-            {match.round !== undefined && (
-              <span className="inline-flex items-center gap-1">
-                <Clock className="w-3 h-3" /> Round {match.round}
-              </span>
-            )}
-            {match.referee && (
-              <span className="inline-flex items-center gap-1">
-                <User className="w-3 h-3" /> {match.referee.first_name} {match.referee.last_name}
-              </span>
-            )}
-          </div>
-        )}
+  /* ── Inner layout (shared between flat and card) ──────────────────── */
+  const inner = (
+    <div className={cn(flat ? 'py-3 first:pt-0 last:pb-0' : 'p-3.5 sm:p-4')}>
+      <div className={cn('mb-2.5 flex items-center justify-between gap-2', flat && 'mb-2')}>
+        <Badge variant={getMatchStatusBadgeVariant(match.status)}>
+          {isLive ? '● LIVE' : match.status.replace(/_/g, ' ')}
+        </Badge>
+        <time className="text-xs text-zinc-400" dateTime={match.scheduled_start}>
+          {formatDate(match.scheduled_start)}
+          {!showScore && (
+            <span className="ml-1.5 font-medium text-zinc-600">
+              {formatTime(match.scheduled_start)}
+            </span>
+          )}
+        </time>
       </div>
+
+      <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3">
+        <TeamLine
+          name={match.home_team?.name ?? 'TBD'}
+          logo={match.home_team?.logo}
+          align="right"
+        />
+
+        <div className="flex min-w-[64px] shrink-0 flex-col items-center justify-center">
+          {showScore ? (
+            <div
+              className={cn(
+                'text-xl font-bold tabular-nums tracking-tight font-display',
+                isLive ? 'text-primary' : 'text-foreground',
+              )}
+            >
+              {match.home_score}
+              <span className="mx-1 font-light text-zinc-300">–</span>
+              {match.away_score}
+            </div>
+          ) : (
+            <span className="text-[11px] font-semibold uppercase tracking-widest text-zinc-400">vs</span>
+          )}
+        </div>
+
+        <TeamLine
+          name={match.away_team?.name ?? 'TBD'}
+          logo={match.away_team?.logo}
+          align="left"
+        />
+      </div>
+
+      {(match.venue || match.round !== undefined || match.referee) && (
+        <div className="mt-2.5 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 border-t border-border pt-2 text-xs text-zinc-500">
+          {match.venue && (
+            <span className="inline-flex items-center gap-1">
+              <MapPin className="h-3 w-3 shrink-0" aria-hidden />
+              {match.venue.name}
+            </span>
+          )}
+          {match.round !== undefined && (
+            <span className="inline-flex items-center gap-1">
+              <Clock className="h-3 w-3 shrink-0" aria-hidden />
+              Round {match.round}
+            </span>
+          )}
+          {match.referee && (
+            <span className="inline-flex items-center gap-1">
+              <User className="h-3 w-3 shrink-0" aria-hidden />
+              {match.referee.first_name} {match.referee.last_name}
+            </span>
+          )}
+        </div>
+      )}
+    </div>
+  );
+
+  /* ── Flat variant — no card chrome, separated by dividers ─────────── */
+  if (flat) {
+    return (
+      <Link to={getMatchPath(match)} className="group block transition-colors hover:bg-zinc-50/80 rounded-lg -mx-0.5 px-0.5">
+        {inner}
+      </Link>
+    );
+  }
+
+  /* ── Card variant — standalone elevated card ──────────────────────── */
+  return (
+    <Link to={getMatchPath(match)} className="group block">
+      <article className="rounded-xl border border-border bg-white shadow-sm transition-all duration-200 hover:shadow-md hover:border-zinc-300">
+        {inner}
+      </article>
     </Link>
   );
 }
+
+export default memo(MatchCard);

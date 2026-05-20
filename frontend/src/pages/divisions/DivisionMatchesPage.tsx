@@ -1,11 +1,14 @@
-import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useCallback, useMemo, useState } from 'react';
 import QueryState from '@/components/shared/QueryState';
+import SearchField from '@/components/shared/SearchField';
+import SearchEmpty from '@/components/shared/SearchEmpty';
 import MatchCard from '@/components/MatchCard';
 import DivisionPageHeader from '@/components/divisions/DivisionPageHeader';
 import { useDivisionRoute } from '@/context/DivisionContext';
 import { useDivisionMatches } from '@/hooks/useDivisionResources';
-import { divisionMatchPath } from '@/lib/division-routes';
+import { useListSearch } from '@/hooks/useListSearch';
+import { matchSearchText } from '@/lib/search-text';
+import { cn } from '@/lib/utils';
 import type { MatchStatus } from '@/types';
 
 const filters: { label: string; value: MatchStatus | 'ALL' }[] = [
@@ -25,24 +28,50 @@ export default function DivisionMatchesPage() {
     params,
   );
 
+  const getText = useCallback((m: (typeof matches)[0]) => matchSearchText(m), []);
+  const { search, setSearch, filtered, debouncedSearch, hasQuery } = useListSearch(
+    matches,
+    getText,
+  );
+
+  const statusCounts = useMemo(() => {
+    const counts: Record<string, number> = { ALL: matches.length };
+    for (const m of matches) {
+      counts[m.status] = (counts[m.status] ?? 0) + 1;
+    }
+    return counts;
+  }, [matches]);
+
   return (
     <>
       <DivisionPageHeader title="Matches" subtitle="Live, upcoming, and completed fixtures" />
-      <div className="flex gap-2 mb-6 flex-wrap">
-        {filters.map((f) => (
-          <button
-            key={f.value}
-            type="button"
-            onClick={() => setFilter(f.value)}
-            className={`px-4 py-2 rounded-full text-sm font-semibold transition-colors ${
-              filter === f.value
-                ? 'bg-primary text-white'
-                : 'bg-white text-gray-700 border-2 border-gray-200 hover:border-primary'
-            }`}
-          >
-            {f.label}
-          </button>
-        ))}
+      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-wrap gap-2">
+          {filters.map((f) => (
+            <button
+              key={f.value}
+              type="button"
+              onClick={() => setFilter(f.value)}
+              className={cn(
+                'rounded-lg px-3 py-1.5 text-sm font-medium transition-all duration-200',
+                filter === f.value
+                  ? 'bg-primary text-white shadow-sm'
+                  : 'bg-white text-zinc-600 ring-1 ring-border hover:ring-primary/30',
+              )}
+            >
+              {f.label}
+              {statusCounts[f.value] != null && (
+                <span className="ml-1.5 opacity-80">({statusCounts[f.value]})</span>
+              )}
+            </button>
+          ))}
+        </div>
+        <SearchField
+          value={search}
+          onChange={setSearch}
+          placeholder="Search teams or venue…"
+          className="max-w-md sm:mb-0"
+        />
       </div>
       <QueryState
         isLoading={isLoading}
@@ -51,13 +80,15 @@ export default function DivisionMatchesPage() {
         onRetry={() => refetch()}
         emptyMessage="No matches in this division."
       >
-        <div className="space-y-3">
-          {matches.map((m) => (
-            <Link key={m.id} to={divisionMatchPath(tournamentSlug, divisionSlug, m.id)}>
-              <MatchCard match={m} />
-            </Link>
-          ))}
-        </div>
+        {hasQuery && filtered.length === 0 ? (
+          <SearchEmpty query={debouncedSearch} entityLabel="matches" />
+        ) : (
+          <div className="space-y-2">
+            {filtered.map((m) => (
+              <MatchCard key={m.id} match={m} />
+            ))}
+          </div>
+        )}
       </QueryState>
     </>
   );

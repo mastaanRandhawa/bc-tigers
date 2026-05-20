@@ -9,8 +9,9 @@ import {
   DivisionOverviewPage,
   DivisionTeamsPage,
   DivisionTeamDetailPage,
-  DivisionPlayersPage,
   DivisionPlayerDetailPage,
+  DivisionPlayersListRedirect,
+  DivisionPlayerLegacyRedirect,
   DivisionSchedulePage,
   DivisionMatchesPage,
   DivisionMatchDetailPage,
@@ -106,18 +107,26 @@ export default function App() {
           }
         />
         <Route
-          path="players"
+          path="teams/:teamSlug/players/:playerId"
           element={
             <L>
-              <DivisionPlayersPage />
+              <DivisionPlayerDetailPage />
             </L>
           }
         />
         <Route
-          path="players/:playerSlug"
+          path="players"
           element={
             <L>
-              <DivisionPlayerDetailPage />
+              <DivisionPlayersListRedirect />
+            </L>
+          }
+        />
+        <Route
+          path="players/:playerId"
+          element={
+            <L>
+              <DivisionPlayerLegacyRedirect />
             </L>
           }
         />

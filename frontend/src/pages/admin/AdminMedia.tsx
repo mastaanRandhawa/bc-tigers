@@ -1,6 +1,9 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import AdminLayout from '@/components/AdminLayout';
 import QueryState from '@/components/shared/QueryState';
+import SearchField from '@/components/shared/SearchField';
+import SearchEmpty from '@/components/shared/SearchEmpty';
+import { useListSearch } from '@/hooks/useListSearch';
 import MediaFormDialog from '@/components/admin/forms/MediaFormDialog';
 import { useMedia, useDeleteMedia } from '@/hooks/useMedia';
 import { Upload, Image, Trash2 } from 'lucide-react';
@@ -11,6 +14,11 @@ export default function AdminMedia() {
   const { data: media = [], isLoading, isError, refetch } = useMedia();
   const deleteMutation = useDeleteMedia();
   const [formOpen, setFormOpen] = useState(false);
+  const getText = useCallback(
+    (item: (typeof media)[0]) => [item.title, item.type, item.url].filter(Boolean).join(' '),
+    [],
+  );
+  const { search, setSearch, filtered, debouncedSearch, hasQuery } = useListSearch(media, getText);
 
   const handleDelete = async (id: string) => {
     if (!confirm('Delete this media?')) return;
@@ -36,6 +44,15 @@ export default function AdminMedia() {
           </Button>
         </div>
 
+        {media.length > 0 && (
+          <SearchField
+            value={search}
+            onChange={setSearch}
+            placeholder="Search media…"
+            className="mb-4 max-w-md"
+          />
+        )}
+
         <QueryState
           isLoading={isLoading}
           isError={isError}
@@ -43,8 +60,11 @@ export default function AdminMedia() {
           onRetry={() => refetch()}
           emptyMessage="No media uploaded yet."
         >
+          {hasQuery && filtered.length === 0 ? (
+            <SearchEmpty query={debouncedSearch} entityLabel="media" />
+          ) : (
           <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {media.map((item) => (
+            {filtered.map((item) => (
               <div
                 key={item.id}
                 className="group relative bg-white rounded-2xl overflow-hidden border border-border shadow-sm hover:shadow-md transition-all"
@@ -74,6 +94,7 @@ export default function AdminMedia() {
               </div>
             ))}
           </div>
+          )}
         </QueryState>
       </div>
 

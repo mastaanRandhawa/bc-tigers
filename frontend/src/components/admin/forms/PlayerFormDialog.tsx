@@ -2,10 +2,9 @@ import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import FormDialog from '@/components/admin/FormDialog';
-import { TextInputField, SelectField, FormError } from '@/components/admin/form-fields';
+import { TextInputField, FormError } from '@/components/admin/form-fields';
 import { playerSchema, type PlayerFormValues } from '@/lib/schemas/admin';
 import { useCreatePlayer, useUpdatePlayer } from '@/hooks/usePlayers';
-import { slugify } from '@/lib/utils';
 import { getApiErrorMessage } from '@/lib/errors';
 import type { Player } from '@/types';
 
@@ -25,7 +24,6 @@ export default function PlayerFormDialog({ open, onOpenChange, player }: PlayerF
     defaultValues: {
       first_name: '',
       last_name: '',
-      slug: '',
       nationality: '',
       jersey_number: undefined,
       preferred_position: '',
@@ -39,7 +37,6 @@ export default function PlayerFormDialog({ open, onOpenChange, player }: PlayerF
       form.reset({
         first_name: player.first_name,
         last_name: player.last_name,
-        slug: player.slug,
         nationality: player.nationality ?? '',
         jersey_number: player.jersey_number != null ? String(player.jersey_number) : '',
         preferred_position: player.preferred_position ?? '',
@@ -49,7 +46,6 @@ export default function PlayerFormDialog({ open, onOpenChange, player }: PlayerF
       form.reset({
         first_name: '',
         last_name: '',
-        slug: '',
         nationality: '',
         jersey_number: '',
         preferred_position: '',
@@ -57,14 +53,6 @@ export default function PlayerFormDialog({ open, onOpenChange, player }: PlayerF
       });
     }
   }, [open, player, form]);
-
-  const firstName = form.watch('first_name');
-  const lastName = form.watch('last_name');
-  useEffect(() => {
-    if (!isEditing && firstName && lastName) {
-      form.setValue('slug', slugify(`${firstName}-${lastName}`));
-    }
-  }, [firstName, lastName, isEditing, form]);
 
   const onSubmit = form.handleSubmit(async (values) => {
     try {
@@ -97,7 +85,9 @@ export default function PlayerFormDialog({ open, onOpenChange, player }: PlayerF
         <TextInputField control={form.control} name="first_name" label="First Name" />
         <TextInputField control={form.control} name="last_name" label="Last Name" />
       </div>
-      <TextInputField control={form.control} name="slug" label="Slug" />
+      <p className="text-xs text-zinc-500">
+        Player URLs use an auto-generated ID. No manual slug required.
+      </p>
       <div className="grid grid-cols-2 gap-3">
         <TextInputField control={form.control} name="jersey_number" label="Jersey #" type="number" />
         <TextInputField control={form.control} name="preferred_position" label="Position" />
