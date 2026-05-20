@@ -28,10 +28,10 @@ export default function Footer() {
   const { data: settings } = usePublicSettings();
 
   return (
-    <footer className="bg-gray-900 text-white">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 safe-x">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8">
-          <div className="lg:col-span-2">
+    <footer className="w-full shrink-0 bg-gray-900 text-white">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12 safe-x w-full">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-8 w-full">
+          <div className="sm:col-span-2 min-w-0">
             <Link to="/" className="flex items-center gap-2 mb-4">
               <div className="bg-[#CCFF00] p-1.5 rounded-xl">
                 <Trophy className="w-5 h-5 text-black" />
@@ -67,7 +67,7 @@ export default function Footer() {
           </div>
 
           {Object.entries(footerLinks).map(([section, links]) => (
-            <div key={section}>
+            <div key={section} className="min-w-0">
               <h3 className="font-bold text-sm uppercase tracking-wider text-[#CCFF00] mb-3">{section}</h3>
               <ul className="space-y-2">
                 {links.map((link) => (

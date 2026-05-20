@@ -22,14 +22,14 @@ function FirstDivisionStandings() {
   return (
     <section className="py-12 px-4 bg-white">
       <div className="max-w-7xl mx-auto">
-        <div className="flex items-center justify-between mb-6">
-          <div>
+        <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 mb-6 min-w-0">
+          <div className="min-w-0">
             <h2 className="text-2xl font-black text-gray-900 uppercase tracking-tight">League Standings</h2>
             <p className="text-sm text-gray-500 mt-1">{firstDivision.name}</p>
           </div>
           <Link
             to={`/standings/${firstDivision.slug}`}
-            className="text-sm text-[#0038FF] font-semibold flex items-center gap-1 hover:underline"
+            className="text-sm text-[#0038FF] font-semibold flex items-center gap-1 hover:underline shrink-0 whitespace-nowrap ml-auto"
           >
             Full Standings <ChevronRight className="w-4 h-4" />
           </Link>
@@ -88,9 +88,9 @@ export default function HomePage() {
       <section className="py-12 px-4 bg-gray-50">
         <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-3 gap-8">
           <div className="lg:col-span-2">
-            <div className="flex items-center justify-between mb-5">
+            <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 mb-5 min-w-0">
               <h2 className="text-xl font-black text-gray-900 uppercase tracking-tight">Recent Results</h2>
-              <Link to="/matches" className="text-sm text-[#0038FF] font-semibold flex items-center gap-1 hover:underline">
+              <Link to="/matches" className="text-sm text-[#0038FF] font-semibold flex items-center gap-1 hover:underline shrink-0 whitespace-nowrap ml-auto">
                 All Matches <ChevronRight className="w-4 h-4" />
               </Link>
             </div>
@@ -103,19 +103,19 @@ export default function HomePage() {
             </QueryState>
           </div>
 
-          <div>
-            <div className="flex items-center justify-between mb-5">
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 mb-5 min-w-0">
               <h2 className="text-xl font-black text-gray-900 uppercase tracking-tight">Upcoming</h2>
-              <Link to="/schedule" className="text-sm text-[#0038FF] font-semibold flex items-center gap-1 hover:underline">
+              <Link to="/schedule" className="text-sm text-[#0038FF] font-semibold flex items-center gap-1 hover:underline shrink-0 whitespace-nowrap ml-auto">
                 Full Schedule <ChevronRight className="w-4 h-4" />
               </Link>
             </div>
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm divide-y divide-gray-50">
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm divide-y divide-gray-50 overflow-hidden min-w-0">
               {upcoming.length > 0 ? (
                 upcoming.map((match) => (
-                  <div key={match.id} className="p-4">
-                    <div className="flex items-center gap-1 mb-2 text-xs text-gray-400">
-                      <Calendar className="w-3 h-3" />
+                  <div key={match.id} className="px-4 py-3 min-w-0">
+                    <div className="flex items-center gap-1.5 mb-2 text-xs text-gray-500">
+                      <Calendar className="w-3 h-3 shrink-0" />
                       <span>{formatDate(match.scheduled_start)}</span>
                     </div>
                     <MatchCard match={match} compact />
@@ -124,11 +124,6 @@ export default function HomePage() {
               ) : (
                 <div className="p-8 text-center text-gray-400 text-sm">No upcoming matches</div>
               )}
-              <div className="p-4">
-                <Link to="/schedule" className="block text-center text-sm text-[#0038FF] font-semibold hover:underline">
-                  View full schedule →
-                </Link>
-              </div>
             </div>
           </div>
         </div>
@@ -138,9 +133,9 @@ export default function HomePage() {
 
       <section className="py-12 px-4 bg-gray-50">
         <div className="max-w-7xl mx-auto">
-          <div className="flex items-center justify-between mb-6">
+          <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 mb-6 min-w-0">
             <h2 className="text-2xl font-black text-gray-900 uppercase tracking-tight">Tournaments</h2>
-            <Link to="/tournaments" className="text-sm text-[#0038FF] font-semibold flex items-center gap-1 hover:underline">
+            <Link to="/tournaments" className="text-sm text-[#0038FF] font-semibold flex items-center gap-1 hover:underline shrink-0 whitespace-nowrap ml-auto">
               All Tournaments <ChevronRight className="w-4 h-4" />
             </Link>
           </div>

@@ -16,24 +16,28 @@ export default function MatchCard({ match, compact = false }: MatchCardProps) {
 
   if (compact) {
     return (
-      <Link to={`/matches/${match.id}`} className="block group">
-        <div className="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 transition-colors border border-gray-100">
-          <div className="flex-1 text-right">
-            <p className="text-sm font-bold text-gray-900 truncate">{match.home_team?.name ?? 'TBD'}</p>
-          </div>
-          <div className="flex flex-col items-center px-3">
+      <Link to={`/matches/${match.id}`} className="block group min-w-0">
+        <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2 py-2 rounded-lg hover:bg-gray-50 transition-colors min-w-0">
+          <p className="text-sm font-bold text-gray-900 truncate text-right min-w-0">
+            {match.home_team?.name ?? 'TBD'}
+          </p>
+          <div className="shrink-0 text-center px-1">
             {showScore ? (
-              <span className={`text-lg font-black ${isLive ? 'text-red-600' : 'text-gray-900'}`}>
+              <span className={`text-sm font-black whitespace-nowrap ${isLive ? 'text-red-600' : 'text-gray-900'}`}>
                 {match.home_score} – {match.away_score}
               </span>
             ) : (
-              <span className="text-xs font-semibold text-gray-500">{formatTime(match.scheduled_start)}</span>
+              <span className="text-xs font-semibold text-gray-500 whitespace-nowrap">
+                {formatTime(match.scheduled_start)}
+              </span>
             )}
-            {isLive && <span className="text-[9px] text-red-500 font-bold uppercase animate-pulse">LIVE</span>}
+            {isLive && (
+              <span className="text-[9px] text-red-500 font-bold uppercase animate-pulse block">LIVE</span>
+            )}
           </div>
-          <div className="flex-1 text-left">
-            <p className="text-sm font-bold text-gray-900 truncate">{match.away_team?.name ?? 'TBD'}</p>
-          </div>
+          <p className="text-sm font-bold text-gray-900 truncate text-left min-w-0">
+            {match.away_team?.name ?? 'TBD'}
+          </p>
         </div>
       </Link>
     );
