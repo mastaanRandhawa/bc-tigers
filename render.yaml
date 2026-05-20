@@ -1,0 +1,25 @@
+# Render Blueprint — backend API (set Root Directory to "backend" if not using this file)
+services:
+  - type: web
+    name: bc-tigers-api
+    runtime: node
+    rootDir: backend
+    buildCommand: npm ci && npm run build:render
+    startCommand: npm run start:render
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: bc-tigers-db
+          property: connectionString
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_EXPIRES_IN
+        value: 7d
+
+databases:
+  - name: bc-tigers-db
+    plan: free
+    databaseName: bc_tigers
+    user: bc_tigers
