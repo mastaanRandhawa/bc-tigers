@@ -9,6 +9,7 @@ import {
   Settings,
   LayoutDashboard,
 } from 'lucide-react';
+import LiveScoreTicker from '@/components/LiveScoreTicker';
 import { useAuthStore } from '@/store/authStore';
 import {
   isAdminRole,
@@ -20,16 +21,51 @@ import { cn } from '@/lib/utils';
 
 const navLinks = [{ label: 'Tournaments', href: '/tournaments' }];
 
-interface NavbarProps {
-  variant?: 'default' | 'hero';
+interface SiteHeaderProps {
+  variant?: 'site' | 'hero' | 'minimal';
 }
 
-export default function Navbar({ variant = 'default' }: NavbarProps) {
+function SiteLogo({ compact = false, onDark = true }: { compact?: boolean; onDark?: boolean }) {
+  return (
+    <Link to="/" className="flex items-center gap-1 flex-shrink-0">
+      <div
+        className={cn(
+          'font-black tracking-tight rounded-2xl rounded-bl-sm relative shadow-sm',
+          compact ? 'text-xs px-2.5 py-1' : 'text-xs md:text-sm px-3 py-1.5',
+          onDark ? 'bg-white text-black' : 'bg-primary-muted text-foreground',
+        )}
+      >
+        BC
+        {onDark && (
+          <div
+            className="absolute -bottom-1.5 left-0 w-3 h-3 bg-white"
+            style={{ clipPath: 'polygon(0 0, 100% 0, 0 100%)' }}
+          />
+        )}
+      </div>
+      <div
+        className={cn(
+          'font-black rounded-full shadow-sm',
+          compact ? 'text-xs px-2.5 py-1' : 'text-xs md:text-sm px-3 py-1.5',
+          onDark
+            ? 'bg-primary-muted text-primary border-[1.5px] border-white'
+            : 'bg-primary text-white',
+        )}
+      >
+        TIGERS
+      </div>
+    </Link>
+  );
+}
+
+export default function SiteHeader({ variant = 'site' }: SiteHeaderProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
   const { isAuthenticated, user, logout } = useAuthStore();
   const navigate = useNavigate();
   const isHero = variant === 'hero';
+  const isMinimal = variant === 'minimal';
+  const onDark = !isMinimal;
 
   const handleLogout = () => {
     logout();
@@ -37,73 +73,63 @@ export default function Navbar({ variant = 'default' }: NavbarProps) {
     setUserMenuOpen(false);
   };
 
-  const linkClass = ({ isActive }: { isActive: boolean }) =>
+  const navLinkClass = ({ isActive }: { isActive: boolean }) =>
     cn(
-      'px-3 xl:px-4 py-1.5 rounded-full text-xs xl:text-sm font-semibold transition-colors whitespace-nowrap shrink-0',
-      isHero
+      'inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold transition-colors whitespace-nowrap shrink-0',
+      onDark
         ? isActive
           ? 'bg-white text-primary'
           : 'border border-white/30 text-white hover:bg-white/10'
         : isActive
           ? 'bg-primary-muted text-primary'
-          : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+          : 'text-muted-foreground hover:text-foreground hover:bg-muted',
     );
+
+  if (isMinimal) {
+    return (
+      <header className="sticky top-0 z-50 w-full bg-surface border-b border-border shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 safe-x">
+          <div className="flex items-center justify-between h-14 gap-4">
+            <SiteLogo compact onDark={false} />
+            <nav aria-label="Main navigation" className="flex items-center gap-2">
+              {navLinks.map((link) => (
+                <NavLink key={link.href} to={link.href} className={navLinkClass}>
+                  {link.label}
+                </NavLink>
+              ))}
+            </nav>
+          </div>
+        </div>
+      </header>
+    );
+  }
 
   return (
     <header
       className={cn(
-        'z-50 w-full',
-        isHero
-          ? 'relative bg-primary'
-          : 'sticky top-0 bg-surface border-b border-border shadow-sm'
+        'z-50 w-full bg-primary text-white',
+        isHero ? 'relative' : 'sticky top-0 shadow-md',
       )}
     >
-      <div
-        className={cn(
-          'max-w-[1440px] mx-auto safe-x',
-          isHero ? 'px-6 py-6 md:px-10 md:py-8' : 'px-4 sm:px-6 lg:px-8'
-        )}
-      >
-        <div className={cn('flex items-center justify-between gap-4', !isHero && 'h-16')}>
-          <Link to="/" className="flex items-center gap-1 flex-shrink-0">
-            <div
-              className={cn(
-                'font-black tracking-tight text-xs md:text-sm px-3 py-1.5 rounded-2xl rounded-bl-sm relative shadow-sm',
-                isHero ? 'bg-white text-black' : 'bg-primary-muted text-foreground'
-              )}
-            >
-              BC
-              {isHero && (
-                <div
-                  className="absolute -bottom-1.5 left-0 w-3 h-3 bg-white"
-                  style={{ clipPath: 'polygon(0 0, 100% 0, 0 100%)' }}
-                />
-              )}
-            </div>
-            <div
-              className={cn(
-                'font-black text-xs md:text-sm px-3 py-1.5 rounded-full shadow-sm',
-                isHero
-                  ? 'bg-primary-muted text-primary border-[1.5px] border-white'
-                  : 'bg-primary text-white'
-              )}
-            >
-              TIGERS
-            </div>
-          </Link>
+      <div className="absolute inset-x-0 bottom-0 h-px bg-white/10 pointer-events-none" />
 
-          <nav
-            aria-label="Main navigation"
-            className="hidden lg:flex items-center gap-1 overflow-x-auto no-scrollbar min-w-0"
-          >
-            {navLinks.map((link) => (
-              <NavLink key={link.href} to={link.href} className={linkClass}>
-                {link.label}
-              </NavLink>
-            ))}
-          </nav>
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 safe-x">
+        <div className="flex items-center gap-3 py-2.5 min-w-0">
+          <SiteLogo compact />
 
-          <div className="flex items-center gap-2 flex-shrink-0">
+          <div className="hidden md:flex flex-1 min-w-0 border-l border-white/15 pl-3">
+            <LiveScoreTicker embedded alwaysShow />
+          </div>
+
+          <div className="flex items-center gap-2 ml-auto shrink-0">
+            <nav aria-label="Main navigation" className="hidden lg:flex items-center gap-1">
+              {navLinks.map((link) => (
+                <NavLink key={link.href} to={link.href} className={navLinkClass}>
+                  {link.label}
+                </NavLink>
+              ))}
+            </nav>
+
             {isAuthenticated && user ? (
               <div className="relative">
                 <button
@@ -111,32 +137,13 @@ export default function Navbar({ variant = 'default' }: NavbarProps) {
                   aria-expanded={userMenuOpen}
                   aria-haspopup="menu"
                   onClick={() => setUserMenuOpen(!userMenuOpen)}
-                  className={cn(
-                    'flex items-center gap-2 px-3 py-1.5 rounded-full transition-colors',
-                    isHero
-                      ? 'border border-white/30 text-white hover:bg-white/10'
-                      : 'border border-border bg-surface hover:bg-muted'
-                  )}
+                  className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-full border border-white/30 text-white hover:bg-white/10 transition-colors"
                 >
-                  <div
-                    className={cn(
-                      'w-7 h-7 rounded-full flex items-center justify-center',
-                      isHero ? 'bg-white/20' : 'bg-primary-muted'
-                    )}
-                  >
-                    <User className={cn('w-3.5 h-3.5', isHero ? 'text-white' : 'text-primary')} />
+                  <div className="w-7 h-7 rounded-full bg-white/20 flex items-center justify-center">
+                    <User className="w-3.5 h-3.5 text-white" />
                   </div>
-                  <span
-                    className={cn(
-                      'text-sm font-medium hidden sm:block',
-                      isHero ? 'text-white' : 'text-foreground'
-                    )}
-                  >
-                    {user.first_name}
-                  </span>
-                  <ChevronDown
-                    className={cn('w-3 h-3', isHero ? 'text-white/70' : 'text-muted-foreground')}
-                  />
+                  <span className="text-sm font-medium hidden sm:block">{user.first_name}</span>
+                  <ChevronDown className="w-3 h-3 text-white/70 hidden sm:block" />
                 </button>
                 {userMenuOpen && (
                   <div
@@ -186,12 +193,7 @@ export default function Navbar({ variant = 'default' }: NavbarProps) {
             ) : (
               <Link
                 to="/login"
-                className={cn(
-                  'hidden md:inline-flex items-center px-6 py-2 rounded-full text-xs md:text-sm font-semibold transition-colors',
-                  isHero
-                    ? 'border border-white text-white hover:bg-white hover:text-primary'
-                    : 'bg-primary text-white hover:bg-primary-hover'
-                )}
+                className="hidden sm:inline-flex items-center px-4 py-1.5 rounded-full text-xs font-semibold border border-white text-white hover:bg-white hover:text-primary transition-colors"
               >
                 Sign In
               </Link>
@@ -201,27 +203,25 @@ export default function Navbar({ variant = 'default' }: NavbarProps) {
               type="button"
               aria-expanded={mobileOpen}
               aria-label={mobileOpen ? 'Close menu' : 'Open menu'}
-              className={cn(
-                'lg:hidden p-2 rounded-full transition-colors',
-                isHero ? 'text-white hover:bg-white/10' : 'text-foreground hover:bg-muted'
-              )}
+              className="lg:hidden p-2 rounded-full text-white hover:bg-white/10 transition-colors"
               onClick={() => setMobileOpen(!mobileOpen)}
             >
               {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
             </button>
           </div>
         </div>
+
+        <div className="md:hidden pb-2.5 border-t border-white/10 pt-2">
+          <LiveScoreTicker embedded alwaysShow />
+        </div>
       </div>
 
       {mobileOpen && (
         <nav
           aria-label="Mobile navigation"
-          className={cn(
-            'lg:hidden border-t',
-            isHero ? 'border-white/20 bg-primary' : 'border-border bg-surface'
-          )}
+          className="lg:hidden border-t border-white/20 bg-primary"
         >
-          <div className="px-4 py-3 space-y-1">
+          <div className="px-4 py-3 space-y-1 safe-x">
             {navLinks.map((link) => (
               <NavLink
                 key={link.href}
@@ -230,13 +230,7 @@ export default function Navbar({ variant = 'default' }: NavbarProps) {
                 className={({ isActive }) =>
                   cn(
                     'block px-4 py-2.5 rounded-full text-sm font-medium',
-                    isHero
-                      ? isActive
-                        ? 'bg-white text-primary'
-                        : 'text-white hover:bg-white/10'
-                      : isActive
-                        ? 'bg-primary-muted text-primary'
-                        : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                    isActive ? 'bg-white text-primary' : 'text-white hover:bg-white/10',
                   )
                 }
               >
@@ -247,10 +241,7 @@ export default function Navbar({ variant = 'default' }: NavbarProps) {
               <Link
                 to="/login"
                 onClick={() => setMobileOpen(false)}
-                className={cn(
-                  'block px-4 py-2.5 rounded-full text-sm font-semibold',
-                  isHero ? 'text-white border border-white/30' : 'text-primary hover:bg-primary-muted'
-                )}
+                className="block px-4 py-2.5 rounded-full text-sm font-semibold text-white border border-white/30"
               >
                 Sign In
               </Link>

@@ -17,6 +17,7 @@ export class DivisionsService {
 
   async findOne(tournamentSlug: string, divisionSlug: string) {
     return this.resolveDivision(tournamentSlug, divisionSlug, {
+      tournament: true,
       teams: true,
       standings: { include: { team: true }, orderBy: { rank: 'asc' } },
       matches: { include: { home_team: true, away_team: true } },

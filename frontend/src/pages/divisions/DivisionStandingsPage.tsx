@@ -1,19 +1,19 @@
-import PageContent from '@/components/shared/PageContent';
 import QueryState from '@/components/shared/QueryState';
 import StandingsTable from '@/components/StandingsTable';
+import DivisionPageHeader from '@/components/divisions/DivisionPageHeader';
 import { useDivisionRoute } from '@/context/DivisionContext';
 import { useDivisionStandingsResource } from '@/hooks/useDivisionResources';
 
 export default function DivisionStandingsPage() {
-  const { tournamentSlug, divisionSlug } = useDivisionRoute();
+  const { division, tournamentSlug, divisionSlug } = useDivisionRoute();
   const { data: standings = [], isLoading, isError, refetch } = useDivisionStandingsResource(
     tournamentSlug,
     divisionSlug,
   );
 
   return (
-    <PageContent>
-      <h2 className="text-xl font-black uppercase mb-6">Standings</h2>
+    <>
+      <DivisionPageHeader title="Standings" subtitle="League table for this division" />
       <QueryState
         isLoading={isLoading}
         isError={isError}
@@ -21,8 +21,8 @@ export default function DivisionStandingsPage() {
         onRetry={() => refetch()}
         emptyMessage="No standings for this division yet."
       >
-        <StandingsTable standings={standings} />
+        <StandingsTable standings={standings} division={division} />
       </QueryState>
-    </PageContent>
+    </>
   );
 }

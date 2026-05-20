@@ -218,4 +218,69 @@
       animation: none;
     }
   }
+
+  .division-theme-root {
+    --division-primary: #F48735;
+    --division-primary-hover: #D66E1F;
+    --division-accent: #FEF3EB;
+    --division-accent-fg: #D66E1F;
+    --division-shadow: #D66E1F;
+  }
+
+  .division-hero-headline {
+    font-family: 'Arial Black', Impact, 'Franklin Gothic Bold', sans-serif;
+    @apply font-black leading-[0.9] tracking-tighter uppercase;
+    text-shadow:
+      1px 1px 0 var(--division-shadow),
+      2px 2px 0 var(--division-shadow),
+      3px 3px 0 var(--division-shadow),
+      4px 4px 0 var(--division-shadow),
+      5px 5px 0 var(--division-shadow),
+      6px 6px 0 var(--division-shadow);
+  }
+
+  .division-nav-pill {
+    @apply px-2.5 sm:px-3 xl:px-4 py-1.5 rounded-full text-xs xl:text-sm font-semibold transition-colors whitespace-nowrap border border-white/30 text-white hover:bg-white/10;
+  }
+
+  .division-nav-pill-active {
+    @apply bg-white border-white;
+    color: var(--division-primary) !important;
+  }
+
+  .division-badge {
+    @apply text-xs font-bold uppercase tracking-wide px-3 py-1 rounded-full border border-white/30;
+    background-color: color-mix(in srgb, var(--division-accent) 85%, transparent);
+    color: var(--division-accent-fg);
+  }
+
+  .division-stat-card {
+    @apply rounded-2xl border-2 border-gray-200 bg-white p-4 text-center shadow-sm;
+  }
+
+  .division-stat-value {
+    @apply text-2xl font-black;
+    color: var(--division-primary);
+  }
+
+  .division-stat-label {
+    @apply text-xs font-bold uppercase text-gray-600 mt-1;
+  }
+
+  .division-section-title {
+    @apply text-xl font-black uppercase tracking-tight text-foreground;
+  }
+
+  .division-link {
+    @apply font-bold hover:underline;
+    color: var(--division-primary);
+  }
+
+  .division-page-header {
+    @apply mb-6 pb-4 border-b-2 border-gray-200;
+  }
+
+  .division-page-header h2 {
+    @apply text-xl md:text-2xl font-black uppercase tracking-tight text-foreground;
+  }
 }

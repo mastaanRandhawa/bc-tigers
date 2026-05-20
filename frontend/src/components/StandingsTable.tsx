@@ -1,7 +1,8 @@
 import { Link } from 'react-router-dom';
-import type { Standing } from '@/types';
+import type { Division, Standing } from '@/types';
 import { getFormColor } from '@/lib/utils';
 import { cn } from '@/lib/utils';
+import { getDivisionTeamPath } from '@/lib/division-routes';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import {
@@ -16,9 +17,10 @@ import {
 interface StandingsTableProps {
   standings: Standing[];
   compact?: boolean;
+  division?: Division;
 }
 
-export default function StandingsTable({ standings, compact = false }: StandingsTableProps) {
+export default function StandingsTable({ standings, compact = false, division }: StandingsTableProps) {
   return (
     <Card className="overflow-hidden -mx-4 sm:mx-0">
       <div className="overflow-x-auto px-4 sm:px-0">
@@ -53,18 +55,29 @@ export default function StandingsTable({ standings, compact = false }: Standings
               >
                 <TableCell className="text-muted-foreground font-medium">{s.rank}</TableCell>
                 <TableCell>
-                  {s.team ? (
-                    <Link
-                      to={`/teams/${s.team.slug}`}
-                      className="flex items-center gap-2 hover:text-primary transition-colors min-w-0"
-                    >
-                      {s.team.logo && (
-                        <img src={s.team.logo} alt="" className="w-6 h-6 rounded-full object-cover shrink-0" />
-                      )}
-                      <span className="font-semibold text-foreground truncate">{s.team.name}</span>
-                      {idx === 0 && <Badge variant="default" className="shrink-0">Leader</Badge>}
-                    </Link>
-                  ) : (
+                  {s.team ? (() => {
+                    const div = s.team.division ?? division;
+                    const teamPath = div ? getDivisionTeamPath(div, s.team.slug) : null;
+                    const content = (
+                      <>
+                        {s.team.logo && (
+                          <img src={s.team.logo} alt="" className="w-6 h-6 rounded-full object-cover shrink-0" />
+                        )}
+                        <span className="font-semibold text-foreground truncate">{s.team.name}</span>
+                        {idx === 0 && <Badge variant="default" className="shrink-0">Leader</Badge>}
+                      </>
+                    );
+                    return teamPath ? (
+                      <Link
+                        to={teamPath}
+                        className="flex items-center gap-2 hover:text-primary transition-colors min-w-0"
+                      >
+                        {content}
+                      </Link>
+                    ) : (
+                      <div className="flex items-center gap-2 min-w-0">{content}</div>
+                    );
+                  })() : (
                     <span className="text-muted-foreground">Unknown</span>
                   )}
                 </TableCell>

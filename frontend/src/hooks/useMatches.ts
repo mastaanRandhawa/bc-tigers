@@ -16,8 +16,8 @@ export function useMatches(params?: {
   });
 }
 
-export function useLiveMatches() {
-  const query = useMatches({ status: 'LIVE' });
+export function useLiveMatches(params?: { divisionId?: string }) {
+  const query = useMatches({ status: 'LIVE', divisionId: params?.divisionId });
   return {
     ...query,
     data: query.data?.filter((m) => m.status === 'LIVE') ?? [],

@@ -23,21 +23,6 @@ import {
   DivisionVenuesPage,
   DivisionVenueDetailPage,
   DivisionSlugRedirect,
-  MatchesPage,
-  MatchDetailPage,
-  TeamsPage,
-  TeamDetailPage,
-  PlayersPage,
-  PlayerDetailPage,
-  VenuesPage,
-  VenueDetailPage,
-  SchedulePage,
-  StandingsPage,
-  StatsPage,
-  TopScorersPage,
-  TopAssistsPage,
-  DisciplinePage,
-  BracketsPage,
   LoginPage,
   RegisterPage,
   ForgotPasswordPage,
@@ -227,95 +212,10 @@ export default function App() {
       </Route>
 
       <Route
-        path="/matches"
-        element={
-          <L>
-            <MatchesPage />
-          </L>
-        }
-      />
-      <Route
-        path="/matches/:matchId"
-        element={
-          <L>
-            <MatchDetailPage />
-          </L>
-        }
-      />
-
-      <Route
-        path="/teams"
-        element={
-          <L>
-            <TeamsPage />
-          </L>
-        }
-      />
-      <Route
-        path="/teams/:teamSlug"
-        element={
-          <L>
-            <TeamDetailPage />
-          </L>
-        }
-      />
-
-      <Route
-        path="/players"
-        element={
-          <L>
-            <PlayersPage />
-          </L>
-        }
-      />
-      <Route
-        path="/players/:playerSlug"
-        element={
-          <L>
-            <PlayerDetailPage />
-          </L>
-        }
-      />
-
-      <Route
-        path="/venues"
-        element={
-          <L>
-            <VenuesPage />
-          </L>
-        }
-      />
-      <Route
-        path="/venues/:venueSlug"
-        element={
-          <L>
-            <VenueDetailPage />
-          </L>
-        }
-      />
-
-      <Route
-        path="/schedule"
-        element={
-          <L>
-            <SchedulePage />
-          </L>
-        }
-      />
-      <Route
         path="/schedule/:divisionSlug"
         element={
           <L>
             <DivisionSlugRedirect />
-          </L>
-        }
-      />
-
-      <Route
-        path="/standings"
-        element={
-          <L>
-            <StandingsPage />
           </L>
         }
       />
@@ -324,48 +224,6 @@ export default function App() {
         element={
           <L>
             <DivisionSlugRedirect />
-          </L>
-        }
-      />
-
-      <Route
-        path="/stats"
-        element={
-          <L>
-            <StatsPage />
-          </L>
-        }
-      />
-      <Route
-        path="/stats/top-scorers"
-        element={
-          <L>
-            <TopScorersPage />
-          </L>
-        }
-      />
-      <Route
-        path="/stats/top-assists"
-        element={
-          <L>
-            <TopAssistsPage />
-          </L>
-        }
-      />
-      <Route
-        path="/stats/discipline"
-        element={
-          <L>
-            <DisciplinePage />
-          </L>
-        }
-      />
-
-      <Route
-        path="/brackets"
-        element={
-          <L>
-            <BracketsPage />
           </L>
         }
       />

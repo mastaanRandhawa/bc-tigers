@@ -49,6 +49,8 @@ const DIVISIONS_CONFIG = [
     slug: 'boys-u18-open',
     age_group: 'U18',
     gender: 'MALE' as const,
+    primary_color: '#F48735',
+    accent_color: '#FEF3EB',
     teams: [
       { name: 'FC Coastal United', city: 'Vancouver', primaryColor: '#002D72' },
       { name: 'Pacific Strikers SC', city: 'Burnaby', primaryColor: '#CC0000' },
@@ -63,6 +65,8 @@ const DIVISIONS_CONFIG = [
     slug: 'girls-u16-select',
     age_group: 'U16',
     gender: 'FEMALE' as const,
+    primary_color: '#7C3AED',
+    accent_color: '#F3E8FF',
     teams: [
       { name: 'Vancouver FC Girls', city: 'Vancouver', primaryColor: '#003DA5' },
       { name: 'Richmond United Girls', city: 'Richmond', primaryColor: '#D4002C' },
@@ -195,6 +199,8 @@ async function main() {
         points_win: 3,
         points_draw: 1,
         points_loss: 0,
+        primary_color: divConfig.primary_color,
+        accent_color: divConfig.accent_color,
       },
     });
 

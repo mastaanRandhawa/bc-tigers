@@ -1,13 +1,18 @@
 import { createContext, useContext } from 'react';
 import type { DivisionRouteContext } from '@/hooks/useDivisionResources';
+import type { DivisionTheme } from '@/lib/division-theme';
 
-const DivisionContext = createContext<DivisionRouteContext | null>(null);
+export type DivisionContextValue = DivisionRouteContext & {
+  theme: DivisionTheme;
+};
+
+const DivisionContext = createContext<DivisionContextValue | null>(null);
 
 export function DivisionProvider({
   value,
   children,
 }: {
-  value: DivisionRouteContext;
+  value: DivisionContextValue;
   children: React.ReactNode;
 }) {
   return <DivisionContext.Provider value={value}>{children}</DivisionContext.Provider>;

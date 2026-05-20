@@ -1,6 +1,6 @@
-import PageContent from '@/components/shared/PageContent';
 import QueryState from '@/components/shared/QueryState';
 import MatchCard from '@/components/MatchCard';
+import DivisionPageHeader from '@/components/divisions/DivisionPageHeader';
 import { useDivisionRoute } from '@/context/DivisionContext';
 import { useDivisionMatches } from '@/hooks/useDivisionResources';
 import { formatDate } from '@/lib/utils';
@@ -24,8 +24,8 @@ export default function DivisionSchedulePage() {
   }, {});
 
   return (
-    <PageContent innerClassName="max-w-4xl">
-      <h2 className="text-xl font-black uppercase mb-6">Schedule</h2>
+    <>
+      <DivisionPageHeader title="Schedule" subtitle="Match dates and kickoff times" />
       <QueryState
         isLoading={isLoading}
         isError={isError}
@@ -48,6 +48,6 @@ export default function DivisionSchedulePage() {
           ))}
         </div>
       </QueryState>
-    </PageContent>
+    </>
   );
 }

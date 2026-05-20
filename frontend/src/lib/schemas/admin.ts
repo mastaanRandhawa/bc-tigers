@@ -25,6 +25,8 @@ export const divisionSchema = z.object({
   gender: z.enum(['MALE', 'FEMALE', 'MIXED']),
   max_teams: z.string().min(1),
   format: z.string().min(1),
+  primary_color: z.string().optional(),
+  accent_color: z.string().optional(),
 });
 
 export const teamSchema = z.object({

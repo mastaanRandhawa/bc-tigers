@@ -5,6 +5,7 @@ import { useLiveMatches } from '@/hooks/useMatches';
 import { useTournaments } from '@/hooks/useTournaments';
 import { formatDate } from '@/lib/utils';
 import { cn } from '@/lib/utils';
+import { getMatchPath } from '@/lib/division-routes';
 import type { Match } from '@/types';
 
 const ArrowAccentLeft = () => (
@@ -35,10 +36,10 @@ const ArrowAccentRight = () => (
   </svg>
 );
 
-function CircularBadge() {
+function CircularBadge({ schedulePath }: { schedulePath: string }) {
   return (
     <Link
-      to="/schedule"
+      to={schedulePath}
       className="relative w-28 h-28 md:w-36 md:h-36 bg-primary-muted rounded-full flex items-center justify-center shadow-xl rotate-12 hover:scale-105 transition-transform border-[3px] border-white/20"
     >
       <div className="absolute inset-1 animate-[spin_10s_linear_infinite]">
@@ -73,7 +74,7 @@ function LiveMatchCard({
 }) {
   return (
     <Link
-      to={`/matches/${match.id}`}
+      to={getMatchPath(match)}
       className={cn(
         'flex flex-col items-center justify-center rounded-[1.5rem] border border-white/30 shadow-xl',
         compact
@@ -126,6 +127,12 @@ export function TournamentHubHeader() {
 
   const activeTournament =
     tournaments.find((t) => t.status === 'ACTIVE') ?? tournaments[0];
+  const featuredDivision = activeTournament?.divisions?.[0];
+  const schedulePath = featuredDivision?.slug && activeTournament?.slug
+    ? `/tournaments/${activeTournament.slug}/divisions/${featuredDivision.slug}/schedule`
+    : activeTournament
+      ? `/tournaments/${activeTournament.slug}`
+      : '/tournaments';
 
   const featuredLive = liveMatches.slice(0, 2);
 
@@ -191,7 +198,7 @@ export function TournamentHubHeader() {
           )}
 
           <Link
-            to="/schedule"
+            to={schedulePath}
             className="md:hidden relative z-20 mt-4 inline-flex items-center gap-2 rounded-full border-2 border-white bg-white/10 px-5 py-2.5 text-sm font-bold text-white hover:bg-white hover:text-primary transition-colors"
           >
             <Calendar className="w-4 h-4" />
@@ -235,7 +242,7 @@ export function TournamentHubHeader() {
             </div>
 
             <div className="absolute bottom-[-10%] right-[12%] z-40 pointer-events-auto">
-              <CircularBadge />
+              <CircularBadge schedulePath={schedulePath} />
             </div>
           </div>
         </div>

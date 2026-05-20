@@ -4,13 +4,13 @@ import QueryState from '@/components/shared/QueryState';
 import { useMatches } from '@/hooks/useMatches';
 import { useAuthStore } from '@/store/authStore';
 import { formatDate, formatTime, getStatusColor } from '@/lib/utils';
-import { LayoutDashboard, Calendar, Zap, MapPin, ClipboardList } from 'lucide-react';
+import { getMatchPath } from '@/lib/division-routes';
+import { LayoutDashboard, Calendar, Zap, MapPin, ClipboardList, Trophy } from 'lucide-react';
 import { useEffect } from 'react';
 
 const nav = [
   { label: 'Dashboard', href: '/referee', icon: LayoutDashboard },
-  { label: 'Matches', href: '/matches', icon: ClipboardList },
-  { label: 'Schedule', href: '/schedule', icon: Calendar },
+  { label: 'Tournaments', href: '/tournaments', icon: Trophy },
 ];
 
 export default function RefereeDashboard() {
@@ -42,10 +42,7 @@ export default function RefereeDashboard() {
     .sort((a, b) => new Date(a.scheduled_start).getTime() - new Date(b.scheduled_start).getTime());
 
   const live = myMatches.filter((m) => m.status === 'LIVE');
-  const upcoming = myMatches
-    .filter((m) => m.status === 'SCHEDULED')
-    .sort((a, b) => new Date(a.scheduled_start).getTime() - new Date(b.scheduled_start).getTime())
-    .slice(0, 8);
+  const livePath = live[0] ? getMatchPath(live[0]) : '/tournaments';
 
   return (
     <PortalLayout title="Referee Portal" subtitle="Match Assignments" nav={nav}>
@@ -53,7 +50,7 @@ export default function RefereeDashboard() {
         {[
           { label: "Today's Matches", value: todayMatches.length, icon: Calendar },
           { label: 'Live Now', value: live.length, icon: Zap },
-          { label: 'Upcoming', value: upcoming.length, icon: ClipboardList },
+          { label: 'Assigned', value: myMatches.length, icon: ClipboardList },
         ].map((stat) => (
           <div key={stat.label} className="rounded-lg border border-border bg-card shadow-sm p-5 flex items-center gap-4">
             <div className="bg-violet-600 p-3 rounded-xl">
@@ -80,7 +77,7 @@ export default function RefereeDashboard() {
               {todayMatches.map((m) => (
                 <Link
                   key={m.id}
-                  to={`/matches/${m.id}`}
+                  to={getMatchPath(m)}
                   className="flex items-start gap-3 p-4 hover:bg-muted transition-colors"
                 >
                   <div className="flex-1 text-sm">
@@ -113,8 +110,8 @@ export default function RefereeDashboard() {
               <h2 className="font-semibold text-foreground">Live Matches</h2>
               {live.length > 0 && <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />}
             </div>
-            <Link to="/matches" className="text-xs text-violet-600 font-semibold hover:underline">
-              All Matches →
+            <Link to={livePath} className="text-xs text-violet-600 font-semibold hover:underline">
+              View Live →
             </Link>
           </div>
           <QueryState isEmpty={live.length === 0} emptyMessage="No live matches">
@@ -122,7 +119,7 @@ export default function RefereeDashboard() {
               {live.map((m) => (
                 <Link
                   key={m.id}
-                  to={`/matches/${m.id}`}
+                  to={getMatchPath(m)}
                   className="flex items-center gap-3 p-4 hover:bg-muted transition-colors"
                 >
                   <div className="flex-1 text-sm">

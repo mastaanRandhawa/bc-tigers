@@ -4,6 +4,7 @@ import type { Match } from '@/types';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent } from '@/components/ui/card';
 import { formatDate, formatTime, getMatchStatusBadgeVariant } from '@/lib/utils';
+import { getMatchPath } from '@/lib/division-routes';
 
 interface MatchCardProps {
   match: Match;
@@ -17,7 +18,7 @@ export default function MatchCard({ match, compact = false }: MatchCardProps) {
 
   if (compact) {
     return (
-      <Link to={`/matches/${match.id}`} className="block group min-w-0">
+      <Link to={getMatchPath(match)} className="block group min-w-0">
         <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2 py-2 rounded-lg hover:bg-muted transition-colors min-w-0">
           <p className="text-sm font-semibold text-foreground truncate text-right min-w-0">
             {match.home_team?.name ?? 'TBD'}
@@ -45,7 +46,7 @@ export default function MatchCard({ match, compact = false }: MatchCardProps) {
   }
 
   return (
-    <Link to={`/matches/${match.id}`} className="block group">
+    <Link to={getMatchPath(match)} className="block group">
       <Card className="hover:shadow-md transition-shadow">
         <CardContent className="p-5">
           <div className="flex items-center justify-between mb-4">

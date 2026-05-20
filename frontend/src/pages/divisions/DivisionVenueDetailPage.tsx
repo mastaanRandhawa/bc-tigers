@@ -1,5 +1,4 @@
 import { useParams } from 'react-router-dom';
-import PageContent from '@/components/shared/PageContent';
 import QueryState from '@/components/shared/QueryState';
 import MatchCard from '@/components/MatchCard';
 import { useDivisionRoute } from '@/context/DivisionContext';
@@ -18,7 +17,7 @@ export default function DivisionVenueDetailPage() {
   const matches = venue?.matches ?? [];
 
   return (
-    <PageContent innerClassName="max-w-4xl">
+    <>
       <QueryState
         isLoading={isLoading}
         isError={isError}
@@ -43,6 +42,6 @@ export default function DivisionVenueDetailPage() {
           </>
         )}
       </QueryState>
-    </PageContent>
+    </>
   );
 }

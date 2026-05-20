@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import PageContent from '@/components/shared/PageContent';
 import QueryState from '@/components/shared/QueryState';
 import MatchCard from '@/components/MatchCard';
+import DivisionPageHeader from '@/components/divisions/DivisionPageHeader';
 import { useDivisionRoute } from '@/context/DivisionContext';
 import { useDivisionMatches } from '@/hooks/useDivisionResources';
 import { divisionMatchPath } from '@/lib/division-routes';
@@ -26,8 +26,8 @@ export default function DivisionMatchesPage() {
   );
 
   return (
-    <PageContent innerClassName="max-w-4xl">
-      <h2 className="text-xl font-black uppercase mb-6">Matches</h2>
+    <>
+      <DivisionPageHeader title="Matches" subtitle="Live, upcoming, and completed fixtures" />
       <div className="flex gap-2 mb-6 flex-wrap">
         {filters.map((f) => (
           <button
@@ -59,6 +59,6 @@ export default function DivisionMatchesPage() {
           ))}
         </div>
       </QueryState>
-    </PageContent>
+    </>
   );
 }

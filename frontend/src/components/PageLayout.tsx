@@ -6,6 +6,7 @@ interface PageLayoutProps {
   className?: string;
   showFooter?: boolean;
   heroTheme?: boolean;
+  headerMode?: 'site' | 'hero' | 'minimal';
 }
 
 export default function PageLayout({
@@ -13,9 +14,15 @@ export default function PageLayout({
   className,
   showFooter = true,
   heroTheme = false,
+  headerMode,
 }: PageLayoutProps) {
   return (
-    <AppShell className={className} showFooter={showFooter} heroTheme={heroTheme}>
+    <AppShell
+      className={className}
+      showFooter={showFooter}
+      heroTheme={heroTheme}
+      headerMode={headerMode}
+    >
       {children}
     </AppShell>
   );

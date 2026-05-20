@@ -1,5 +1,4 @@
 import { Link, useParams } from 'react-router-dom';
-import PageContent from '@/components/shared/PageContent';
 import QueryState from '@/components/shared/QueryState';
 import MatchCard from '@/components/MatchCard';
 import { useDivisionRoute } from '@/context/DivisionContext';
@@ -28,7 +27,7 @@ export default function DivisionTeamDetailPage() {
   const roster = team?.rosters?.map((r) => r.player).filter(Boolean) ?? [];
 
   return (
-    <PageContent>
+    <>
       <QueryState
         isLoading={isLoading}
         isError={isError}
@@ -119,6 +118,6 @@ export default function DivisionTeamDetailPage() {
           </>
         )}
       </QueryState>
-    </PageContent>
+    </>
   );
 }

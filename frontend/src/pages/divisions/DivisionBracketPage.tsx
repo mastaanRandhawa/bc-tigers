@@ -1,6 +1,6 @@
-import PageContent from '@/components/shared/PageContent';
 import QueryState from '@/components/shared/QueryState';
 import BracketView from '@/components/BracketView';
+import DivisionPageHeader from '@/components/divisions/DivisionPageHeader';
 import { useDivisionRoute } from '@/context/DivisionContext';
 import { useDivisionBracketResource } from '@/hooks/useDivisionResources';
 
@@ -12,8 +12,8 @@ export default function DivisionBracketPage() {
   );
 
   return (
-    <PageContent>
-      <h2 className="text-xl font-black uppercase mb-6">Bracket</h2>
+    <>
+      <DivisionPageHeader title="Bracket" subtitle="Knockout stage progression" />
       <QueryState
         isLoading={isLoading}
         isError={isError}
@@ -25,6 +25,6 @@ export default function DivisionBracketPage() {
           <BracketView nodes={nodes} />
         </div>
       </QueryState>
-    </PageContent>
+    </>
   );
 }

@@ -38,6 +38,8 @@ export default function DivisionFormDialog({ open, onOpenChange, division }: Div
       gender: 'MALE',
       max_teams: '8',
       format: 'Round Robin',
+      primary_color: '#F48735',
+      accent_color: '#FEF3EB',
     },
   });
 
@@ -52,6 +54,8 @@ export default function DivisionFormDialog({ open, onOpenChange, division }: Div
         gender: division.gender,
         max_teams: String(division.max_teams),
         format: division.format,
+        primary_color: division.primary_color ?? '#F48735',
+        accent_color: division.accent_color ?? '#FEF3EB',
       });
     } else {
       form.reset({
@@ -62,6 +66,8 @@ export default function DivisionFormDialog({ open, onOpenChange, division }: Div
         gender: 'MALE',
         max_teams: '8',
         format: 'Round Robin',
+        primary_color: '#F48735',
+        accent_color: '#FEF3EB',
       });
     }
   }, [open, division, form, tournaments]);
@@ -108,6 +114,8 @@ export default function DivisionFormDialog({ open, onOpenChange, division }: Div
       <SelectField control={form.control} name="gender" label="Gender" options={GENDER_OPTIONS} />
       <TextInputField control={form.control} name="max_teams" label="Max Teams" type="number" />
       <TextInputField control={form.control} name="format" label="Format" />
+      <TextInputField control={form.control} name="primary_color" label="Primary Color" placeholder="#F48735" />
+      <TextInputField control={form.control} name="accent_color" label="Accent Color" placeholder="#FEF3EB" />
     </FormDialog>
   );
 }

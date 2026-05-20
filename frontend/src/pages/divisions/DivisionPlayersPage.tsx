@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import PageContent from '@/components/shared/PageContent';
 import QueryState from '@/components/shared/QueryState';
+import DivisionPageHeader from '@/components/divisions/DivisionPageHeader';
 import { useDivisionRoute } from '@/context/DivisionContext';
 import { useDivisionPlayers, useDivisionTopScorers } from '@/hooks/useDivisionResources';
 import { Search, User } from 'lucide-react';
@@ -22,8 +22,8 @@ export default function DivisionPlayersPage() {
   const getStats = (playerId: string) => topScorers.find((s) => s.player_id === playerId);
 
   return (
-    <PageContent>
-      <h2 className="text-xl font-black uppercase mb-6">Players</h2>
+    <>
+      <DivisionPageHeader title="Players" subtitle="Registered athletes in this division" />
       <div className="relative max-w-md mb-6">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
         <Input
@@ -76,6 +76,6 @@ export default function DivisionPlayersPage() {
           })}
         </div>
       </QueryState>
-    </PageContent>
+    </>
   );
 }

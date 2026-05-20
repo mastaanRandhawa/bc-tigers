@@ -72,53 +72,6 @@ export const DivisionSlugRedirect = lazyPage(
   () => import("@/components/shared/DivisionSlugRedirect"),
 );
 
-export const MatchesPage = lazyPage(
-  () => import("@/pages/matches/MatchesPage"),
-);
-export const MatchDetailPage = lazyPage(
-  () => import("@/pages/matches/MatchDetailPage"),
-);
-
-export const TeamsPage = lazyPage(() => import("@/pages/teams/TeamsPage"));
-export const TeamDetailPage = lazyPage(
-  () => import("@/pages/teams/TeamDetailPage"),
-);
-
-export const PlayersPage = lazyPage(
-  () => import("@/pages/players/PlayersPage"),
-);
-export const PlayerDetailPage = lazyPage(
-  () => import("@/pages/players/PlayerDetailPage"),
-);
-
-export const VenuesPage = lazyPage(() => import("@/pages/venues/VenuesPage"));
-export const VenueDetailPage = lazyPage(
-  () => import("@/pages/venues/VenueDetailPage"),
-);
-
-export const SchedulePage = lazyPage(
-  () => import("@/pages/schedule/SchedulePage"),
-);
-
-export const StandingsPage = lazyPage(
-  () => import("@/pages/standings/StandingsPage"),
-);
-
-export const StatsPage = lazyPage(() => import("@/pages/stats/StatsPage"));
-export const TopScorersPage = lazyPage(
-  () => import("@/pages/stats/TopScorersPage"),
-);
-export const TopAssistsPage = lazyPage(
-  () => import("@/pages/stats/TopAssistsPage"),
-);
-export const DisciplinePage = lazyPage(
-  () => import("@/pages/stats/DisciplinePage"),
-);
-
-export const BracketsPage = lazyPage(
-  () => import("@/pages/brackets/BracketsPage"),
-);
-
 export const LoginPage = lazyPage(() => import("@/pages/auth/LoginPage"));
 export const RegisterPage = lazyPage(() => import("@/pages/auth/RegisterPage"));
 export const ForgotPasswordPage = lazyPage(

@@ -1,4 +1,4 @@
-import type { Division } from '@/types';
+import type { Division, Match, Team } from '@/types';
 
 export function divisionBasePath(tournamentSlug: string, divisionSlug: string) {
   return `/tournaments/${tournamentSlug}/divisions/${divisionSlug}`;
@@ -70,6 +70,12 @@ export function getDivisionSchedulePath(division: Division) {
   return divisionSchedulePath(tournamentSlug, division.slug);
 }
 
+export function getDivisionMatchesPath(division: Division) {
+  const tournamentSlug = division.tournament?.slug;
+  if (!tournamentSlug) return null;
+  return divisionMatchesPath(tournamentSlug, division.slug);
+}
+
 export function getDivisionBracketsPath(division: Division) {
   const tournamentSlug = division.tournament?.slug;
   if (!tournamentSlug) return null;
@@ -92,4 +98,22 @@ export function getDivisionVenuesPath(division: Division) {
   const tournamentSlug = division.tournament?.slug;
   if (!tournamentSlug) return null;
   return divisionVenuesPath(tournamentSlug, division.slug);
+}
+
+export function getMatchPath(match: Match): string {
+  const tournamentSlug = match.division?.tournament?.slug ?? match.tournament?.slug;
+  const divisionSlug = match.division?.slug;
+  if (tournamentSlug && divisionSlug) {
+    return divisionMatchPath(tournamentSlug, divisionSlug, match.id);
+  }
+  return '/tournaments';
+}
+
+export function getDivisionPublicPath(tournamentSlug: string, divisionSlug: string) {
+  return divisionBasePath(tournamentSlug, divisionSlug);
+}
+
+export function getTeamPath(team: Team): string | null {
+  if (!team.division) return null;
+  return getDivisionTeamPath(team.division, team.slug);
 }

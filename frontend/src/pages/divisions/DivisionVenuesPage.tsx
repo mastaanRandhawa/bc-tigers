@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
-import PageContent from '@/components/shared/PageContent';
 import QueryState from '@/components/shared/QueryState';
+import DivisionPageHeader from '@/components/divisions/DivisionPageHeader';
 import { useDivisionRoute } from '@/context/DivisionContext';
 import { useDivisionVenues } from '@/hooks/useDivisionResources';
 import { MapPin } from 'lucide-react';
@@ -13,11 +13,11 @@ export default function DivisionVenuesPage() {
   );
 
   return (
-    <PageContent>
-      <h2 className="text-xl font-black uppercase mb-6">Venues</h2>
-      <p className="text-sm text-gray-700 mb-6">
-        Locations used for matches in this division.
-      </p>
+    <>
+      <DivisionPageHeader
+        title="Venues"
+        subtitle="Locations used for matches in this division"
+      />
       <QueryState
         isLoading={isLoading}
         isError={isError}
@@ -32,7 +32,7 @@ export default function DivisionVenuesPage() {
               to={`${basePath}/venues/${venue.slug}`}
               className="rounded-[2rem] border-2 border-gray-200 bg-white p-6 hover:shadow-lg transition-shadow"
             >
-              <MapPin className="w-5 h-5 text-primary mb-2" />
+              <MapPin className="w-5 h-5 mb-2" style={{ color: 'var(--division-primary)' }} />
               <h3 className="font-black uppercase">{venue.name}</h3>
               <p className="text-sm text-gray-700 mt-1">{venue.address}</p>
               <p className="text-xs text-gray-600 mt-2">{venue.city}</p>
@@ -40,6 +40,6 @@ export default function DivisionVenuesPage() {
           ))}
         </div>
       </QueryState>
-    </PageContent>
+    </>
   );
 }

@@ -12,7 +12,7 @@ interface AuthLayoutProps {
 
 export default function AuthLayout({ children, title, subtitle }: AuthLayoutProps) {
   return (
-    <AppShell showFooter={false} className="flex flex-col items-center justify-center px-4 py-12">
+    <AppShell showFooter={false} headerMode="minimal" className="flex flex-col items-center justify-center px-4 py-12">
       <Link to="/" className="flex items-center gap-2.5 mb-8">
         <div className="bg-primary-muted p-2 rounded-lg">
           <Trophy className="w-6 h-6 text-primary" />

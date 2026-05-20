@@ -4,6 +4,7 @@ import QueryState from '@/components/shared/QueryState';
 import { Badge } from '@/components/ui/badge';
 import { MapPin, Clock, User, Goal as GoalIcon, AlertTriangle, RefreshCw, ArrowLeftRight, ArrowLeft } from 'lucide-react';
 import { formatDate, formatTime, cn } from '@/lib/utils';
+import { divisionMatchesPath } from '@/lib/division-routes';
 import { useMatch } from '@/hooks/useMatches';
 import type { MatchEventType } from '@/types';
 
@@ -40,6 +41,11 @@ export default function MatchDetailPage({ embedded = false }: { embedded?: boole
     ? `${match.referee.first_name} ${match.referee.last_name}`
     : undefined;
 
+  const backPath =
+    match?.division?.tournament?.slug && match?.division?.slug
+      ? divisionMatchesPath(match.division.tournament.slug, match.division.slug)
+      : '/tournaments';
+
   const content = (
     <QueryState
       isLoading={isLoading}
@@ -54,7 +60,7 @@ export default function MatchDetailPage({ embedded = false }: { embedded?: boole
             <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff10_1px,transparent_1px),linear-gradient(to_bottom,#ffffff10_1px,transparent_1px)] bg-[size:3rem_3rem]" />
             <div className="max-w-4xl mx-auto relative z-10 text-center">
               {!embedded && (
-                <Link to="/matches" className="inline-flex items-center gap-1 text-white/60 text-sm mb-4 hover:text-white">
+                <Link to={backPath} className="inline-flex items-center gap-1 text-white/60 text-sm mb-4 hover:text-white">
                   <ArrowLeft className="w-4 h-4" /> Back to matches
                 </Link>
               )}

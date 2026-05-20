@@ -6,6 +6,7 @@ import { useMatches } from '@/hooks/useMatches';
 import { useTournaments } from '@/hooks/useTournaments';
 import { useAuthStore } from '@/store/authStore';
 import { formatDate, formatTime } from '@/lib/utils';
+import { getMatchPath, getTeamPath, getDivisionSchedulePath } from '@/lib/division-routes';
 import {
   LayoutDashboard,
   Users,
@@ -13,15 +14,11 @@ import {
   Trophy,
   Clock,
   Zap,
-  BarChart3,
 } from 'lucide-react';
 import { useEffect } from 'react';
 
 const nav = [
   { label: 'Dashboard', href: '/coach', icon: LayoutDashboard },
-  { label: 'Teams', href: '/teams', icon: Users },
-  { label: 'Schedule', href: '/schedule', icon: Calendar },
-  { label: 'Standings', href: '/standings', icon: BarChart3 },
   { label: 'Tournaments', href: '/tournaments', icon: Trophy },
 ];
 
@@ -39,6 +36,10 @@ export default function CoachDashboard() {
     user?.coach?.team_coaches?.map((tc) => tc.team?.id).filter(Boolean) as string[]
   );
   const myTeams = myTeamIds.size > 0 ? teams.filter((t) => myTeamIds.has(t.id)) : teams;
+  const primaryTeam = myTeams[0];
+  const schedulePath = primaryTeam?.division
+    ? getDivisionSchedulePath(primaryTeam.division)
+    : '/tournaments';
 
   const myMatches = myTeamIds.size > 0
     ? matches.filter((m) => myTeamIds.has(m.home_team_id) || myTeamIds.has(m.away_team_id))
@@ -50,14 +51,15 @@ export default function CoachDashboard() {
     .slice(0, 6);
 
   const live = myMatches.filter((m) => m.status === 'LIVE');
+  const livePath = live[0] ? getMatchPath(live[0]) : schedulePath ?? '/tournaments';
 
   return (
     <PortalLayout title="Coach Portal" subtitle="Team Management" nav={nav}>
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         {[
-          { label: 'Teams', value: myTeams.length, icon: Users, href: '/teams' },
-          { label: 'Upcoming', value: upcoming.length, icon: Clock, href: '/schedule' },
-          { label: 'Live Now', value: live.length, icon: Zap, href: '/matches' },
+          { label: 'Teams', value: myTeams.length, icon: Users, href: primaryTeam ? (getTeamPath(primaryTeam) ?? '/tournaments') : '/tournaments' },
+          { label: 'Upcoming', value: upcoming.length, icon: Clock, href: schedulePath ?? '/tournaments' },
+          { label: 'Live Now', value: live.length, icon: Zap, href: livePath },
           { label: 'Tournaments', value: tournaments.length, icon: Trophy, href: '/tournaments' },
         ].map((stat) => (
           <Link key={stat.label} to={stat.href} className="group">
@@ -81,7 +83,7 @@ export default function CoachDashboard() {
               <Clock className="w-4 h-4 text-emerald-600" />
               <h2 className="font-semibold text-foreground">Upcoming Matches</h2>
             </div>
-            <Link to="/schedule" className="text-xs text-emerald-600 font-semibold hover:underline">
+            <Link to={schedulePath ?? '/tournaments'} className="text-xs text-emerald-600 font-semibold hover:underline">
               Full Schedule →
             </Link>
           </div>
@@ -90,7 +92,7 @@ export default function CoachDashboard() {
               {upcoming.map((m) => (
                 <Link
                   key={m.id}
-                  to={`/matches/${m.id}`}
+                  to={getMatchPath(m)}
                   className="flex items-center gap-3 p-4 hover:bg-muted transition-colors"
                 >
                   <div className="flex-1 text-sm">
@@ -113,8 +115,8 @@ export default function CoachDashboard() {
               <Users className="w-4 h-4 text-emerald-600" />
               <h2 className="font-semibold text-foreground">Teams</h2>
             </div>
-            <Link to="/teams" className="text-xs text-emerald-600 font-semibold hover:underline">
-              Browse All →
+            <Link to="/tournaments" className="text-xs text-emerald-600 font-semibold hover:underline">
+              Browse Tournaments →
             </Link>
           </div>
           <QueryState isLoading={teamsLoading} isEmpty={myTeams.length === 0} emptyMessage="No teams assigned">
@@ -122,7 +124,7 @@ export default function CoachDashboard() {
               {myTeams.slice(0, 6).map((team) => (
                 <Link
                   key={team.id}
-                  to={`/teams/${team.slug}`}
+                  to={getTeamPath(team) ?? '/tournaments'}
                   className="flex items-center gap-3 p-4 hover:bg-muted transition-colors"
                 >
                   <div

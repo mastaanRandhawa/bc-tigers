@@ -2,17 +2,7 @@ import { Link } from 'react-router-dom';
 import { Trophy } from 'lucide-react';
 import { usePublicSettings } from '@/hooks/useSettings';
 
-const tournamentLinks = [
-  { label: 'Tournaments', href: '/tournaments' },
-  { label: 'Schedule', href: '/schedule' },
-  { label: 'Matches', href: '/matches' },
-  { label: 'Standings', href: '/standings' },
-  { label: 'Brackets', href: '/brackets' },
-  { label: 'Teams', href: '/teams' },
-  { label: 'Players', href: '/players' },
-  { label: 'Statistics', href: '/stats' },
-  { label: 'Venues', href: '/venues' },
-];
+const tournamentLinks = [{ label: 'Tournaments', href: '/tournaments' }];
 
 export default function Footer() {
   const { data: settings } = usePublicSettings();
@@ -33,12 +23,12 @@ export default function Footer() {
               </div>
             </Link>
             <p className="text-sm text-muted-foreground leading-relaxed max-w-md">
-              {siteName} Tournament Hub — browse by division from any tournament page, or use the global indexes for schedules, scores, standings, and more.
+              {siteName} Tournament Hub — pick a tournament, then browse each division for schedules, scores, and standings.
             </p>
           </div>
 
           <div className="min-w-0">
-            <h3 className="text-label mb-3">Tournament</h3>
+            <h3 className="text-label mb-3">Explore</h3>
             <ul className="grid grid-cols-2 sm:grid-cols-3 gap-x-4 gap-y-2">
               {tournamentLinks.map((link) => (
                 <li key={link.href}>

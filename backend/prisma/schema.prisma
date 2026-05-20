@@ -139,6 +139,8 @@ model Division {
   points_win    Int      @default(3)
   points_draw   Int      @default(1)
   points_loss   Int      @default(0)
+  primary_color String?
+  accent_color  String?
   created_at    DateTime @default(now())
   updated_at    DateTime @updatedAt
 

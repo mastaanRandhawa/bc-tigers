@@ -2,7 +2,6 @@ import { Link } from 'react-router-dom';
 import PageLayout from '@/components/PageLayout';
 import Footer from '@/components/Footer';
 import { TournamentHubHeader } from '@/components/ui/hero';
-import LiveScoreTicker from '@/components/LiveScoreTicker';
 import MatchCard from '@/components/MatchCard';
 import StandingsTable from '@/components/StandingsTable';
 import QueryState from '@/components/shared/QueryState';
@@ -13,7 +12,7 @@ import { useDivisions } from '@/hooks/useDivisions';
 import { useStandings } from '@/hooks/useStandings';
 import { Calendar, ChevronRight, Trophy, ArrowUpRight } from 'lucide-react';
 import { formatDate } from '@/lib/utils';
-import { getDivisionStandingsPath } from '@/lib/division-routes';
+import { getDivisionStandingsPath, getDivisionSchedulePath, getDivisionMatchesPath, getMatchPath } from '@/lib/division-routes';
 import type { Division } from '@/types';
 
 function SectionLink({ to, children }: { to: string; children: React.ReactNode }) {
@@ -55,7 +54,7 @@ function AllDivisionsStandings() {
           <h2 className="text-xl md:text-2xl font-black uppercase tracking-tight">League Standings</h2>
           <p className="text-xs md:text-sm text-gray-700 font-semibold mt-1">By division</p>
         </div>
-        <SectionLink to="/standings">All Standings</SectionLink>
+        <SectionLink to="/tournaments">All Tournaments</SectionLink>
       </div>
       <div className="space-y-8">
         {divisions.map((division) => (
@@ -75,21 +74,32 @@ function DivisionStandingsSnippet({ division }: { division: Division }) {
       <div className="flex items-center justify-between mb-4">
         <h3 className="font-black uppercase">{division.name}</h3>
         {path && (
-          <Link to={path} className="text-sm text-primary font-bold hover:underline">
+          <a
+            href={path}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="division-link text-sm font-bold hover:underline"
+          >
             Full table
-          </Link>
+          </a>
         )}
       </div>
-      <StandingsTable standings={standings} compact />
+      <StandingsTable standings={standings} compact division={division} />
     </div>
   );
 }
 
 export default function HomePage() {
   const { data: tournaments = [] } = useTournaments();
+  const { data: divisions = [] } = useDivisions();
   const { data: allMatches = [] } = useMatches();
 
   const activeTournaments = tournaments.filter((t) => t.status === 'ACTIVE');
+  const featuredDivision = divisions[0];
+  const schedulePath = featuredDivision ? getDivisionSchedulePath(featuredDivision) : '/tournaments';
+  const matchesPath = featuredDivision ? getDivisionMatchesPath(featuredDivision) : '/tournaments';
+  const standingsPath = featuredDivision ? getDivisionStandingsPath(featuredDivision) : '/tournaments';
+
   const liveAndRecent = allMatches
     .filter((m) => m.status === 'LIVE' || m.status === 'COMPLETED')
     .slice(0, 3);
@@ -99,7 +109,6 @@ export default function HomePage() {
 
   return (
     <PageLayout heroTheme showFooter={false}>
-      <LiveScoreTicker />
       <TournamentHubHeader />
 
       <section className="sheet-top px-4 py-10 md:px-10 md:py-16 mt-auto w-full">
@@ -135,7 +144,7 @@ export default function HomePage() {
                 </>
               ) : (
                 <Link
-                  to="/schedule"
+                  to={schedulePath ?? '/tournaments'}
                   className="flex items-center bg-primary rounded-2xl px-4 py-3 text-white shadow-lg font-bold text-sm"
                 >
                   Open Schedule
@@ -168,10 +177,10 @@ export default function HomePage() {
                 </div>
               ) : (
                 <Link
-                  to="/matches"
+                  to={latestResult ? getMatchPath(latestResult) : (matchesPath ?? '/tournaments')}
                   className="flex items-center bg-primary rounded-full px-4 py-2.5 text-white shadow-lg font-bold text-sm"
                 >
-                  All Matches
+                  View Matches
                 </Link>
               )}
               <div className="absolute -bottom-6 right-1/3 bg-primary-muted rounded-full p-2.5 shadow-lg rotate-12 z-20">
@@ -183,7 +192,7 @@ export default function HomePage() {
             </div>
           </div>
 
-          <Link to="/standings" className="feature-card min-h-[240px] md:h-64 hover:shadow-lg transition-shadow">
+          <Link to={standingsPath ?? '/tournaments'} className="feature-card min-h-[240px] md:h-64 hover:shadow-lg transition-shadow">
             <h3 className="text-xl md:text-2xl uppercase leading-tight mb-2 font-black text-foreground">
               CHECK
               <br />
@@ -223,7 +232,7 @@ export default function HomePage() {
           <div className="lg:col-span-2 home-section">
             <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 mb-5 min-w-0">
               <h2 className="text-xl md:text-2xl font-black uppercase tracking-tight">Recent Results</h2>
-              <SectionLink to="/matches">All Matches</SectionLink>
+              <SectionLink to={matchesPath ?? '/tournaments'}>Division Matches</SectionLink>
             </div>
             <QueryState isEmpty={liveAndRecent.length === 0} emptyMessage="No recent matches.">
               <div className="space-y-3">
@@ -237,7 +246,7 @@ export default function HomePage() {
           <div className="min-w-0 home-section">
             <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 mb-5 min-w-0">
               <h2 className="text-xl md:text-2xl font-black uppercase tracking-tight text-foreground">Upcoming</h2>
-              <SectionLink to="/schedule">Full Schedule</SectionLink>
+              <SectionLink to={schedulePath ?? '/tournaments'}>Division Schedule</SectionLink>
             </div>
             <div className="rounded-2xl border-2 border-gray-200 bg-white overflow-hidden min-w-0">
               {upcoming.length > 0 ? (

@@ -9,6 +9,11 @@ import { useTopScorers } from '@/hooks/useStats';
 import { useStandings } from '@/hooks/useStandings';
 import { Trophy, Calendar, MapPin, Flag, Users, ChevronRight } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
+import {
+  getDivisionStandingsPath,
+  getDivisionSchedulePath,
+  divisionStatsPath,
+} from '@/lib/division-routes';
 import { formatDate } from '@/lib/utils';
 
 export default function TournamentDetailPage() {
@@ -24,6 +29,17 @@ export default function TournamentDetailPage() {
   const featured = matches.filter((m) => m.status === 'LIVE' || m.status === 'COMPLETED').slice(0, 2);
   const upcoming = matches.filter((m) => m.status === 'SCHEDULED').slice(0, 2);
   const divisions = tournament?.divisions ?? [];
+  const primaryDivision = divisions[0];
+  const standingsPath = primaryDivision
+    ? getDivisionStandingsPath({ ...primaryDivision, tournament })
+    : null;
+  const schedulePath = primaryDivision
+    ? getDivisionSchedulePath({ ...primaryDivision, tournament })
+    : null;
+  const statsPath =
+    tournament && primaryDivision
+      ? `${divisionStatsPath(tournament.slug, primaryDivision.slug)}/top-scorers`
+      : null;
 
   return (
     <PageLayout>
@@ -36,7 +52,7 @@ export default function TournamentDetailPage() {
       >
         {tournament && (
           <>
-            <div className="bg-primary text-white py-16 px-4 relative overflow-hidden">
+            <div className="bg-primary text-white py-10 sm:py-16 px-4 relative overflow-hidden">
               <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff10_1px,transparent_1px),linear-gradient(to_bottom,#ffffff10_1px,transparent_1px)] bg-[size:3rem_3rem]" />
               <div className="max-w-7xl mx-auto relative z-10">
                 <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
@@ -47,13 +63,10 @@ export default function TournamentDetailPage() {
                     <Badge variant={tournament.status === 'ACTIVE' ? 'live' : 'default'} className="mb-3">
                       {tournament.status}
                     </Badge>
-                    <h1
-                      className="text-display leading-none"
-                     
-                    >
+                    <h1 className="text-display leading-none text-white">
                       {tournament.name}
                     </h1>
-                    <div className="flex flex-wrap items-center gap-4 mt-4 text-white/70 text-sm">
+                    <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mt-4 text-white/80 text-xs sm:text-sm">
                       <span className="flex items-center gap-1">
                         <Calendar className="w-4 h-4" />
                         {formatDate(tournament.start_date)} – {formatDate(tournament.end_date)}
@@ -85,16 +98,29 @@ export default function TournamentDetailPage() {
                   <h2 className="text-xl font-semibold text-foreground uppercase tracking-tight mb-4">Divisions</h2>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     {divisions.map((div) => (
-                      <Link
+                      <a
                         key={div.id}
-                        to={`/tournaments/${tournament.slug}/divisions/${div.slug}`}
-                        className="group rounded-lg border border-border bg-card shadow-sm hover:shadow-lg transition-all p-5 flex items-center gap-4"
+                        href={`/tournaments/${tournament.slug}/divisions/${div.slug}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="group rounded-[2rem] border-2 border-gray-200 bg-white shadow-sm hover:shadow-lg transition-all p-5 flex items-center gap-4"
                       >
-                        <div className="bg-primary-muted p-2.5 rounded-xl flex-shrink-0 group-hover:scale-110 transition-transform">
-                          <Flag className="w-5 h-5 text-black" />
+                        <div
+                          className="p-2.5 rounded-xl flex-shrink-0 group-hover:scale-110 transition-transform border-2 border-gray-100"
+                          style={{
+                            backgroundColor: div.accent_color ?? '#FEF3EB',
+                          }}
+                        >
+                          <Flag
+                            className="w-5 h-5"
+                            style={{ color: div.primary_color ?? '#F48735' }}
+                          />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors">
+                          <h3
+                            className="font-black uppercase group-hover:underline transition-colors"
+                            style={{ color: div.primary_color ?? undefined }}
+                          >
                             {div.name}
                           </h3>
                           <div className="flex items-center gap-3 text-xs text-muted-foreground mt-1">
@@ -105,8 +131,8 @@ export default function TournamentDetailPage() {
                             </span>
                           </div>
                         </div>
-                        <ChevronRight className="w-4 h-4 text-gray-300 group-hover:text-primary transition-colors" />
-                      </Link>
+                        <ChevronRight className="w-4 h-4 text-gray-300 group-hover:text-foreground transition-colors" />
+                      </a>
                     ))}
                   </div>
                 </section>
@@ -125,11 +151,11 @@ export default function TournamentDetailPage() {
                 <section>
                   <div className="flex items-center justify-between mb-4">
                     <h2 className="text-xl font-semibold text-foreground uppercase tracking-tight">Standings</h2>
-                    <Link to="/standings" className="text-sm text-primary font-semibold hover:underline flex items-center gap-1">
+                    <Link to={standingsPath ?? `/tournaments/${tournament.slug}`} className="text-sm text-primary font-semibold hover:underline flex items-center gap-1">
                       Full Standings <ChevronRight className="w-4 h-4" />
                     </Link>
                   </div>
-                  <StandingsTable standings={standings} compact />
+                  <StandingsTable standings={standings} compact division={firstDivision} />
                 </section>
               </div>
 
@@ -141,7 +167,7 @@ export default function TournamentDetailPage() {
                       <MatchCard key={m.id} match={m} compact />
                     ))}
                   </div>
-                  <Link to="/schedule" className="block text-center text-sm text-primary font-semibold mt-4 hover:underline">
+                  <Link to={schedulePath ?? `/tournaments/${tournament.slug}`} className="block text-center text-sm text-primary font-semibold mt-4 hover:underline">
                     Full Schedule →
                   </Link>
                 </div>
@@ -162,7 +188,7 @@ export default function TournamentDetailPage() {
                       </div>
                     ))}
                   </div>
-                  <Link to="/stats/top-scorers" className="block text-center text-sm text-primary font-semibold mt-4 hover:underline">
+                  <Link to={statsPath ?? `/tournaments/${tournament.slug}`} className="block text-center text-sm text-primary font-semibold mt-4 hover:underline">
                     All Stats →
                   </Link>
                 </div>

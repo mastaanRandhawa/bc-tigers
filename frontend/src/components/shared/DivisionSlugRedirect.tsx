@@ -14,7 +14,7 @@ export default function DivisionSlugRedirect() {
 
   const division = Array.isArray(data) ? data[0] : (data as Division | undefined);
   if (isError || !division?.tournament) {
-    return <Navigate to={`/${section}`} replace />;
+    return <Navigate to="/tournaments" replace />;
   }
 
   const tournamentSlug = division.tournament.slug;

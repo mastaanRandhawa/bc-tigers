@@ -80,6 +80,8 @@ export interface Division {
   points_win: number;
   points_draw: number;
   points_loss: number;
+  primary_color?: string;
+  accent_color?: string;
   teams?: Team[];
 }
 

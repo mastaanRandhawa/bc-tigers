@@ -6,11 +6,10 @@ import { useTopScorers } from '@/hooks/useStats';
 import { useTournaments } from '@/hooks/useTournaments';
 import { useAuthStore } from '@/store/authStore';
 import { formatDate, formatTime } from '@/lib/utils';
+import { getMatchPath, getDivisionSchedulePath, divisionStatsPath } from '@/lib/division-routes';
 import {
   LayoutDashboard,
   Calendar,
-  BarChart3,
-  Users,
   Trophy,
   Clock,
   Target,
@@ -19,10 +18,7 @@ import { useEffect } from 'react';
 
 const nav = [
   { label: 'Dashboard', href: '/player', icon: LayoutDashboard },
-  { label: 'Schedule', href: '/schedule', icon: Calendar },
-  { label: 'Standings', href: '/standings', icon: BarChart3 },
-  { label: 'Stats', href: '/stats', icon: Target },
-  { label: 'Teams', href: '/teams', icon: Users },
+  { label: 'Tournaments', href: '/tournaments', icon: Trophy },
 ];
 
 export default function PlayerDashboard() {
@@ -38,6 +34,12 @@ export default function PlayerDashboard() {
   const myTeamIds = new Set(
     user?.player?.rosters?.map((r) => r.team?.id).filter(Boolean) as string[]
   );
+  const myDivision = user?.player?.rosters?.[0]?.team?.division;
+  const schedulePath = myDivision ? getDivisionSchedulePath(myDivision) : '/tournaments';
+  const statsPath =
+    myDivision?.tournament?.slug && myDivision.slug
+      ? `${divisionStatsPath(myDivision.tournament.slug, myDivision.slug)}/top-scorers`
+      : '/tournaments';
 
   const myMatches = myTeamIds.size > 0
     ? matches.filter((m) => myTeamIds.has(m.home_team_id) || myTeamIds.has(m.away_team_id))
@@ -52,9 +54,9 @@ export default function PlayerDashboard() {
     <PortalLayout title="Player Portal" subtitle="Your Tournament Hub" nav={nav}>
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         {[
-          { label: 'Upcoming', value: upcoming.length, icon: Clock, href: '/schedule' },
-          { label: 'My Teams', value: myTeamIds.size, icon: Users, href: '/teams' },
-          { label: 'Top Scorers', value: scorers.length, icon: Target, href: '/stats/top-scorers' },
+          { label: 'Upcoming', value: upcoming.length, icon: Clock, href: schedulePath ?? '/tournaments' },
+          { label: 'My Teams', value: myTeamIds.size, icon: Calendar, href: '/tournaments' },
+          { label: 'Top Scorers', value: scorers.length, icon: Target, href: statsPath },
           { label: 'Tournaments', value: tournaments.length, icon: Trophy, href: '/tournaments' },
         ].map((stat) => (
           <Link key={stat.label} to={stat.href} className="group">
@@ -78,7 +80,7 @@ export default function PlayerDashboard() {
               <Calendar className="w-4 h-4 text-orange-600" />
               <h2 className="font-semibold text-foreground">Upcoming Matches</h2>
             </div>
-            <Link to="/schedule" className="text-xs text-orange-600 font-semibold hover:underline">
+            <Link to={schedulePath ?? '/tournaments'} className="text-xs text-orange-600 font-semibold hover:underline">
               Schedule →
             </Link>
           </div>
@@ -87,7 +89,7 @@ export default function PlayerDashboard() {
               {upcoming.map((m) => (
                 <Link
                   key={m.id}
-                  to={`/matches/${m.id}`}
+                  to={getMatchPath(m)}
                   className="flex items-center gap-3 p-4 hover:bg-muted transition-colors"
                 >
                   <div className="flex-1 text-sm">
@@ -110,7 +112,7 @@ export default function PlayerDashboard() {
               <Target className="w-4 h-4 text-orange-600" />
               <h2 className="font-semibold text-foreground">Top Scorers</h2>
             </div>
-            <Link to="/stats/top-scorers" className="text-xs text-orange-600 font-semibold hover:underline">
+            <Link to={statsPath} className="text-xs text-orange-600 font-semibold hover:underline">
               Full Stats →
             </Link>
           </div>
