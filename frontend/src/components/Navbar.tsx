@@ -39,14 +39,14 @@ export default function Navbar({ variant = 'default' }: NavbarProps) {
 
   const linkClass = ({ isActive }: { isActive: boolean }) =>
     cn(
-      'px-3 xl:px-4 py-1.5 rounded-full text-xs xl:text-sm font-semibold transition-colors whitespace-nowrap shrink-0',
+      'px-3 xl:px-4 py-1.5 rounded-lg text-xs xl:text-sm font-medium transition-all duration-200 whitespace-nowrap shrink-0',
       isHero
         ? isActive
           ? 'bg-white text-primary'
           : 'border border-white/30 text-white hover:bg-white/10'
         : isActive
-          ? 'bg-primary-muted text-primary'
-          : 'text-muted-foreground hover:text-foreground hover:bg-muted'
+          ? 'bg-white text-foreground shadow-sm border border-border font-semibold'
+          : 'text-zinc-500 hover:text-foreground hover:bg-zinc-100'
     );
 
   return (

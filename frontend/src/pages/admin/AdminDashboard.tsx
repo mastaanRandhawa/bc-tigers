@@ -18,7 +18,7 @@ export default function AdminDashboard() {
 
   return (
     <AdminLayout title="Dashboard" description="Overview of divisions, teams, and live activity">
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
         <div className="ds-stat-card">
           <p className="ds-stat-value">{divisions.length}</p>
           <p className="ds-stat-label">Divisions</p>
@@ -47,7 +47,7 @@ export default function AdminDashboard() {
             const matchCount = matches.filter((m) => m.division_id === division.id).length;
 
             return (
-              <div key={division.id} className="ds-card-hover p-5 md:p-6">
+              <div key={division.id} className="admin-card p-4 hover:shadow-md transition-all duration-200">
                 <div className="flex items-start justify-between gap-3">
                   <div className="flex items-start gap-3 min-w-0">
                     <div
@@ -55,7 +55,7 @@ export default function AdminDashboard() {
                       style={{ backgroundColor: theme.primary }}
                     />
                     <div className="min-w-0">
-                      <h3 className="text-base font-semibold truncate font-display" style={{ color: theme.primary }}>
+                      <h3 className="text-base font-semibold truncate font-display text-foreground">
                         {division.name}
                       </h3>
                       <p className="text-body-sm truncate mt-0.5">{division.tournament?.name}</p>

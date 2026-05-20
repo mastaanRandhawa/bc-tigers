@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import { ChevronRight } from 'lucide-react';
+import { ChevronRight, Flag } from 'lucide-react';
 import { getDivisionBasePath } from '@/lib/division-routes';
 import type { Division } from '@/types';
 
@@ -18,19 +18,30 @@ export default function DivisionDirectoryCard({
   return (
     <Link
       to={href}
-      className="group block rounded-[2rem] border-2 border-gray-200 bg-white hover:shadow-lg transition-all p-5"
+      className="group flex items-center gap-4 rounded-xl border border-border bg-white p-4 shadow-sm transition-all duration-200 hover:shadow-md hover:-translate-y-px"
     >
-      <div className="flex items-center justify-between gap-4">
-        <div>
-          <h3 className="font-black uppercase text-foreground group-hover:text-primary">
-            {division.name}
-          </h3>
-          <p className="text-sm text-gray-600 mt-1">
-            {description ?? division.tournament?.name}
-          </p>
-        </div>
-        <ChevronRight className="w-5 h-5 text-gray-400 group-hover:text-primary shrink-0" />
+      <div className="w-10 h-10 rounded-lg bg-primary-muted flex items-center justify-center shrink-0 border border-primary/10">
+        <Flag className="w-5 h-5 text-primary" />
       </div>
+      <div className="min-w-0 flex-1">
+        <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors truncate">
+          {division.name}
+        </h3>
+        <p className="text-sm text-zinc-500 mt-0.5 truncate">
+          {description ?? division.tournament?.name}
+        </p>
+        <div className="flex flex-wrap gap-2 mt-2">
+          {division.age_group && (
+            <span className="text-xs text-zinc-500 bg-zinc-50 px-2 py-0.5 rounded-md border border-border">
+              {division.age_group}
+            </span>
+          )}
+          <span className="text-xs text-zinc-500 bg-zinc-50 px-2 py-0.5 rounded-md border border-border">
+            {division.format}
+          </span>
+        </div>
+      </div>
+      <ChevronRight className="w-5 h-5 text-zinc-300 group-hover:text-primary shrink-0 transition-colors" />
     </Link>
   );
 }

@@ -49,8 +49,8 @@ export default function StandingsTable({ standings, compact = false, division }:
               <TableRow
                 key={s.id}
                 className={cn(
-                  idx === 0 && 'bg-primary-muted/60',
-                  idx > 0 && idx < 3 && 'bg-primary-muted/30'
+                  idx === 0 && 'bg-zinc-50',
+                  idx > 0 && idx < 3 && 'bg-zinc-50/50'
                 )}
               >
                 <TableCell className="text-muted-foreground font-medium">{s.rank}</TableCell>

@@ -9,8 +9,8 @@ interface PageContentProps {
 
 export default function PageContent({ children, className, innerClassName }: PageContentProps) {
   return (
-    <section className={cn('sheet-top px-4 py-8 sm:px-6 md:px-10 md:py-12 -mt-4 md:-mt-6 w-full', className)}>
-      <div className={cn('max-w-7xl mx-auto w-full', innerClassName)}>{children}</div>
+    <section className={cn('sheet-top px-4 py-6 sm:px-6 md:px-8 md:py-8 -mt-3 md:-mt-4 w-full', className)}>
+      <div className={cn('max-w-6xl mx-auto w-full', innerClassName)}>{children}</div>
     </section>
   );
 }

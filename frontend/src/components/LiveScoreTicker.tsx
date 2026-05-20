@@ -11,21 +11,36 @@ interface LiveScoreTickerProps {
   alwaysShow?: boolean;
   divisionId?: string;
   className?: string;
+  variant?: 'dark' | 'light';
 }
 
-function MatchTickerItem({ match, compact }: { match: Match; compact?: boolean }) {
+function MatchTickerItem({
+  match,
+  compact,
+  light,
+}: {
+  match: Match;
+  compact?: boolean;
+  light?: boolean;
+}) {
   return (
     <Link
       to={getMatchPath(match)}
       className={cn(
-        'inline-flex items-center gap-2 whitespace-nowrap hover:opacity-90 transition-opacity shrink-0',
+        'inline-flex items-center gap-2 whitespace-nowrap hover:opacity-80 transition-opacity shrink-0',
         compact ? 'text-xs' : 'text-sm',
+        light ? 'text-foreground' : 'text-white',
       )}
     >
       <span className="font-medium max-w-[7rem] sm:max-w-none truncate">
         {match.home_team?.name ?? 'Home'}
       </span>
-      <span className="font-bold bg-white/20 px-2 py-0.5 rounded-full tabular-nums shrink-0">
+      <span
+        className={cn(
+          'font-bold px-2 py-0.5 rounded-md tabular-nums shrink-0',
+          light ? 'bg-primary-muted text-primary' : 'bg-white/20 text-white',
+        )}
+      >
         {match.home_score} – {match.away_score}
       </span>
       <span className="font-medium max-w-[7rem] sm:max-w-none truncate">
@@ -40,9 +55,11 @@ export default function LiveScoreTicker({
   alwaysShow = false,
   divisionId,
   className,
+  variant = 'dark',
 }: LiveScoreTickerProps) {
   const { data: liveMatches = [] } = useLiveMatches({ divisionId });
   const reducedMotion = useReducedMotion();
+  const light = variant === 'light';
 
   if (liveMatches.length === 0 && !alwaysShow) return null;
 
@@ -53,21 +70,29 @@ export default function LiveScoreTicker({
   return (
     <div
       className={cn(
-        'text-white overflow-hidden min-w-0',
-        embedded ? 'py-0.5' : 'bg-primary py-2 safe-x',
+        'overflow-hidden min-w-0',
+        light ? 'text-foreground' : 'text-white',
+        embedded ? 'py-0.5' : light ? 'bg-zinc-100 py-2 safe-x' : 'bg-primary py-2 safe-x',
         className,
       )}
       role="region"
       aria-label="Live scores"
     >
       <div className={cn('flex items-center gap-2 sm:gap-3 min-w-0', !embedded && 'max-w-7xl mx-auto px-4')}>
-        <div className="flex items-center gap-1.5 shrink-0 bg-white/15 px-2.5 py-1 rounded-full">
+        <div
+          className={cn(
+            'flex items-center gap-1.5 shrink-0 px-2.5 py-1 rounded-md',
+            light ? 'bg-red-50 text-red-600 border border-red-100' : 'bg-white/15 text-white',
+          )}
+        >
           <Zap className="w-3 h-3 sm:w-3.5 sm:h-3.5" aria-hidden />
-          <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider">Live</span>
+          <span className="text-[10px] sm:text-xs font-semibold uppercase tracking-wider">Live</span>
         </div>
 
         {liveMatches.length === 0 ? (
-          <p className="text-xs sm:text-sm text-white/70 truncate">No live matches right now</p>
+          <p className={cn('text-xs sm:text-sm truncate', light ? 'text-zinc-500' : 'text-white/70')}>
+            No live matches right now
+          </p>
         ) : (
           <div
             className={cn(
@@ -87,11 +112,17 @@ export default function LiveScoreTicker({
               {tickerMatches.map((match, index) => (
                 <div key={`${match.id}-${index}`} className="flex items-center gap-6 sm:gap-8 shrink-0">
                   {index > 0 && (
-                    <span className="text-white/40 text-base leading-none select-none" aria-hidden>
+                    <span
+                      className={cn(
+                        'text-base leading-none select-none',
+                        light ? 'text-zinc-300' : 'text-white/40',
+                      )}
+                      aria-hidden
+                    >
                       •
                     </span>
                   )}
-                  <MatchTickerItem match={match} compact={embedded} />
+                  <MatchTickerItem match={match} compact={embedded} light={light} />
                 </div>
               ))}
             </div>

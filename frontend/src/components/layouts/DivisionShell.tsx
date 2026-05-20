@@ -51,9 +51,9 @@ function DivisionNavbar({ items }: { items: DivisionNavItem[] }) {
   return (
     <nav
       aria-label="Division navigation"
-      className="max-w-[1440px] mx-auto px-3 sm:px-6 lg:px-8 safe-x"
+      className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 safe-x"
     >
-      <div className="flex gap-1 sm:gap-1.5 overflow-x-auto no-scrollbar py-2 snap-x snap-mandatory">
+      <div className="flex gap-1 overflow-x-auto no-scrollbar py-2 snap-x snap-mandatory bg-zinc-100/80 rounded-xl px-1">
         {items.map((item) => (
           <NavLink
             key={item.href}
@@ -63,7 +63,7 @@ function DivisionNavbar({ items }: { items: DivisionNavItem[] }) {
             aria-label={item.label}
             className={({ isActive }) =>
               cn(
-                'division-nav-pill inline-flex items-center gap-1.5 sm:gap-2 shrink-0 snap-start',
+                'division-nav-pill inline-flex items-center gap-1.5 shrink-0 snap-start',
                 isActive && 'division-nav-pill-active',
               )
             }
@@ -86,32 +86,26 @@ export default function DivisionShell({
 
   return (
     <div
-      className="min-h-dvh min-h-screen flex flex-col w-full overflow-x-hidden division-theme-root"
+      className="min-h-dvh min-h-screen flex flex-col w-full overflow-x-hidden division-theme-root bg-surface-muted"
       style={divisionThemeStyle(theme)}
     >
-      <header className="relative bg-[var(--division-primary)] text-white overflow-hidden shrink-0">
-        <div className="absolute inset-0 bg-brand-grid pointer-events-none opacity-80" />
+      <header className="relative bg-hero-gradient border-b border-border shrink-0 overflow-hidden">
+        <div className="absolute inset-0 bg-brand-grid pointer-events-none opacity-60" />
+        <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary/80 via-primary to-primary/60" />
 
-        <div className="relative z-10 max-w-[1440px] mx-auto px-3 sm:px-6 lg:px-8 pt-4 pb-2 safe-x">
-          <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4 min-w-0">
-            <Link to="/tournaments" className="inline-flex items-center gap-1 flex-shrink-0">
-              <div className="font-black tracking-tight text-xs px-2.5 py-1 rounded-2xl rounded-bl-sm relative shadow-sm bg-white text-black">
+        <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pt-3 pb-2 safe-x">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-3 min-w-0">
+            <Link to="/" className="inline-flex items-center gap-1 shrink-0">
+              <div className="font-bold tracking-tight text-xs px-2 py-0.5 rounded-lg bg-foreground text-white">
                 BC
-                <div
-                  className="absolute -bottom-1.5 left-0 w-3 h-3 bg-white"
-                  style={{ clipPath: 'polygon(0 0, 100% 0, 0 100%)' }}
-                />
               </div>
-              <div
-                className="font-black text-xs px-2.5 py-1 rounded-full shadow-sm border-[1.5px] border-white"
-                style={{ backgroundColor: 'var(--division-accent)', color: 'var(--division-accent-fg)' }}
-              >
+              <div className="font-bold text-xs px-2 py-0.5 rounded-lg bg-primary-muted text-primary border border-primary/20">
                 TIGERS
               </div>
             </Link>
 
-            <div className="flex-1 min-w-0 sm:border-l sm:border-white/15 sm:pl-4">
-              <LiveScoreTicker embedded alwaysShow divisionId={division.id} />
+            <div className="flex-1 min-w-0 sm:border-l sm:border-border sm:pl-4">
+              <LiveScoreTicker embedded alwaysShow divisionId={division.id} variant="light" />
             </div>
           </div>
         </div>
@@ -119,12 +113,14 @@ export default function DivisionShell({
         <DivisionHero division={division} />
       </header>
 
-      <div className="sticky top-0 z-40 bg-[var(--division-primary)] border-t border-white/10 shadow-md shrink-0">
-        <DivisionNavbar items={navItems} />
+      <div className="sticky top-0 z-40 bg-white/95 backdrop-blur-sm border-b border-border shadow-sm shrink-0">
+        <div className="py-2">
+          <DivisionNavbar items={navItems} />
+        </div>
       </div>
 
       <main className="flex-1 w-full min-w-0">
-        <PageContent className="-mt-6 md:-mt-10">
+        <PageContent className="-mt-2 md:-mt-3">
           <Outlet />
         </PageContent>
       </main>

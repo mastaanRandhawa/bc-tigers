@@ -4,66 +4,21 @@ import Footer from '@/components/Footer';
 import { TournamentHubHeader } from '@/components/ui/hero';
 import MatchCard from '@/components/MatchCard';
 import StandingsTable from '@/components/StandingsTable';
+import SectionHeader from '@/components/shared/SectionHeader';
 import QueryState from '@/components/shared/QueryState';
 import { Badge } from '@/components/ui/badge';
 import { useTournaments } from '@/hooks/useTournaments';
 import { useMatches } from '@/hooks/useMatches';
 import { useDivisions } from '@/hooks/useDivisions';
 import { useStandings } from '@/hooks/useStandings';
-import { Calendar, ChevronRight, Trophy, ArrowUpRight } from 'lucide-react';
+import { Calendar, ChevronRight, Trophy, Swords, TrendingUp } from 'lucide-react';
 import { formatDate } from '@/lib/utils';
-import { getDivisionStandingsPath, getDivisionSchedulePath, getDivisionMatchesPath, getMatchPath } from '@/lib/division-routes';
+import {
+  getDivisionStandingsPath,
+  getDivisionSchedulePath,
+  getDivisionMatchesPath,
+} from '@/lib/division-routes';
 import type { Division } from '@/types';
-
-function SectionLink({ to, children }: { to: string; children: React.ReactNode }) {
-  return (
-    <Link
-      to={to}
-      className="text-sm text-primary font-bold flex items-center gap-1 hover:underline shrink-0 whitespace-nowrap ml-auto uppercase tracking-wide"
-    >
-      {children} <ChevronRight className="w-4 h-4" />
-    </Link>
-  );
-}
-
-function FeatureArrow() {
-  return (
-    <svg
-      viewBox="0 0 100 100"
-      className="w-full h-full text-black stroke-current overflow-visible"
-      fill="none"
-      strokeWidth="5"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-    >
-      <path d="M20,80 Q 40,20 80,40" />
-      <path d="M60,20 L80,40 L50,60" />
-    </svg>
-  );
-}
-
-function AllDivisionsStandings() {
-  const { data: divisions = [] } = useDivisions();
-
-  if (divisions.length === 0) return null;
-
-  return (
-    <section className="py-10 md:py-14">
-      <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 mb-6 min-w-0">
-        <div className="min-w-0">
-          <h2 className="text-xl md:text-2xl font-black uppercase tracking-tight">League Standings</h2>
-          <p className="text-xs md:text-sm text-gray-700 font-semibold mt-1">By division</p>
-        </div>
-        <SectionLink to="/tournaments">All Tournaments</SectionLink>
-      </div>
-      <div className="space-y-8">
-        {divisions.map((division) => (
-          <DivisionStandingsSnippet key={division.id} division={division} />
-        ))}
-      </div>
-    </section>
-  );
-}
 
 function DivisionStandingsSnippet({ division }: { division: Division }) {
   const { data: standings = [] } = useStandings(division.id);
@@ -71,17 +26,12 @@ function DivisionStandingsSnippet({ division }: { division: Division }) {
 
   return (
     <div className="home-section">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="font-black uppercase">{division.name}</h3>
+      <div className="flex items-center justify-between mb-3">
+        <h3 className="text-subsection m-0">{division.name}</h3>
         {path && (
-          <a
-            href={path}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="division-link text-sm font-bold hover:underline"
-          >
+          <Link to={path} className="text-sm font-medium text-primary hover:text-primary-hover">
             Full table
-          </a>
+          </Link>
         )}
       </div>
       <StandingsTable standings={standings} compact division={division} />
@@ -100,214 +50,187 @@ export default function HomePage() {
   const matchesPath = featuredDivision ? getDivisionMatchesPath(featuredDivision) : '/tournaments';
   const standingsPath = featuredDivision ? getDivisionStandingsPath(featuredDivision) : '/tournaments';
 
+  const liveMatches = allMatches.filter((m) => m.status === 'LIVE');
   const liveAndRecent = allMatches
     .filter((m) => m.status === 'LIVE' || m.status === 'COMPLETED')
-    .slice(0, 3);
-  const upcoming = allMatches.filter((m) => m.status === 'SCHEDULED').slice(0, 2);
-  const nextMatch = upcoming[0];
-  const latestResult = liveAndRecent[0];
+    .slice(0, 4);
+  const upcoming = allMatches.filter((m) => m.status === 'SCHEDULED').slice(0, 4);
 
   return (
     <PageLayout heroTheme showFooter={false}>
       <TournamentHubHeader />
 
-      <section className="sheet-top px-4 py-10 md:px-10 md:py-16 mt-auto w-full">
-        <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-5 md:gap-8">
-          <div className="feature-card min-h-[240px] md:h-64 relative">
-            <h3 className="text-xl md:text-2xl uppercase leading-tight mb-2 font-black text-foreground">
-              VIEW FULL
-              <br />
-              SCHEDULE
-            </h3>
-            <p className="text-xs md:text-sm text-gray-700 font-semibold mb-auto">
-              every match, venue, and kickoff time
-            </p>
-            <div className="relative w-full flex justify-center mt-6">
-              {nextMatch ? (
-                <>
-                  <div className="flex items-center bg-primary rounded-2xl p-2 pr-16 text-white shadow-lg relative z-10 w-full max-w-[220px]">
-                    <div className="w-8 h-8 bg-white/20 rounded-full mr-3 flex-shrink-0 flex items-center justify-center">
-                      <Calendar className="w-4 h-4" />
-                    </div>
-                    <div className="text-left min-w-0">
-                      <p className="text-[10px] font-bold leading-none truncate text-white">
-                        {nextMatch.home_team?.name ?? 'TBD'} vs {nextMatch.away_team?.name ?? 'TBD'}
-                      </p>
-                      <p className="text-[10px] text-white/90 leading-none mt-1">
-                        {formatDate(nextMatch.scheduled_start)}
-                      </p>
-                    </div>
-                  </div>
-                  <div className="absolute right-2 top-1/2 -translate-y-1/2 bg-primary-muted text-primary font-black text-[10px] px-3 py-2 rounded-xl z-20 shadow-md">
-                    NEXT
-                  </div>
-                </>
-              ) : (
-                <Link
-                  to={schedulePath ?? '/tournaments'}
-                  className="flex items-center bg-primary rounded-2xl px-4 py-3 text-white shadow-lg font-bold text-sm"
-                >
-                  Open Schedule
-                </Link>
-              )}
-            </div>
-            <div className="hidden md:block absolute -right-12 bottom-8 w-16 h-16 z-30">
-              <FeatureArrow />
-            </div>
-          </div>
-
-          <div className="feature-card min-h-[240px] md:h-64 relative">
-            <h3 className="text-xl md:text-2xl uppercase leading-tight mb-2 font-black text-foreground">
-              LIVE &amp;
-              <br />
-              RESULTS
-            </h3>
-            <p className="text-xs md:text-sm text-gray-700 font-semibold mb-auto">
-              scores update as matches are played
-            </p>
-            <div className="relative w-full flex justify-center mt-6">
-              {latestResult ? (
-                <div className="flex items-center bg-primary rounded-full p-1.5 text-white shadow-lg">
-                  <div className="bg-white/20 text-white font-bold text-sm px-4 py-2 rounded-full mr-2">
-                    {latestResult.home_score} – {latestResult.away_score}
-                  </div>
-                  <div className="font-bold text-xs px-2 truncate max-w-[100px]">
-                    {latestResult.status === 'LIVE' ? 'LIVE' : 'FT'}
-                  </div>
-                </div>
-              ) : (
-                <Link
-                  to={latestResult ? getMatchPath(latestResult) : (matchesPath ?? '/tournaments')}
-                  className="flex items-center bg-primary rounded-full px-4 py-2.5 text-white shadow-lg font-bold text-sm"
-                >
-                  View Matches
-                </Link>
-              )}
-              <div className="absolute -bottom-6 right-1/3 bg-primary-muted rounded-full p-2.5 shadow-lg rotate-12 z-20">
-                <ArrowUpRight className="w-4 h-4 text-primary" strokeWidth={3} />
+      <section className="sheet-top px-4 py-6 md:px-8 md:py-8 mt-auto w-full">
+        <div className="max-w-6xl mx-auto">
+          {/* Quick links */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-8">
+            <Link
+              to={schedulePath ?? '/tournaments'}
+              className="feature-card flex-row sm:flex-col items-start sm:items-stretch gap-3"
+            >
+              <div className="w-9 h-9 rounded-lg bg-primary-muted flex items-center justify-center shrink-0">
+                <Calendar className="w-5 h-5 text-primary" />
               </div>
-            </div>
-            <div className="hidden md:block absolute -right-12 bottom-8 w-16 h-16 z-30">
-              <FeatureArrow />
-            </div>
+              <div>
+                <h3 className="text-subsection m-0">Schedule</h3>
+                <p className="text-body-sm mt-1">Matches, venues & kickoffs</p>
+              </div>
+            </Link>
+            <Link
+              to={matchesPath ?? '/tournaments'}
+              className="feature-card flex-row sm:flex-col items-start sm:items-stretch gap-3"
+            >
+              <div className="w-9 h-9 rounded-lg bg-primary-muted flex items-center justify-center shrink-0">
+                <Swords className="w-5 h-5 text-primary" />
+              </div>
+              <div>
+                <h3 className="text-subsection m-0">Live & results</h3>
+                <p className="text-body-sm mt-1">
+                  {liveMatches.length > 0 ? `${liveMatches.length} live now` : 'Scores & fixtures'}
+                </p>
+              </div>
+            </Link>
+            <Link
+              to={standingsPath ?? '/tournaments'}
+              className="feature-card flex-row sm:flex-col items-start sm:items-stretch gap-3"
+            >
+              <div className="w-9 h-9 rounded-lg bg-primary-muted flex items-center justify-center shrink-0">
+                <TrendingUp className="w-5 h-5 text-primary" />
+              </div>
+              <div>
+                <h3 className="text-subsection m-0">Standings</h3>
+                <p className="text-body-sm mt-1">Points, wins & goal diff</p>
+              </div>
+            </Link>
           </div>
 
-          <Link to={standingsPath ?? '/tournaments'} className="feature-card min-h-[240px] md:h-64 hover:shadow-lg transition-shadow">
-            <h3 className="text-xl md:text-2xl uppercase leading-tight mb-2 font-black text-foreground">
-              CHECK
-              <br />
-              STANDINGS
-            </h3>
-            <p className="text-xs md:text-sm text-gray-700 font-semibold mb-auto">
-              points, wins, and goal difference
-            </p>
-            <div className="flex flex-col items-center bg-primary-muted rounded-[2rem] px-6 py-4 text-primary shadow-lg mt-6 relative w-full max-w-[200px]">
-              <p className="text-[9px] font-bold uppercase tracking-wider mb-1">Tournament Hub</p>
-              <p className="text-xl font-black">Standings</p>
-              <div className="absolute -bottom-2 left-8 w-5 h-5 bg-primary-muted rotate-45" />
+          {activeTournaments.length > 0 && (
+            <div className="flex flex-wrap items-center gap-2 mb-8 pb-6 border-b border-border">
+              <Trophy className="w-4 h-4 text-primary shrink-0" />
+              <span className="text-sm font-medium text-foreground">Active tournaments</span>
+              <div className="flex gap-2 flex-wrap">
+                {activeTournaments.map((t) => (
+                  <Link
+                    key={t.id}
+                    to={`/tournaments/${t.slug}`}
+                    className="text-xs font-medium px-2.5 py-1 rounded-md border border-border bg-white hover:border-primary/30 hover:text-primary transition-colors text-foreground"
+                  >
+                    {t.name}
+                  </Link>
+                ))}
+              </div>
+              <Link
+                to="/tournaments"
+                className="text-sm font-medium text-primary hover:text-primary-hover ml-auto inline-flex items-center gap-1"
+              >
+                All <ChevronRight className="w-4 h-4" />
+              </Link>
             </div>
-          </Link>
-        </div>
+          )}
 
-        {activeTournaments.length > 0 && (
-          <div className="max-w-6xl mx-auto mt-10 pt-8 border-t-2 border-gray-200 flex flex-wrap items-center gap-3">
-            <Trophy className="w-5 h-5 text-primary shrink-0" />
-            <span className="text-sm font-black uppercase tracking-wide text-foreground">Active:</span>
-            <div className="flex gap-2 flex-wrap">
-              {activeTournaments.map((t) => (
-                <Link
-                  key={t.id}
-                  to={`/tournaments/${t.slug}`}
-                  className="bg-white border-2 border-gray-200 text-xs font-bold px-3 py-1.5 rounded-full hover:border-primary hover:text-primary transition-colors text-foreground"
-                >
-                  {t.name}
-                </Link>
-              ))}
-            </div>
-            <SectionLink to="/tournaments">All Tournaments</SectionLink>
-          </div>
-        )}
-
-        <div className="max-w-6xl mx-auto mt-12 md:mt-16 pt-10 border-t-2 border-gray-200 grid grid-cols-1 lg:grid-cols-3 gap-8">
-          <div className="lg:col-span-2 home-section">
-            <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 mb-5 min-w-0">
-              <h2 className="text-xl md:text-2xl font-black uppercase tracking-tight">Recent Results</h2>
-              <SectionLink to={matchesPath ?? '/tournaments'}>Division Matches</SectionLink>
-            </div>
-            <QueryState isEmpty={liveAndRecent.length === 0} emptyMessage="No recent matches.">
-              <div className="space-y-3">
-                {liveAndRecent.map((match) => (
+          {/* Live matches strip */}
+          {liveMatches.length > 0 && (
+            <section className="mb-8">
+              <SectionHeader title="Live now" />
+              <div className="space-y-2">
+                {liveMatches.slice(0, 3).map((match) => (
                   <MatchCard key={match.id} match={match} />
                 ))}
               </div>
-            </QueryState>
-          </div>
+            </section>
+          )}
 
-          <div className="min-w-0 home-section">
-            <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 mb-5 min-w-0">
-              <h2 className="text-xl md:text-2xl font-black uppercase tracking-tight text-foreground">Upcoming</h2>
-              <SectionLink to={schedulePath ?? '/tournaments'}>Division Schedule</SectionLink>
-            </div>
-            <div className="rounded-2xl border-2 border-gray-200 bg-white overflow-hidden min-w-0">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-8">
+            <section className="lg:col-span-2 home-section">
+              <SectionHeader
+                title="Recent results"
+                href={matchesPath ?? '/tournaments'}
+                linkLabel="All matches"
+              />
+              <QueryState isEmpty={liveAndRecent.length === 0} emptyMessage="No recent matches.">
+                <div className="space-y-2">
+                  {liveAndRecent.map((match) => (
+                    <MatchCard key={match.id} match={match} />
+                  ))}
+                </div>
+              </QueryState>
+            </section>
+
+            <section className="home-section">
+              <SectionHeader
+                title="Upcoming"
+                href={schedulePath ?? '/tournaments'}
+                linkLabel="Schedule"
+              />
               {upcoming.length > 0 ? (
-                <div className="divide-y divide-gray-200">
+                <div className="divide-y divide-border -mx-1">
                   {upcoming.map((match) => (
-                    <div key={match.id} className="px-4 py-3 min-w-0">
-                      <div className="flex items-center gap-1.5 mb-2 text-xs text-gray-700 font-semibold">
-                        <Calendar className="w-3 h-3 shrink-0" />
-                        <span>{formatDate(match.scheduled_start)}</span>
-                      </div>
+                    <div key={match.id} className="px-1 py-1">
                       <MatchCard match={match} compact />
                     </div>
                   ))}
                 </div>
               ) : (
-                <p className="p-8 text-center text-sm text-gray-700 font-medium">No upcoming matches</p>
+                <p className="text-sm text-zinc-500 py-4 text-center">No upcoming matches</p>
               )}
-            </div>
+            </section>
           </div>
-        </div>
 
-        <div className="max-w-6xl mx-auto mt-12 pt-10 border-t-2 border-gray-200">
-          <AllDivisionsStandings />
-        </div>
+          {divisions.length > 0 && (
+            <section className="mb-8">
+              <SectionHeader
+                title="League standings"
+                subtitle="By division"
+                href="/tournaments"
+                linkLabel="All tournaments"
+              />
+              <div className="space-y-4">
+                {divisions.map((division) => (
+                  <DivisionStandingsSnippet key={division.id} division={division} />
+                ))}
+              </div>
+            </section>
+          )}
 
-        <div className="max-w-6xl mx-auto py-10 md:py-14 mt-12 pt-10 border-t-2 border-gray-200">
-          <div className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 mb-6 min-w-0">
-            <h2 className="text-xl md:text-2xl font-black uppercase tracking-tight">Tournaments</h2>
-            <SectionLink to="/tournaments">All Tournaments</SectionLink>
-          </div>
-          <QueryState isEmpty={tournaments.length === 0} emptyMessage="No tournaments yet." variant="skeleton-cards">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {tournaments.slice(0, 4).map((t) => (
-                <Link key={t.id} to={`/tournaments/${t.slug}`} className="group">
-                  <div className="rounded-[2rem] border-2 border-gray-200 bg-white overflow-hidden h-full hover:shadow-lg transition-shadow">
-                    <div className="h-32 bg-primary-muted relative flex items-center justify-center border-b-2 border-gray-200">
-                      <div className="bg-white p-3 rounded-2xl shadow-sm">
-                        <Trophy className="w-8 h-8 text-primary" />
+          <section>
+            <SectionHeader
+              title="Tournaments"
+              href="/tournaments"
+              linkLabel="View all"
+            />
+            <QueryState
+              isEmpty={tournaments.length === 0}
+              emptyMessage="No tournaments yet."
+              variant="skeleton-cards"
+            >
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {tournaments.slice(0, 4).map((t) => (
+                  <Link key={t.id} to={`/tournaments/${t.slug}`} className="group ds-card-hover overflow-hidden">
+                    <div className="h-24 bg-zinc-50 relative flex items-center justify-center border-b border-border">
+                      <div className="bg-white p-2.5 rounded-xl shadow-sm border border-border">
+                        <Trophy className="w-7 h-7 text-primary" />
                       </div>
                       <Badge
                         variant={t.status === 'ACTIVE' ? 'success' : 'default'}
-                        className="absolute top-3 right-3"
+                        className="absolute top-2.5 right-2.5"
                       >
                         {t.status}
                       </Badge>
                     </div>
-                    <div className="p-5">
-                      <h3 className="font-black uppercase text-foreground text-lg group-hover:text-primary transition-colors">
+                    <div className="p-4">
+                      <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors">
                         {t.name}
                       </h3>
-                      <p className="text-sm text-gray-700 font-medium mt-1">{t.location}</p>
-                      <p className="text-xs text-gray-600 font-semibold mt-3">
+                      <p className="text-sm text-zinc-500 mt-0.5">{t.location}</p>
+                      <p className="text-xs text-zinc-400 mt-2">
                         {formatDate(t.start_date)} – {formatDate(t.end_date)}
                       </p>
-                      <p className="text-sm text-gray-700 mt-3 line-clamp-2">{t.description}</p>
                     </div>
-                  </div>
-                </Link>
-              ))}
-            </div>
-          </QueryState>
+                  </Link>
+                ))}
+              </div>
+            </QueryState>
+          </section>
         </div>
 
         <Footer />

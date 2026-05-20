@@ -52,21 +52,22 @@ export default function TournamentDetailPage() {
       >
         {tournament && (
           <>
-            <div className="bg-primary text-white py-10 sm:py-16 px-4 relative overflow-hidden">
-              <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff10_1px,transparent_1px),linear-gradient(to_bottom,#ffffff10_1px,transparent_1px)] bg-[size:3rem_3rem]" />
-              <div className="max-w-7xl mx-auto relative z-10">
-                <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
-                  <div className="bg-primary-muted p-4 rounded-2xl flex-shrink-0">
-                    <Trophy className="w-12 h-12 text-black" />
+            <div className="bg-hero-gradient border-b border-border py-8 sm:py-10 px-4 relative overflow-hidden">
+              <div className="absolute inset-0 bg-brand-grid pointer-events-none opacity-50" />
+              <div className="absolute top-0 left-0 right-0 h-1 bg-gradient-to-r from-primary/60 via-primary to-primary/40" />
+              <div className="max-w-6xl mx-auto relative z-10">
+                <div className="flex flex-col md:flex-row items-start md:items-center gap-5">
+                  <div className="bg-primary-muted p-3 rounded-xl flex-shrink-0 border border-primary/15">
+                    <Trophy className="w-10 h-10 text-primary" />
                   </div>
                   <div className="flex-1">
-                    <Badge variant={tournament.status === 'ACTIVE' ? 'live' : 'default'} className="mb-3">
+                    <Badge variant={tournament.status === 'ACTIVE' ? 'success' : 'default'} className="mb-2">
                       {tournament.status}
                     </Badge>
-                    <h1 className="text-display leading-none text-white">
+                    <h1 className="text-page-title m-0">
                       {tournament.name}
                     </h1>
-                    <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mt-4 text-white/80 text-xs sm:text-sm">
+                    <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mt-3 text-zinc-500 text-sm">
                       <span className="flex items-center gap-1">
                         <Calendar className="w-4 h-4" />
                         {formatDate(tournament.start_date)} – {formatDate(tournament.end_date)}
@@ -85,7 +86,7 @@ export default function TournamentDetailPage() {
               </div>
             </div>
 
-            <div className="max-w-7xl mx-auto px-4 py-10 grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="max-w-6xl mx-auto px-4 py-6 sm:py-8 grid grid-cols-1 lg:grid-cols-3 gap-6">
               <div className="lg:col-span-2 space-y-8">
                 {tournament.description && (
                   <section className="rounded-lg border border-border bg-card shadow-sm p-6">
@@ -95,50 +96,39 @@ export default function TournamentDetailPage() {
                 )}
 
                 <section>
-                  <h2 className="text-xl font-semibold text-foreground uppercase tracking-tight mb-4">Divisions</h2>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <h2 className="text-section mb-4">Divisions</h2>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     {divisions.map((div) => (
                       <a
                         key={div.id}
                         href={`/tournaments/${tournament.slug}/divisions/${div.slug}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="group rounded-[2rem] border-2 border-gray-200 bg-white shadow-sm hover:shadow-lg transition-all p-5 flex items-center gap-4"
+                        className="group rounded-xl border border-border bg-white shadow-sm hover:shadow-md transition-all duration-200 hover:-translate-y-px p-4 flex items-center gap-3"
                       >
-                        <div
-                          className="p-2.5 rounded-xl flex-shrink-0 group-hover:scale-110 transition-transform border-2 border-gray-100"
-                          style={{
-                            backgroundColor: div.accent_color ?? '#FEF3EB',
-                          }}
-                        >
-                          <Flag
-                            className="w-5 h-5"
-                            style={{ color: div.primary_color ?? '#F48735' }}
-                          />
+                        <div className="p-2 rounded-lg flex-shrink-0 bg-primary-muted border border-primary/10">
+                          <Flag className="w-5 h-5 text-primary" />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <h3
-                            className="font-black uppercase group-hover:underline transition-colors"
-                            style={{ color: div.primary_color ?? undefined }}
-                          >
+                          <h3 className="font-semibold text-foreground group-hover:text-primary transition-colors truncate">
                             {div.name}
                           </h3>
-                          <div className="flex items-center gap-3 text-xs text-muted-foreground mt-1">
+                          <div className="flex items-center gap-3 text-xs text-zinc-500 mt-1">
                             {div.age_group && <span>{div.age_group}</span>}
                             <span>{div.gender}</span>
                             <span className="flex items-center gap-0.5">
-                              <Users className="w-3 h-3" /> {div.max_teams} teams max
+                              <Users className="w-3 h-3" /> {div.max_teams} max
                             </span>
                           </div>
                         </div>
-                        <ChevronRight className="w-4 h-4 text-gray-300 group-hover:text-foreground transition-colors" />
+                        <ChevronRight className="w-4 h-4 text-zinc-300 group-hover:text-primary transition-colors shrink-0" />
                       </a>
                     ))}
                   </div>
                 </section>
 
                 <section>
-                  <h2 className="text-xl font-semibold text-foreground uppercase tracking-tight mb-4">Featured Matches</h2>
+                  <h2 className="text-section mb-4">Featured matches</h2>
                   <div className="space-y-3">
                     {featured.length > 0 ? (
                       featured.map((m) => <MatchCard key={m.id} match={m} />)
@@ -150,7 +140,7 @@ export default function TournamentDetailPage() {
 
                 <section>
                   <div className="flex items-center justify-between mb-4">
-                    <h2 className="text-xl font-semibold text-foreground uppercase tracking-tight">Standings</h2>
+                    <h2 className="text-section">Standings</h2>
                     <Link to={standingsPath ?? `/tournaments/${tournament.slug}`} className="text-sm text-primary font-semibold hover:underline flex items-center gap-1">
                       Full Standings <ChevronRight className="w-4 h-4" />
                     </Link>
@@ -177,14 +167,14 @@ export default function TournamentDetailPage() {
                   <div className="space-y-3">
                     {topScorers.map((stat, i) => (
                       <div key={stat.id} className="flex items-center gap-3">
-                        <span className="text-sm font-black text-muted-foreground w-5 text-center">{i + 1}</span>
+                        <span className="text-sm font-medium text-zinc-400 w-5 text-center tabular-nums">{i + 1}</span>
                         <div className="flex-1 min-w-0">
                           <p className="text-sm font-bold text-foreground truncate">
                             {stat.player?.first_name} {stat.player?.last_name}
                           </p>
                           <p className="text-xs text-muted-foreground truncate">{stat.team?.name}</p>
                         </div>
-                        <span className="text-primary font-black text-sm">{stat.goals}G</span>
+                        <span className="text-primary font-semibold text-sm tabular-nums">{stat.goals}G</span>
                       </div>
                     ))}
                   </div>

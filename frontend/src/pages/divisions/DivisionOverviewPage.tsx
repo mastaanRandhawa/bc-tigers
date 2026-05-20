@@ -1,6 +1,9 @@
 import { Link } from 'react-router-dom';
 import QueryState from '@/components/shared/QueryState';
 import MatchCard from '@/components/MatchCard';
+import StatCard from '@/components/shared/StatCard';
+import SectionHeader from '@/components/shared/SectionHeader';
+import StandingsTable from '@/components/StandingsTable';
 import DivisionPageHeader from '@/components/divisions/DivisionPageHeader';
 import { useDivisionRoute } from '@/context/DivisionContext';
 import {
@@ -8,7 +11,7 @@ import {
   useDivisionStandingsResource,
   useDivisionTeams,
 } from '@/hooks/useDivisionResources';
-import { ChevronRight } from 'lucide-react';
+import { Calendar, MapPin, Swords, Trophy, Users, Zap } from 'lucide-react';
 import { formatDate } from '@/lib/utils';
 
 export default function DivisionOverviewPage() {
@@ -19,51 +22,41 @@ export default function DivisionOverviewPage() {
   const { data: standings = [] } = useDivisionStandingsResource(tournamentSlug, divisionSlug);
 
   const liveMatches = matches.filter((m) => m.status === 'LIVE');
-  const upcoming = matches.filter((m) => m.status === 'SCHEDULED').slice(0, 3);
+  const upcoming = matches.filter((m) => m.status === 'SCHEDULED').slice(0, 4);
+  const recent = matches
+    .filter((m) => m.status === 'COMPLETED')
+    .slice(0, 4);
 
   return (
-    <>
-      <DivisionPageHeader title="Overview" subtitle="Division snapshot and recent activity" />
+    <div className="space-y-6">
+      <DivisionPageHeader
+        title="Overview"
+        subtitle="Division snapshot, live action, and standings"
+      />
 
-      {tournament && (
-        <div className="mb-8 rounded-[2rem] border-2 border-gray-200 bg-gray-50 p-6">
-          <h3 className="text-sm font-black uppercase tracking-wide text-gray-600 mb-2">Tournament</h3>
-          <Link
-            to={`/tournaments/${tournament.slug}`}
-            className="division-link text-lg"
-          >
-            {tournament.name}
-          </Link>
-          <p className="text-sm text-gray-700 mt-2">
-            {formatDate(tournament.start_date)} – {formatDate(tournament.end_date)} ·{' '}
-            {tournament.location}
-          </p>
-        </div>
-      )}
-
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
-        <div className="division-stat-card">
-          <p className="division-stat-value">{teams.length}</p>
-          <p className="division-stat-label">Teams</p>
-        </div>
-        <div className="division-stat-card">
-          <p className="division-stat-value">{matches.length}</p>
-          <p className="division-stat-label">Matches</p>
-        </div>
-        <div className="division-stat-card">
-          <p className="division-stat-value">{liveMatches.length}</p>
-          <p className="division-stat-label">Live</p>
-        </div>
-        <div className="division-stat-card">
-          <p className="division-stat-value">{standings[0]?.points ?? '—'}</p>
-          <p className="division-stat-label">Leader Pts</p>
-        </div>
+      {/* Quick stats */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <StatCard value={teams.length} label="Teams" icon={Users} />
+        <StatCard value={matches.length} label="Matches" icon={Swords} />
+        <StatCard
+          value={liveMatches.length}
+          label="Live now"
+          icon={Zap}
+          accent={liveMatches.length > 0}
+        />
+        <StatCard
+          value={standings[0]?.points ?? '—'}
+          label="Leader pts"
+          icon={Trophy}
+          trend={standings[0]?.team?.name}
+        />
       </div>
 
+      {/* Live matches */}
       {liveMatches.length > 0 && (
-        <section className="mb-10 home-section">
-          <h3 className="division-section-title mb-4">Live Now</h3>
-          <div className="space-y-3">
+        <section className="home-section">
+          <SectionHeader title="Live matches" subtitle="Scores updating in real time" />
+          <div className="space-y-2">
             {liveMatches.map((m) => (
               <MatchCard key={m.id} match={m} />
             ))}
@@ -71,23 +64,76 @@ export default function DivisionOverviewPage() {
         </section>
       )}
 
-      {upcoming.length > 0 && (
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {/* Upcoming */}
         <section className="home-section">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="division-section-title">Upcoming</h3>
-            <Link to={`${basePath}/schedule`} className="division-link text-sm inline-flex items-center gap-1">
-              Full schedule <ChevronRight className="w-4 h-4" />
-            </Link>
-          </div>
+          <SectionHeader
+            title="Upcoming"
+            href={`${basePath}/schedule`}
+            linkLabel="Full schedule"
+          />
           <QueryState isEmpty={upcoming.length === 0} emptyMessage="No upcoming matches.">
-            <div className="space-y-3">
+            <div className="space-y-2">
               {upcoming.map((m) => (
                 <MatchCard key={m.id} match={m} />
               ))}
             </div>
           </QueryState>
         </section>
+
+        {/* Recent results */}
+        <section className="home-section">
+          <SectionHeader
+            title="Recent results"
+            href={`${basePath}/matches`}
+            linkLabel="All matches"
+          />
+          <QueryState isEmpty={recent.length === 0} emptyMessage="No completed matches yet.">
+            <div className="space-y-2">
+              {recent.map((m) => (
+                <MatchCard key={m.id} match={m} />
+              ))}
+            </div>
+          </QueryState>
+        </section>
+      </div>
+
+      {/* Standings snapshot */}
+      {standings.length > 0 && (
+        <section className="home-section">
+          <SectionHeader
+            title="Standings"
+            href={`${basePath}/standings`}
+            linkLabel="Full table"
+          />
+          <StandingsTable standings={standings.slice(0, 6)} compact division={division} />
+        </section>
       )}
-    </>
+
+      {/* Tournament info */}
+      {tournament && (
+        <section className="ds-section">
+          <SectionHeader title="Tournament info" />
+          <Link
+            to={`/tournaments/${tournament.slug}`}
+            className="text-lg font-semibold text-foreground hover:text-primary transition-colors"
+          >
+            {tournament.name}
+          </Link>
+          <div className="flex flex-wrap gap-4 mt-3 text-sm text-zinc-500">
+            <span className="inline-flex items-center gap-1.5">
+              <Calendar className="w-4 h-4 text-zinc-400" />
+              {formatDate(tournament.start_date)} – {formatDate(tournament.end_date)}
+            </span>
+            {tournament.location && (
+              <span className="inline-flex items-center gap-1.5">
+                <MapPin className="w-4 h-4 text-zinc-400" />
+                {tournament.location}
+              </span>
+            )}
+          </div>
+        </section>
+      )}
+    </div>
   );
 }

@@ -15,7 +15,7 @@ const badgeVariants = cva(
         live: 'bg-red-600 text-white animate-pulse',
         success: 'bg-emerald-50 text-emerald-700 border border-emerald-200',
         warning: 'bg-amber-50 text-amber-800 border border-amber-200',
-        scheduled: 'bg-primary text-white',
+        scheduled: 'bg-zinc-100 text-zinc-700 border border-border',
         cancelled: 'bg-muted text-muted-foreground',
       },
     },
