@@ -282,7 +282,7 @@ Dev uses Vite proxy (`/api` → `localhost:3000`); production build targets Rend
 
 1. **Render:** set `CORS_ORIGIN` to `https://mastaanrandhawa.github.io,https://mastaanrandhawa.github.io/bc-tigers` (Origin header is usually without path; include both to be safe).
 2. **GitHub:** Settings → Pages → Source: **GitHub Actions**.
-3. Push to `main`; workflow `.github/workflows/deploy-frontend.yml` builds with `GITHUB_PAGES=true` (base `/bc-tigers/`).
+3. Push to `main` or `master`; workflow `.github/workflows/deploy-frontend.yml` builds with `GITHUB_PAGES=true` (base `/bc-tigers/`).
 
 ---
 
