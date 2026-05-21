@@ -8,6 +8,7 @@ import {
   GitBranch,
   MapPin,
   LayoutDashboard,
+  ChevronRight,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import LiveScoreTicker from '@/components/LiveScoreTicker';
@@ -56,6 +57,7 @@ export default function DivisionShell({
 }: DivisionShellProps) {
   const navItems = buildDivisionNavItems(basePath);
   const { primary: primaryNavItems, more: moreNavItems } = splitDivisionNavItems(navItems);
+  const tournament = division.tournament;
 
   return (
     <div
@@ -94,6 +96,32 @@ export default function DivisionShell({
       </header>
 
       <div className="sticky top-0 z-40 shrink-0 border-b border-border bg-white/95 shadow-sm backdrop-blur-sm">
+        <nav
+          aria-label="Tournament context"
+          className="page-container flex min-w-0 items-center gap-1.5 overflow-x-auto border-b border-border/60 py-1.5 text-xs no-scrollbar"
+        >
+          <Link
+            to="/tournaments"
+            className="inline-flex shrink-0 items-center gap-1 rounded-md border border-border bg-zinc-50 px-2 py-1 font-semibold text-foreground transition-colors hover:border-primary/30 hover:text-primary sm:border-transparent sm:bg-transparent sm:px-0 sm:py-0 sm:font-medium sm:text-zinc-500 sm:hover:text-foreground"
+          >
+            <span aria-hidden className="sm:hidden">←</span>
+            Tournaments
+          </Link>
+          {tournament && (
+            <>
+              <ChevronRight className="h-3 w-3 shrink-0 text-zinc-300" aria-hidden />
+              <Link
+                to={`/tournaments/${tournament.slug}`}
+                className="max-w-[10rem] truncate font-medium text-zinc-500 transition-colors hover:text-foreground sm:max-w-xs"
+                title={tournament.name}
+              >
+                {tournament.name}
+              </Link>
+            </>
+          )}
+          <ChevronRight className="h-3 w-3 shrink-0 text-zinc-300" aria-hidden />
+          <span className="truncate font-semibold text-foreground">{division.name}</span>
+        </nav>
         <div className="py-2">
           <DivisionNav
             primaryItems={primaryNavItems}

@@ -4,17 +4,39 @@ import {
   getDivisionSchedulePath,
 } from '@/lib/division-routes';
 
-export const FEATURED_TOURNAMENT_SLUG = 'miri-piri-2026';
+function tournamentStartMs(t: Tournament) {
+  return new Date(t.start_date).getTime();
+}
 
+function tournamentEndMs(t: Tournament) {
+  return new Date(t.end_date).getTime();
+}
+
+function bySoonestStart(a: Tournament, b: Tournament) {
+  return tournamentStartMs(a) - tournamentStartMs(b);
+}
+
+function bySoonestEnd(a: Tournament, b: Tournament) {
+  return tournamentEndMs(a) - tournamentEndMs(b);
+}
+
+/** Primary tournament for home hero and hub deep-links (from API data only). */
 export function pickFeaturedTournament(
   tournaments: Tournament[],
 ): Tournament | undefined {
-  return (
-    tournaments.find((t) => t.slug === FEATURED_TOURNAMENT_SLUG) ??
-    tournaments.find((t) => t.status === 'UPCOMING') ??
-    tournaments.find((t) => t.status === 'ACTIVE') ??
-    tournaments[0]
-  );
+  if (tournaments.length === 0) return undefined;
+
+  const active = tournaments
+    .filter((t) => t.status === 'ACTIVE')
+    .sort(bySoonestEnd);
+  if (active.length > 0) return active[0];
+
+  const upcoming = tournaments
+    .filter((t) => t.status === 'UPCOMING')
+    .sort(bySoonestStart);
+  if (upcoming.length > 0) return upcoming[0];
+
+  return tournaments[0];
 }
 
 export function tournamentOverviewPath(tournament?: Tournament | null) {

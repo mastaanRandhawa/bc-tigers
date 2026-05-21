@@ -24,7 +24,7 @@ export default function AppShell({
   showLiveTicker,
 }: AppShellProps) {
   const headerVariant = headerMode ?? (heroTheme ? 'hero' : 'site');
-  const tickerVisible = showLiveTicker ?? !heroTheme;
+  const tickerVisible = showLiveTicker ?? true;
 
   return (
     <div

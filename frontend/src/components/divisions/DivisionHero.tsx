@@ -1,4 +1,3 @@
-import { Link } from 'react-router-dom';
 import type { Division } from '@/types';
 import type { DivisionTheme } from '@/lib/division-theme';
 
@@ -8,37 +7,8 @@ interface DivisionHeroProps {
 }
 
 export default function DivisionHero({ division, theme }: DivisionHeroProps) {
-  const tournament = division.tournament;
-
   return (
     <div className="page-container relative z-10 pt-3 pb-4">
-      {/* Breadcrumb */}
-      <nav
-        aria-label="Breadcrumb"
-        className="mb-3 flex min-w-0 items-center gap-1.5 overflow-x-auto text-xs no-scrollbar"
-      >
-        <Link
-          to="/tournaments"
-          className="shrink-0 text-zinc-500 transition-colors hover:text-foreground"
-        >
-          Tournaments
-        </Link>
-        <span className="shrink-0 text-zinc-300">/</span>
-        {tournament && (
-          <>
-            <Link
-              to={`/tournaments/${tournament.slug}`}
-              className="max-w-[8rem] truncate text-zinc-500 transition-colors hover:text-foreground sm:max-w-xs"
-              title={tournament.name}
-            >
-              {tournament.name}
-            </Link>
-            <span className="shrink-0 text-zinc-300">/</span>
-          </>
-        )}
-        <span className="truncate font-medium text-foreground">{division.name}</span>
-      </nav>
-
       {/* Division identity row */}
       <div className="flex items-center gap-3">
         {/* Division color swatch / icon */}

@@ -96,20 +96,20 @@ function LiveMatchCard({
         "flex flex-col items-center justify-center rounded-[1.5rem] border border-white/30 shadow-xl",
         compact
           ? "min-w-[160px] shrink-0 p-4 bg-primary-hover/90"
-          : "w-40 md:w-52 aspect-[3/3.5] p-5 bg-primary-hover/85 backdrop-blur-md rotate-0 hover:rotate-0 transition-transform duration-500",
+          : "w-[7.5rem] sm:w-36 md:w-40 lg:w-52 aspect-[3/3.5] p-3 sm:p-4 md:p-5 bg-primary-hover/85 backdrop-blur-md rotate-0 hover:rotate-0 transition-transform duration-500",
         className,
       )}
     >
       <div
         className={cn(
           "rounded-full flex items-center justify-center mb-2 shadow-inner border-[3px] border-white/40 bg-primary",
-          compact ? "w-12 h-12" : "w-16 h-16 md:w-20 md:h-20 mb-3",
+          compact ? "w-12 h-12" : "w-11 h-11 sm:w-14 sm:h-14 md:w-16 md:h-16 lg:w-20 lg:h-20 mb-2 sm:mb-3",
         )}
       >
         <span
           className={cn(
             "text-white font-black",
-            compact ? "text-xs" : "text-lg",
+            compact ? "text-xs" : "text-[10px] sm:text-sm md:text-lg",
           )}
         >
           LIVE
@@ -119,7 +119,7 @@ function LiveMatchCard({
         <p
           className={cn(
             "font-bold text-white truncate max-w-full drop-shadow-sm",
-            compact ? "text-xs" : "text-sm md:text-base max-w-[140px]",
+            compact ? "text-xs" : "text-[10px] sm:text-xs md:text-sm lg:text-base max-w-[5.5rem] sm:max-w-[120px] md:max-w-[140px]",
           )}
         >
           {match.home_team?.name ?? "Home"}
@@ -127,7 +127,7 @@ function LiveMatchCard({
         <p
           className={cn(
             "font-black text-white my-0.5 drop-shadow-md",
-            compact ? "text-lg" : "text-xl md:text-2xl",
+            compact ? "text-lg" : "text-base sm:text-lg md:text-xl lg:text-2xl",
           )}
         >
           {match.home_score} – {match.away_score}
@@ -135,7 +135,7 @@ function LiveMatchCard({
         <p
           className={cn(
             "font-bold text-white truncate max-w-full drop-shadow-sm",
-            compact ? "text-xs" : "text-sm md:text-base max-w-[140px]",
+            compact ? "text-xs" : "text-[10px] sm:text-xs md:text-sm lg:text-base max-w-[5.5rem] sm:max-w-[120px] md:max-w-[140px]",
           )}
         >
           {match.away_team?.name ?? "Away"}
@@ -158,8 +158,8 @@ export function TournamentHubHeader() {
     <section className="relative bg-primary overflow-x-hidden w-full">
       <div className="absolute inset-0 bg-brand-grid pointer-events-none z-0" />
 
-      <div className="relative z-10 px-4 pt-6 pb-10 sm:pt-8 sm:pb-12 md:pt-10 md:pb-48 flex flex-col items-center w-full max-w-[1440px] mx-auto">
-        <div className="relative w-full max-w-5xl mx-auto flex flex-col items-center text-center md:min-h-[420px]">
+      <div className="relative z-10 px-4 pt-6 pb-28 sm:pt-8 sm:pb-32 md:pt-10 md:pb-48 flex flex-col items-center w-full max-w-[1440px] mx-auto">
+        <div className="relative w-full max-w-5xl mx-auto flex flex-col items-center text-center min-h-[300px] sm:min-h-[360px] md:min-h-[420px]">
           <div className="hero-headline-stack w-full flex flex-col items-center relative z-10 pointer-events-none">
             <div className="w-full flex justify-start pl-[8%] md:pl-[25%] relative z-30">
               <h1 className="hero-headline hero-headline-shadow text-[clamp(2.75rem,14vw,160px)] text-primary-muted m-0 p-0">
@@ -207,15 +207,7 @@ export function TournamentHubHeader() {
             </div>
           )}
 
-          <Link
-            to={schedulePath}
-            className="md:hidden relative z-20 mt-6 mb-1 inline-flex items-center gap-2 rounded-full border-2 border-white bg-white/10 px-6 py-3 text-sm font-bold text-white hover:bg-white hover:text-primary transition-colors pointer-events-auto"
-          >
-            <Calendar className="w-4 h-4" />
-            View Schedule
-          </Link>
-
-          <div className="hidden md:block absolute inset-0 w-full h-full pointer-events-none min-h-[420px]">
+          <div className="absolute inset-0 w-full h-full pointer-events-none min-h-[300px] sm:min-h-[360px] md:min-h-[420px]">
             {featuredLive[0] && (
               <motion.div
                 animate={{ y: [0, -15, 0] }}
@@ -224,11 +216,11 @@ export function TournamentHubHeader() {
                   repeat: Infinity,
                   ease: "easeInOut",
                 }}
-                className="absolute bottom-[10%] left-[18%] z-30 pointer-events-auto"
+                className="absolute bottom-[6%] left-[2%] sm:bottom-[8%] sm:left-[10%] md:bottom-[10%] md:left-[18%] z-30 pointer-events-auto"
               >
                 <LiveMatchCard
                   match={featuredLive[0]}
-                  className="rotate-[-12deg] hover:rotate-0"
+                  className="rotate-[-10deg] sm:rotate-[-12deg] hover:rotate-0"
                 />
               </motion.div>
             )}
@@ -242,24 +234,24 @@ export function TournamentHubHeader() {
                   ease: "easeInOut",
                   delay: 1,
                 }}
-                className="absolute top-[15%] right-[20%] z-30 pointer-events-auto"
+                className="absolute top-[10%] right-[2%] sm:top-[12%] sm:right-[12%] md:top-[15%] md:right-[20%] z-30 pointer-events-auto"
               >
                 <LiveMatchCard
                   match={featuredLive[1]}
-                  className="rotate-[12deg] hover:rotate-0"
+                  className="rotate-[10deg] sm:rotate-[12deg] hover:rotate-0"
                 />
               </motion.div>
             )}
 
-            <div className="absolute bottom-[0%] left-[8%] w-32 h-32 z-20">
+            <div className="absolute bottom-[2%] left-[4%] w-16 h-16 sm:bottom-[0%] sm:left-[8%] sm:w-24 sm:h-24 md:w-32 md:h-32 z-20">
               <ArrowAccentLeft />
             </div>
 
-            <div className="absolute top-[5%] right-[8%] w-32 h-32 z-20">
+            <div className="absolute top-[4%] right-[4%] w-16 h-16 sm:top-[5%] sm:right-[8%] sm:w-24 sm:h-24 md:w-32 md:h-32 z-20">
               <ArrowAccentRight />
             </div>
 
-            <div className="absolute bottom-[-10%] right-[12%] z-40 pointer-events-auto">
+            <div className="absolute bottom-[-6%] right-[4%] sm:bottom-[-8%] sm:right-[8%] md:bottom-[-10%] md:right-[12%] z-40 pointer-events-auto scale-90 sm:scale-100">
               <CircularBadge schedulePath={schedulePath} />
             </div>
           </div>

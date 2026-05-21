@@ -1,8 +1,6 @@
 import { useState } from 'react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
 import {
-  Menu,
-  X,
   ChevronDown,
   User,
   LogOut,
@@ -21,11 +19,9 @@ import type { UserRole } from '@/types';
 import BrandLogo from '@/components/shared/BrandLogo';
 import { cn } from '@/lib/utils';
 
-const navLinks = [{ label: 'Tournaments', href: '/tournaments' }];
-
 interface SiteHeaderProps {
   variant?: 'site' | 'hero' | 'minimal' | 'admin';
-  /** Hide embedded live ticker (e.g. home hero shows scores in the banner). */
+  /** Hide embedded live ticker (e.g. when a page renders its own full-width ticker). */
   showLiveTicker?: boolean;
 }
 
@@ -41,6 +37,9 @@ function UserMenu({ onDark = true }: { onDark?: boolean }) {
     navigate('/');
     setUserMenuOpen(false);
   };
+
+  const displayName =
+    [user.first_name, user.last_name].filter(Boolean).join(' ') || 'Account';
 
   return (
     <div className="relative">
@@ -64,8 +63,13 @@ function UserMenu({ onDark = true }: { onDark?: boolean }) {
         >
           <User className={cn('w-3.5 h-3.5', onDark ? 'text-white' : 'text-primary')} />
         </div>
-        <span className={cn('text-sm font-medium hidden sm:block', onDark ? 'text-white' : 'text-foreground')}>
-          {user.first_name}
+        <span
+          className={cn(
+            'text-sm font-medium hidden sm:block max-w-[8rem] truncate',
+            onDark ? 'text-white' : 'text-foreground',
+          )}
+        >
+          {displayName}
         </span>
         <ChevronDown
           className={cn('w-3 h-3 hidden sm:block', onDark ? 'text-white/70' : 'text-muted-foreground')}
@@ -104,7 +108,7 @@ function UserMenu({ onDark = true }: { onDark?: boolean }) {
               onClick={() => setUserMenuOpen(false)}
               className="flex items-center gap-2 px-4 py-2.5 text-sm text-foreground hover:bg-muted transition-colors"
             >
-              <Settings className="w-4 h-4" /> Settings
+              <Settings className="w-4 h-4" /> Profile
             </Link>
             <button
               type="button"
@@ -122,25 +126,50 @@ function UserMenu({ onDark = true }: { onDark?: boolean }) {
   );
 }
 
+function SignInButton({ isHero }: { isHero: boolean }) {
+  return (
+    <Link
+      to="/login"
+      className={cn(
+        'inline-flex items-center rounded-lg px-3 py-1.5 text-xs font-semibold transition-all duration-200 sm:px-4 sm:text-sm',
+        isHero
+          ? 'border border-white/30 text-white hover:bg-white hover:text-primary'
+          : 'bg-primary text-white hover:bg-primary-hover shadow-sm',
+      )}
+    >
+      Sign In
+    </Link>
+  );
+}
+
+function TournamentsLink({ onDark }: { onDark: boolean }) {
+  return (
+    <NavLink
+      to="/tournaments"
+      className={({ isActive }) =>
+        cn(
+          'nav-pill text-xs sm:text-sm',
+          onDark
+            ? isActive
+              ? 'nav-pill-light-active'
+              : 'nav-pill-light'
+            : isActive
+              ? 'nav-pill-dark-active'
+              : 'nav-pill-dark',
+        )
+      }
+    >
+      Tournaments
+    </NavLink>
+  );
+}
+
 export default function SiteHeader({ variant = 'site', showLiveTicker = true }: SiteHeaderProps) {
-  const [mobileOpen, setMobileOpen] = useState(false);
   const { isAuthenticated, user } = useAuthStore();
   const isHero = variant === 'hero';
   const isMinimal = variant === 'minimal';
   const isAdmin = variant === 'admin';
   const onDark = !isMinimal;
-
-  const navLinkClass = ({ isActive }: { isActive: boolean }) =>
-    cn(
-      'nav-pill text-xs sm:text-sm',
-      onDark
-        ? isActive
-          ? 'nav-pill-light-active'
-          : 'nav-pill-light'
-        : isActive
-          ? 'nav-pill-dark-active'
-          : 'nav-pill-dark',
-    );
 
   if (isAdmin) {
     return (
@@ -156,13 +185,17 @@ export default function SiteHeader({ variant = 'site', showLiveTicker = true }: 
 
             <div className="flex shrink-0 items-center gap-2">
               <Link
-                to="/tournaments"
+                to="/"
                 className="nav-pill-dark hidden items-center gap-1.5 sm:inline-flex"
               >
                 <ExternalLink className="w-3.5 h-3.5" aria-hidden />
                 View Site
               </Link>
-              {isAuthenticated && user && <UserMenu onDark={false} />}
+              {isAuthenticated && user ? (
+                <UserMenu onDark={false} />
+              ) : (
+                <SignInButton isHero={false} />
+              )}
             </div>
           </div>
         </div>
@@ -174,15 +207,16 @@ export default function SiteHeader({ variant = 'site', showLiveTicker = true }: 
     return (
       <header className="sticky top-0 z-50 w-full bg-white border-b border-border shadow-sm">
         <div className="page-container">
-          <div className="flex items-center justify-between h-14 gap-4">
+          <div className="flex h-14 items-center justify-between gap-2 sm:gap-3">
             <BrandLogo compact />
-            <nav aria-label="Main navigation" className="flex items-center gap-2">
-              {navLinks.map((link) => (
-                <NavLink key={link.href} to={link.href} className={navLinkClass}>
-                  {link.label}
-                </NavLink>
-              ))}
-            </nav>
+            <div className="ml-auto flex shrink-0 items-center gap-1.5 sm:gap-2">
+              <TournamentsLink onDark={false} />
+              {isAuthenticated && user ? (
+                <UserMenu onDark={false} />
+              ) : (
+                <SignInButton isHero={false} />
+              )}
+            </div>
           </div>
         </div>
       </header>
@@ -208,8 +242,8 @@ export default function SiteHeader({ variant = 'site', showLiveTicker = true }: 
       <div className="page-container relative">
         <div
           className={cn(
-            'flex min-w-0 items-center gap-3',
-            isHero ? 'py-3.5 sm:py-3' : 'py-2.5',
+            'flex items-center gap-2 sm:gap-3',
+            isHero ? 'py-3 sm:py-3' : 'py-2.5',
           )}
         >
           <BrandLogo compact />
@@ -225,43 +259,13 @@ export default function SiteHeader({ variant = 'site', showLiveTicker = true }: 
             </div>
           )}
 
-          <div className="ml-auto flex shrink-0 items-center gap-2">
-            <nav aria-label="Main navigation" className="hidden items-center gap-1 lg:flex">
-              {navLinks.map((link) => (
-                <NavLink key={link.href} to={link.href} className={navLinkClass}>
-                  {link.label}
-                </NavLink>
-              ))}
-            </nav>
-
+          <div className="ml-auto flex shrink-0 items-center gap-1.5 sm:gap-2">
+            <TournamentsLink onDark={isHero} />
             {isAuthenticated && user ? (
               <UserMenu onDark={isHero} />
             ) : (
-              <Link
-                to="/login"
-                className={cn(
-                  'hidden items-center rounded-lg px-4 py-1.5 text-sm font-semibold transition-all duration-200 sm:inline-flex',
-                  isHero
-                    ? 'border border-white/30 text-white hover:bg-white hover:text-primary'
-                    : 'bg-primary text-white hover:bg-primary-hover shadow-sm',
-                )}
-              >
-                Sign In
-              </Link>
+              <SignInButton isHero={isHero} />
             )}
-
-            <button
-              type="button"
-              aria-expanded={mobileOpen}
-              aria-label={mobileOpen ? 'Close menu' : 'Open menu'}
-              className={cn(
-                'rounded-lg p-2 transition-colors lg:hidden',
-                isHero ? 'text-white hover:bg-white/10' : 'text-foreground hover:bg-muted',
-              )}
-              onClick={() => setMobileOpen(!mobileOpen)}
-            >
-              {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-            </button>
           </div>
         </div>
 
@@ -276,52 +280,6 @@ export default function SiteHeader({ variant = 'site', showLiveTicker = true }: 
           </div>
         )}
       </div>
-
-      {mobileOpen && (
-        <nav
-          aria-label="Mobile navigation"
-          className={cn(
-            'relative border-t lg:hidden',
-            isHero ? 'border-white/20 bg-primary' : 'border-border bg-white',
-          )}
-        >
-          <div className="space-y-1 px-4 py-3 safe-x">
-            {navLinks.map((link) => (
-              <NavLink
-                key={link.href}
-                to={link.href}
-                onClick={() => setMobileOpen(false)}
-                className={({ isActive }) =>
-                  cn(
-                    'block w-full justify-center nav-pill',
-                    isHero
-                      ? isActive
-                        ? 'nav-pill-light-active'
-                        : 'nav-pill-light'
-                      : isActive
-                        ? 'nav-pill-dark-active'
-                        : 'nav-pill-dark',
-                  )
-                }
-              >
-                {link.label}
-              </NavLink>
-            ))}
-            {!isAuthenticated && (
-              <Link
-                to="/login"
-                onClick={() => setMobileOpen(false)}
-                className={cn(
-                  'block w-full justify-center nav-pill',
-                  isHero ? 'nav-pill-light' : 'nav-pill-dark',
-                )}
-              >
-                Sign In
-              </Link>
-            )}
-          </div>
-        </nav>
-      )}
     </header>
   );
 }
