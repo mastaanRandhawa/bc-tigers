@@ -20,6 +20,7 @@ export class AuthService {
     email: string;
     password: string;
     phone?: string;
+    role?: 'VIEWER' | 'COACH';
   }) {
     const exists = await prisma.user.findUnique({
       where: { email: data.email },
@@ -27,6 +28,7 @@ export class AuthService {
     if (exists) throw new ConflictException('Email already registered');
 
     const password_hash = await bcrypt.hash(data.password, 12);
+    const role = data.role === 'COACH' ? 'COACH' : 'VIEWER';
     const user = await prisma.user.create({
       data: {
         first_name: data.first_name,
@@ -34,8 +36,20 @@ export class AuthService {
         email: data.email,
         password_hash,
         phone: data.phone,
+        role,
       },
     });
+
+    if (role === 'COACH') {
+      await prisma.coach.create({
+        data: {
+          first_name: data.first_name,
+          last_name: data.last_name,
+          email: data.email,
+          user_id: user.id,
+        },
+      });
+    }
 
     return this.signToken(user);
   }

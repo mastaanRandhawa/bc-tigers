@@ -6,6 +6,7 @@ import { useDivisions } from '@/hooks/useDivisions';
 import { useTeams } from '@/hooks/useTeams';
 import { useMatches } from '@/hooks/useMatches';
 import { getDivisionPublicPath } from '@/lib/division-routes';
+import { managementRoutes } from '@/lib/management-routes';
 import { getDivisionTheme } from '@/lib/division-theme';
 import { ExternalLink, Shield, Calendar, Zap } from 'lucide-react';
 import { cn } from '@/lib/utils';
@@ -79,9 +80,9 @@ export default function AdminDashboard() {
                 </div>
                 <div className="mt-4 flex flex-wrap gap-x-4 gap-y-1 border-t border-border pt-4">
                   {[
-                    { to: '/admin/teams', label: 'Manage teams' },
-                    { to: '/admin/matches', label: 'Manage matches' },
-                    { to: '/admin/divisions', label: 'Edit division' },
+                    { to: managementRoutes.teams, label: 'Manage teams' },
+                    { to: managementRoutes.matches, label: 'Manage matches' },
+                    { to: managementRoutes.divisions, label: 'Edit division' },
                   ].map((link) => (
                     <Link
                       key={link.to}

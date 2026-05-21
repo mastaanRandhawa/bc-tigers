@@ -23,6 +23,7 @@ interface StandingsTableProps {
   compact?: boolean;
   division?: Division;
   searchable?: boolean;
+  highlightTeamId?: string;
 }
 
 export default function StandingsTable({
@@ -30,6 +31,7 @@ export default function StandingsTable({
   compact = false,
   division,
   searchable = true,
+  highlightTeamId,
 }: StandingsTableProps) {
   const getText = useCallback((s: Standing) => standingSearchText(s), []);
   const { search, setSearch, filtered, debouncedSearch, hasQuery } = useListSearch(
@@ -52,25 +54,25 @@ export default function StandingsTable({
         <SearchEmpty query={debouncedSearch} entityLabel="teams" />
       ) : (
     <Card className="overflow-hidden mx-0">
-      <div className="overflow-x-auto">
+      <div className="overflow-x-auto scroll-fade-x">
         <Table className="min-w-[640px]">
-          <TableHeader>
-            <TableRow className="hover:bg-transparent">
-              <TableHead className="w-8">#</TableHead>
-              <TableHead>Team</TableHead>
-              <TableHead className="text-center">P</TableHead>
-              <TableHead className="text-center">W</TableHead>
-              <TableHead className="text-center">D</TableHead>
-              <TableHead className="text-center">L</TableHead>
+          <TableHeader className="sticky top-0 z-10 border-b-2 border-foreground bg-bauhaus-muted">
+            <TableRow className="hover:bg-transparent border-b-2 border-foreground">
+              <TableHead className="w-8 text-[10px] font-black uppercase tracking-widest">#</TableHead>
+              <TableHead className="text-[10px] font-black uppercase tracking-widest">Team</TableHead>
+              <TableHead className="text-center text-[10px] font-black uppercase tracking-widest">P</TableHead>
+              <TableHead className="text-center text-[10px] font-black uppercase tracking-widest">W</TableHead>
+              <TableHead className="text-center text-[10px] font-black uppercase tracking-widest">D</TableHead>
+              <TableHead className="text-center text-[10px] font-black uppercase tracking-widest">L</TableHead>
               {!compact && (
                 <>
-                  <TableHead className="text-center">GF</TableHead>
-                  <TableHead className="text-center">GA</TableHead>
+                  <TableHead className="text-center text-[10px] font-black uppercase tracking-widest">GF</TableHead>
+                  <TableHead className="text-center text-[10px] font-black uppercase tracking-widest">GA</TableHead>
                 </>
               )}
-              <TableHead className="text-center">GD</TableHead>
-              <TableHead className="text-center">Pts</TableHead>
-              {!compact && <TableHead className="text-center">Form</TableHead>}
+              <TableHead className="text-center text-[10px] font-black uppercase tracking-widest">GD</TableHead>
+              <TableHead className="text-center text-[10px] font-black uppercase tracking-widest">Pts</TableHead>
+              {!compact && <TableHead className="text-center text-[10px] font-black uppercase tracking-widest">Form</TableHead>}
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -78,8 +80,12 @@ export default function StandingsTable({
               <TableRow
                 key={s.id}
                 className={cn(
-                  idx === 0 && 'bg-zinc-50',
-                  idx > 0 && idx < 3 && 'bg-zinc-50/50'
+                  'transition-colors border-b border-foreground/10',
+                  idx % 2 === 1 && 'bg-bauhaus-muted/40',
+                  s.team_id === highlightTeamId && 'bg-primary-muted ring-2 ring-inset ring-primary',
+                  s.team_id !== highlightTeamId && idx === 0 && 'bg-bauhaus-yellow/15',
+                  s.team_id !== highlightTeamId && idx === 1 && 'bg-bauhaus-muted/60',
+                  s.team_id !== highlightTeamId && idx === 2 && 'bg-bauhaus-muted/30',
                 )}
               >
                 <TableCell className="text-muted-foreground font-medium">{s.rank}</TableCell>
@@ -92,8 +98,8 @@ export default function StandingsTable({
                         {s.team.logo && (
                           <img src={s.team.logo} alt="" className="w-6 h-6 rounded-full object-cover shrink-0" />
                         )}
-                        <span className="font-semibold text-foreground truncate">{s.team.name}</span>
-                        {idx === 0 && <Badge variant="default" className="shrink-0 rounded-md">1st</Badge>}
+                        <span className="font-black uppercase tracking-tight text-foreground truncate text-sm">{s.team.name}</span>
+                        {idx === 0 && <Badge variant="accent" className="shrink-0">1st</Badge>}
                       </>
                     );
                     return teamPath ? (
@@ -137,7 +143,7 @@ export default function StandingsTable({
                         <span
                           key={i}
                           className={cn(
-                            'w-5 h-5 rounded-md text-[9px] font-bold text-white flex items-center justify-center',
+                            'w-5 h-5 border-2 border-foreground text-[9px] font-black text-white flex items-center justify-center',
                             getFormColor(f)
                           )}
                         >

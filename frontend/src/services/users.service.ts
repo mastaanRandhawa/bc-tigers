@@ -11,4 +11,9 @@ export const usersService = {
     apiClient.patch<User>(`/users/${id}`, data),
 
   delete: (id: string) => apiClient.delete<User>(`/users/${id}`),
+
+  linkEntity: (
+    id: string,
+    data: { entity_type: 'player' | 'coach' | 'referee'; entity_id: string },
+  ) => apiClient.patch<User>(`/users/${id}/link`, data),
 };

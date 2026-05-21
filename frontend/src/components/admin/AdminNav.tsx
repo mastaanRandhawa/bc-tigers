@@ -3,11 +3,13 @@ import type { LucideIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { adminNavGroups, type AdminNavGroup } from '@/components/admin/admin-nav';
 
+import { managementRoutes } from '@/lib/management-routes';
+
 function AdminNavLink({ href, label, icon: Icon }: { href: string; label: string; icon: LucideIcon }) {
   return (
     <NavLink
       to={href}
-      end={href === '/admin/dashboard'}
+      end={href === managementRoutes.dashboard}
       className={({ isActive }) =>
         cn('admin-sidebar-link', isActive && 'admin-sidebar-link-active')
       }
@@ -50,7 +52,7 @@ export function AdminMobileNav({ groups = adminNavGroups }: { groups?: AdminNavG
           <NavLink
             key={item.href}
             to={item.href}
-            end={item.href === '/admin/dashboard'}
+            end={item.href === managementRoutes.dashboard}
             title={item.label}
             aria-label={item.label}
             className={({ isActive }) =>

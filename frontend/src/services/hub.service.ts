@@ -1,11 +1,8 @@
 import apiClient from '@/lib/api-client';
-import type { Match, Tournament } from '@/types';
+import type { Tournament } from '@/types';
 
 export interface HomeHubResponse {
-  tournaments: Tournament[];
-  liveMatches: Match[];
-  recentMatches: Match[];
-  upcomingMatches: Match[];
+  tournaments: (Tournament & { _count?: { divisions: number } })[];
 }
 
 export const hubService = {

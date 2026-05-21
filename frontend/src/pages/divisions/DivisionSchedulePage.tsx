@@ -4,6 +4,7 @@ import SearchField from '@/components/shared/SearchField';
 import SearchEmpty from '@/components/shared/SearchEmpty';
 import MatchCard from '@/components/MatchCard';
 import DivisionPageHeader from '@/components/divisions/DivisionPageHeader';
+import SurfaceCard from '@/components/design-system/SurfaceCard';
 import { useDivisionRoute } from '@/context/DivisionContext';
 import { useDivisionMatches } from '@/hooks/useDivisionResources';
 import { useListSearch } from '@/hooks/useListSearch';
@@ -39,13 +40,16 @@ export default function DivisionSchedulePage() {
 
   return (
     <>
-      <DivisionPageHeader title="Schedule" subtitle="Match dates and kickoff times" />
+      <DivisionPageHeader
+        title="Schedule"
+        subtitle="Matches grouped by date — use Matches to filter by status"
+      />
       {matches.length > 0 && (
         <SearchField
           value={search}
           onChange={setSearch}
           placeholder="Search teams or venue…"
-          className="mb-5 max-w-md"
+          className="mb-4 max-w-md"
         />
       )}
       <QueryState
@@ -58,18 +62,18 @@ export default function DivisionSchedulePage() {
         {hasQuery && filtered.length === 0 ? (
           <SearchEmpty query={debouncedSearch} entityLabel="matches" />
         ) : (
-          <div className="space-y-6">
+          <div className="space-y-4">
             {sortedDates.map((date) => (
-              <div key={date}>
-                <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-zinc-500">
+              <SurfaceCard key={date} variant="default" padding="md" accentEdge>
+                <h3 className="text-overline mb-3 m-0 sticky top-0 bg-white py-1">
                   {formatScheduleDay(date)}
                 </h3>
-                <div className="space-y-2">
+                <div className="space-y-2 border-l-2 border-primary/20 pl-3">
                   {grouped[date].map((m) => (
                     <MatchCard key={m.id} match={m} />
                   ))}
                 </div>
-              </div>
+              </SurfaceCard>
             ))}
           </div>
         )}

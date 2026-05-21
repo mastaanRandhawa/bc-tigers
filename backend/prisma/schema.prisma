@@ -104,27 +104,30 @@ model Organization {
 }
 
 model Tournament {
-  id               String           @id @default(uuid())
-  name             String
-  slug             String           @unique
-  description      String?
-  start_date       DateTime
-  end_date         DateTime
-  location         String
-  status           TournamentStatus @default(UPCOMING)
-  tournament_type  TournamentType   @default(ROUND_ROBIN)
-  logo             String?
-  rules            String?
-  created_by       String
-  created_at       DateTime         @default(now())
-  updated_at       DateTime         @updatedAt
+  id                      String           @id @default(uuid())
+  name                    String
+  slug                    String           @unique
+  description             String?
+  start_date              DateTime
+  end_date                DateTime
+  registration_open_date  DateTime?
+  registration_close_date DateTime?
+  entry_fee               Decimal?         @db.Decimal(10, 2)
+  location                String
+  status                  TournamentStatus @default(UPCOMING)
+  tournament_type         TournamentType   @default(ROUND_ROBIN)
+  logo                    String?
+  rules                   String?
+  created_by              String
+  created_at              DateTime         @default(now())
+  updated_at              DateTime         @updatedAt
 
-  divisions        Division[]
-  matches          Match[]
-  player_stats     PlayerStat[]
+  divisions         Division[]
+  matches           Match[]
+  player_stats      PlayerStat[]
   tournament_admins TournamentAdmin[]
-  media            Media[]
-  notifications    Notification[]
+  media             Media[]
+  notifications     Notification[]
 }
 
 model Division {

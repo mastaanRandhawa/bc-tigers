@@ -8,6 +8,20 @@ export const queryKeys = {
   tournaments: {
     all: (params?: object) => ['tournaments', params ?? {}] as const,
     detail: (slug: string) => ['tournaments', slug] as const,
+    resources: {
+      matches: (tournamentSlug: string, params?: object) =>
+        ['tournaments', tournamentSlug, 'matches', params ?? {}] as const,
+      standings: (tournamentSlug: string) =>
+        ['tournaments', tournamentSlug, 'standings'] as const,
+      venues: (tournamentSlug: string) =>
+        ['tournaments', tournamentSlug, 'venues'] as const,
+      media: (tournamentSlug: string, limit?: number) =>
+        ['tournaments', tournamentSlug, 'media', limit ?? 24] as const,
+      announcements: (tournamentSlug: string, limit?: number) =>
+        ['tournaments', tournamentSlug, 'announcements', limit ?? 10] as const,
+      topScorers: (tournamentSlug: string, limit?: number) =>
+        ['tournaments', tournamentSlug, 'stats', 'top-scorers', limit ?? 20] as const,
+    },
   },
   divisions: {
     all: (params?: object) => ['divisions', params ?? {}] as const,
@@ -43,6 +57,7 @@ export const queryKeys = {
   teams: {
     all: (params?: object) => ['teams', params ?? {}] as const,
     detail: (slug: string) => ['teams', slug] as const,
+    rosters: (teamId: string) => ['teams', teamId, 'rosters'] as const,
   },
   players: {
     all: (params?: object) => ['players', params ?? {}] as const,

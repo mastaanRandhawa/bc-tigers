@@ -125,12 +125,16 @@ export function getDivisionVenuesPath(division: Division) {
 }
 
 export function getMatchPath(match: Match): string {
+  return `/matches/${match.id}`;
+}
+
+export function getDivisionMatchPath(match: Match): string | null {
   const tournamentSlug = match.division?.tournament?.slug ?? match.tournament?.slug;
   const divisionSlug = match.division?.slug;
   if (tournamentSlug && divisionSlug) {
     return divisionMatchPath(tournamentSlug, divisionSlug, match.id);
   }
-  return '/tournaments';
+  return null;
 }
 
 export function getDivisionPublicPath(tournamentSlug: string, divisionSlug: string) {
@@ -140,4 +144,60 @@ export function getDivisionPublicPath(tournamentSlug: string, divisionSlug: stri
 export function getTeamPath(team: Team): string | null {
   if (!team.division) return null;
   return getDivisionTeamPath(team.division, team.slug);
+}
+
+export function teamBasePath(
+  tournamentSlug: string,
+  divisionSlug: string,
+  teamSlug: string,
+) {
+  return divisionTeamPath(tournamentSlug, divisionSlug, teamSlug);
+}
+
+export function teamOverviewPath(
+  tournamentSlug: string,
+  divisionSlug: string,
+  teamSlug: string,
+) {
+  return teamBasePath(tournamentSlug, divisionSlug, teamSlug);
+}
+
+export function teamRosterPath(
+  tournamentSlug: string,
+  divisionSlug: string,
+  teamSlug: string,
+) {
+  return `${teamBasePath(tournamentSlug, divisionSlug, teamSlug)}/roster`;
+}
+
+export function teamMatchesPath(
+  tournamentSlug: string,
+  divisionSlug: string,
+  teamSlug: string,
+) {
+  return `${teamBasePath(tournamentSlug, divisionSlug, teamSlug)}/matches`;
+}
+
+export function teamStandingsPath(
+  tournamentSlug: string,
+  divisionSlug: string,
+  teamSlug: string,
+) {
+  return `${teamBasePath(tournamentSlug, divisionSlug, teamSlug)}/standings`;
+}
+
+export function teamStatsPath(
+  tournamentSlug: string,
+  divisionSlug: string,
+  teamSlug: string,
+) {
+  return `${teamBasePath(tournamentSlug, divisionSlug, teamSlug)}/stats`;
+}
+
+export function teamCoachesPath(
+  tournamentSlug: string,
+  divisionSlug: string,
+  teamSlug: string,
+) {
+  return `${teamBasePath(tournamentSlug, divisionSlug, teamSlug)}/coaches`;
 }

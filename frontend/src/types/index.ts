@@ -58,6 +58,9 @@ export interface Tournament {
   description?: string;
   start_date: string;
   end_date: string;
+  registration_open_date?: string;
+  registration_close_date?: string;
+  entry_fee?: number | string;
   location: string;
   status: TournamentStatus;
   tournament_type: TournamentType;
@@ -65,6 +68,7 @@ export interface Tournament {
   rules?: string;
   created_by: string;
   divisions?: Division[];
+  _count?: { divisions: number };
 }
 
 export interface Division {
@@ -83,6 +87,7 @@ export interface Division {
   primary_color?: string;
   accent_color?: string;
   teams?: Team[];
+  _count?: { matches: number };
 }
 
 export interface Team {
@@ -98,6 +103,7 @@ export interface Team {
   secondary_color?: string;
   players?: Player[];
   rosters?: TeamRoster[];
+  team_coaches?: TeamCoach[];
 }
 
 export interface Player {
@@ -343,6 +349,7 @@ export interface RegisterRequest {
   email: string;
   password: string;
   phone?: string;
+  role?: 'VIEWER' | 'COACH';
 }
 
 export interface AuthResponse {

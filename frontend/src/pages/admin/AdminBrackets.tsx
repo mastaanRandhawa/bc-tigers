@@ -4,7 +4,7 @@ import SearchField from '@/components/shared/SearchField';
 import SearchEmpty from '@/components/shared/SearchEmpty';
 import { useListSearch } from '@/hooks/useListSearch';
 import { divisionSearchText } from '@/lib/search-text';
-import BracketView from '@/components/BracketView';
+import AdminBracketView from '@/components/admin/AdminBracketView';
 import QueryState from '@/components/shared/QueryState';
 import { useDivisions } from '@/hooks/useDivisions';
 import { useBracket, useGenerateBracket } from '@/hooks/useBrackets';
@@ -81,7 +81,7 @@ export default function AdminBrackets() {
                   Generate Bracket
                 </Button>
               </div>
-              <BracketView nodes={nodes} />
+              <AdminBracketView nodes={nodes} />
             </div>
           </div>
         )}

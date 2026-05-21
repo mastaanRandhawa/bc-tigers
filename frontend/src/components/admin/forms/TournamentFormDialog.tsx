@@ -120,16 +120,24 @@ export default function TournamentFormDialog({ open, onOpenChange, tournament }:
       submitLabel={isEditing ? 'Update' : 'Create'}
     >
       <FormError message={form.formState.errors.root?.message} />
-      <TextInputField control={form.control} name="name" label="Name" />
-      <TextInputField control={form.control} name="slug" label="Slug" />
-      <TextareaField control={form.control} name="description" label="Description" />
-      <TextInputField control={form.control} name="location" label="Location" />
-      <div className="grid grid-cols-2 gap-3">
-        <TextInputField control={form.control} name="start_date" label="Start Date" type="date" />
-        <TextInputField control={form.control} name="end_date" label="End Date" type="date" />
+      <div className="space-y-4">
+        <div className="rounded-xl border border-border bg-zinc-50/80 p-4 space-y-4">
+          <p className="m-0 text-xs font-semibold uppercase tracking-wide text-zinc-600">Basic info</p>
+          <TextInputField control={form.control} name="name" label="Name" />
+          <TextInputField control={form.control} name="slug" label="Slug" />
+          <TextareaField control={form.control} name="description" label="Description" />
+          <TextInputField control={form.control} name="location" label="Location" />
+        </div>
+        <div className="rounded-xl border border-border bg-zinc-50/80 p-4 space-y-4">
+          <p className="m-0 text-xs font-semibold uppercase tracking-wide text-zinc-600">Schedule & status</p>
+          <div className="grid grid-cols-2 gap-3">
+            <TextInputField control={form.control} name="start_date" label="Start Date" type="date" />
+            <TextInputField control={form.control} name="end_date" label="End Date" type="date" />
+          </div>
+          <SelectField control={form.control} name="status" label="Status" options={STATUS_OPTIONS} />
+          <SelectField control={form.control} name="tournament_type" label="Format" options={TYPE_OPTIONS} />
+        </div>
       </div>
-      <SelectField control={form.control} name="status" label="Status" options={STATUS_OPTIONS} />
-      <SelectField control={form.control} name="tournament_type" label="Format" options={TYPE_OPTIONS} />
     </FormDialog>
   );
 }

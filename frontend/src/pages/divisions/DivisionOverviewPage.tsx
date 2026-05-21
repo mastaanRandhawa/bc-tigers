@@ -2,10 +2,10 @@ import { Link } from 'react-router-dom';
 import QueryState from '@/components/shared/QueryState';
 import MatchCard from '@/components/MatchCard';
 import DivisionQuickStats from '@/components/divisions/DivisionQuickStats';
-import SectionHeader from '@/components/shared/SectionHeader';
-import Section from '@/components/shared/Section';
+import SectionBlock from '@/components/design-system/SectionBlock';
 import StandingsTable from '@/components/StandingsTable';
 import DivisionPageHeader from '@/components/divisions/DivisionPageHeader';
+import MetaChip from '@/components/design-system/MetaChip';
 import { useDivisionRoute } from '@/context/DivisionContext';
 import {
   useDivisionMatches,
@@ -27,7 +27,7 @@ export default function DivisionOverviewPage() {
   const recent = matches.filter((m) => m.status === 'COMPLETED').slice(0, 4);
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-4">
       <DivisionPageHeader
         title="Overview"
         subtitle="Division snapshot, live action, and standings"
@@ -51,26 +51,27 @@ export default function DivisionOverviewPage() {
         ]}
       />
 
-      {/* Live — full prominence */}
       {liveMatches.length > 0 && (
-        <Section>
-          <SectionHeader title="Live matches" subtitle="Scores updating in real time" />
-          <div className="divide-y divide-border">
-            {liveMatches.map((m) => (
-              <MatchCard key={m.id} match={m} flat />
-            ))}
-          </div>
-        </Section>
+        <SectionBlock title="Live matches" subtitle="Scores updating in real time" variant="card">
+          <MatchCard match={liveMatches[0]} featured />
+          {liveMatches.length > 1 && (
+            <div className="mt-3 divide-y divide-border border-t border-border pt-3">
+              {liveMatches.slice(1).map((m) => (
+                <MatchCard key={m.id} match={m} flat />
+              ))}
+            </div>
+          )}
+        </SectionBlock>
       )}
 
-      {/* Upcoming + Recent results side-by-side on lg */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        <Section>
-          <SectionHeader
-            title="Upcoming"
-            href={`${basePath}/schedule`}
-            linkLabel="Full schedule"
-          />
+        <SectionBlock
+          title="Upcoming"
+          subtitle="Chronological schedule"
+          href={`${basePath}/schedule`}
+          linkLabel="Full schedule"
+          variant="card"
+        >
           <QueryState isEmpty={upcoming.length === 0} emptyMessage="No upcoming matches.">
             <div className="divide-y divide-border">
               {upcoming.map((m) => (
@@ -78,14 +79,15 @@ export default function DivisionOverviewPage() {
               ))}
             </div>
           </QueryState>
-        </Section>
+        </SectionBlock>
 
-        <Section>
-          <SectionHeader
-            title="Recent results"
-            href={`${basePath}/matches`}
-            linkLabel="All matches"
-          />
+        <SectionBlock
+          title="Recent results"
+          subtitle="Filter by status on Matches"
+          href={`${basePath}/matches`}
+          linkLabel="All matches"
+          variant="card"
+        >
           <QueryState isEmpty={recent.length === 0} emptyMessage="No completed matches yet.">
             <div className="divide-y divide-border">
               {recent.map((m) => (
@@ -93,43 +95,36 @@ export default function DivisionOverviewPage() {
               ))}
             </div>
           </QueryState>
-        </Section>
+        </SectionBlock>
       </div>
 
-      {/* Standings snapshot */}
       {standings.length > 0 && (
-        <Section>
-          <SectionHeader
-            title="Standings"
-            href={`${basePath}/standings`}
-            linkLabel="Full table"
-          />
+        <SectionBlock
+          title="Standings"
+          href={`${basePath}/standings`}
+          linkLabel="Full table"
+          variant="card"
+        >
           <StandingsTable standings={standings.slice(0, 6)} compact division={division} />
-        </Section>
+        </SectionBlock>
       )}
 
-      {/* Tournament info — minimal */}
       {tournament && (
-        <div className="flex flex-col gap-1 rounded-xl bg-white px-4 py-3 ring-1 ring-border/60 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-col gap-2 rounded-xl border border-border bg-white px-4 py-3 shadow-sm sm:flex-row sm:items-center sm:justify-between">
           <div className="min-w-0">
             <Link
               to={`/tournaments/${tournament.slug}`}
-              className="text-sm font-semibold text-foreground transition-colors hover:underline"
+              className="text-sm font-semibold transition-colors hover:underline"
               style={{ color: theme.primary }}
             >
               {tournament.name}
             </Link>
-            <div className="mt-1 flex flex-wrap gap-x-4 gap-y-0.5 text-xs text-zinc-500">
-              <span className="inline-flex items-center gap-1">
-                <Calendar className="h-3.5 w-3.5 text-zinc-400" aria-hidden />
-                {formatDate(tournament.start_date)} – {formatDate(tournament.end_date)}
-              </span>
-              {tournament.location && (
-                <span className="inline-flex items-center gap-1">
-                  <MapPin className="h-3.5 w-3.5 text-zinc-400" aria-hidden />
-                  {tournament.location}
-                </span>
-              )}
+            <div className="mt-2 flex flex-wrap gap-2">
+              <MetaChip
+                icon={Calendar}
+                value={`${formatDate(tournament.start_date)} – ${formatDate(tournament.end_date)}`}
+              />
+              {tournament.location && <MetaChip icon={MapPin} value={tournament.location} />}
             </div>
           </div>
         </div>

@@ -4,6 +4,7 @@ import AdminTable from '@/components/AdminTable';
 import QueryState from '@/components/shared/QueryState';
 import MatchFormDialog from '@/components/admin/forms/MatchFormDialog';
 import MatchScoreFormDialog from '@/components/admin/forms/MatchScoreFormDialog';
+import MatchRefereesFormDialog from '@/components/admin/forms/MatchRefereesFormDialog';
 import { useFormDialog } from '@/hooks/useFormDialog';
 import { useMatches, useDeleteMatch } from '@/hooks/useMatches';
 import type { Match } from '@/types';
@@ -12,9 +13,12 @@ import { Button } from '@/components/ui/button';
 import { formatDate, formatTime, getMatchStatusBadgeVariant } from '@/lib/utils';
 import { getApiErrorMessage } from '@/lib/errors';
 import { matchSearchText } from '@/lib/search-text';
-import { Zap } from 'lucide-react';
+import { Zap, UserCheck } from 'lucide-react';
 
-const columns = (onScore: (m: Match) => void) => [
+const columns = (
+  onScore: (m: Match) => void,
+  onReferees: (m: Match) => void,
+) => [
   {
     key: 'teams',
     label: 'Match',
@@ -61,6 +65,23 @@ const columns = (onScore: (m: Match) => void) => [
     ),
   },
   { key: 'round', label: 'Round', render: (m: Match) => <span>{m.round ?? '—'}</span> },
+  {
+    key: 'referees',
+    label: 'Referees',
+    render: (m: Match) => (
+      <Button
+        size="sm"
+        variant="outline"
+        className="h-7 px-2"
+        onClick={(e) => {
+          e.stopPropagation();
+          onReferees(m);
+        }}
+      >
+        <UserCheck className="w-3 h-3" />
+      </Button>
+    ),
+  },
 ];
 
 export default function AdminMatches() {
@@ -68,6 +89,7 @@ export default function AdminMatches() {
   const deleteMutation = useDeleteMatch();
   const formDialog = useFormDialog<Match>();
   const [scoreMatch, setScoreMatch] = useState<Match | null>(null);
+  const [refereeMatch, setRefereeMatch] = useState<Match | null>(null);
 
   const handleDelete = async (m: Match) => {
     if (!confirm('Delete this match?')) return;
@@ -84,7 +106,7 @@ export default function AdminMatches() {
         <AdminTable
           title="All Matches"
           data={matches}
-          columns={columns(setScoreMatch)}
+          columns={columns(setScoreMatch, setRefereeMatch)}
           onAdd={formDialog.openCreate}
           onEdit={formDialog.openEdit}
           onDelete={handleDelete}
@@ -102,6 +124,11 @@ export default function AdminMatches() {
         open={!!scoreMatch}
         onOpenChange={(open) => !open && setScoreMatch(null)}
         match={scoreMatch}
+      />
+      <MatchRefereesFormDialog
+        open={!!refereeMatch}
+        onOpenChange={(open) => !open && setRefereeMatch(null)}
+        match={refereeMatch}
       />
     </AdminLayout>
   );

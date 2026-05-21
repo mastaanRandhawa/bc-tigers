@@ -34,3 +34,19 @@ export function useDeleteUser() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['users'] }),
   });
 }
+
+export function useLinkUserEntity() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      id,
+      entity_type,
+      entity_id,
+    }: {
+      id: string;
+      entity_type: 'player' | 'coach' | 'referee';
+      entity_id: string;
+    }) => usersService.linkEntity(id, { entity_type, entity_id }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['users'] }),
+  });
+}

@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { useAuthStore } from '@/store/authStore';
 import { authService } from '@/services/auth.service';
 import { getRoleLabel } from '@/lib/auth-utils';
+import { getCoachTeamPath } from '@/lib/coach-utils';
 import { Save, Lock } from 'lucide-react';
 
 export default function ProfilePage() {
@@ -123,12 +124,30 @@ export default function ProfilePage() {
             </Button>
           </form>
 
-          {user.role === 'COACH' && user.coach?.team_coaches?.[0]?.team && (
+          {user.role === 'COACH' && (user.coach?.team_coaches?.length ?? 0) > 0 && (
             <div className="rounded-lg border border-border bg-card shadow-sm p-6">
-              <h2 className="font-semibold text-foreground mb-2">Your Team</h2>
-              <Link to={`/teams/${user.coach.team_coaches[0].team!.slug}`} className="text-primary font-semibold hover:underline">
-                {user.coach.team_coaches[0].team!.name}
-              </Link>
+              <h2 className="font-semibold text-foreground mb-2">Your Teams</h2>
+              <ul className="space-y-2 m-0 p-0 list-none">
+                {user.coach!.team_coaches!.map((tc) => {
+                  const team = tc.team;
+                  if (!team) return null;
+                  const path = getCoachTeamPath(team);
+                  return (
+                    <li key={tc.id}>
+                      {path ? (
+                        <Link to={path} className="text-primary font-semibold hover:underline">
+                          {team.name}
+                        </Link>
+                      ) : (
+                        <span className="font-semibold">{team.name}</span>
+                      )}
+                      {team.division?.name && (
+                        <span className="text-sm text-muted-foreground ml-2">{team.division.name}</span>
+                      )}
+                    </li>
+                  );
+                })}
+              </ul>
             </div>
           )}
         </div>

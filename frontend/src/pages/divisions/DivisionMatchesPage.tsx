@@ -53,10 +53,10 @@ export default function DivisionMatchesPage() {
               type="button"
               onClick={() => setFilter(f.value)}
               className={cn(
-                'rounded-lg px-3 py-1.5 text-sm font-medium transition-all duration-200',
+                'border-2 px-3 py-1.5 text-xs font-black uppercase tracking-wide transition-all duration-200 ease-out press-scale',
                 filter === f.value
-                  ? 'bg-primary text-white shadow-sm'
-                  : 'bg-white text-zinc-600 ring-1 ring-border hover:ring-primary/30',
+                  ? 'border-foreground bg-foreground text-white shadow-hard-sm'
+                  : 'border-foreground bg-white text-foreground/65 shadow-hard-sm hover:shadow-hard-md hover:-translate-x-0.5 hover:-translate-y-0.5',
               )}
             >
               {f.label}
@@ -83,7 +83,7 @@ export default function DivisionMatchesPage() {
         {hasQuery && filtered.length === 0 ? (
           <SearchEmpty query={debouncedSearch} entityLabel="matches" />
         ) : (
-          <div className="space-y-2">
+          <div className="grid grid-cols-1 gap-2 md:grid-cols-2">
             {filtered.map((m) => (
               <MatchCard key={m.id} match={m} />
             ))}

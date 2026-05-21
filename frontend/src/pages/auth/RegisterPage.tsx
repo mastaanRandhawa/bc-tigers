@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import AuthLayout from '@/components/AuthLayout';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -9,6 +9,9 @@ import { getPostLoginPath } from '@/lib/auth-utils';
 import { UserPlus } from 'lucide-react';
 
 export default function RegisterPage() {
+  const [searchParams] = useSearchParams();
+  const defaultCoach = searchParams.get('coach') === '1';
+  const [accountType, setAccountType] = useState<'COACH' | 'VIEWER'>(defaultCoach ? 'COACH' : 'VIEWER');
   const [form, setForm] = useState({ first_name: '', last_name: '', email: '', password: '', confirm: '' });
   const { register, isLoading, error, clearError } = useAuthStore();
   const navigate = useNavigate();
@@ -25,7 +28,13 @@ export default function RegisterPage() {
       return;
     }
     try {
-      const user = await register({ first_name: form.first_name, last_name: form.last_name, email: form.email, password: form.password });
+      const user = await register({
+        first_name: form.first_name,
+        last_name: form.last_name,
+        email: form.email,
+        password: form.password,
+        role: accountType,
+      });
       navigate(getPostLoginPath(user));
     } catch {
       // handled by store
@@ -33,7 +42,10 @@ export default function RegisterPage() {
   };
 
   return (
-    <AuthLayout title="Create Account" subtitle="Join the BC Tigers community">
+    <AuthLayout
+      title={accountType === 'COACH' ? 'Coach registration' : 'Create account'}
+      subtitle={accountType === 'COACH' ? 'Create a coach account' : 'Join BC Tigers Soccer'}
+    >
       {error && (
         <div className="mb-4 p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-sm">
           {error}
@@ -41,6 +53,34 @@ export default function RegisterPage() {
       )}
 
       <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="space-y-2">
+          <Label>Account type</Label>
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              type="button"
+              onClick={() => setAccountType('COACH')}
+              className={`rounded-lg border px-3 py-2 text-sm font-medium transition-colors ${
+                accountType === 'COACH'
+                  ? 'border-primary bg-primary/5 text-primary'
+                  : 'border-border hover:bg-zinc-50'
+              }`}
+            >
+              Coach
+            </button>
+            <button
+              type="button"
+              onClick={() => setAccountType('VIEWER')}
+              className={`rounded-lg border px-3 py-2 text-sm font-medium transition-colors ${
+                accountType === 'VIEWER'
+                  ? 'border-primary bg-primary/5 text-primary'
+                  : 'border-border hover:bg-zinc-50'
+              }`}
+            >
+              Fan / viewer
+            </button>
+          </div>
+        </div>
+
         <div className="grid grid-cols-2 gap-3">
           <div className="space-y-1.5">
             <Label htmlFor="first_name">First Name</Label>

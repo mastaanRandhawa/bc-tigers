@@ -10,26 +10,22 @@ export function getRoleDashboardPath(role?: UserRole | null): string {
   switch (role) {
     case 'ADMIN':
     case 'TOURNAMENT_ADMIN':
-      return '/admin/dashboard';
-    case 'COACH':
-      return '/coach';
+      return '/management/dashboard';
     case 'REFEREE':
       return '/referee';
     case 'PLAYER':
       return '/player';
     default:
-      return '/';
+      return '/tournaments';
   }
 }
 
-export function getUserDisplayName(user: Pick<User, 'first_name' | 'last_name' | 'email'> | null): string {
+export function getUserDisplayName(
+  user: Pick<User, 'first_name' | 'last_name' | 'email'> | null,
+): string {
   if (!user) return '';
   const name = [user.first_name, user.last_name].filter(Boolean).join(' ').trim();
   return name || user.email;
-}
-
-export function getPostLoginPath(user: Pick<User, 'role'> | null): string {
-  return getRoleDashboardPath(user?.role);
 }
 
 export function getRoleLabel(role: UserRole): string {
@@ -43,3 +39,5 @@ export function getRoleLabel(role: UserRole): string {
   };
   return labels[role];
 }
+
+export { getPostLoginPath } from '@/lib/coach-utils';

@@ -1,7 +1,12 @@
+import { BAUHAUS } from './design-tokens';
+
 export const BRAND = {
-  primary: '#F48735',
-  primaryHover: '#D66E1F',
-  primaryMuted: '#FEF3EB',
-  accent: '#ffffff',
-  shadow: '#D66E1F',
+  primary: BAUHAUS.brand,
+  primaryHover: BAUHAUS.brandDark,
+  primaryMuted: '#FFE8D4',
+  accent: BAUHAUS.white,
+  shadow: BAUHAUS.foreground,
+  red: BAUHAUS.red,
+  blue: BAUHAUS.blue,
+  yellow: BAUHAUS.yellow,
 } as const;

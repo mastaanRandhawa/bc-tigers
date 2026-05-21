@@ -4,19 +4,26 @@ import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '@/lib/utils';
 
 const buttonVariants = cva(
-  'inline-flex items-center justify-center gap-2 whitespace-nowrap rounded-lg text-sm font-semibold transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50',
+  'inline-flex items-center justify-center gap-2 whitespace-nowrap text-sm font-black uppercase tracking-wide transition-all duration-200 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 border-2 border-foreground press-scale',
   {
     variants: {
       variant: {
-        default: 'bg-primary text-white shadow-sm hover:bg-primary-hover hover:shadow-md',
-        accent: 'bg-primary-muted text-primary hover:bg-primary/10 border border-primary/20',
-        outline: 'border border-border bg-white text-foreground hover:bg-muted hover:border-primary/30',
-        ghost: 'hover:bg-muted text-foreground',
-        destructive: 'bg-destructive text-white hover:bg-destructive/90 shadow-sm',
-        secondary: 'bg-secondary text-secondary-foreground hover:bg-secondary/80',
-        link: 'text-primary underline-offset-4 hover:underline hover:text-primary-hover font-medium',
-        pill: 'rounded-full bg-primary text-white hover:bg-primary-hover shadow-sm',
-        'pill-outline': 'rounded-full border border-border bg-white text-foreground hover:bg-muted',
+        default:
+          'bg-primary text-white shadow-hard-sm hover:shadow-hard-md hover:-translate-x-0.5 hover:-translate-y-0.5 hover:bg-primary-hover',
+        accent:
+          'bg-primary-muted text-foreground shadow-hard-sm hover:shadow-hard-md hover:-translate-x-0.5 hover:-translate-y-0.5',
+        outline:
+          'bg-white text-foreground shadow-hard-sm hover:shadow-hard-md hover:-translate-x-0.5 hover:-translate-y-0.5 hover:bg-bauhaus-muted/50',
+        ghost: 'border-transparent shadow-none hover:bg-bauhaus-muted/60 text-foreground',
+        destructive:
+          'bg-bauhaus-red text-white border-bauhaus-red shadow-hard-sm hover:shadow-hard-md hover:-translate-x-0.5 hover:-translate-y-0.5',
+        secondary:
+          'bg-bauhaus-muted text-foreground shadow-hard-sm hover:shadow-hard-md hover:-translate-x-0.5 hover:-translate-y-0.5',
+        link: 'border-transparent shadow-none text-primary underline-offset-4 hover:underline hover:text-primary-hover font-bold normal-case tracking-normal',
+        pill:
+          'rounded-full bg-primary text-white shadow-hard-sm hover:shadow-hard-md hover:-translate-x-0.5 hover:-translate-y-0.5',
+        'pill-outline':
+          'rounded-full bg-white text-foreground shadow-hard-sm hover:shadow-hard-md hover:-translate-x-0.5 hover:-translate-y-0.5',
       },
       size: {
         default: 'h-10 px-4 py-2',
@@ -30,7 +37,7 @@ const buttonVariants = cva(
       variant: 'default',
       size: 'default',
     },
-  }
+  },
 );
 
 export interface ButtonProps
@@ -45,7 +52,7 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     return (
       <Comp className={cn(buttonVariants({ variant, size, className }))} ref={ref} {...props} />
     );
-  }
+  },
 );
 Button.displayName = 'Button';
 

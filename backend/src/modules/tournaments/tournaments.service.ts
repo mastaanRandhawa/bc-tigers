@@ -21,7 +21,12 @@ export class TournamentsService {
     const t = await prisma.tournament.findUnique({
       where: { slug },
       include: {
-        divisions: { include: { teams: true } },
+        divisions: {
+          include: {
+            teams: { select: { id: true } },
+            _count: { select: { matches: true } },
+          },
+        },
       },
     });
     if (!t) throw new NotFoundException('Tournament not found');

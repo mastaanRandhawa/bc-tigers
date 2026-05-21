@@ -4,23 +4,37 @@ import { LazyPage } from "@/routes/LazyPage";
 import {
   HomePage,
   TournamentsPage,
-  TournamentDetailPage,
+  TournamentLayout,
+  TournamentOverviewPage,
+  TournamentDivisionsPage,
+  TournamentMediaPage,
+  TournamentNewsPage,
+  TournamentSponsorsPage,
+  TournamentRulesPage,
   DivisionLayout,
   DivisionOverviewPage,
   DivisionTeamsPage,
-  DivisionTeamDetailPage,
+  TeamLayout,
+  TeamOverviewPage,
+  TeamRosterPage,
+  TeamMatchesPage,
+  TeamStandingsPage,
+  TeamStatsPage,
+  TeamCoachesPage,
   DivisionPlayerDetailPage,
   DivisionPlayersListRedirect,
   DivisionPlayerLegacyRedirect,
   DivisionSchedulePage,
   DivisionMatchesPage,
   DivisionMatchDetailPage,
+  GlobalMatchDetailPage,
   DivisionStandingsPage,
   DivisionStatsPage,
   DivisionTopScorersPage,
   DivisionTopAssistsPage,
   DivisionDisciplinePage,
   DivisionBracketPage,
+  DivisionRulesPage,
   DivisionVenuesPage,
   DivisionVenueDetailPage,
   DivisionSlugRedirect,
@@ -43,7 +57,7 @@ import {
   AdminMedia,
   AdminUsers,
   AdminSettings,
-  CoachDashboard,
+  AdminAnalytics,
   RefereeDashboard,
   PlayerDashboard,
 } from "@/routes/lazy-pages";
@@ -51,6 +65,32 @@ import {
 function L({ children }: { children: React.ReactNode }) {
   return <LazyPage>{children}</LazyPage>;
 }
+
+function ManagementRoute({ children }: { children: React.ReactNode }) {
+  return (
+    <ProtectedRoute adminOnly>
+      <L>{children}</L>
+    </ProtectedRoute>
+  );
+}
+
+const managementPages = [
+  { path: "dashboard", element: <AdminDashboard /> },
+  { path: "tournaments", element: <AdminTournaments /> },
+  { path: "divisions", element: <AdminDivisions /> },
+  { path: "teams", element: <AdminTeams /> },
+  { path: "players", element: <AdminPlayers /> },
+  { path: "matches", element: <AdminMatches /> },
+  { path: "schedules", element: <AdminSchedules /> },
+  { path: "standings", element: <AdminStandings /> },
+  { path: "brackets", element: <AdminBrackets /> },
+  { path: "venues", element: <AdminVenues /> },
+  { path: "referees", element: <AdminReferees /> },
+  { path: "media", element: <AdminMedia /> },
+  { path: "analytics", element: <AdminAnalytics /> },
+  { path: "users", element: <AdminUsers /> },
+  { path: "settings", element: <AdminSettings /> },
+] as const;
 
 export default function App() {
   return (
@@ -65,14 +105,67 @@ export default function App() {
           </L>
         }
       />
+
       <Route
         path="/tournaments/:tournamentSlug"
         element={
           <L>
-            <TournamentDetailPage />
+            <TournamentLayout />
           </L>
         }
-      />
+      >
+        <Route
+          index
+          element={
+            <L>
+              <TournamentOverviewPage />
+            </L>
+          }
+        />
+        <Route
+          path="divisions"
+          element={
+            <L>
+              <TournamentDivisionsPage />
+            </L>
+          }
+        />
+        <Route path="matches" element={<Navigate to="divisions" replace />} />
+        <Route path="standings" element={<Navigate to="divisions" replace />} />
+        <Route path="venues" element={<Navigate to="divisions" replace />} />
+        <Route
+          path="media"
+          element={
+            <L>
+              <TournamentMediaPage />
+            </L>
+          }
+        />
+        <Route
+          path="news"
+          element={
+            <L>
+              <TournamentNewsPage />
+            </L>
+          }
+        />
+        <Route
+          path="sponsors"
+          element={
+            <L>
+              <TournamentSponsorsPage />
+            </L>
+          }
+        />
+        <Route
+          path="rules"
+          element={
+            <L>
+              <TournamentRulesPage />
+            </L>
+          }
+        />
+      </Route>
 
       <Route
         path="/tournaments/:tournamentSlug/divisions/:divisionSlug"
@@ -102,18 +195,67 @@ export default function App() {
           path="teams/:teamSlug"
           element={
             <L>
-              <DivisionTeamDetailPage />
+              <TeamLayout />
             </L>
           }
-        />
-        <Route
-          path="teams/:teamSlug/players/:playerId"
-          element={
-            <L>
-              <DivisionPlayerDetailPage />
-            </L>
-          }
-        />
+        >
+          <Route
+            index
+            element={
+              <L>
+                <TeamOverviewPage />
+              </L>
+            }
+          />
+          <Route
+            path="roster"
+            element={
+              <L>
+                <TeamRosterPage />
+              </L>
+            }
+          />
+          <Route
+            path="matches"
+            element={
+              <L>
+                <TeamMatchesPage />
+              </L>
+            }
+          />
+          <Route
+            path="standings"
+            element={
+              <L>
+                <TeamStandingsPage />
+              </L>
+            }
+          />
+          <Route
+            path="stats"
+            element={
+              <L>
+                <TeamStatsPage />
+              </L>
+            }
+          />
+          <Route
+            path="coaches"
+            element={
+              <L>
+                <TeamCoachesPage />
+              </L>
+            }
+          />
+          <Route
+            path="players/:playerId"
+            element={
+              <L>
+                <DivisionPlayerDetailPage />
+              </L>
+            }
+          />
+        </Route>
         <Route
           path="players"
           element={
@@ -203,6 +345,14 @@ export default function App() {
           }
         />
         <Route
+          path="rules"
+          element={
+            <L>
+              <DivisionRulesPage />
+            </L>
+          }
+        />
+        <Route
           path="venues"
           element={
             <L>
@@ -219,6 +369,15 @@ export default function App() {
           }
         />
       </Route>
+
+      <Route
+        path="/matches/:matchId"
+        element={
+          <L>
+            <GlobalMatchDetailPage />
+          </L>
+        }
+      />
 
       <Route
         path="/schedule/:divisionSlug"
@@ -289,16 +448,9 @@ export default function App() {
         }
       />
 
-      <Route
-        path="/coach"
-        element={
-          <ProtectedRoute allowedRoles={["COACH", "ADMIN", "TOURNAMENT_ADMIN"]}>
-            <L>
-              <CoachDashboard />
-            </L>
-          </ProtectedRoute>
-        }
-      />
+      <Route path="/portal/*" element={<Navigate to="/tournaments" replace />} />
+      <Route path="/coach" element={<Navigate to="/tournaments" replace />} />
+
       <Route
         path="/referee"
         element={
@@ -324,150 +476,24 @@ export default function App() {
         }
       />
 
-      <Route
-        path="/admin"
-        element={<Navigate to="/admin/dashboard" replace />}
-      />
-      <Route
-        path="/admin/dashboard"
-        element={
-          <ProtectedRoute adminOnly>
-            <L>
-              <AdminDashboard />
-            </L>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/admin/tournaments"
-        element={
-          <ProtectedRoute adminOnly>
-            <L>
-              <AdminTournaments />
-            </L>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/admin/divisions"
-        element={
-          <ProtectedRoute adminOnly>
-            <L>
-              <AdminDivisions />
-            </L>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/admin/teams"
-        element={
-          <ProtectedRoute adminOnly>
-            <L>
-              <AdminTeams />
-            </L>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/admin/players"
-        element={
-          <ProtectedRoute adminOnly>
-            <L>
-              <AdminPlayers />
-            </L>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/admin/matches"
-        element={
-          <ProtectedRoute adminOnly>
-            <L>
-              <AdminMatches />
-            </L>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/admin/schedules"
-        element={
-          <ProtectedRoute adminOnly>
-            <L>
-              <AdminSchedules />
-            </L>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/admin/standings"
-        element={
-          <ProtectedRoute adminOnly>
-            <L>
-              <AdminStandings />
-            </L>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/admin/brackets"
-        element={
-          <ProtectedRoute adminOnly>
-            <L>
-              <AdminBrackets />
-            </L>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/admin/venues"
-        element={
-          <ProtectedRoute adminOnly>
-            <L>
-              <AdminVenues />
-            </L>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/admin/referees"
-        element={
-          <ProtectedRoute adminOnly>
-            <L>
-              <AdminReferees />
-            </L>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/admin/media"
-        element={
-          <ProtectedRoute adminOnly>
-            <L>
-              <AdminMedia />
-            </L>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/admin/users"
-        element={
-          <ProtectedRoute adminOnly>
-            <L>
-              <AdminUsers />
-            </L>
-          </ProtectedRoute>
-        }
-      />
-      <Route
-        path="/admin/settings"
-        element={
-          <ProtectedRoute adminOnly>
-            <L>
-              <AdminSettings />
-            </L>
-          </ProtectedRoute>
-        }
-      />
+      <Route path="/management" element={<Navigate to="/management/dashboard" replace />} />
+      {managementPages.map(({ path, element }) => (
+        <Route
+          key={path}
+          path={`/management/${path}`}
+          element={<ManagementRoute>{element}</ManagementRoute>}
+        />
+      ))}
+
+      <Route path="/admin" element={<Navigate to="/management/dashboard" replace />} />
+      {managementPages.map(({ path }) => (
+        <Route
+          key={`admin-${path}`}
+          path={`/admin/${path}`}
+          element={<Navigate to={`/management/${path}`} replace />}
+        />
+      ))}
+      <Route path="/admin/*" element={<Navigate to="/management/dashboard" replace />} />
 
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>

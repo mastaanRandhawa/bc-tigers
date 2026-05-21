@@ -1,3 +1,6 @@
+import { Users } from 'lucide-react';
+import MetaChip from '@/components/design-system/MetaChip';
+import GeometricAccent from '@/components/design-system/GeometricAccent';
 import type { Division } from '@/types';
 import type { DivisionTheme } from '@/lib/division-theme';
 
@@ -7,46 +10,56 @@ interface DivisionHeroProps {
 }
 
 export default function DivisionHero({ division, theme }: DivisionHeroProps) {
-  return (
-    <div className="page-container relative z-10 pt-3 pb-4">
-      {/* Division identity row */}
-      <div className="flex items-center gap-3">
-        {/* Division color swatch / icon */}
-        <div
-          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl shadow-sm sm:h-12 sm:w-12"
-          style={{
-            backgroundColor: theme.accent,
-            border: `1.5px solid color-mix(in srgb, ${theme.primary} 25%, transparent)`,
-          }}
-          aria-hidden
-        >
-          {/* Soccer-ball inspired dot pattern using division primary */}
-          <svg viewBox="0 0 24 24" className="h-6 w-6 sm:h-7 sm:w-7" fill="none">
-            <circle cx="12" cy="12" r="9" stroke={theme.primary} strokeWidth="1.5" />
-            <circle cx="12" cy="12" r="2.5" fill={theme.primary} />
-            <path
-              d="M12 3 L12 6.5M12 17.5 L12 21M3 12 L6.5 12M17.5 12 L21 12"
-              stroke={theme.primary}
-              strokeWidth="1.5"
-              strokeLinecap="round"
-              opacity="0.4"
-            />
-          </svg>
-        </div>
+  const teamCount = division.teams?.length ?? 0;
+  const matchCount = division._count?.matches;
 
-        <div className="min-w-0 flex-1">
-          <h1
-            className="division-hero-headline truncate text-2xl sm:text-3xl md:text-4xl"
-            style={{ color: theme.primary }}
+  return (
+    <div
+      className="relative overflow-hidden border-b-2 border-foreground"
+      style={{
+        background: `linear-gradient(145deg, color-mix(in srgb, ${theme.primary} 85%, #121212) 0%, color-mix(in srgb, ${theme.primary} 40%, #121212) 100%)`,
+      }}
+    >
+      <div className="pointer-events-none absolute inset-0 bg-hero-mesh opacity-40" aria-hidden />
+      <div className="pointer-events-none absolute inset-0 bg-noise opacity-20" aria-hidden />
+      <GeometricAccent shape="circle" position="top-right" size="md" color="muted" />
+
+      <div className="page-container relative z-10 py-5 sm:py-6">
+        <div className="flex items-center gap-3 sm:gap-4">
+          <div
+            className="flex h-14 w-14 shrink-0 items-center justify-center border-2 border-white text-sm font-black uppercase tracking-wider shadow-hard-sm sm:h-16 sm:w-16"
+            style={{
+              backgroundColor: theme.accent,
+              color: theme.primary,
+            }}
+            aria-hidden
           >
-            {division.name}
-          </h1>
-          <div className="mt-2 flex flex-wrap gap-1.5">
-            {division.age_group && (
-              <span className="division-badge">{division.age_group}</span>
-            )}
-            <span className="division-badge">{division.gender}</span>
-            <span className="division-badge">{division.format}</span>
+            {division.name.slice(0, 2)}
+          </div>
+
+          <div className="min-w-0 flex-1">
+            <h1 className="division-hero-headline truncate text-2xl text-white sm:text-3xl md:text-4xl">
+              {division.name}
+            </h1>
+            <div className="mt-2 flex flex-wrap gap-1.5">
+              {division.age_group && (
+                <span className="border-2 border-white/40 bg-white/10 px-2 py-0.5 text-[10px] font-black uppercase tracking-widest text-white">
+                  {division.age_group}
+                </span>
+              )}
+              <span className="border-2 border-white/40 bg-white/10 px-2 py-0.5 text-[10px] font-black uppercase tracking-widest text-white">
+                {division.gender}
+              </span>
+              <span className="border-2 border-white/40 bg-white/10 px-2 py-0.5 text-[10px] font-black uppercase tracking-widest text-white">
+                {division.format}
+              </span>
+              {teamCount > 0 && (
+                <MetaChip icon={Users} value={`${teamCount} teams`} variant="dark" />
+              )}
+              {matchCount != null && matchCount > 0 && (
+                <MetaChip value={`${matchCount} matches`} variant="dark" />
+              )}
+            </div>
           </div>
         </div>
       </div>

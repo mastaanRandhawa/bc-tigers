@@ -58,11 +58,11 @@ function divisionPathFromMatch(
     : getDivisionMatchesPath(withTournament);
 }
 
-/** Prefer a path tied to real fixtures; otherwise tournament overview. */
+/** Prefer division fixtures when available; otherwise tournament-level pages. */
 export function hubSchedulePath(tournament: Tournament | undefined, upcoming: Match[]) {
   return (
     divisionPathFromMatch(upcoming[0], 'schedule') ??
-    tournamentOverviewPath(tournament)
+    (tournament?.slug ? `${tournamentOverviewPath(tournament)}/divisions` : '/tournaments')
   );
 }
 
@@ -74,6 +74,6 @@ export function hubMatchesPath(
   return (
     divisionPathFromMatch(live[0], 'matches') ??
     divisionPathFromMatch(recent[0], 'matches') ??
-    tournamentOverviewPath(tournament)
+    (tournament?.slug ? `${tournamentOverviewPath(tournament)}/divisions` : '/tournaments')
   );
 }

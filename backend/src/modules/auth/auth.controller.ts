@@ -23,6 +23,7 @@ export class AuthController {
       email: string;
       password: string;
       phone?: string;
+      role?: 'VIEWER' | 'COACH';
     },
   ) {
     return this.authService.register(body);

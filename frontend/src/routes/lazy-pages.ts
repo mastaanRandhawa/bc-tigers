@@ -6,14 +6,32 @@ function lazyPage(
   return lazy(factory);
 }
 
-// Public — keep home eager for fastest first paint
 export { default as HomePage } from "@/pages/HomePage";
 
 export const TournamentsPage = lazyPage(
   () => import("@/pages/tournaments/TournamentsPage"),
 );
-export const TournamentDetailPage = lazyPage(
-  () => import("@/pages/tournaments/TournamentDetailPage"),
+
+export const TournamentLayout = lazyPage(
+  () => import("@/components/layouts/TournamentLayout"),
+);
+export const TournamentOverviewPage = lazyPage(
+  () => import("@/pages/tournaments/TournamentOverviewPage"),
+);
+export const TournamentDivisionsPage = lazyPage(
+  () => import("@/pages/tournaments/TournamentDivisionsPage"),
+);
+export const TournamentMediaPage = lazyPage(
+  () => import("@/pages/tournaments/TournamentMediaPage"),
+);
+export const TournamentNewsPage = lazyPage(
+  () => import("@/pages/tournaments/TournamentNewsPage"),
+);
+export const TournamentSponsorsPage = lazyPage(
+  () => import("@/pages/tournaments/TournamentSponsorsPage"),
+);
+export const TournamentRulesPage = lazyPage(
+  () => import("@/pages/tournaments/TournamentRulesPage"),
 );
 
 export const DivisionLayout = lazyPage(
@@ -25,8 +43,26 @@ export const DivisionOverviewPage = lazyPage(
 export const DivisionTeamsPage = lazyPage(
   () => import("@/pages/divisions/DivisionTeamsPage"),
 );
-export const DivisionTeamDetailPage = lazyPage(
-  () => import("@/pages/divisions/DivisionTeamDetailPage"),
+export const TeamLayout = lazyPage(
+  () => import("@/components/layouts/TeamLayout"),
+);
+export const TeamOverviewPage = lazyPage(
+  () => import("@/pages/teams/TeamOverviewPage"),
+);
+export const TeamRosterPage = lazyPage(
+  () => import("@/pages/teams/TeamRosterPage"),
+);
+export const TeamMatchesPage = lazyPage(
+  () => import("@/pages/teams/TeamMatchesPage"),
+);
+export const TeamStandingsPage = lazyPage(
+  () => import("@/pages/teams/TeamStandingsPage"),
+);
+export const TeamStatsPage = lazyPage(
+  () => import("@/pages/teams/TeamStatsPage"),
+);
+export const TeamCoachesPage = lazyPage(
+  () => import("@/pages/teams/TeamCoachesPage"),
 );
 export const DivisionPlayerDetailPage = lazyPage(
   () => import("@/pages/divisions/DivisionPlayerDetailPage"),
@@ -52,6 +88,9 @@ export const DivisionMatchesPage = lazyPage(
 export const DivisionMatchDetailPage = lazyPage(
   () => import("@/pages/divisions/DivisionMatchDetailPage"),
 );
+export const GlobalMatchDetailPage = lazyPage(
+  () => import("@/pages/matches/GlobalMatchDetailPage"),
+);
 export const DivisionStandingsPage = lazyPage(
   () => import("@/pages/divisions/DivisionStandingsPage"),
 );
@@ -70,6 +109,9 @@ export const DivisionDisciplinePage = lazyPage(
 export const DivisionBracketPage = lazyPage(
   () => import("@/pages/divisions/DivisionBracketPage"),
 );
+export const DivisionRulesPage = lazyPage(
+  () => import("@/pages/divisions/DivisionRulesPage"),
+);
 export const DivisionVenuesPage = lazyPage(
   () => import("@/pages/divisions/DivisionVenuesPage"),
 );
@@ -81,10 +123,6 @@ export const DivisionSlugRedirect = lazyPage(
   () => import("@/components/shared/DivisionSlugRedirect"),
 );
 
-// Legacy division player URLs (redirect only — no DivisionPlayersPage)
-// /players → teams list; /players/:slug → team-scoped player profile
-
-// Auth
 export const LoginPage = lazyPage(() => import("@/pages/auth/LoginPage"));
 export const RegisterPage = lazyPage(() => import("@/pages/auth/RegisterPage"));
 export const ForgotPasswordPage = lazyPage(
@@ -129,11 +167,10 @@ export const AdminUsers = lazyPage(() => import("@/pages/admin/AdminUsers"));
 export const AdminSettings = lazyPage(
   () => import("@/pages/admin/AdminSettings"),
 );
-
-// Role portals
-export const CoachDashboard = lazyPage(
-  () => import("@/pages/coach/CoachDashboard"),
+export const AdminAnalytics = lazyPage(
+  () => import("@/pages/admin/AdminAnalytics"),
 );
+
 export const RefereeDashboard = lazyPage(
   () => import("@/pages/referee/RefereeDashboard"),
 );

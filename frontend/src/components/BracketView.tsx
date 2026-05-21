@@ -33,18 +33,18 @@ function BracketTeamRow({
     <div
       className={cn(
         'bracket-match-row',
-        isWinner && 'bg-zinc-50',
+        isWinner && 'bg-bauhaus-yellow/15',
       )}
     >
       {logo ? (
-        <img src={logo} alt="" className="h-5 w-5 shrink-0 rounded-full object-cover ring-1 ring-border" />
+        <img src={logo} alt="" className="h-5 w-5 shrink-0 rounded-full border-2 border-foreground object-cover" />
       ) : (
-        <div className="h-5 w-5 shrink-0 rounded-full bg-zinc-100 ring-1 ring-border" />
+        <div className="h-5 w-5 shrink-0 rounded-full border-2 border-foreground bg-bauhaus-muted" />
       )}
       <span
         className={cn(
           'min-w-0 flex-1 truncate text-sm',
-          isWinner ? 'font-semibold text-foreground' : 'font-medium text-zinc-600',
+          isWinner ? 'font-black uppercase tracking-tight text-foreground' : 'font-semibold text-foreground/60',
         )}
       >
         {name}
@@ -129,9 +129,9 @@ export default function BracketView({ nodes }: BracketViewProps) {
   if (nodes.length === 0) {
     return (
       <div className="py-10 text-center">
-        <Trophy className="mx-auto mb-3 h-9 w-9 text-zinc-300" aria-hidden />
+        <Trophy className="mx-auto mb-3 h-9 w-9 text-foreground/25" aria-hidden />
         <p className="font-medium text-foreground">Bracket not yet generated</p>
-        <p className="mt-1 text-sm text-zinc-500">Check back once knockout rounds are set.</p>
+        <p className="text-meta mt-1 normal-case">Check back once knockout rounds are set.</p>
       </div>
     );
   }
@@ -144,8 +144,9 @@ export default function BracketView({ nodes }: BracketViewProps) {
   const roundMinHeight = maxInRound * rowHeight * 2;
 
   return (
-    <div className="overflow-x-auto pb-1 -mx-1 px-1 no-scrollbar">
-      <div className="bracket-shell">
+    <div className="overflow-x-auto scroll-fade-x pb-1 -mx-1 px-1 no-scrollbar">
+      <p className="text-caption mb-2 text-center sm:hidden">Swipe to view bracket →</p>
+      <div className="bracket-shell shadow-md">
         <div className="bracket-track">
           {stagesPresent.map((stage, stageIndex) => {
             const stageNodes = nodes
