@@ -85,4 +85,12 @@ export class BracketsService {
       data: { winner_id: winnerId },
     });
   }
+
+  updateNode(nodeId: string, data: { home_team_id?: string | null; away_team_id?: string | null; match_id?: string | null }) {
+    return prisma.bracketNode.update({
+      where: { id: nodeId },
+      data,
+      include: { home_team: true, away_team: true, winner: true },
+    });
+  }
 }

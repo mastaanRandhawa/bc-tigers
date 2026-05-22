@@ -14,6 +14,29 @@ import {
 } from '@/components/ui/table';
 import { cn } from '@/lib/utils';
 
+/** Returns an array of page numbers and '…' ellipsis markers for a compact paginator. */
+function buildPageWindows(current: number, total: number): (number | '…')[] {
+  if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
+
+  const pages: (number | '…')[] = [];
+  const addPage = (n: number) => pages.push(n);
+  const addEllipsis = () => {
+    if (pages[pages.length - 1] !== '…') pages.push('…');
+  };
+
+  addPage(1);
+  if (current > 4) addEllipsis();
+
+  const start = Math.max(2, current - 2);
+  const end = Math.min(total - 1, current + 2);
+  for (let p = start; p <= end; p++) addPage(p);
+
+  if (current < total - 3) addEllipsis();
+  addPage(total);
+
+  return pages;
+}
+
 export interface Column<T> {
   key: string;
   label: string;
@@ -162,19 +185,25 @@ export default function AdminTable<T extends { id: string }>({
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
-            {Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
-              <button
-                key={p}
-                type="button"
-                onClick={() => setPage(p)}
-                className={cn(
-                  'w-7 h-7 rounded-md text-xs font-semibold',
-                  p === page ? 'bg-primary text-white' : 'text-muted-foreground hover:bg-muted'
-                )}
-              >
-                {p}
-              </button>
-            ))}
+            {buildPageWindows(page, totalPages).map((item, i) =>
+              item === '…' ? (
+                <span key={`ellipsis-${i}`} className="w-7 h-7 flex items-center justify-center text-xs text-muted-foreground select-none">
+                  …
+                </span>
+              ) : (
+                <button
+                  key={item}
+                  type="button"
+                  onClick={() => setPage(item as number)}
+                  className={cn(
+                    'w-7 h-7 rounded-md text-xs font-semibold',
+                    item === page ? 'bg-primary text-white' : 'text-muted-foreground hover:bg-muted',
+                  )}
+                >
+                  {item}
+                </button>
+              ),
+            )}
             <button
               type="button"
               onClick={() => setPage((p) => Math.min(totalPages, p + 1))}

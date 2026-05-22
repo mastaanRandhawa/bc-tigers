@@ -16,6 +16,8 @@ export const tournamentsService = {
 
   getOne: (slug: string) => apiClient.get<Tournament>(`/tournaments/${slug}`),
 
+  getById: (id: string) => apiClient.get<Tournament>(`/tournaments/by-id/${id}`),
+
   getOverview: (slug: string) =>
     apiClient.get<TournamentOverview>(`/tournaments/${slug}/overview`),
 

@@ -1,9 +1,7 @@
 import { useState } from 'react';
 import { useTeamRoster, useAddToRoster, useRemoveFromRoster, useUpdateRoster } from '@/hooks/useRosters';
-import { usePlayers } from '@/hooks/usePlayers';
 import QueryState from '@/components/shared/QueryState';
 import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import PlayerFormDialog from '@/components/admin/forms/PlayerFormDialog';
 import { getApiErrorMessage } from '@/lib/errors';
 import { Pencil, UserPlus } from 'lucide-react';
@@ -15,29 +13,11 @@ interface TeamRosterPanelProps {
 
 export default function TeamRosterPanel({ team }: TeamRosterPanelProps) {
   const { data: roster = [], isLoading, refetch } = useTeamRoster(team.id);
-  const { data: players = [] } = usePlayers();
   const addMutation = useAddToRoster();
   const removeMutation = useRemoveFromRoster();
   const updateMutation = useUpdateRoster();
-  const [playerId, setPlayerId] = useState('');
   const [newPlayerOpen, setNewPlayerOpen] = useState(false);
   const [editingPlayer, setEditingPlayer] = useState<Player | null>(null);
-
-  const rosterPlayerIds = new Set(roster.map((r) => r.player_id));
-  const available = players.filter((p) => !rosterPlayerIds.has(p.id));
-
-  const handleAdd = async () => {
-    if (!playerId) return;
-    try {
-      await addMutation.mutateAsync({
-        teamId: team.id,
-        data: { player_id: playerId, season: new Date().getFullYear().toString() },
-      });
-      setPlayerId('');
-    } catch (err) {
-      alert(getApiErrorMessage(err, 'Failed to add player'));
-    }
-  };
 
   const handleRemove = async (rosterId: string) => {
     if (!confirm('Remove from roster?')) return;
@@ -60,30 +40,7 @@ export default function TeamRosterPanel({ team }: TeamRosterPanelProps) {
     <div className="rounded-xl border border-border bg-card p-4">
       <h3 className="mb-3 text-sm font-semibold text-foreground">Roster — {team.name}</h3>
 
-      {/* Add existing player or create a brand-new one */}
-      <div className="mb-4 flex flex-wrap gap-2">
-        <Select value={playerId} onValueChange={setPlayerId}>
-          <SelectTrigger className="w-[220px]">
-            <SelectValue placeholder="Add existing player…" />
-          </SelectTrigger>
-          <SelectContent>
-            {available.length === 0 ? (
-              <div className="px-2 py-1.5 text-xs text-muted-foreground">
-                No unrostered players — create one below
-              </div>
-            ) : (
-              available.map((p) => (
-                <SelectItem key={p.id} value={p.id}>
-                  {p.first_name} {p.last_name}
-                  {p.jersey_number != null && ` #${p.jersey_number}`}
-                </SelectItem>
-              ))
-            )}
-          </SelectContent>
-        </Select>
-        <Button size="sm" onClick={handleAdd} disabled={!playerId || addMutation.isPending}>
-          Add to roster
-        </Button>
+      <div className="mb-4">
         <Button
           size="sm"
           variant="outline"
@@ -143,10 +100,8 @@ export default function TeamRosterPanel({ team }: TeamRosterPanelProps) {
               teamId: team.id,
               data: { player_id: created.id, season: new Date().getFullYear().toString() },
             });
-          } catch (err) {
-            // Fallback: pre-select in dropdown so user can add manually
-            setPlayerId(created.id);
-            alert(getApiErrorMessage(err, 'Player created but could not be added to roster automatically. Select them in the dropdown.'));
+          } catch {
+            // silently ignore — player was still created
           }
         }}
       />

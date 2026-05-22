@@ -82,6 +82,7 @@ model User {
   password_hash String
   phone         String?
   role          UserRole @default(VIEWER)
+  active        Boolean  @default(true)
   profile_image String?
   created_at    DateTime @default(now())
   updated_at    DateTime @updatedAt
@@ -308,6 +309,7 @@ model Match {
   match_type      String?
   home_score      Int         @default(0)
   away_score      Int         @default(0)
+  stream_url      String?
   created_at      DateTime    @default(now())
   updated_at      DateTime    @updatedAt
 

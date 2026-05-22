@@ -24,6 +24,12 @@ export class TournamentsController {
     });
   }
 
+  @Get('by-id/:id')
+  @AdminOnly()
+  findById(@Param('id') id: string) {
+    return this.service.findById(id);
+  }
+
   @Get(':slug/overview')
   getOverview(@Param('slug') slug: string) {
     return this.service.getOverview(slug);

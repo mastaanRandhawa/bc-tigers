@@ -89,6 +89,12 @@ export const AdminDashboard = lazyPage(
 export const AdminTournaments = lazyPage(
   () => import("@/pages/admin/AdminTournaments"),
 );
+export const AdminTournamentWorkspace = lazyPage(
+  () => import("@/pages/admin/TournamentWorkspacePage"),
+);
+export const AdminDivisionWorkspace = lazyPage(
+  () => import("@/pages/admin/DivisionWorkspacePage"),
+);
 export const AdminDivisions = lazyPage(
   () => import("@/pages/admin/AdminDivisions"),
 );

@@ -78,21 +78,38 @@ export default function AdminDashboard() {
                   )}
                 </div>
                 <div className="mt-4 flex flex-wrap gap-x-4 gap-y-1 border-t border-border pt-4">
-                  {[
-                    { to: '/admin/teams', label: 'Manage teams' },
-                    { to: '/admin/matches', label: 'Manage matches' },
-                    { to: '/admin/divisions', label: 'Edit division' },
-                  ].map((link) => (
+                  {division.tournament?.id && (
                     <Link
-                      key={link.to}
-                      to={link.to}
+                      to={`/admin/tournaments/${division.tournament.id}`}
                       className={cn(
                         'text-xs font-medium text-muted-foreground transition-colors hover:text-primary',
                       )}
                     >
-                      {link.label}
+                      Open Tournament Workspace
                     </Link>
-                  ))}
+                  )}
+                  {division.tournament?.id && (
+                    <Link
+                      to={`/admin/tournaments/${division.tournament.id}/divisions/${division.id}`}
+                      className={cn(
+                        'text-xs font-medium text-muted-foreground transition-colors hover:text-primary',
+                      )}
+                    >
+                      Open Division Workspace
+                    </Link>
+                  )}
+                  {publicPath && (
+                    <a
+                      href={publicPath}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={cn(
+                        'text-xs font-medium text-muted-foreground transition-colors hover:text-primary',
+                      )}
+                    >
+                      View on site
+                    </a>
+                  )}
                 </div>
               </div>
             );

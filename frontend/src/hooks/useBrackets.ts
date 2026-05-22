@@ -26,3 +26,17 @@ export function useAdvanceBracket() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['brackets'] }),
   });
 }
+
+export function useUpdateBracketNode() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      nodeId,
+      data,
+    }: {
+      nodeId: string;
+      data: { home_team_id?: string | null; away_team_id?: string | null };
+    }) => bracketsService.updateNode(nodeId, data),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['brackets'] }),
+  });
+}

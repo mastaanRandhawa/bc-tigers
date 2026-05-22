@@ -10,4 +10,7 @@ export const bracketsService = {
 
   advance: (nodeId: string, winner_id: string) =>
     apiClient.patch<BracketNode>(`/brackets/nodes/${nodeId}/advance`, { winner_id }),
+
+  updateNode: (nodeId: string, data: { home_team_id?: string | null; away_team_id?: string | null }) =>
+    apiClient.patch<BracketNode>(`/brackets/nodes/${nodeId}`, data),
 };

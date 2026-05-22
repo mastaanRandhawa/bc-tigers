@@ -20,6 +20,7 @@ import { NotificationsModule } from './modules/notifications/notifications.modul
 import { HubModule } from './modules/hub/hub.module';
 import { MailModule } from './modules/mail/mail.module';
 import { MeModule } from './modules/me/me.module';
+import { AuditLogModule } from './modules/audit-log/audit-log.module';
 
 @Module({
   imports: [
@@ -44,6 +45,7 @@ import { MeModule } from './modules/me/me.module';
     NotificationsModule,
     GatewaysModule,
     HubModule,
+    AuditLogModule,
   ],
 })
 export class AppModule {}

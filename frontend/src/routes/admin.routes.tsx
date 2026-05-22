@@ -4,6 +4,8 @@ import { LazyPage } from '@/routes/LazyPage';
 import {
   AdminDashboard,
   AdminTournaments,
+  AdminTournamentWorkspace,
+  AdminDivisionWorkspace,
   AdminDivisions,
   AdminTeams,
   AdminPlayers,
@@ -37,6 +39,8 @@ export function adminRoutes() {
       <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
       <Route path="/admin/dashboard" element={<AdminRoute><L><AdminDashboard /></L></AdminRoute>} />
       <Route path="/admin/tournaments" element={<AdminRoute><L><AdminTournaments /></L></AdminRoute>} />
+      <Route path="/admin/tournaments/:id" element={<AdminRoute><L><AdminTournamentWorkspace /></L></AdminRoute>} />
+      <Route path="/admin/tournaments/:id/divisions/:divisionId" element={<AdminRoute><L><AdminDivisionWorkspace /></L></AdminRoute>} />
       <Route path="/admin/divisions" element={<AdminRoute><L><AdminDivisions /></L></AdminRoute>} />
       <Route path="/admin/teams" element={<AdminRoute><L><AdminTeams /></L></AdminRoute>} />
       <Route path="/admin/players" element={<AdminRoute><L><AdminPlayers /></L></AdminRoute>} />

@@ -21,6 +21,15 @@ export function useTournament(slug?: string) {
   });
 }
 
+export function useTournamentById(id?: string) {
+  return useQuery({
+    queryKey: ['tournaments', 'by-id', id ?? ''],
+    queryFn: async () => (await tournamentsService.getById(id!)).data,
+    enabled: !!id,
+    ...queryTiming.feed,
+  });
+}
+
 export function useTournamentOverview(slug?: string) {
   return useQuery({
     queryKey: [...queryKeys.tournaments.detail(slug ?? ''), 'overview'],

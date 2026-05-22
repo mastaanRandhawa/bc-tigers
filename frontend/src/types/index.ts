@@ -268,6 +268,26 @@ export interface BracketNode {
   match?: Match;
 }
 
+export interface TournamentAdmin {
+  id: string;
+  tournament_id: string;
+  user_id: string;
+  role: string;
+  created_at: string;
+  user?: Pick<User, 'id' | 'first_name' | 'last_name' | 'email' | 'role'>;
+}
+
+export interface AuditLog {
+  id: string;
+  user_id?: string;
+  action: string;
+  entity: string;
+  entity_id?: string;
+  metadata?: Record<string, unknown>;
+  created_at: string;
+  user?: Pick<User, 'id' | 'first_name' | 'last_name' | 'email'>;
+}
+
 export interface Notification {
   id: string;
   user_id?: string;

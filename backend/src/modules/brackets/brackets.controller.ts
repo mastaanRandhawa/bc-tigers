@@ -32,4 +32,13 @@ export class BracketsController {
   ) {
     return this.service.advance(nodeId, body.winner_id);
   }
+
+  @Patch('nodes/:nodeId')
+  @AdminOnly()
+  updateNode(
+    @Param('nodeId') nodeId: string,
+    @Body() body: { home_team_id?: string | null; away_team_id?: string | null; match_id?: string | null },
+  ) {
+    return this.service.updateNode(nodeId, body);
+  }
 }
