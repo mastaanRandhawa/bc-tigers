@@ -72,7 +72,7 @@ export default function DivisionWorkspacePage() {
 
   const handleStatusChange = async (match: Match, status: string) => {
     try {
-      await updateMatchMutation.mutateAsync({ id: match.id, data: { status } });
+      await updateMatchMutation.mutateAsync({ id: match.id, data: { status: status as Match['status'] } });
     } catch (err) {
       alert(getApiErrorMessage(err, 'Failed to update status'));
     }
