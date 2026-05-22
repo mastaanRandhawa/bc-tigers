@@ -25,16 +25,17 @@ export default function DivisionNav({
   const { pathname } = useLocation();
   const moreActive = moreItems.some((item) => isNavActive(pathname, item.href, item.end));
 
-  const linkClass = (isActive: boolean) =>
+  const pillClass = (isActive: boolean) =>
     cn(
-      'inline-flex shrink-0 items-center justify-center gap-1 rounded-md px-2.5 py-2 text-xs font-medium transition-all duration-200 min-h-[2.25rem]',
+      'inline-flex shrink-0 items-center justify-center gap-1 rounded-md px-2.5 py-2 text-xs font-medium transition-all duration-200 min-h-[2.25rem] w-full',
       isActive
-        ? 'bg-card text-foreground font-semibold shadow-sm'
-        : 'text-muted-foreground hover:bg-card/60 hover:text-foreground',
+        ? 'division-nav-pill-active'
+        : 'division-nav-pill',
     );
 
   return (
     <>
+      {/* Mobile: compact grid with overflow "More" dropdown */}
       <nav aria-label="Division navigation" className="page-container lg:hidden">
         <div className="grid grid-cols-5 gap-1 rounded-xl bg-secondary p-1">
           {primaryItems.map((item) => (
@@ -42,7 +43,7 @@ export default function DivisionNav({
               key={item.href}
               to={item.href}
               end={item.end ?? false}
-              className={({ isActive }) => cn(linkClass(isActive), 'w-full')}
+              className={({ isActive }) => pillClass(isActive)}
             >
               {item.label}
             </NavLink>
@@ -55,11 +56,12 @@ export default function DivisionNav({
                 aria-expanded={moreOpen}
                 aria-haspopup="menu"
                 onClick={() => setMoreOpen((open) => !open)}
-                className={cn(linkClass(moreActive), 'w-full')}
+                className={pillClass(moreActive)}
               >
                 <MoreHorizontal className="h-3.5 w-3.5" aria-hidden />
                 <span>More</span>
               </button>
+
               {moreOpen && (
                 <>
                   <div
@@ -97,8 +99,9 @@ export default function DivisionNav({
         </div>
       </nav>
 
+      {/* Desktop: horizontal scroll PillNav with division accent */}
       <div className="hidden lg:block">
-        <PillNav items={allItems} ariaLabel="Division navigation" />
+        <PillNav items={allItems} ariaLabel="Division navigation" variant="division" />
       </div>
     </>
   );

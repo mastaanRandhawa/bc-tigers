@@ -244,6 +244,8 @@ export interface PlayerStat {
   matches_played: number;
   player?: Player;
   team?: Team;
+  /** Rank position returned by the top-scorers / stats endpoints */
+  rank?: number;
 }
 
 export interface BracketNode {

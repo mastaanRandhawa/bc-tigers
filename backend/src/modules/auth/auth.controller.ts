@@ -9,27 +9,22 @@ import {
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { JwtAuthGuard } from './jwt-auth.guard';
+import { RegisterDto } from './dto/register.dto';
+import { LoginDto } from './dto/login.dto';
+import { UpdateProfileDto } from './dto/update-profile.dto';
+import { ChangePasswordDto } from './dto/change-password.dto';
 
 @Controller('auth')
 export class AuthController {
   constructor(private authService: AuthService) {}
 
   @Post('register')
-  register(
-    @Body()
-    body: {
-      first_name: string;
-      last_name: string;
-      email: string;
-      password: string;
-      phone?: string;
-    },
-  ) {
+  register(@Body() body: RegisterDto) {
     return this.authService.register(body);
   }
 
   @Post('login')
-  login(@Body() body: { email: string; password: string }) {
+  login(@Body() body: LoginDto) {
     return this.authService.login(body.email, body.password);
   }
 
@@ -43,13 +38,7 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   updateMe(
     @Request() req: { user: { userId: string } },
-    @Body()
-    body: {
-      first_name?: string;
-      last_name?: string;
-      phone?: string;
-      profile_image?: string;
-    },
+    @Body() body: UpdateProfileDto,
   ) {
     return this.authService.updateProfile(req.user.userId, body);
   }
@@ -58,7 +47,7 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   changePassword(
     @Request() req: { user: { userId: string } },
-    @Body() body: { current_password: string; new_password: string },
+    @Body() body: ChangePasswordDto,
   ) {
     return this.authService.changePassword(
       req.user.userId,

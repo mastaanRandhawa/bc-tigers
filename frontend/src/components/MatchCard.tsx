@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { MapPin, Clock, User } from 'lucide-react';
 import type { Match } from '@/types';
 import { Badge } from '@/components/ui/badge';
-import { cn } from '@/lib/utils';
+import { cn, getInitials } from '@/lib/utils';
 import { formatDate, formatTime, getMatchStatusBadgeVariant } from '@/lib/utils';
 import { getMatchPath } from '@/lib/division-routes';
 
@@ -16,15 +16,6 @@ interface MatchCardProps {
   match: Match;
   compact?: boolean;
   flat?: boolean;
-}
-
-function getInitials(name: string) {
-  return name
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((w) => w[0].toUpperCase())
-    .join('');
 }
 
 function TeamLogo({ logo, name, size = 'md' }: { logo?: string | null; name?: string; size?: 'sm' | 'md' }) {

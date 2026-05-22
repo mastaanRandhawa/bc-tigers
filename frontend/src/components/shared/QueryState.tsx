@@ -5,7 +5,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Skeleton } from '@/components/ui/skeleton';
 
-type QueryStateVariant = 'spinner' | 'skeleton-table' | 'skeleton-cards' | 'skeleton-detail';
+export type QueryStateVariant = 'spinner' | 'skeleton-table' | 'skeleton-cards' | 'skeleton-detail';
 
 interface QueryStateProps {
   isLoading?: boolean;

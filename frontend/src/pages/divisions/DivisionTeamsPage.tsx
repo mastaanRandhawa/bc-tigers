@@ -1,9 +1,7 @@
 import { useCallback } from 'react';
-import QueryState from '@/components/shared/QueryState';
-import SearchField from '@/components/shared/SearchField';
-import SearchEmpty from '@/components/shared/SearchEmpty';
 import TeamCard from '@/components/teams/TeamCard';
 import DivisionPageHeader from '@/components/divisions/DivisionPageHeader';
+import ResourceList from '@/components/shared/ResourceList';
 import { useDivisionRoute } from '@/context/DivisionContext';
 import { useDivisionTeams } from '@/hooks/useDivisionResources';
 import { useListSearch } from '@/hooks/useListSearch';
@@ -17,44 +15,36 @@ export default function DivisionTeamsPage() {
   );
 
   const getText = useCallback((t: (typeof teams)[0]) => teamSearchText(t), []);
-  const { search, setSearch, filtered, debouncedSearch, hasQuery } = useListSearch(
-    teams,
-    getText,
-  );
+  const { search, setSearch, filtered, debouncedSearch, hasQuery } = useListSearch(teams, getText);
 
   return (
     <>
       <DivisionPageHeader title="Teams" subtitle="Registered squads in this division" />
-      {teams.length > 0 && (
-        <SearchField
-          value={search}
-          onChange={setSearch}
-          placeholder="Search teams…"
-          className="mb-5"
-        />
-      )}
-      <QueryState
+      <ResourceList
+        items={filtered}
+        totalCount={teams.length}
+        search={search}
+        onSearchChange={setSearch}
+        searchPlaceholder="Search teams…"
+        debouncedSearch={debouncedSearch}
+        hasQuery={hasQuery}
+        entityLabel="teams"
         isLoading={isLoading}
         isError={isError}
-        isEmpty={teams.length === 0}
-        onRetry={() => refetch()}
+        onRetry={refetch}
         emptyMessage="No teams in this division."
       >
-        {hasQuery && filtered.length === 0 ? (
-          <SearchEmpty query={debouncedSearch} entityLabel="teams" />
-        ) : (
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {filtered.map((team) => (
-              <TeamCard
-                key={team.id}
-                team={team}
-                tournamentSlug={tournamentSlug}
-                divisionSlug={divisionSlug}
-              />
-            ))}
-          </div>
-        )}
-      </QueryState>
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+          {filtered.map((team) => (
+            <TeamCard
+              key={team.id}
+              team={team}
+              tournamentSlug={tournamentSlug}
+              divisionSlug={divisionSlug}
+            />
+          ))}
+        </div>
+      </ResourceList>
     </>
   );
 }

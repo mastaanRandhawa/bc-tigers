@@ -1,9 +1,7 @@
 import { useCallback } from 'react';
 import { Link } from 'react-router-dom';
-import QueryState from '@/components/shared/QueryState';
-import SearchField from '@/components/shared/SearchField';
-import SearchEmpty from '@/components/shared/SearchEmpty';
 import DivisionPageHeader from '@/components/divisions/DivisionPageHeader';
+import ResourceList from '@/components/shared/ResourceList';
 import { useDivisionRoute } from '@/context/DivisionContext';
 import { useDivisionVenues } from '@/hooks/useDivisionResources';
 import { useListSearch } from '@/hooks/useListSearch';
@@ -18,10 +16,7 @@ export default function DivisionVenuesPage() {
   );
 
   const getText = useCallback((v: (typeof venues)[0]) => venueSearchText(v), []);
-  const { search, setSearch, filtered, debouncedSearch, hasQuery } = useListSearch(
-    venues,
-    getText,
-  );
+  const { search, setSearch, filtered, debouncedSearch, hasQuery } = useListSearch(venues, getText);
 
   return (
     <>
@@ -29,44 +24,39 @@ export default function DivisionVenuesPage() {
         title="Venues"
         subtitle="Locations used for matches in this division"
       />
-      {venues.length > 0 && (
-        <SearchField
-          value={search}
-          onChange={setSearch}
-          placeholder="Search venues…"
-          className="mb-5 max-w-md"
-        />
-      )}
-      <QueryState
+      <ResourceList
+        items={filtered}
+        totalCount={venues.length}
+        search={search}
+        onSearchChange={setSearch}
+        searchPlaceholder="Search venues…"
+        debouncedSearch={debouncedSearch}
+        hasQuery={hasQuery}
+        entityLabel="venues"
         isLoading={isLoading}
         isError={isError}
-        isEmpty={venues.length === 0}
-        onRetry={() => refetch()}
+        onRetry={refetch}
         emptyMessage="No venues used in this division yet."
       >
-        {hasQuery && filtered.length === 0 ? (
-          <SearchEmpty query={debouncedSearch} entityLabel="venues" />
-        ) : (
-          <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
-            {filtered.map((venue) => (
-              <Link
-                key={venue.id}
-                to={`${basePath}/venues/${venue.slug}`}
-                className="rounded-xl bg-card p-4 shadow-sm border border-border transition-all duration-200 hover:shadow-md hover:border-primary/30"
-              >
-                <MapPin
-                  className="mb-2 h-5 w-5"
-                  style={{ color: 'var(--division-primary)' }}
-                  aria-hidden
-                />
-                <h3 className="font-semibold text-foreground">{venue.name}</h3>
-                <p className="mt-1 text-sm text-muted-foreground">{venue.address}</p>
-                {venue.city && <p className="mt-0.5 text-xs text-zinc-400">{venue.city}</p>}
-              </Link>
-            ))}
-          </div>
-        )}
-      </QueryState>
+        <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+          {filtered.map((venue) => (
+            <Link
+              key={venue.id}
+              to={`${basePath}/venues/${venue.slug}`}
+              className="rounded-xl bg-card p-4 shadow-sm border border-border transition-all duration-200 hover:shadow-md hover:border-primary/30"
+            >
+              <MapPin
+                className="mb-2 h-5 w-5"
+                style={{ color: 'var(--division-primary)' }}
+                aria-hidden
+              />
+              <h3 className="font-semibold text-foreground">{venue.name}</h3>
+              <p className="mt-1 text-sm text-muted-foreground">{venue.address}</p>
+              {venue.city && <p className="mt-0.5 text-xs text-muted-foreground/60">{venue.city}</p>}
+            </Link>
+          ))}
+        </div>
+      </ResourceList>
     </>
   );
 }

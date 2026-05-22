@@ -1,25 +1,19 @@
 import { Link } from 'react-router-dom';
 import PortalLayout from '@/components/layouts/PortalLayout';
+import PortalStatGrid from '@/components/shared/PortalStatGrid';
+import PortalMatchList from '@/components/shared/PortalMatchList';
 import QueryState from '@/components/shared/QueryState';
 import Section from '@/components/shared/Section';
 import SectionHeader from '@/components/shared/SectionHeader';
+import SearchField from '@/components/shared/SearchField';
+import SearchEmpty from '@/components/shared/SearchEmpty';
 import { useTeams } from '@/hooks/useTeams';
 import { useMatches } from '@/hooks/useMatches';
 import { useTournaments } from '@/hooks/useTournaments';
 import { useAuthStore } from '@/store/authStore';
-import { formatDate, formatTime } from '@/lib/utils';
-import { getMatchPath, getTeamPath, getDivisionMatchesPath } from '@/lib/division-routes';
-import {
-  LayoutDashboard,
-  Users,
-  Calendar,
-  Trophy,
-  Clock,
-  Zap,
-} from 'lucide-react';
+import { getTeamPath, getDivisionMatchesPath, getMatchPath } from '@/lib/division-routes';
+import { LayoutDashboard, Users, Trophy, Clock, Zap } from 'lucide-react';
 import { useCallback, useEffect } from 'react';
-import SearchField from '@/components/shared/SearchField';
-import SearchEmpty from '@/components/shared/SearchEmpty';
 import { useListSearch } from '@/hooks/useListSearch';
 import { matchSearchText, teamSearchText } from '@/lib/search-text';
 
@@ -34,12 +28,10 @@ export default function CoachDashboard() {
   const { data: matches = [], isLoading: matchesLoading } = useMatches();
   const { data: tournaments = [] } = useTournaments();
 
-  useEffect(() => {
-    refreshUser();
-  }, [refreshUser]);
+  useEffect(() => { refreshUser(); }, [refreshUser]);
 
   const myTeamIds = new Set(
-    user?.coach?.team_coaches?.map((tc) => tc.team?.id).filter(Boolean) as string[]
+    user?.coach?.team_coaches?.map((tc) => tc.team?.id).filter(Boolean) as string[],
   );
   const myTeams = myTeamIds.size > 0 ? teams.filter((t) => myTeamIds.has(t.id)) : teams;
   const primaryTeam = myTeams[0];
@@ -57,24 +49,18 @@ export default function CoachDashboard() {
     .slice(0, 6);
 
   const live = myMatches.filter((m) => m.status === 'LIVE');
-  const livePath = live[0] ? getMatchPath(live[0]) : matchesPath ?? '/tournaments';
+  const livePath = live[0] ? getMatchPath(live[0]) : (matchesPath ?? '/tournaments');
 
   const getMatchText = useCallback((m: (typeof upcoming)[0]) => matchSearchText(m), []);
   const {
-    search: matchSearch,
-    setSearch: setMatchSearch,
-    filtered: filteredUpcoming,
-    debouncedSearch: debouncedMatchSearch,
-    hasQuery: hasMatchQuery,
+    search: matchSearch, setSearch: setMatchSearch,
+    filtered: filteredUpcoming, debouncedSearch: debouncedMatchSearch, hasQuery: hasMatchQuery,
   } = useListSearch(upcoming, getMatchText);
 
   const getTeamText = useCallback((t: (typeof myTeams)[0]) => teamSearchText(t), []);
   const {
-    search: teamSearch,
-    setSearch: setTeamSearch,
-    filtered: filteredTeams,
-    debouncedSearch: debouncedTeamSearch,
-    hasQuery: hasTeamQuery,
+    search: teamSearch, setSearch: setTeamSearch,
+    filtered: filteredTeams, debouncedSearch: debouncedTeamSearch, hasQuery: hasTeamQuery,
   } = useListSearch(myTeams, getTeamText);
 
   const stats = [
@@ -86,71 +72,22 @@ export default function CoachDashboard() {
 
   return (
     <PortalLayout title="Coach Portal" subtitle="Team Management" nav={nav}>
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6">
-        {stats.map((stat) => (
-          <Link key={stat.label} to={stat.href} className="group">
-            <div className="portal-stat-card">
-              <div className="portal-stat-icon">
-                <stat.icon className="w-5 h-5" aria-hidden />
-              </div>
-              <div>
-                <p className="text-2xl font-semibold text-foreground tabular-nums">{stat.value}</p>
-                <p className="text-sm text-muted-foreground font-medium">{stat.label}</p>
-              </div>
-            </div>
-          </Link>
-        ))}
-      </div>
+      <PortalStatGrid stats={stats} columns={4} />
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-        <Section className="p-0 overflow-hidden">
-          <div className="flex items-center justify-between px-4 py-3.5 border-b border-border">
-            <SectionHeader
-              title="Upcoming Matches"
-              href={matchesPath ?? '/tournaments'}
-              linkLabel="All Matches"
-              className="mb-0"
-            />
-          </div>
-          {upcoming.length > 3 && (
-            <div className="border-b border-border px-4 py-2">
-              <SearchField
-                value={matchSearch}
-                onChange={setMatchSearch}
-                placeholder="Search matches…"
-                className="max-w-full"
-              />
-            </div>
-          )}
-          <QueryState
-            isLoading={matchesLoading}
-            isEmpty={upcoming.length === 0}
-            emptyMessage="No upcoming matches"
-          >
-            {hasMatchQuery && filteredUpcoming.length === 0 ? (
-              <SearchEmpty query={debouncedMatchSearch} entityLabel="matches" />
-            ) : (
-              <div className="divide-y divide-border">
-                {filteredUpcoming.map((m) => (
-                  <Link
-                    key={m.id}
-                    to={getMatchPath(m)}
-                    className="flex items-center gap-3 px-4 py-3 hover:bg-muted transition-colors"
-                  >
-                    <div className="flex-1 min-w-0 text-sm">
-                      <p className="font-semibold text-foreground truncate">
-                        {m.home_team?.name} vs {m.away_team?.name}
-                      </p>
-                      <p className="text-muted-foreground text-xs mt-0.5">
-                        {formatDate(m.scheduled_start)} · {formatTime(m.scheduled_start)}
-                      </p>
-                    </div>
-                  </Link>
-                ))}
-              </div>
-            )}
-          </QueryState>
-        </Section>
+        <PortalMatchList
+          title="Upcoming Matches"
+          matches={upcoming}
+          search={matchSearch}
+          onSearchChange={setMatchSearch}
+          filteredMatches={filteredUpcoming}
+          debouncedSearch={debouncedMatchSearch}
+          hasQuery={hasMatchQuery}
+          isLoading={matchesLoading}
+          emptyMessage="No upcoming matches"
+          href={matchesPath ?? '/tournaments'}
+          linkLabel="All Matches"
+        />
 
         <Section className="p-0 overflow-hidden">
           <div className="flex items-center justify-between px-4 py-3.5 border-b border-border">
@@ -163,12 +100,7 @@ export default function CoachDashboard() {
           </div>
           {myTeams.length > 3 && (
             <div className="border-b border-border px-4 py-2">
-              <SearchField
-                value={teamSearch}
-                onChange={setTeamSearch}
-                placeholder="Search teams…"
-                className="max-w-full"
-              />
+              <SearchField value={teamSearch} onChange={setTeamSearch} placeholder="Search teams…" className="max-w-full" />
             </div>
           )}
           <QueryState isLoading={teamsLoading} isEmpty={myTeams.length === 0} emptyMessage="No teams assigned">

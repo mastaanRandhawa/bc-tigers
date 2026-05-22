@@ -1,18 +1,11 @@
 import { Shield } from 'lucide-react';
 import type { Team } from '@/types';
+import { hexToRgba } from '@/lib/color';
 
 interface TeamHeroProps {
   team: Team;
   /** Division or tournament context label shown above the team name */
   contextLabel?: string;
-}
-
-function hexToRgba(hex: string, alpha: number) {
-  const h = hex.replace('#', '');
-  const r = parseInt(h.slice(0, 2), 16);
-  const g = parseInt(h.slice(2, 4), 16);
-  const b = parseInt(h.slice(4, 6), 16);
-  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 }
 
 export default function TeamHero({ team, contextLabel }: TeamHeroProps) {

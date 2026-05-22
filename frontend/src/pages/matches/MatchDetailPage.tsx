@@ -16,21 +16,12 @@ import {
   ShieldAlert,
   Flag,
 } from 'lucide-react';
-import { formatDate, formatTime, cn, getMatchStatusBadgeVariant } from '@/lib/utils';
+import { formatDate, formatTime, cn, getInitials, getMatchStatusBadgeVariant } from '@/lib/utils';
 import { divisionMatchesPath } from '@/lib/division-routes';
 import { useMatch } from '@/hooks/useMatches';
 import type { MatchEventType } from '@/types';
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
-
-function getInitials(name: string) {
-  return name
-    .split(/\s+/)
-    .filter(Boolean)
-    .slice(0, 2)
-    .map((w) => w[0].toUpperCase())
-    .join('');
-}
 
 /**
  * Team avatar — shows logo if available, otherwise 2-letter initials.
@@ -180,25 +171,25 @@ export default function MatchDetailPage() {
                   </div>
 
                   {/* Teams + score */}
-                  <div className="grid grid-cols-7 items-center gap-2 text-center">
+                  <div className="flex items-center justify-between gap-2 text-center">
                     {/* Home team */}
-                    <div className="col-span-3 flex flex-col items-center gap-3">
+                    <div className="flex flex-1 flex-col items-center gap-2 min-w-0">
                       <TeamCircle
                         logo={match.home_team?.logo}
                         name={match.home_team?.name ?? 'Home'}
                         color={homeColor}
                       />
-                      <p className="font-display text-lg font-bold text-foreground sm:text-2xl">
+                      <p className="font-display text-base font-bold text-foreground sm:text-xl w-full truncate">
                         {match.home_team?.name ?? 'TBD'}
                       </p>
                     </div>
 
                     {/* Score */}
-                    <div className="col-span-1 flex flex-col items-center justify-center gap-1">
+                    <div className="flex shrink-0 flex-col items-center justify-center gap-1 px-2">
                       {showScore ? (
-                        <p className="font-display text-4xl font-black tabular-nums tracking-tight text-foreground sm:text-5xl">
+                        <p className="font-display text-3xl font-black tabular-nums tracking-tight text-foreground sm:text-5xl whitespace-nowrap">
                           {match.home_score}
-                          <span className="mx-2 font-light text-muted-foreground/40">—</span>
+                          <span className="mx-1.5 font-light text-muted-foreground/40">—</span>
                           {match.away_score}
                         </p>
                       ) : (
@@ -206,22 +197,22 @@ export default function MatchDetailPage() {
                           vs
                         </p>
                       )}
-                      <p className="text-xs text-muted-foreground">
+                      <p className="text-xs text-muted-foreground whitespace-nowrap">
                         {formatTime(match.scheduled_start)}
                         {match.round !== undefined && (
-                          <span className="ml-2 font-medium">· Round {match.round}</span>
+                          <span className="ml-1.5 font-medium">· R{match.round}</span>
                         )}
                       </p>
                     </div>
 
                     {/* Away team */}
-                    <div className="col-span-3 flex flex-col items-center gap-3">
+                    <div className="flex flex-1 flex-col items-center gap-2 min-w-0">
                       <TeamCircle
                         logo={match.away_team?.logo}
                         name={match.away_team?.name ?? 'Away'}
                         color={awayColor}
                       />
-                      <p className="font-display text-lg font-bold text-foreground sm:text-2xl">
+                      <p className="font-display text-base font-bold text-foreground sm:text-xl w-full truncate">
                         {match.away_team?.name ?? 'TBD'}
                       </p>
                     </div>

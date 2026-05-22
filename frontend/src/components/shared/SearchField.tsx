@@ -22,7 +22,7 @@ export default function SearchField({
   return (
     <div className={cn('relative w-full max-w-md', className)}>
       <Search
-        className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-zinc-400"
+        className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground"
         aria-hidden
       />
       <Input
@@ -39,7 +39,7 @@ export default function SearchField({
         <button
           type="button"
           onClick={() => onChange('')}
-          className="absolute right-2 top-1/2 -translate-y-1/2 rounded-md p-1 text-zinc-400 transition-colors hover:bg-zinc-100 hover:text-zinc-600"
+          className="absolute right-2 top-1/2 -translate-y-1/2 rounded-md p-1 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
           aria-label="Clear search"
         >
           <X className="h-4 w-4" aria-hidden />

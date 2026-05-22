@@ -9,7 +9,7 @@ interface PageContentProps {
 
 export default function PageContent({ children, className, innerClassName }: PageContentProps) {
   return (
-    <section className={cn('w-full py-5 md:py-6', className)}>
+    <section className={cn('w-full py-5 md:py-6 page-fade-in', className)}>
       <div className={cn('page-container', innerClassName)}>{children}</div>
     </section>
   );

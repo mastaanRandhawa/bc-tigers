@@ -1,46 +1,22 @@
 import type { CSSProperties } from 'react';
 import type { Division } from '@/types';
+import { BRAND_PRIMARY, BRAND_PRIMARY_HOVER, BRAND_PRIMARY_MUTED, BRAND_PRIMARY_MUTED_FG, DIVISION_PALETTE } from '@/lib/tokens';
 
 export interface DivisionTheme {
-  primary: string;
-  primaryHover: string;
-  accent: string;
-  accentForeground: string;
-  shadow: string;
+  readonly primary: string;
+  readonly primaryHover: string;
+  readonly accent: string;
+  readonly accentForeground: string;
+  readonly shadow: string;
 }
 
 const DEFAULT_THEME: DivisionTheme = {
-  primary: '#F48735',
-  primaryHover: '#D66E1F',
-  accent: '#FEF3EB',
-  accentForeground: '#D66E1F',
-  shadow: '#D66E1F',
+  primary: BRAND_PRIMARY,
+  primaryHover: BRAND_PRIMARY_HOVER,
+  accent: BRAND_PRIMARY_MUTED,
+  accentForeground: BRAND_PRIMARY_MUTED_FG,
+  shadow: BRAND_PRIMARY_HOVER,
 };
-
-const FALLBACK_PALETTE: DivisionTheme[] = [
-  DEFAULT_THEME,
-  {
-    primary: '#7C3AED',
-    primaryHover: '#6D28D9',
-    accent: '#F3E8FF',
-    accentForeground: '#6D28D9',
-    shadow: '#6D28D9',
-  },
-  {
-    primary: '#059669',
-    primaryHover: '#047857',
-    accent: '#ECFDF5',
-    accentForeground: '#047857',
-    shadow: '#047857',
-  },
-  {
-    primary: '#2563EB',
-    primaryHover: '#1D4ED8',
-    accent: '#EFF6FF',
-    accentForeground: '#1D4ED8',
-    shadow: '#1D4ED8',
-  },
-];
 
 function darkenHex(hex: string, amount = 0.15): string {
   const normalized = hex.replace('#', '');
@@ -54,15 +30,17 @@ function darkenHex(hex: string, amount = 0.15): string {
 function paletteIndexFromSlug(slug: string): number {
   let hash = 0;
   for (let i = 0; i < slug.length; i++) {
-    hash = (hash + slug.charCodeAt(i) * (i + 1)) % FALLBACK_PALETTE.length;
+    hash = (hash + slug.charCodeAt(i) * (i + 1)) % DIVISION_PALETTE.length;
   }
   return hash;
 }
 
-export function getDivisionTheme(division: Pick<Division, 'slug' | 'primary_color' | 'accent_color'>): DivisionTheme {
+export function getDivisionTheme(
+  division: Pick<Division, 'slug' | 'primary_color' | 'accent_color'>,
+): DivisionTheme {
   if (division.primary_color) {
     const primary = division.primary_color;
-    const accent = division.accent_color ?? '#FEF3EB';
+    const accent = division.accent_color ?? BRAND_PRIMARY_MUTED;
     const hover = darkenHex(primary);
     return {
       primary,
@@ -73,7 +51,7 @@ export function getDivisionTheme(division: Pick<Division, 'slug' | 'primary_colo
     };
   }
 
-  return FALLBACK_PALETTE[paletteIndexFromSlug(division.slug)] ?? DEFAULT_THEME;
+  return (DIVISION_PALETTE[paletteIndexFromSlug(division.slug)] as DivisionTheme) ?? DEFAULT_THEME;
 }
 
 export function divisionThemeStyle(theme: DivisionTheme): CSSProperties {

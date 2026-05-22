@@ -188,7 +188,7 @@
   }
 
   ::selection {
-    background-color: #FEF3EB;
+    background-color: var(--color-primary-muted);
     color: #18181b;
   }
 
@@ -316,7 +316,7 @@
   }
 
   .bg-brand-gradient {
-    background: linear-gradient(135deg, #FEF3EB 0%, #ffffff 50%, #fafafa 100%);
+    background: linear-gradient(135deg, var(--color-primary-muted) 0%, #ffffff 50%, #fafafa 100%);
   }
 
   .dark .bg-brand-gradient {
@@ -324,7 +324,7 @@
   }
 
   .bg-hero-gradient {
-    background: linear-gradient(180deg, #FEF3EB 0%, #ffffff 40%, #fafafa 100%);
+    background: linear-gradient(180deg, var(--color-primary-muted) 0%, #ffffff 40%, #fafafa 100%);
   }
 
   .dark .bg-hero-gradient {
