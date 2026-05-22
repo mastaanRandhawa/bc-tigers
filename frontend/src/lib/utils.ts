@@ -28,6 +28,7 @@ export function getInitials(name: string): string {
 export type MatchStatusBadgeVariant =
   | 'live'
   | 'success'
+  | 'completed'
   | 'scheduled'
   | 'warning'
   | 'cancelled'
@@ -38,7 +39,7 @@ export function getMatchStatusBadgeVariant(status: string): MatchStatusBadgeVari
     case 'LIVE':
       return 'live';
     case 'COMPLETED':
-      return 'success';
+      return 'completed';
     case 'SCHEDULED':
       return 'scheduled';
     case 'POSTPONED':

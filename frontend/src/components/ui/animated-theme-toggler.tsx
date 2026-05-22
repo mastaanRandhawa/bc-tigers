@@ -3,6 +3,8 @@ import { motion } from 'motion/react';
 
 export interface AnimatedThemeTogglerProps {
   sound?: boolean;
+  /** White icon on orange/dark headers (no filled button background) */
+  onDark?: boolean;
 }
 
 let _ctx: AudioContext | null = null;
@@ -52,7 +54,7 @@ function tick(last: React.MutableRefObject<number>) {
   }
 }
 
-export function AnimatedThemeToggler({ sound = false }: AnimatedThemeTogglerProps) {
+export function AnimatedThemeToggler({ sound = false, onDark = false }: AnimatedThemeTogglerProps) {
   const rawId = useId();
   const maskId = `att${rawId.replace(/:/g, '')}`;
   const lastSnd = useRef(0);
@@ -78,13 +80,15 @@ export function AnimatedThemeToggler({ sound = false }: AnimatedThemeTogglerProp
 
   return (
     <>
-      <style>{`
-        .att-btn{--at-ink:rgba(0,0,0,0.82)}
-        .dark .att-btn,[data-theme="dark"] .att-btn{--at-ink:rgba(255,255,255,0.82)}
-      `}</style>
+      {!onDark && (
+        <style>{`
+          .att-btn{--at-ink:rgba(0,0,0,0.82)}
+          .dark .att-btn,[data-theme="dark"] .att-btn{--at-ink:rgba(255,255,255,0.82)}
+        `}</style>
+      )}
       <motion.button
         type="button"
-        className="att-btn"
+        className={onDark ? 'att-btn att-btn--on-dark' : 'att-btn'}
         onClick={toggle}
         whileHover={{ scale: 1.1 }}
         whileTap={{ scale: 0.86 }}

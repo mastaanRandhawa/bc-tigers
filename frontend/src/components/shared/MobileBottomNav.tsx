@@ -36,7 +36,7 @@ export default function MobileBottomNav() {
             end={exact}
             className={({ isActive }) =>
               cn(
-                'flex-1 flex flex-col items-center justify-center gap-0.5 py-2 px-1 text-[10px] font-medium transition-colors',
+                'relative flex-1 flex flex-col items-center justify-center gap-0.5 py-2 px-1 text-[10px] font-medium transition-all duration-[var(--motion-normal)] active:scale-95',
                 isActive
                   ? 'text-primary'
                   : 'text-muted-foreground hover:text-foreground',
@@ -44,8 +44,18 @@ export default function MobileBottomNav() {
             }
             aria-label={label}
           >
-            <Icon className="h-5 w-5" aria-hidden />
-            <span>{label}</span>
+            {({ isActive }) => (
+              <>
+                <Icon
+                  className={cn(
+                    'h-5 w-5 transition-transform duration-[var(--motion-normal)]',
+                    isActive && 'scale-110',
+                  )}
+                  aria-hidden
+                />
+                <span>{label}</span>
+              </>
+            )}
           </NavLink>
         ))}
       </div>

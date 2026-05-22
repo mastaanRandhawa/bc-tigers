@@ -46,7 +46,7 @@ export default function DirectoryCard({
         'group flex items-center gap-3 transition-all duration-200',
         isRow
           ? 'px-4 py-3.5 hover:bg-secondary/50'
-          : 'rounded-xl bg-card p-3.5 shadow-sm border border-border hover:shadow-md hover:border-primary/30',
+          : 'rounded-md bg-card p-3.5 shadow-sm border border-border/80 hover:shadow-md hover:-translate-y-px hover:border-primary/25',
         className,
       )}
     >

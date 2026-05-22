@@ -13,7 +13,7 @@ import { useMatches } from '@/hooks/useMatches';
 import type { Division } from '@/types';
 import { getApiErrorMessage } from '@/lib/errors';
 import { getDivisionPublicPath } from '@/lib/division-routes';
-import { getDivisionTheme } from '@/lib/division-theme';
+import { getDivisionTheme, themeChipStyle } from '@/lib/division-theme';
 import { ExternalLink, Pencil, Trash2, Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
@@ -86,14 +86,9 @@ export default function AdminDivisions() {
               <div key={division.id} className="admin-card p-4">
                 <div className="flex items-start gap-4">
                   <div
-                    className="h-12 w-12 shrink-0 rounded-lg ring-1 ring-border"
-                    style={{ backgroundColor: theme.accent }}
-                  >
-                    <div
-                      className="m-1 h-[calc(100%-0.5rem)] w-[calc(100%-0.5rem)] rounded-md"
-                      style={{ backgroundColor: theme.primary, opacity: 0.85 }}
-                    />
-                  </div>
+                    className="theme-chip h-12 w-12 shrink-0 rounded-lg"
+                    style={themeChipStyle(theme)}
+                  />
                   <div className="min-w-0 flex-1">
                     <h3 className="font-semibold" style={{ color: theme.primary }}>
                       {division.name}

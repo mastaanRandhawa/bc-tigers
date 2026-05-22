@@ -16,9 +16,10 @@ export function GlassCard({ children, className }: GlassCardProps) {
   return (
     <div
       className={cn(
-        'relative overflow-hidden rounded-2xl',
-        'border border-white/10 bg-card/60 backdrop-blur-xl',
-        'shadow-[inset_1px_1px_1px_rgba(255,255,255,0.08),inset_-1px_-1px_1px_rgba(0,0,0,0.3)]',
+        'relative overflow-hidden rounded-md',
+        'border border-border/80 bg-card/80 backdrop-blur-xl',
+        'shadow-sm dark:border-white/10 dark:bg-card/60',
+        'dark:shadow-[inset_1px_1px_1px_rgba(255,255,255,0.06),0_4px_24px_rgba(0,0,0,0.25)]',
         className,
       )}
     >

@@ -4,8 +4,18 @@ import { Button } from '@/components/ui/button';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Skeleton } from '@/components/ui/skeleton';
+import {
+  SkeletonCard,
+  SkeletonTableRow,
+  SkeletonMatchRow,
+} from '@/components/ui/skeleton-presets';
 
-export type QueryStateVariant = 'spinner' | 'skeleton-table' | 'skeleton-cards' | 'skeleton-detail';
+export type QueryStateVariant =
+  | 'spinner'
+  | 'skeleton-table'
+  | 'skeleton-cards'
+  | 'skeleton-detail'
+  | 'skeleton-match-list';
 
 interface QueryStateProps {
   isLoading?: boolean;
@@ -24,7 +34,7 @@ function LoadingSkeleton({ variant }: { variant: QueryStateVariant }) {
     return (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {Array.from({ length: 6 }).map((_, i) => (
-          <Skeleton key={i} className="h-40 rounded-lg" />
+          <SkeletonCard key={i} />
         ))}
       </div>
     );
@@ -45,7 +55,17 @@ function LoadingSkeleton({ variant }: { variant: QueryStateVariant }) {
       <div className="space-y-2">
         <Skeleton className="h-10 w-full rounded-lg" />
         {Array.from({ length: 8 }).map((_, i) => (
-          <Skeleton key={i} className="h-12 w-full rounded-lg" />
+          <SkeletonTableRow key={i} />
+        ))}
+      </div>
+    );
+  }
+
+  if (variant === 'skeleton-match-list') {
+    return (
+      <div className="divide-y divide-border">
+        {Array.from({ length: 5 }).map((_, i) => (
+          <SkeletonMatchRow key={i} />
         ))}
       </div>
     );

@@ -1,6 +1,8 @@
 import { NavLink } from 'react-router-dom';
 import type { LucideIcon } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { LayoutReveal } from '@/components/motion/LayoutReveal';
+import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 
 export interface PillNavItem {
   label: string;
@@ -16,37 +18,27 @@ interface PillNavProps {
   items: PillNavItem[];
   ariaLabel?: string;
   className?: string;
-  /**
-   * default — neutral bg-secondary container (public pages, portals)
-   * light   — white text on coloured/hero backgrounds (SiteHeader hero mode)
-   * dark    — muted text on light/admin surfaces
-   * division — uses --division-primary CSS var for active state
-   */
   variant?: PillNavVariant;
-  /**
-   * scroll — horizontal overflow scroll (default, all breakpoints)
-   * grid   — CSS grid; caller controls column count via className
-   */
   layout?: PillNavLayout;
-  /** Number of columns for grid layout */
   columns?: number;
 }
 
 const containerClass: Record<PillNavVariant, string> = {
-  default: 'flex gap-1 overflow-x-auto rounded-xl bg-secondary p-1 no-scrollbar snap-x snap-mandatory',
+  default: 'flex gap-0.5 overflow-x-auto rounded-md border border-border/60 bg-secondary/80 p-0.5 no-scrollbar snap-x snap-mandatory',
   light: 'flex gap-0.5 overflow-x-auto no-scrollbar',
-  dark: 'flex gap-1 overflow-x-auto rounded-xl bg-secondary p-1 no-scrollbar snap-x snap-mandatory',
-  division: 'flex gap-1 overflow-x-auto rounded-xl bg-secondary p-1 no-scrollbar snap-x snap-mandatory',
+  dark: 'flex gap-0.5 overflow-x-auto rounded-md border border-border/60 bg-secondary/80 p-0.5 no-scrollbar snap-x snap-mandatory',
+  division: 'flex gap-0.5 overflow-x-auto rounded-md border border-border/60 bg-secondary/80 p-0.5 no-scrollbar snap-x snap-mandatory',
 };
 
 function itemClass(variant: PillNavVariant, isActive: boolean): string {
-  const base = 'inline-flex shrink-0 snap-start items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-all duration-200 whitespace-nowrap';
+  const base =
+    'relative inline-flex shrink-0 snap-start items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors duration-[var(--motion-normal)] whitespace-nowrap z-[1]';
 
   if (variant === 'light') {
     return cn(
       base,
       isActive
-        ? 'bg-white text-primary font-semibold shadow-sm'
+        ? 'text-white font-semibold after:absolute after:bottom-0 after:left-3 after:right-3 after:h-0.5 after:rounded-sm after:bg-white after:content-[""]'
         : 'text-white/80 hover:text-white hover:bg-white/10',
     );
   }
@@ -57,11 +49,15 @@ function itemClass(variant: PillNavVariant, isActive: boolean): string {
 
   return cn(
     base,
-    isActive
-      ? 'bg-card text-foreground font-semibold shadow-sm'
-      : 'text-muted-foreground hover:text-foreground hover:bg-card/60',
+    isActive ? 'text-foreground font-semibold' : 'text-muted-foreground hover:text-foreground',
   );
 }
+
+const layoutIdByVariant: Partial<Record<PillNavVariant, string>> = {
+  default: 'pill-nav-default',
+  dark: 'pill-nav-dark',
+  light: 'pill-nav-light',
+};
 
 export default function PillNav({
   items,
@@ -71,13 +67,16 @@ export default function PillNav({
   layout = 'scroll',
   columns,
 }: PillNavProps) {
+  const reduced = usePrefersReducedMotion();
+  const layoutId = layoutIdByVariant[variant];
+  const pillBg =
+    variant === 'light' || variant === 'division'
+      ? undefined
+      : 'bg-card shadow-sm';
+
   const wrapperClass =
     layout === 'grid'
-      ? cn(
-          'grid rounded-xl bg-secondary p-1 gap-1',
-          columns ? `grid-cols-${columns}` : 'grid-cols-auto',
-          className,
-        )
+      ? cn('grid rounded-xl bg-secondary p-1 gap-1', columns ? `grid-cols-${columns}` : 'grid-cols-auto', className)
       : cn(containerClass[variant], className);
 
   return (
@@ -90,16 +89,18 @@ export default function PillNav({
             end={item.end ?? false}
             title={item.label}
             className={({ isActive }) =>
-              cn(
-                itemClass(variant, isActive),
-                layout === 'grid' && 'justify-center w-full',
-              )
+              cn(itemClass(variant, isActive), layout === 'grid' && 'justify-center w-full')
             }
           >
-            {item.icon && (
-              <item.icon className="h-3.5 w-3.5 shrink-0" aria-hidden />
+            {({ isActive }) => (
+              <>
+                {isActive && layoutId && pillBg && !reduced && (
+                  <LayoutReveal layoutId={layoutId} className={pillBg} />
+                )}
+                {item.icon && <item.icon className="h-3.5 w-3.5 shrink-0 relative z-[1]" aria-hidden />}
+                <span className={cn('relative z-[1]', item.icon && 'hidden sm:inline')}>{item.label}</span>
+              </>
             )}
-            <span className={item.icon ? 'hidden sm:inline' : undefined}>{item.label}</span>
           </NavLink>
         ))}
       </div>

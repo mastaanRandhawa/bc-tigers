@@ -24,7 +24,7 @@ export default function AppShell({
   headerMode,
   showLiveTicker,
 }: AppShellProps) {
-  const headerVariant = headerMode ?? (heroTheme ? 'hero' : 'site');
+  const headerVariant = headerMode ?? 'hero';
   const tickerVisible = showLiveTicker ?? true;
   useRealtimeInvalidation();
 
@@ -37,7 +37,16 @@ export default function AppShell({
     >
       <SiteHeader variant={headerVariant} showLiveTicker={tickerVisible} />
       {subNav}
-      <main className={cn('flex-1 w-full min-w-0 pb-16 lg:pb-0', className)}>{children}</main>
+      <main
+        className={cn(
+          'flex-1 w-full min-w-0 pb-16 lg:pb-0',
+          !heroTheme && 'pt-14',
+          !heroTheme && tickerVisible && headerVariant !== 'admin' && 'max-md:pt-[6.75rem]',
+          className,
+        )}
+      >
+        {children}
+      </main>
       {showFooter && <Footer />}
       <MobileBottomNav />
     </div>

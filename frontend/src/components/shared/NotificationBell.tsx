@@ -1,5 +1,8 @@
 import { useState, useRef, useEffect } from 'react';
+import { AnimatePresence, m } from 'motion/react';
 import { Bell, Check, CheckCheck } from 'lucide-react';
+import { scaleIn, transitionSpring } from '@/lib/motion/variants';
+import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 import { cn } from '@/lib/utils';
 import {
   useNotifications,
@@ -20,6 +23,7 @@ export default function NotificationBell({ onDark = false }: NotificationBellPro
   const markAllRead = useMarkAllRead();
 
   const unreadCount = notifications.filter((n) => !n.read).length;
+  const reduced = usePrefersReducedMotion();
 
   useEffect(() => {
     if (!open) return;
@@ -54,8 +58,14 @@ export default function NotificationBell({ onDark = false }: NotificationBellPro
         )}
       </button>
 
+      <AnimatePresence>
       {open && (
-        <div
+        <m.div
+          initial={reduced ? false : 'hidden'}
+          animate={reduced ? undefined : 'visible'}
+          exit={reduced ? undefined : 'exit'}
+          variants={reduced ? undefined : scaleIn}
+          transition={transitionSpring}
           className={cn(
             'absolute right-0 top-full z-50 mt-2 w-80 max-h-[min(24rem,70vh)] overflow-hidden rounded-lg border shadow-lg',
             'border-border bg-card text-foreground',
@@ -117,8 +127,9 @@ export default function NotificationBell({ onDark = false }: NotificationBellPro
               ))
             )}
           </ul>
-        </div>
+        </m.div>
       )}
+      </AnimatePresence>
     </div>
   );
 }

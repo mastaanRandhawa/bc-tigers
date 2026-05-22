@@ -63,3 +63,12 @@ export function divisionThemeStyle(theme: DivisionTheme): CSSProperties {
     '--division-shadow': theme.shadow,
   } as CSSProperties;
 }
+
+/** Inline vars for `.theme-chip` — filled in light mode, outline in dark. */
+export function themeChipStyle(theme: DivisionTheme): CSSProperties {
+  return {
+    '--chip-bg': theme.accent,
+    '--chip-fg': theme.primary,
+    '--chip-border': theme.primary,
+  } as CSSProperties;
+}

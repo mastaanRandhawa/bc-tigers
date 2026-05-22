@@ -26,18 +26,21 @@ export default function DivisionQuickStats({
   className,
 }: DivisionQuickStatsProps) {
   return (
-    <div className={cn('grid grid-cols-2 gap-3 sm:grid-cols-4', className)}>
-      {stats.map((stat) => (
-        <MetricCard
-          key={stat.label}
-          value={stat.value}
-          label={stat.label}
-          sublabel={stat.sublabel}
-          icon={stat.icon}
-          liveIndicator={stat.liveIndicator}
-          theme={theme}
-        />
-      ))}
+    <div className={cn('mx-auto w-full max-w-4xl', className)}>
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        {stats.map((stat) => (
+          <MetricCard
+            key={stat.label}
+            className="h-full"
+            value={stat.value}
+            label={stat.label}
+            sublabel={stat.sublabel}
+            icon={stat.icon}
+            liveIndicator={stat.liveIndicator}
+            theme={theme}
+          />
+        ))}
+      </div>
     </div>
   );
 }

@@ -1,5 +1,6 @@
 import type { Division } from '@/types';
 import type { DivisionTheme } from '@/lib/division-theme';
+import { themeChipStyle } from '@/lib/division-theme';
 
 interface DivisionHeroProps {
   division: Division;
@@ -13,11 +14,8 @@ export default function DivisionHero({ division, theme }: DivisionHeroProps) {
       <div className="flex items-center gap-3">
         {/* Division color swatch / icon */}
         <div
-          className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl shadow-sm sm:h-12 sm:w-12"
-          style={{
-            backgroundColor: theme.accent,
-            border: `1.5px solid color-mix(in srgb, ${theme.primary} 25%, transparent)`,
-          }}
+          className="theme-chip flex h-11 w-11 shrink-0 items-center justify-center rounded-xl sm:h-12 sm:w-12"
+          style={themeChipStyle(theme)}
           aria-hidden
         >
           {/* Soccer-ball inspired dot pattern using division primary */}

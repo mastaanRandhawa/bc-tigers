@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import PageContent from '@/components/shared/PageContent';
+import { PageTransition } from '@/components/motion/PageTransition';
 import { type PillNavItem } from '@/components/shared/PillNav';
 import DivisionNav from '@/components/divisions/DivisionNav';
 import DivisionHero from '@/components/divisions/DivisionHero';
@@ -78,7 +79,7 @@ export default function DivisionShell({
         <div
           className="pointer-events-none absolute inset-0"
           style={{
-            background: `linear-gradient(180deg, color-mix(in srgb, ${theme.accent} 30%, transparent) 0%, transparent 100%)`,
+            backgroundColor: `color-mix(in srgb, ${theme.accent} 12%, transparent)`,
           }}
           aria-hidden
         />
@@ -132,7 +133,9 @@ export default function DivisionShell({
 
       <main className="min-w-0 w-full flex-1">
         <PageContent className="-mt-2 md:-mt-3">
-          <Outlet />
+          <PageTransition>
+            <Outlet />
+          </PageTransition>
         </PageContent>
       </main>
     </div>

@@ -21,6 +21,7 @@ import GlobalSearch from '@/components/shared/GlobalSearch';
 import NotificationBell from '@/components/shared/NotificationBell';
 import { AnimatedThemeToggler } from '@/components/ui/animated-theme-toggler';
 import { cn } from '@/lib/utils';
+import { useSmartHeader } from '@/hooks/useSmartHeader';
 
 interface SiteHeaderProps {
   variant?: 'site' | 'hero' | 'minimal' | 'admin';
@@ -167,21 +168,37 @@ function TournamentsLink({ onDark }: { onDark: boolean }) {
   );
 }
 
-export default function SiteHeader({ variant = 'site', showLiveTicker = true }: SiteHeaderProps) {
+export default function SiteHeader({ variant = 'hero', showLiveTicker = true }: SiteHeaderProps) {
+  const { isVisible, isAtTop, isScrolled } = useSmartHeader();
   const { isAuthenticated, user } = useAuthStore();
-  const isHero = variant === 'hero';
-  const isMinimal = variant === 'minimal';
   const isAdmin = variant === 'admin';
-  const onDark = !isMinimal;
+  const isMinimal = variant === 'minimal';
+  const showTicker = showLiveTicker && !isMinimal;
+  const onDark = true;
+
+  const orangeBar = cn(
+    'site-header-orange site-header-smart fixed top-0 left-0 right-0 z-50 w-full text-white will-change-transform',
+    !isVisible && 'site-header-hidden',
+    isAtTop ? 'bg-primary' : 'bg-primary/95 shadow-md backdrop-blur-md supports-[backdrop-filter]:bg-primary/90',
+    isScrolled && isVisible && !isAtTop && 'shadow-lg',
+  );
+
+  const barInner = (
+    <>
+      <div className="absolute inset-0 bg-brand-grid pointer-events-none opacity-60" />
+      <div className="absolute inset-x-0 bottom-0 h-px bg-white/10 pointer-events-none" />
+    </>
+  );
 
   if (isAdmin) {
     return (
-      <header className="admin-topbar">
-        <div className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 safe-x">
+      <header className={orangeBar} aria-hidden={!isVisible}>
+        {barInner}
+        <div className="page-container relative">
           <div className="flex h-14 items-center justify-between gap-4">
             <div className="flex min-w-0 items-center gap-2.5">
               <BrandLogo compact />
-              <span className="shrink-0 rounded-md border border-border bg-secondary px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground sm:text-xs">
+              <span className="shrink-0 rounded-md border border-white/25 bg-white/10 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-white/90 sm:text-xs">
                 Admin
               </span>
             </div>
@@ -189,42 +206,15 @@ export default function SiteHeader({ variant = 'site', showLiveTicker = true }: 
             <div className="flex shrink-0 items-center gap-2">
               <Link
                 to="/"
-                className="nav-pill-dark hidden items-center gap-1.5 sm:inline-flex"
+                className="nav-pill nav-pill-light hidden items-center gap-1.5 sm:inline-flex"
               >
                 <ExternalLink className="w-3.5 h-3.5" aria-hidden />
                 View Site
               </Link>
               {isAuthenticated && user ? (
-                <UserMenu onDark={false} />
+                <UserMenu onDark />
               ) : (
-                <SignInButton isHero={false} />
-              )}
-            </div>
-          </div>
-        </div>
-      </header>
-    );
-  }
-
-  if (isMinimal) {
-    return (
-      <header className="sticky top-0 z-50 w-full bg-card border-b border-border shadow-sm">
-        <div className="page-container overflow-hidden">
-          <div className="flex h-14 items-center justify-between gap-2 sm:gap-3">
-            <BrandLogo compact />
-            <div className="ml-auto flex shrink-0 items-center gap-1.5 sm:gap-2">
-              <div className="hidden md:block">
-                <GlobalSearch />
-              </div>
-              <TournamentsLink onDark={false} />
-              <AnimatedThemeToggler />
-              {isAuthenticated && user ? (
-                <>
-                  <NotificationBell onDark={false} />
-                  <UserMenu onDark={false} />
-                </>
-              ) : (
-                <SignInButton isHero={false} />
+                <SignInButton isHero />
               )}
             </div>
           </div>
@@ -234,69 +224,44 @@ export default function SiteHeader({ variant = 'site', showLiveTicker = true }: 
   }
 
   return (
-    <header
-      className={cn(
-        'z-50 w-full',
-        isHero
-          ? 'relative bg-primary text-white'
-          : 'sticky top-0 border-b border-border bg-card/95 text-foreground shadow-sm backdrop-blur-sm',
-      )}
-    >
-      {isHero && (
-        <>
-          <div className="absolute inset-0 bg-brand-grid pointer-events-none opacity-60" />
-          <div className="absolute inset-x-0 bottom-0 h-px bg-white/10 pointer-events-none" />
-        </>
-      )}
+    <header className={orangeBar} aria-hidden={!isVisible}>
+      {barInner}
 
       <div className="page-container relative">
-        {/* Fixed-height row keeps logo, ticker, and actions anchored regardless of content */}
         <div className="flex h-14 items-center gap-2 sm:gap-3">
           <BrandLogo compact />
 
-          {showLiveTicker && (
+          {showTicker && (
             <>
-              {/* Vertical divider */}
-              <span
-                className={cn(
-                  'hidden h-5 w-px shrink-0 md:block',
-                  isHero ? 'bg-white/20' : 'bg-border',
-                )}
-                aria-hidden
-              />
-              {/* Ticker — overflow-hidden prevents it from stretching the row */}
+              <span className="hidden h-5 w-px shrink-0 bg-white/20 md:block" aria-hidden />
               <div className="hidden min-w-0 flex-1 overflow-hidden md:block">
-                <LiveScoreTicker embedded alwaysShow variant={isHero ? 'dark' : 'light'} />
+                <LiveScoreTicker embedded alwaysShow variant="dark" />
               </div>
             </>
           )}
 
           <div className="ml-auto flex shrink-0 items-center gap-1.5 sm:gap-2">
-            <div className="hidden md:block">
-              <GlobalSearch />
-            </div>
-            <TournamentsLink onDark={isHero} />
-            <AnimatedThemeToggler />
+            {!isMinimal && (
+              <div className="hidden md:block">
+                <GlobalSearch />
+              </div>
+            )}
+            <TournamentsLink onDark={onDark} />
+            <AnimatedThemeToggler onDark={onDark} />
             {isAuthenticated && user ? (
               <>
-                <NotificationBell onDark={isHero} />
-                <UserMenu onDark={isHero} />
+                {!isMinimal && <NotificationBell onDark={onDark} />}
+                <UserMenu onDark={onDark} />
               </>
             ) : (
-              <SignInButton isHero={isHero} />
+              <SignInButton isHero />
             )}
           </div>
         </div>
 
-        {/* Mobile ticker — sits in its own row below the main bar */}
-        {showLiveTicker && (
-          <div
-            className={cn(
-              'overflow-hidden border-t pb-2 pt-1.5 md:hidden',
-              isHero ? 'border-white/10' : 'border-border',
-            )}
-          >
-            <LiveScoreTicker embedded alwaysShow variant={isHero ? 'dark' : 'light'} />
+        {showTicker && (
+          <div className="overflow-hidden border-t border-white/10 pb-2 pt-1.5 md:hidden">
+            <LiveScoreTicker embedded alwaysShow variant="dark" />
           </div>
         )}
       </div>

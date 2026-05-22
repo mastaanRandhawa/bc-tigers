@@ -127,9 +127,9 @@ export default function DivisionTeamDetailPage() {
             {hasMatchQuery && filteredMatches.length === 0 ? (
               <SearchEmpty query={debouncedMatchSearch} entityLabel="matches" />
             ) : filteredMatches.length > 0 ? (
-              <div className="divide-y divide-border">
-                {filteredMatches.map((m) => (
-                  <MatchCard key={m.id} match={m} flat />
+              <div className="overflow-hidden rounded-md border border-border/60 bg-card">
+                {filteredMatches.map((m, index) => (
+                  <MatchCard key={m.id} match={m} flat divider={index > 0} />
                 ))}
               </div>
             ) : (

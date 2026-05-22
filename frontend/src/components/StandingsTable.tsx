@@ -1,4 +1,5 @@
 import { useCallback } from 'react';
+import { useValueFlash } from '@/hooks/useValueFlash';
 import { Link } from 'react-router-dom';
 import type { Division, Standing } from '@/types';
 import SearchField from '@/components/shared/SearchField';
@@ -75,18 +76,43 @@ export default function StandingsTable({
           </TableHeader>
           <TableBody>
             {rows.map((s, idx) => (
-              <TableRow
-                key={s.id}
-                className={cn(
-                  idx === 0 && 'bg-surface-muted',
-                  idx > 0 && idx < 3 && 'bg-surface-muted/50'
-                )}
-              >
-                <TableCell className="text-muted-foreground font-medium">{s.rank}</TableCell>
-                <TableCell>
-                  {s.team ? (() => {
-                    const div = s.team.division ?? division;
-                    const teamPath = div ? getDivisionTeamPath(div, s.team.slug) : null;
+              <StandingRow key={s.id} standing={s} idx={idx} compact={compact} division={division} />
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+    </Card>
+      )}
+    </div>
+  );
+}
+
+function StandingRow({
+  standing: s,
+  idx,
+  compact,
+  division,
+}: {
+  standing: Standing;
+  idx: number;
+  compact: boolean;
+  division?: Division;
+}) {
+  const pointsFlash = useValueFlash(s.points);
+
+  return (
+    <TableRow
+      className={cn(
+        pointsFlash && 'motion-safe:animate-score-flash',
+        idx === 0 && 'bg-surface-muted',
+        idx > 0 && idx < 3 && 'bg-surface-muted/50',
+      )}
+    >
+      <TableCell className="text-muted-foreground font-medium">{s.rank}</TableCell>
+      <TableCell>
+        {s.team ? (() => {
+          const div = s.team.division ?? division;
+          const teamPath = div ? getDivisionTeamPath(div, s.team.slug) : null;
                     const content = (
                       <>
                         {s.team.logo && (
@@ -146,14 +172,7 @@ export default function StandingsTable({
                       ))}
                     </div>
                   </TableCell>
-                )}
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      </div>
-    </Card>
-      )}
-    </div>
+        )}
+    </TableRow>
   );
 }

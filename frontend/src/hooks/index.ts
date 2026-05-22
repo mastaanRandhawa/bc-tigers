@@ -15,3 +15,8 @@ export * from './useCoaches';
 export * from './useRosters';
 export * from './useNotifications';
 export * from './useCreateNotification';
+export * from './usePrefersReducedMotion';
+export * from './useScrollY';
+export * from './useSmartHeader';
+export * from './useScoreFlash';
+export * from './useValueFlash';

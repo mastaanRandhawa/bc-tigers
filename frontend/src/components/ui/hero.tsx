@@ -158,7 +158,7 @@ export function TournamentHubHeader() {
     <section className="relative bg-primary overflow-x-hidden w-full">
       <div className="absolute inset-0 bg-brand-grid pointer-events-none z-0" />
 
-      <div className="relative z-10 px-4 pt-6 pb-28 sm:pt-8 sm:pb-32 md:pt-10 md:pb-48 flex flex-col items-center w-full max-w-[1440px] mx-auto">
+      <div className="relative z-10 px-4 pt-[calc(3.5rem+1.25rem)] pb-28 sm:pt-[calc(3.5rem+1.5rem)] sm:pb-32 md:pt-[calc(3.5rem+2rem)] md:pb-48 flex flex-col items-center w-full max-w-[1440px] mx-auto max-md:pt-[calc(6.75rem+1rem)]">
         <div className="relative w-full max-w-5xl mx-auto flex flex-col items-center text-center min-h-[300px] sm:min-h-[360px] md:min-h-[420px]">
           <div className="hero-headline-stack w-full flex flex-col items-center relative z-10 pointer-events-none">
             <div className="w-full flex justify-start pl-[8%] md:pl-[25%] relative z-30">

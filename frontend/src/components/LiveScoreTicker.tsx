@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom';
 import { Zap } from 'lucide-react';
 import { useReducedMotion } from 'motion/react';
 import type { Match } from '@/types';
+import { ScoreFlash } from '@/components/motion/ScoreFlash';
+import { useScoreFlash } from '@/hooks/useScoreFlash';
 import { cn } from '@/lib/utils';
 import { getMatchPath } from '@/lib/division-routes';
 
@@ -23,11 +25,13 @@ function MatchTickerItem({
   compact?: boolean;
   light?: boolean;
 }) {
+  const flash = useScoreFlash(match.home_score, match.away_score);
+
   return (
     <Link
       to={getMatchPath(match)}
       className={cn(
-        'inline-flex items-center gap-2 whitespace-nowrap hover:opacity-80 transition-opacity shrink-0',
+        'inline-flex items-center gap-2 whitespace-nowrap hover:opacity-90 transition-opacity shrink-0 active:scale-[0.98]',
         compact ? 'text-xs' : 'text-sm',
         light ? 'text-foreground' : 'text-white',
       )}
@@ -35,7 +39,8 @@ function MatchTickerItem({
       <span className="font-medium max-w-[7rem] sm:max-w-none truncate">
         {match.home_team?.name ?? 'Home'}
       </span>
-      <span
+      <ScoreFlash
+        active={flash}
         className={cn(
           'shrink-0 rounded px-1.5 py-0.5 font-mono text-[11px] font-bold tabular-nums',
           light
@@ -44,7 +49,7 @@ function MatchTickerItem({
         )}
       >
         {match.home_score} – {match.away_score}
-      </span>
+      </ScoreFlash>
       <span className="font-medium max-w-[7rem] sm:max-w-none truncate">
         {match.away_team?.name ?? 'Away'}
       </span>

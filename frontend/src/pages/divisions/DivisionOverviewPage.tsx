@@ -13,7 +13,8 @@ import {
   useDivisionTeams,
 } from '@/hooks/useDivisionResources';
 import { divisionTeamPath } from '@/lib/division-routes';
-import { cn } from '@/lib/utils';
+import { StaggerItem } from '@/components/motion/StaggerList';
+import { RevealOnScroll } from '@/components/motion/RevealOnScroll';
 
 function getCountdownDays(dateStr?: string): number | null {
   if (!dateStr) return null;
@@ -89,14 +90,15 @@ export default function DivisionOverviewPage() {
               No teams registered yet.
             </p>
           ) : (
+            <RevealOnScroll>
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
               {teams.map((team) => {
                 const color = team.primary_color ?? accentColor ?? '#F48735';
                 return (
+                  <StaggerItem key={team.id}>
                   <Link
-                    key={team.id}
                     to={divisionTeamPath(tournamentSlug, divisionSlug, team.slug)}
-                    className="group flex flex-col items-center gap-2 rounded-xl border border-border bg-card p-4 text-center shadow-sm transition-all hover:shadow-md hover:border-primary/30"
+                    className="group flex flex-col items-center gap-2 rounded-xl border border-border bg-card p-4 text-center shadow-sm transition-all duration-[var(--motion-normal)] hover:shadow-[var(--shadow-hover)] hover:-translate-y-0.5 hover:border-primary/30 gpu-layer"
                   >
                     <div
                       className="flex h-12 w-12 items-center justify-center rounded-full border-2 border-white/20"
@@ -116,9 +118,11 @@ export default function DivisionOverviewPage() {
                       {team.name}
                     </span>
                   </Link>
+                  </StaggerItem>
                 );
               })}
             </div>
+            </RevealOnScroll>
           )}
         </Section>
       ) : (
@@ -134,9 +138,9 @@ export default function DivisionOverviewPage() {
               No matches scheduled yet.
             </p>
           ) : (
-            <div className="divide-y divide-border">
-              {displayMatches.map((m) => (
-                <MatchCard key={m.id} match={m} flat />
+            <div className="mx-auto w-full max-w-3xl overflow-hidden rounded-md border border-border/60 bg-card">
+              {displayMatches.map((m, index) => (
+                <MatchCard key={m.id} match={m} flat divider={index > 0} />
               ))}
             </div>
           )}

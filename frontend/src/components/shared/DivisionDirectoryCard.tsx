@@ -1,5 +1,5 @@
 import { getDivisionBasePath } from '@/lib/division-routes';
-import { getDivisionTheme } from '@/lib/division-theme';
+import { getDivisionTheme, themeChipStyle } from '@/lib/division-theme';
 import DirectoryCard from '@/components/shared/DirectoryCard';
 import type { Division } from '@/types';
 
@@ -23,14 +23,12 @@ export default function DivisionDirectoryCard({
 
   const theme = getDivisionTheme(division);
 
+  const chipStyle = themeChipStyle(theme);
+
   const media = (
     <div
-      className={`flex items-center justify-center text-xs font-black uppercase tracking-wider ${variant === 'row' ? 'h-9 w-9 rounded-lg' : 'h-10 w-10 rounded-lg'}`}
-      style={{
-        backgroundColor: theme.accent,
-        color: theme.primary,
-        border: `1.5px solid color-mix(in srgb, ${theme.primary} 22%, transparent)`,
-      }}
+      className={`theme-chip flex items-center justify-center text-xs font-black uppercase tracking-wider ${variant === 'row' ? 'h-9 w-9 rounded-lg' : 'h-10 w-10 rounded-lg'}`}
+      style={chipStyle}
       aria-hidden
     >
       {division.name.slice(0, 2)}
@@ -41,15 +39,15 @@ export default function DivisionDirectoryCard({
     <>
       {division.age_group && (
         <span
-          className="rounded px-1.5 py-0.5 text-[10px] font-medium"
-          style={{ backgroundColor: theme.accent, color: theme.accentForeground }}
+          className="theme-chip rounded px-1.5 py-0.5 text-[10px] font-medium"
+          style={chipStyle}
         >
           {division.age_group}
         </span>
       )}
       <span
-        className="rounded px-1.5 py-0.5 text-[10px] font-medium"
-        style={{ backgroundColor: theme.accent, color: theme.accentForeground }}
+        className="theme-chip rounded px-1.5 py-0.5 text-[10px] font-medium"
+        style={chipStyle}
       >
         {division.format}
       </span>

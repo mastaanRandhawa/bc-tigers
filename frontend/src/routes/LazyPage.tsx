@@ -1,6 +1,7 @@
 import { Suspense, type ReactNode } from 'react';
 import AppShell from '@/components/layouts/AppShell';
 import PageLoader from '@/components/shared/PageLoader';
+import { PageFade } from '@/components/motion/PageTransition';
 
 export function LazyPage({ children }: { children: ReactNode }) {
   return (
@@ -11,7 +12,7 @@ export function LazyPage({ children }: { children: ReactNode }) {
         </AppShell>
       }
     >
-      <div className="page-fade-in">{children}</div>
+      <PageFade>{children}</PageFade>
     </Suspense>
   );
 }

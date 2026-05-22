@@ -154,18 +154,18 @@ export default function DivisionMatchesAndSchedulePage() {
                 <h3 className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
                   {formatScheduleDay(date)}
                 </h3>
-                <div className="space-y-2">
-                  {grouped[date].map((m) => (
-                    <MatchCard key={m.id} match={m} />
+                <div className="overflow-hidden rounded-md border border-border/60 bg-card">
+                  {grouped[date].map((m, index) => (
+                    <MatchCard key={m.id} match={m} flat divider={index > 0} />
                   ))}
                 </div>
               </div>
             ))}
           </div>
         ) : (
-          <div className="space-y-2">
-            {filtered.map((m) => (
-              <MatchCard key={m.id} match={m} />
+          <div className="match-list-perf overflow-hidden rounded-md border border-border/60 bg-card">
+            {filtered.map((m, index) => (
+              <MatchCard key={m.id} match={m} flat divider={index > 0} />
             ))}
           </div>
         )}

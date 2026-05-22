@@ -59,9 +59,9 @@ export default function DivisionVenueDetailPage() {
               hasQuery && filtered.length === 0 ? (
                 <SearchEmpty query={debouncedSearch} entityLabel="matches" />
               ) : (
-              <div className="divide-y divide-border">
-                {filtered.map((m) => (
-                  <MatchCard key={m.id} match={m} flat />
+              <div className="overflow-hidden rounded-md border border-border/60 bg-card">
+                {filtered.map((m, index) => (
+                  <MatchCard key={m.id} match={m} flat divider={index > 0} />
                 ))}
               </div>
               )

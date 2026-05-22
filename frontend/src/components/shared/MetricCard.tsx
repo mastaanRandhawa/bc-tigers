@@ -40,7 +40,7 @@ function MetricCardInner({
   return (
     <div
       className={cn(
-        'flex flex-col rounded-xl border bg-card px-4 py-3.5 shadow-sm transition-all duration-200 hover:shadow-md hover:-translate-y-px',
+        'flex h-full flex-col rounded-xl border bg-card px-4 py-3.5 shadow-sm transition-all duration-200 hover:shadow-md hover:-translate-y-px',
         accent ? 'border-transparent' : 'border-border',
       )}
       style={accent && accentBorder ? { borderColor: accentBorder } : undefined}
@@ -102,7 +102,7 @@ export default function MetricCard({ href, className, ...props }: MetricCardProp
     );
   }
   return (
-    <div className={className}>
+    <div className={cn('h-full', className)}>
       <MetricCardInner {...props} />
     </div>
   );

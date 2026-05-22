@@ -16,6 +16,10 @@ import {
   Flag,
 } from 'lucide-react';
 import MatchLineups from '@/components/matches/MatchLineups';
+import { StaggerItem } from '@/components/motion/StaggerList';
+import { AnimatedNumber } from '@/components/motion/AnimatedNumber';
+import { ScoreFlash } from '@/components/motion/ScoreFlash';
+import { useScoreFlash } from '@/hooks/useScoreFlash';
 import { formatDate, formatTime, cn, getInitials, getMatchStatusBadgeVariant } from '@/lib/utils';
 import { divisionMatchesPath } from '@/lib/division-routes';
 import { useMatch } from '@/hooks/useMatches';
@@ -123,6 +127,7 @@ export default function MatchDetailPage() {
   // Team brand colours — fall back to brand orange (home) / indigo (away)
   const homeColor = match?.home_team?.primary_color ?? '#F48735';
   const awayColor = match?.away_team?.primary_color ?? '#6366F1';
+  const scoreFlash = useScoreFlash(match?.home_score ?? 0, match?.away_score ?? 0);
 
   const content = (
     <QueryState
@@ -162,7 +167,7 @@ export default function MatchDetailPage() {
                   <div className="mb-6 flex justify-center">
                     <div className="inline-flex items-center gap-2">
                       <Badge variant={getMatchStatusBadgeVariant(match.status)}>
-                        {isLive ? '● LIVE' : match.status.replace(/_/g, ' ')}
+                        {isLive ? 'Live' : match.status.replace(/_/g, ' ')}
                       </Badge>
                       <span className="text-xs text-muted-foreground">
                         {formatDate(match.scheduled_start)}
@@ -187,11 +192,14 @@ export default function MatchDetailPage() {
                     {/* Score */}
                     <div className="flex shrink-0 flex-col items-center justify-center gap-1 px-2">
                       {showScore ? (
-                        <p className="font-display text-3xl font-black tabular-nums tracking-tight text-foreground sm:text-5xl whitespace-nowrap">
-                          {match.home_score}
+                        <ScoreFlash
+                          active={scoreFlash}
+                          className="font-display text-3xl font-black tabular-nums tracking-tight text-foreground sm:text-5xl whitespace-nowrap rounded-lg px-2"
+                        >
+                          <AnimatedNumber value={match.home_score} />
                           <span className="mx-1.5 font-light text-muted-foreground/40">—</span>
-                          {match.away_score}
-                        </p>
+                          <AnimatedNumber value={match.away_score} />
+                        </ScoreFlash>
                       ) : (
                         <p className="font-display text-2xl font-bold text-muted-foreground/50">
                           vs
@@ -251,12 +259,12 @@ export default function MatchDetailPage() {
                   </h3>
                   {events.length > 0 ? (
                     <div className="space-y-2">
-                      {events.map((event) => {
+                      {events.map((event, index) => {
                         const isHome = event.team_id === match.home_team_id;
                         const accentColor = isHome ? homeColor : awayColor;
                         return (
+                          <StaggerItem key={event.id}>
                           <div
-                            key={event.id}
                             className="flex items-center gap-4 overflow-hidden rounded-xl border border-border/60 bg-card/50 p-4 backdrop-blur-sm transition-colors hover:bg-card/70"
                             style={{ borderLeftWidth: '4px', borderLeftColor: accentColor }}
                           >
@@ -290,6 +298,7 @@ export default function MatchDetailPage() {
                               {isHome ? match.home_team?.name : match.away_team?.name}
                             </span>
                           </div>
+                          </StaggerItem>
                         );
                       })}
                     </div>

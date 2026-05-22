@@ -40,7 +40,7 @@ export default function TournamentDetailPage() {
       {tournament && (
         <>
           {/* ── Hero band ─────────────────────────────────────────────────────── */}
-          <div className="relative overflow-hidden border-b border-border bg-hero-gradient py-7 sm:py-10">
+          <div className="relative overflow-hidden border-b border-border bg-card py-7 sm:py-10">
             <div className="pointer-events-none absolute inset-0 bg-brand-grid opacity-40" />
             <div className="relative z-10 page-container">
               <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center">

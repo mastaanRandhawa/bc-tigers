@@ -17,6 +17,7 @@ import { useHomeHub } from '@/hooks/useHomeHub';
 import { formatDate } from '@/lib/date';
 import { pickFeaturedTournament } from '@/lib/featured-tournament';
 import { ChevronRight, Trophy, Megaphone } from 'lucide-react';
+import { RevealOnScroll } from '@/components/motion/RevealOnScroll';
 
 export default function HomePage() {
   const { data, isLoading, isError, refetch } = useHomeHub();
@@ -101,17 +102,20 @@ export default function HomePage() {
             )}
 
             {liveMatches.length > 0 && (
-              <Section className="mb-6">
-                <SectionHeader title="Live now" linkLabel="View tournaments" href="/tournaments" />
-                <div className="divide-y divide-border">
-                  {liveMatches.slice(0, 3).map((match) => (
-                    <MatchCard key={match.id} match={match} flat />
-                  ))}
-                </div>
-              </Section>
+              <RevealOnScroll>
+                <Section className="mb-6">
+                  <SectionHeader title="Live now" linkLabel="View tournaments" href="/tournaments" />
+                  <div className="overflow-hidden rounded-md border border-border/60 bg-card">
+                    {liveMatches.slice(0, 6).map((match, index) => (
+                      <MatchCard key={match.id} match={match} flat divider={index > 0} />
+                    ))}
+                  </div>
+                </Section>
+              </RevealOnScroll>
             )}
 
             {featuredMedia.length > 0 && (
+              <RevealOnScroll>
               <Section className="mb-6">
                 <SectionHeader title="Featured media" />
                 <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
@@ -139,6 +143,7 @@ export default function HomePage() {
                   ))}
                 </div>
               </Section>
+              </RevealOnScroll>
             )}
 
             {announcements.length > 0 && (
