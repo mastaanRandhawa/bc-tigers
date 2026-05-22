@@ -17,6 +17,7 @@ export class MatchesController {
   constructor(private service: MatchesService) {}
 
   @Get()
+  @AdminOnly()
   findAll(
     @Query()
     q: {

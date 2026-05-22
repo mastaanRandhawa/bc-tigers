@@ -23,6 +23,6 @@ import { VenuesModule } from '../venues/venues.module';
   ],
   controllers: [DivisionsController, DivisionResourcesController],
   providers: [DivisionsService, DivisionResourcesService],
-  exports: [DivisionsService],
+  exports: [DivisionsService, DivisionResourcesService],
 })
 export class DivisionsModule {}

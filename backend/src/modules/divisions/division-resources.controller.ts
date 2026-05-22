@@ -22,6 +22,30 @@ export class DivisionResourcesController {
     return this.service.getTeam(tournamentSlug, divisionSlug, teamSlug);
   }
 
+  @Get('teams/:teamSlug/players/:playerId')
+  getPlayer(
+    @Param('tournamentSlug') tournamentSlug: string,
+    @Param('divisionSlug') divisionSlug: string,
+    @Param('teamSlug') teamSlug: string,
+    @Param('playerId') playerId: string,
+  ) {
+    return this.service.getPlayer(
+      tournamentSlug,
+      divisionSlug,
+      teamSlug,
+      playerId,
+    );
+  }
+
+  @Get('schedule')
+  getSchedule(
+    @Param('tournamentSlug') tournamentSlug: string,
+    @Param('divisionSlug') divisionSlug: string,
+    @Query('status') status?: string,
+  ) {
+    return this.service.getSchedule(tournamentSlug, divisionSlug, { status });
+  }
+
   @Get('players')
   getPlayers(
     @Param('tournamentSlug') tournamentSlug: string,

@@ -28,11 +28,13 @@ export class DivisionsController {
   }
 
   @Get('divisions')
+  @AdminOnly()
   findAll() {
     return this.service.findAll();
   }
 
   @Get('divisions/by-slug/:divisionSlug')
+  @AdminOnly()
   findBySlugGlobal(@Param('divisionSlug') divisionSlug: string) {
     return this.service.findBySlugGlobal(divisionSlug);
   }

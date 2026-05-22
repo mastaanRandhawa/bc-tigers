@@ -1,6 +1,8 @@
 import { Routes, Route, Navigate } from "react-router-dom";
 import ProtectedRoute from "@/components/auth/ProtectedRoute";
 import { LazyPage } from "@/routes/LazyPage";
+import BlockedGlobalRoute from "@/components/routes/BlockedGlobalRoute";
+import DivisionMatchRedirect from "@/components/routes/DivisionMatchRedirect";
 import {
   HomePage,
   TournamentsPage,
@@ -14,7 +16,7 @@ import {
   DivisionPlayerLegacyRedirect,
   DivisionSchedulePage,
   DivisionMatchesPage,
-  DivisionMatchDetailPage,
+  GlobalMatchDetailPage,
   DivisionStandingsPage,
   DivisionStatsPage,
   DivisionTopScorersPage,
@@ -56,6 +58,22 @@ export default function App() {
   return (
     <Routes>
       <Route path="/" element={<HomePage />} />
+
+      <Route path="/teams" element={<BlockedGlobalRoute />} />
+      <Route path="/teams/*" element={<BlockedGlobalRoute />} />
+      <Route path="/divisions" element={<BlockedGlobalRoute />} />
+      <Route path="/divisions/*" element={<BlockedGlobalRoute />} />
+      <Route path="/players" element={<BlockedGlobalRoute />} />
+      <Route path="/players/*" element={<BlockedGlobalRoute />} />
+
+      <Route
+        path="/matches/:matchId"
+        element={
+          <L>
+            <GlobalMatchDetailPage />
+          </L>
+        }
+      />
 
       <Route
         path="/tournaments"
@@ -146,14 +164,7 @@ export default function App() {
             </L>
           }
         />
-        <Route
-          path="matches/:matchId"
-          element={
-            <L>
-              <DivisionMatchDetailPage />
-            </L>
-          }
-        />
+        <Route path="matches/:matchId" element={<DivisionMatchRedirect />} />
         <Route
           path="standings"
           element={

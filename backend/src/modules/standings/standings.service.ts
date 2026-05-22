@@ -11,6 +11,7 @@ export class StandingsService {
         { points: 'desc' },
         { goal_difference: 'desc' },
         { goals_for: 'desc' },
+        { fair_play: 'desc' },
       ],
     });
   }
@@ -33,6 +34,7 @@ export class StandingsService {
         goals_for: number;
         goals_against: number;
         points: number;
+        fair_play: number;
       }
     >();
     const init = () => ({
@@ -43,6 +45,7 @@ export class StandingsService {
       goals_for: 0,
       goals_against: 0,
       points: 0,
+      fair_play: 0,
     });
 
     for (const match of matches) {
@@ -83,7 +86,8 @@ export class StandingsService {
       ([, a], [, b]) =>
         b.points - a.points ||
         b.goals_for - b.goals_against - (a.goals_for - a.goals_against) ||
-        b.goals_for - a.goals_for,
+        b.goals_for - a.goals_for ||
+        b.fair_play - a.fair_play,
     );
 
     await prisma.$transaction(

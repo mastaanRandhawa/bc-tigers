@@ -1,11 +1,23 @@
 import apiClient from '@/lib/api-client';
-import type { Tournament } from '@/types';
+import type { Match, PlayerStat, Standing, Tournament } from '@/types';
+
+export interface TournamentOverview {
+  tournament: Tournament;
+  liveMatches: Match[];
+  recentMatches: Match[];
+  upcomingMatches: Match[];
+  topScorers: PlayerStat[];
+  standingsPreview: Standing[];
+}
 
 export const tournamentsService = {
   getAll: (params?: { status?: string; page?: number; limit?: number }) =>
     apiClient.get<Tournament[]>('/tournaments', { params }),
 
   getOne: (slug: string) => apiClient.get<Tournament>(`/tournaments/${slug}`),
+
+  getOverview: (slug: string) =>
+    apiClient.get<TournamentOverview>(`/tournaments/${slug}/overview`),
 
   create: (data: Partial<Tournament>) => apiClient.post<Tournament>('/tournaments', data),
 
