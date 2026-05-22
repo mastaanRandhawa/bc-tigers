@@ -207,7 +207,7 @@ export default function SiteHeader({ variant = 'site', showLiveTicker = true }: 
   if (isMinimal) {
     return (
       <header className="sticky top-0 z-50 w-full bg-card border-b border-border shadow-sm">
-        <div className="page-container">
+        <div className="page-container overflow-hidden">
           <div className="flex h-14 items-center justify-between gap-2 sm:gap-3">
             <BrandLogo compact />
             <div className="ml-auto flex shrink-0 items-center gap-1.5 sm:gap-2">
@@ -242,23 +242,25 @@ export default function SiteHeader({ variant = 'site', showLiveTicker = true }: 
       )}
 
       <div className="page-container relative">
-        <div
-          className={cn(
-            'flex items-center gap-2 sm:gap-3',
-            isHero ? 'py-3 sm:py-3' : 'py-2.5',
-          )}
-        >
+        {/* Fixed-height row keeps logo, ticker, and actions anchored regardless of content */}
+        <div className="flex h-14 items-center gap-2 sm:gap-3">
           <BrandLogo compact />
 
           {showLiveTicker && (
-            <div
-              className={cn(
-                'hidden min-w-0 flex-1 md:flex',
-                isHero ? 'border-l border-white/15 pl-3' : 'border-l border-border pl-3',
-              )}
-            >
-              <LiveScoreTicker embedded alwaysShow variant={isHero ? 'dark' : 'light'} />
-            </div>
+            <>
+              {/* Vertical divider */}
+              <span
+                className={cn(
+                  'hidden h-5 w-px shrink-0 md:block',
+                  isHero ? 'bg-white/20' : 'bg-border',
+                )}
+                aria-hidden
+              />
+              {/* Ticker — overflow-hidden prevents it from stretching the row */}
+              <div className="hidden min-w-0 flex-1 overflow-hidden md:block">
+                <LiveScoreTicker embedded alwaysShow variant={isHero ? 'dark' : 'light'} />
+              </div>
+            </>
           )}
 
           <div className="ml-auto flex shrink-0 items-center gap-1.5 sm:gap-2">
@@ -272,10 +274,11 @@ export default function SiteHeader({ variant = 'site', showLiveTicker = true }: 
           </div>
         </div>
 
+        {/* Mobile ticker — sits in its own row below the main bar */}
         {showLiveTicker && (
           <div
             className={cn(
-              'border-t pb-2.5 pt-2 md:hidden',
+              'overflow-hidden border-t pb-2 pt-1.5 md:hidden',
               isHero ? 'border-white/10' : 'border-border',
             )}
           >

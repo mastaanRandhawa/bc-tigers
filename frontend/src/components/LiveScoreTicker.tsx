@@ -37,8 +37,10 @@ function MatchTickerItem({
       </span>
       <span
         className={cn(
-          'font-bold px-2 py-0.5 rounded-md tabular-nums shrink-0',
-          light ? 'bg-primary-muted text-primary' : 'bg-white/20 text-white',
+          'shrink-0 rounded px-1.5 py-0.5 font-mono text-[11px] font-bold tabular-nums',
+          light
+            ? 'border border-border/70 bg-secondary text-foreground'
+            : 'border border-white/15 bg-white/10 text-white',
         )}
       >
         {match.home_score} – {match.away_score}

@@ -529,6 +529,14 @@
     border: 1px solid color-mix(in srgb, var(--division-primary) 18%, transparent);
   }
 
+  /* Dark mode: swap to a tinted dark background with near-white text
+     so the pill reads clearly against the dark card header. */
+  .dark .division-badge {
+    background-color: color-mix(in srgb, var(--division-primary) 14%, hsl(var(--card)));
+    color: hsl(0 0% 90%);
+    border: 1px solid color-mix(in srgb, var(--division-primary) 35%, transparent);
+  }
+
   /* Links in division context use division primary */
   .division-link {
     font-weight: 500;
