@@ -10,14 +10,6 @@ export function usePlayers(params?: { teamId?: string }) {
   });
 }
 
-export function usePlayer(slug?: string) {
-  return useQuery({
-    queryKey: queryKeys.players.detail(slug ?? ''),
-    queryFn: async () => (await playersService.getOne(slug!)).data,
-    enabled: !!slug,
-  });
-}
-
 function invalidatePlayerCaches(qc: ReturnType<typeof useQueryClient>) {
   // Invalidate standalone player list (admin portal)
   qc.invalidateQueries({ queryKey: ['players'] });

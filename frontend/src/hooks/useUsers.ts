@@ -10,14 +10,6 @@ export function useUsers(params?: { page?: number; limit?: number }) {
   });
 }
 
-export function useUser(id?: string) {
-  return useQuery({
-    queryKey: queryKeys.users.detail(id ?? ''),
-    queryFn: async () => (await usersService.getOne(id!)).data,
-    enabled: !!id,
-  });
-}
-
 export function useUpdateUser() {
   const qc = useQueryClient();
   return useMutation({

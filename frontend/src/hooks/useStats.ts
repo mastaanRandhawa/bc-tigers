@@ -9,23 +9,3 @@ export function useTopScorers(params?: { tournamentId?: string; divisionId?: str
   });
 }
 
-export function useTopAssists(params?: { tournamentId?: string; divisionId?: string; limit?: number }) {
-  return useQuery({
-    queryKey: queryKeys.stats.topAssists(params),
-    queryFn: async () => (await statsService.topAssists(params)).data,
-  });
-}
-
-export function useDisciplineStats(params?: { tournamentId?: string; divisionId?: string; limit?: number }) {
-  return useQuery({
-    queryKey: queryKeys.stats.discipline(params),
-    queryFn: async () => (await statsService.discipline(params)).data,
-  });
-}
-
-export function useStatsSummary() {
-  return useQuery({
-    queryKey: queryKeys.stats.summary,
-    queryFn: async () => (await statsService.summary()).data,
-  });
-}

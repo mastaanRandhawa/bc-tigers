@@ -10,14 +10,6 @@ export function useTeams(params?: { divisionId?: string }) {
   });
 }
 
-export function useTeam(slug?: string) {
-  return useQuery({
-    queryKey: queryKeys.teams.detail(slug ?? ''),
-    queryFn: async () => (await teamsService.getOne(slug!)).data,
-    enabled: !!slug,
-  });
-}
-
 export function useCreateTeam() {
   const qc = useQueryClient();
   return useMutation({

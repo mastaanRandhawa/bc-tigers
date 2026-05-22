@@ -1,7 +1,7 @@
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
-export { formatDate, formatDateTime, formatScheduleDay, formatTime } from '@/lib/date';
+export { formatDate, formatScheduleDay, formatTime } from '@/lib/date';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -49,19 +49,6 @@ export function getMatchStatusBadgeVariant(status: string): MatchStatusBadgeVari
     default:
       return 'default';
   }
-}
-
-export function getStatusColor(status: string): string {
-  const map: Record<string, string> = {
-    LIVE: 'bg-red-600 text-white',
-    SCHEDULED: 'bg-primary text-white',
-    COMPLETED: 'bg-green-700 text-white',
-    POSTPONED: 'bg-amber-600 text-white',
-    CANCELLED: 'bg-gray-600 text-white',
-    UPCOMING: 'bg-primary text-white',
-    ACTIVE: 'bg-green-700 text-white',
-  };
-  return map[status] ?? 'bg-gray-600 text-white';
 }
 
 export function getFormColor(result: 'W' | 'D' | 'L'): string {

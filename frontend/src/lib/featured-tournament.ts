@@ -1,8 +1,4 @@
-import type { Division, Match, Tournament } from '@/types';
-import {
-  getDivisionMatchesPath,
-  divisionMatchesCalendarPath,
-} from '@/lib/division-routes';
+import type { Tournament } from '@/types';
 
 function tournamentStartMs(t: Tournament) {
   return new Date(t.start_date).getTime();
@@ -43,38 +39,3 @@ export function tournamentOverviewPath(tournament?: Tournament | null) {
   return tournament?.slug ? `/tournaments/${tournament.slug}` : '/tournaments';
 }
 
-function divisionPathFromMatch(
-  match: Match | undefined,
-  kind: 'schedule' | 'matches',
-): string | null {
-  const division = match?.division;
-  const tournamentSlug = division?.tournament?.slug;
-  const divisionSlug = division?.slug;
-  if (!tournamentSlug || !divisionSlug || !division) return null;
-
-  if (kind === 'schedule') {
-    return divisionMatchesCalendarPath(tournamentSlug, divisionSlug);
-  }
-  const withTournament = { ...division, tournament: division.tournament } as Division;
-  return getDivisionMatchesPath(withTournament);
-}
-
-/** Prefer a path tied to real fixtures; otherwise tournament overview. */
-export function hubSchedulePath(tournament: Tournament | undefined, upcoming: Match[]) {
-  return (
-    divisionPathFromMatch(upcoming[0], 'schedule') ??
-    tournamentOverviewPath(tournament)
-  );
-}
-
-export function hubMatchesPath(
-  tournament: Tournament | undefined,
-  live: Match[],
-  recent: Match[],
-) {
-  return (
-    divisionPathFromMatch(live[0], 'matches') ??
-    divisionPathFromMatch(recent[0], 'matches') ??
-    tournamentOverviewPath(tournament)
-  );
-}

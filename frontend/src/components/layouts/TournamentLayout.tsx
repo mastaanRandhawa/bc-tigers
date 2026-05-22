@@ -2,7 +2,6 @@ import { Outlet, useParams } from 'react-router-dom';
 import PageLayout from '@/components/PageLayout';
 import QueryState from '@/components/shared/QueryState';
 import PageLoader from '@/components/shared/PageLoader';
-import TournamentShell from '@/components/layouts/TournamentShell';
 import { TournamentProvider } from '@/context/TournamentContext';
 import { useTournament } from '@/hooks/useTournaments';
 
@@ -28,9 +27,7 @@ export default function TournamentLayout() {
       >
         {tournament && (
           <TournamentProvider value={{ tournament, tournamentSlug }}>
-            <TournamentShell tournament={tournament}>
-              <Outlet />
-            </TournamentShell>
+            <Outlet />
           </TournamentProvider>
         )}
       </QueryState>

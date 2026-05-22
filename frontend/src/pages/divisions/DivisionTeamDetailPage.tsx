@@ -8,7 +8,7 @@ import SectionHeader from '@/components/shared/SectionHeader';
 import MatchCard from '@/components/MatchCard';
 import TeamHero from '@/components/teams/TeamHero';
 import RosterList from '@/components/teams/RosterList';
-import StatCard from '@/components/shared/StatCard';
+import MetricCard from '@/components/shared/MetricCard';
 import TeamRosterPanel from '@/components/admin/TeamRosterPanel';
 import TeamFormDialog from '@/components/admin/forms/TeamFormDialog';
 import { AdminContextBar } from '@/components/admin/inline/AdminContextBar';
@@ -97,10 +97,10 @@ export default function DivisionTeamDetailPage() {
 
           {standing && (
             <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4 sm:gap-3">
-              <StatCard value={standing.played} label="Played" theme={theme} />
-              <StatCard value={standing.wins} label="Wins" theme={theme} />
-              <StatCard value={standing.points} label="Points" accent theme={theme} />
-              <StatCard
+              <MetricCard value={standing.played} label="Played" theme={theme} />
+              <MetricCard value={standing.wins} label="Wins" theme={theme} />
+              <MetricCard value={standing.points} label="Points" accent theme={theme} />
+              <MetricCard
                 value={
                   standing.goal_difference > 0
                     ? `+${standing.goal_difference}`

@@ -10,14 +10,6 @@ export function useReferees() {
   });
 }
 
-export function useReferee(id?: string) {
-  return useQuery({
-    queryKey: queryKeys.referees.detail(id ?? ''),
-    queryFn: async () => (await refereesService.getOne(id!)).data,
-    enabled: !!id,
-  });
-}
-
 export function useCreateReferee() {
   const qc = useQueryClient();
   return useMutation({

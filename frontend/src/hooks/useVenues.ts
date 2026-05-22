@@ -10,14 +10,6 @@ export function useVenues() {
   });
 }
 
-export function useVenue(slug?: string) {
-  return useQuery({
-    queryKey: queryKeys.venues.detail(slug ?? ''),
-    queryFn: async () => (await venuesService.getOne(slug!)).data,
-    enabled: !!slug,
-  });
-}
-
 export function useCreateVenue() {
   const qc = useQueryClient();
   return useMutation({

@@ -9,35 +9,22 @@ import MatchFormDialog from '@/components/admin/forms/MatchFormDialog';
 import MatchScoreFormDialog from '@/components/admin/forms/MatchScoreFormDialog';
 import MatchEventFormDialog from '@/components/admin/forms/MatchEventFormDialog';
 import DivisionFormDialog from '@/components/admin/forms/DivisionFormDialog';
-import { PlayerTransferSheet } from '@/components/admin/PlayerTransferSheet';
 import { ScheduleGeneratorSheet } from '@/components/admin/ScheduleGeneratorSheet';
 import { BracketCanvas } from '@/components/admin/BracketCanvas';
 import { ConfirmDialog } from '@/components/admin/inline/ConfirmDialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import AdminStatGrid from '@/components/admin/AdminStatGrid';
-import { useDivisions, useDeleteDivision, useGenerateSchedule } from '@/hooks/useDivisions';
+import { useDivisions } from '@/hooks/useDivisions';
 import { useTeams, useDeleteTeam } from '@/hooks/useTeams';
 import { useMatches, useDeleteMatch, useUpdateMatch } from '@/hooks/useMatches';
 import { useFormDialog } from '@/hooks/useFormDialog';
 import { getDivisionTheme } from '@/lib/division-theme';
-import { formatDate, formatTime, getMatchStatusBadgeVariant } from '@/lib/utils';
+import { formatDate, formatTime } from '@/lib/utils';
 import { matchSearchText } from '@/lib/search-text';
 import { getApiErrorMessage } from '@/lib/errors';
-import {
-  ArrowLeft,
-  Calendar,
-  GitBranch,
-  Pencil,
-  Shield,
-  Trash2,
-  Users,
-  Zap,
-  PlusCircle,
-  ArrowLeftRight,
-} from 'lucide-react';
-import type { Match, Team, TeamRoster } from '@/types';
+import { Calendar, GitBranch, Pencil, Shield, Users, Zap, PlusCircle } from 'lucide-react';
+import type { Match, Team } from '@/types';
 
 const MATCH_STATUS_OPTIONS = [
   'SCHEDULED', 'LIVE', 'HALFTIME', 'COMPLETED', 'DELAYED', 'POSTPONED', 'CANCELLED',
@@ -55,14 +42,12 @@ export default function DivisionWorkspacePage() {
   const deleteTeamMutation = useDeleteTeam();
   const deleteMatchMutation = useDeleteMatch();
   const updateMatchMutation = useUpdateMatch();
-  const generateMutation = useGenerateSchedule();
 
   const teamDialog = useFormDialog<Team>();
   const matchDialog = useFormDialog<Match>();
   const [editDivisionOpen, setEditDivisionOpen] = useState(false);
   const [scheduleOpen, setScheduleOpen] = useState(false);
   const [rosterTeam, setRosterTeam] = useState<Team | null>(null);
-  const [transferPlayer, setTransferPlayer] = useState<{ player: Team['players'] extends Array<infer P> ? P : never; roster: TeamRoster } | null>(null);
   const [scoreMatch, setScoreMatch] = useState<Match | null>(null);
   const [eventMatch, setEventMatch] = useState<Match | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<{ type: 'team' | 'match'; id: string; label: string } | null>(null);

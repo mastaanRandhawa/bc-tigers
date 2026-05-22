@@ -1,4 +1,5 @@
-import { Routes, Route, Navigate, Suspense } from 'react-router-dom';
+import { Suspense } from 'react';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import { tournamentRoutes } from '@/routes/tournament.routes';
 import { authRoutes } from '@/routes/auth.routes';
 import { adminRoutes } from '@/routes/admin.routes';

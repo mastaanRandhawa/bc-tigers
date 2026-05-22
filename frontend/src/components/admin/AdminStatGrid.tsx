@@ -1,5 +1,5 @@
 import type { LucideIcon } from 'lucide-react';
-import StatCard from '@/components/shared/StatCard';
+import MetricCard from '@/components/shared/MetricCard';
 
 interface AdminStatItem {
   value: string | number;
@@ -17,7 +17,7 @@ export default function AdminStatGrid({ items, className }: AdminStatGridProps) 
   return (
     <div className={`grid grid-cols-1 gap-2.5 sm:grid-cols-3 sm:gap-3 ${className ?? ''}`}>
       {items.map((item) => (
-        <StatCard
+        <MetricCard
           key={item.label}
           value={item.value}
           label={item.label}

@@ -54,7 +54,7 @@ export const DivisionMatchesAndSchedulePage = lazyPage(
   () => import("@/pages/divisions/DivisionMatchesAndSchedulePage"),
 );
 export const DivisionMatchDetailPage = lazyPage(
-  () => import("@/pages/divisions/DivisionMatchDetailPage"),
+  () => import("@/pages/matches/MatchDetailPage"),
 );
 export const DivisionStandingsPage = lazyPage(
   () => import("@/pages/divisions/DivisionStandingsPage"),

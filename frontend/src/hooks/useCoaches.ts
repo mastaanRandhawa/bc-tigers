@@ -35,21 +35,3 @@ export function useDeleteCoach() {
   });
 }
 
-export function useAssignCoachToTeam() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: ({
-      teamId,
-      coach_id,
-      role,
-    }: {
-      teamId: string;
-      coach_id: string;
-      role?: string;
-    }) => coachesService.assignToTeam(teamId, { coach_id, role }),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: queryKeys.coaches.all });
-      qc.invalidateQueries({ queryKey: ['teams'] });
-    },
-  });
-}

@@ -1,12 +1,10 @@
 import {
   Trophy,
   LayoutDashboard,
-  Flag,
   Shield,
   UserCircle,
   UserCog,
   Calendar,
-  GitBranch,
   Megaphone,
   MapPin,
   Users,
@@ -59,4 +57,3 @@ export const adminNavGroups: AdminNavGroup[] = [
   },
 ];
 
-export const adminNavItems = adminNavGroups.flatMap((group) => group.items);
