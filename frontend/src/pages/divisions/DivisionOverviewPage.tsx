@@ -1,5 +1,6 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { Shield } from 'lucide-react';
+import { Shield, Plus } from 'lucide-react';
 import MatchCard from '@/components/MatchCard';
 import DivisionQuickStats from '@/components/divisions/DivisionQuickStats';
 import SectionHeader from '@/components/shared/SectionHeader';
@@ -15,6 +16,9 @@ import {
 import { divisionTeamPath } from '@/lib/division-routes';
 import { StaggerItem } from '@/components/motion/StaggerList';
 import { RevealOnScroll } from '@/components/motion/RevealOnScroll';
+import { useCanAdminEdit } from '@/hooks/useCanAdminEdit';
+import { AdminActionButton } from '@/components/admin/inline/AdminActionButton';
+import MatchFormDialog from '@/components/admin/forms/MatchFormDialog';
 
 function getCountdownDays(dateStr?: string): number | null {
   if (!dateStr) return null;
@@ -27,6 +31,8 @@ export default function DivisionOverviewPage() {
   const { data: teams = [] } = useDivisionTeams(tournamentSlug, divisionSlug);
   const { data: matches = [] } = useDivisionMatches(tournamentSlug, divisionSlug);
   const { data: standings = [] } = useDivisionStandingsResource(tournamentSlug, divisionSlug);
+  const canEdit = useCanAdminEdit();
+  const [addMatchOpen, setAddMatchOpen] = useState(false);
 
   const liveMatches = matches.filter((m) => m.status === 'LIVE');
   const upcomingMatches = matches
@@ -127,12 +133,22 @@ export default function DivisionOverviewPage() {
         </Section>
       ) : (
         <Section>
-          <SectionHeader
-            title={showLive ? 'Live Matches' : 'Upcoming'}
-            subtitle={showLive ? 'Scores updating in real time' : 'Next fixtures in this division'}
-            href={`${basePath}/matches`}
-            linkLabel="All matches"
-          />
+          <div className="flex items-center gap-2">
+            <div className="flex-1">
+              <SectionHeader
+                title={showLive ? 'Live Matches' : 'Upcoming'}
+                subtitle={showLive ? 'Scores updating in real time' : 'Next fixtures in this division'}
+                href={`${basePath}/matches`}
+                linkLabel="All matches"
+              />
+            </div>
+            {canEdit && (
+              <AdminActionButton size="xs" onClick={() => setAddMatchOpen(true)}>
+                <Plus className="h-3 w-3" />
+                Add match
+              </AdminActionButton>
+            )}
+          </div>
           {displayMatches.length === 0 ? (
             <p className="py-6 text-center text-sm text-muted-foreground">
               No matches scheduled yet.
@@ -164,6 +180,13 @@ export default function DivisionOverviewPage() {
           </p>
         )}
       </Section>
+      {canEdit && (
+        <MatchFormDialog
+          open={addMatchOpen}
+          onOpenChange={setAddMatchOpen}
+          defaultDivisionId={division.id}
+        />
+      )}
     </div>
   );
 }

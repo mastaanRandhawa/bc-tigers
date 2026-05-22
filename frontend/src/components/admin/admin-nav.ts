@@ -32,20 +32,22 @@ export const adminNavGroups: AdminNavGroup[] = [
     items: [{ label: 'Dashboard', href: '/admin/dashboard', icon: LayoutDashboard }],
   },
   {
-    label: 'Tournament setup',
+    // Routine division setup is now inline on the main site; portal = bulk/advanced
+    label: 'Advanced — tournament setup',
     items: [
       { label: 'Tournaments', href: '/admin/tournaments', icon: Trophy },
-      { label: 'Divisions', href: '/admin/divisions', icon: Flag },
+      { label: 'Divisions (bulk)', href: '/admin/divisions', icon: Flag },
       { label: 'Venues', href: '/admin/venues', icon: MapPin },
     ],
   },
   {
-    label: 'Division content',
+    // Teams & matches are editable inline; portal = bulk operations and player CRUD
+    label: 'Advanced — division content',
     items: [
-      { label: 'Teams', href: '/admin/teams', icon: Shield },
+      { label: 'Teams (bulk)', href: '/admin/teams', icon: Shield },
       { label: 'Players', href: '/admin/players', icon: UserCircle },
       { label: 'Coaches', href: '/admin/coaches', icon: UserCog },
-      { label: 'Matches', href: '/admin/matches', icon: Calendar },
+      { label: 'Matches (bulk)', href: '/admin/matches', icon: Calendar },
       { label: 'Brackets', href: '/admin/brackets', icon: GitBranch },
     ],
   },

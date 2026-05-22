@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import QueryState from '@/components/shared/QueryState';
 import SearchField from '@/components/shared/SearchField';
@@ -9,6 +9,11 @@ import MatchCard from '@/components/MatchCard';
 import TeamHero from '@/components/teams/TeamHero';
 import RosterList from '@/components/teams/RosterList';
 import StatCard from '@/components/shared/StatCard';
+import TeamRosterPanel from '@/components/admin/TeamRosterPanel';
+import TeamFormDialog from '@/components/admin/forms/TeamFormDialog';
+import { AdminContextBar } from '@/components/admin/inline/AdminContextBar';
+import { AdminActionButton } from '@/components/admin/inline/AdminActionButton';
+import { useCanAdminEdit } from '@/hooks/useCanAdminEdit';
 import { useDivisionRoute } from '@/context/DivisionContext';
 import {
   useDivisionTeam,
@@ -17,6 +22,7 @@ import {
 } from '@/hooks/useDivisionResources';
 import { useListSearch } from '@/hooks/useListSearch';
 import { matchSearchText, playerSearchText } from '@/lib/search-text';
+import { Pencil } from 'lucide-react';
 import type { Player } from '@/types';
 
 export default function DivisionTeamDetailPage() {
@@ -29,6 +35,9 @@ export default function DivisionTeamDetailPage() {
   );
   const { data: allMatches = [] } = useDivisionMatches(tournamentSlug, divisionSlug);
   const { data: standings = [] } = useDivisionStandingsResource(tournamentSlug, divisionSlug);
+
+  const canEdit = useCanAdminEdit();
+  const [editTeamOpen, setEditTeamOpen] = useState(false);
 
   const roster = useMemo(
     () => (team?.rosters?.map((r) => r.player).filter(Boolean) as Player[]) ?? [],
@@ -71,6 +80,19 @@ export default function DivisionTeamDetailPage() {
     >
       {team && (
         <div className="space-y-5">
+          {/* Admin bar */}
+          <AdminContextBar
+            label="Editing team"
+            advancedHref="/admin/teams"
+            advancedLabel="All teams"
+            actions={
+              <AdminActionButton size="xs" onClick={() => setEditTeamOpen(true)}>
+                <Pencil className="h-3 w-3" />
+                Edit team
+              </AdminActionButton>
+            }
+          />
+
           <TeamHero team={team} />
 
           {standing && (
@@ -90,29 +112,35 @@ export default function DivisionTeamDetailPage() {
             </div>
           )}
 
-          {/* Roster */}
-          <div className="space-y-2.5">
-            {/* Search only shown when there's a roster to search */}
-            {roster.length > 3 && (
-              <SearchField
-                value={rosterSearch}
-                onChange={setRosterSearch}
-                placeholder="Search players…"
-                className="max-w-xs"
-              />
-            )}
-            {hasRosterQuery && filteredRoster.length === 0 ? (
-              <SearchEmpty query={debouncedRosterSearch} entityLabel="players" />
-            ) : (
-              <RosterList
-                players={filteredRoster}
-                tournamentSlug={tournamentSlug}
-                divisionSlug={divisionSlug}
-                teamSlug={teamSlug}
-                teamColor={team.primary_color}
-              />
-            )}
-          </div>
+          {/* Roster — admin sees the full management panel; public sees the read-only list */}
+          {canEdit ? (
+            <Section>
+              <SectionHeader title="Roster" />
+              <TeamRosterPanel team={team} />
+            </Section>
+          ) : (
+            <div className="space-y-2.5">
+              {roster.length > 3 && (
+                <SearchField
+                  value={rosterSearch}
+                  onChange={setRosterSearch}
+                  placeholder="Search players…"
+                  className="max-w-xs"
+                />
+              )}
+              {hasRosterQuery && filteredRoster.length === 0 ? (
+                <SearchEmpty query={debouncedRosterSearch} entityLabel="players" />
+              ) : (
+                <RosterList
+                  players={filteredRoster}
+                  tournamentSlug={tournamentSlug}
+                  divisionSlug={divisionSlug}
+                  teamSlug={teamSlug}
+                  teamColor={team.primary_color}
+                />
+              )}
+            </div>
+          )}
 
           <Section>
             <SectionHeader title="Matches" />
@@ -136,6 +164,15 @@ export default function DivisionTeamDetailPage() {
               <p className="text-sm text-muted-foreground">No matches for this team yet.</p>
             )}
           </Section>
+
+          {/* Edit dialog */}
+          {canEdit && (
+            <TeamFormDialog
+              open={editTeamOpen}
+              onOpenChange={setEditTeamOpen}
+              team={team}
+            />
+          )}
         </div>
       )}
     </QueryState>

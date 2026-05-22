@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import PageLayout from '@/components/PageLayout';
 import QueryState from '@/components/shared/QueryState';
@@ -9,11 +10,12 @@ import {
   User,
   Calendar,
   Goal as GoalIcon,
-  AlertTriangle,
   RefreshCw,
   ArrowLeftRight,
   ArrowLeft,
   Flag,
+  ClipboardEdit,
+  PlusSquare,
 } from 'lucide-react';
 import MatchLineups from '@/components/matches/MatchLineups';
 import { StaggerItem } from '@/components/motion/StaggerList';
@@ -23,6 +25,11 @@ import { useScoreFlash } from '@/hooks/useScoreFlash';
 import { formatDate, formatTime, cn, getInitials, getMatchStatusBadgeVariant } from '@/lib/utils';
 import { divisionMatchesPath } from '@/lib/division-routes';
 import { useMatch } from '@/hooks/useMatches';
+import { useCanAdminEdit } from '@/hooks/useCanAdminEdit';
+import { AdminContextBar } from '@/components/admin/inline/AdminContextBar';
+import { AdminActionButton } from '@/components/admin/inline/AdminActionButton';
+import MatchScoreFormDialog from '@/components/admin/forms/MatchScoreFormDialog';
+import MatchEventFormDialog from '@/components/admin/forms/MatchEventFormDialog';
 import type { MatchEventType } from '@/types';
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
@@ -109,6 +116,10 @@ export default function MatchDetailPage() {
   const nestedInDivision = !!(tournamentSlug && divisionSlug);
   const { data: match, isLoading, isError, refetch } = useMatch(matchId);
 
+  const canEdit = useCanAdminEdit();
+  const [scoreOpen, setScoreOpen] = useState(false);
+  const [eventOpen, setEventOpen] = useState(false);
+
   const isLive = match?.status === 'LIVE';
   const isCompleted = match?.status === 'COMPLETED';
   const showScore = isLive || isCompleted;
@@ -146,6 +157,27 @@ export default function MatchDetailPage() {
             '--away-color': awayColor,
           } as React.CSSProperties}
         >
+          {canEdit && (
+            <div className="page-container pt-4">
+              <AdminContextBar
+                label="Editing match"
+                advancedHref="/admin/matches"
+                advancedLabel="All matches"
+                actions={
+                  <>
+                    <AdminActionButton size="xs" onClick={() => setScoreOpen(true)}>
+                      <ClipboardEdit className="h-3 w-3" />
+                      Update score
+                    </AdminActionButton>
+                    <AdminActionButton size="xs" variant="ghost" onClick={() => setEventOpen(true)}>
+                      <PlusSquare className="h-3 w-3" />
+                      Add event
+                    </AdminActionButton>
+                  </>
+                }
+              />
+            </div>
+          )}
           {/* Subtle geometric grid background */}
           <div className="pointer-events-none absolute inset-0 bg-brand-grid opacity-60" aria-hidden />
 
@@ -360,6 +392,21 @@ export default function MatchDetailPage() {
               </div>
             </div>
           </div>
+        {/* Admin dialogs */}
+        {canEdit && (
+          <>
+            <MatchScoreFormDialog
+              open={scoreOpen}
+              onOpenChange={setScoreOpen}
+              match={match}
+            />
+            <MatchEventFormDialog
+              open={eventOpen}
+              onOpenChange={setEventOpen}
+              match={match}
+            />
+          </>
+        )}
         </div>
       )}
     </QueryState>

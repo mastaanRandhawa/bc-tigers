@@ -14,9 +14,11 @@ interface TeamFormDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   team?: Team | null;
+  /** Pre-fill division when creating a new team from a division context */
+  defaultDivisionId?: string;
 }
 
-export default function TeamFormDialog({ open, onOpenChange, team }: TeamFormDialogProps) {
+export default function TeamFormDialog({ open, onOpenChange, team, defaultDivisionId }: TeamFormDialogProps) {
   const { data: divisions = [] } = useDivisions();
   const createMutation = useCreateTeam();
   const updateMutation = useUpdateTeam();
@@ -49,7 +51,7 @@ export default function TeamFormDialog({ open, onOpenChange, team }: TeamFormDia
       });
     } else {
       form.reset({
-        division_id: divisions[0]?.id ?? '',
+        division_id: defaultDivisionId ?? divisions[0]?.id ?? '',
         name: '',
         slug: '',
         city: '',
@@ -58,7 +60,7 @@ export default function TeamFormDialog({ open, onOpenChange, team }: TeamFormDia
         logo: '',
       });
     }
-  }, [open, team, form, divisions]);
+  }, [open, team, form, divisions, defaultDivisionId]);
 
   const name = form.watch('name');
   useEffect(() => {

@@ -1,9 +1,14 @@
+import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import QueryState from '@/components/shared/QueryState';
 import { useDivisionRoute } from '@/context/DivisionContext';
 import { useDivisionTeam } from '@/hooks/useDivisionResources';
 import { matchesPlayerRef } from '@/lib/player-routes';
-import { ChevronLeft, User } from 'lucide-react';
+import { ChevronLeft, User, Pencil } from 'lucide-react';
+import { useCanAdminEdit } from '@/hooks/useCanAdminEdit';
+import { AdminActionButton } from '@/components/admin/inline/AdminActionButton';
+import PlayerFormDialog from '@/components/admin/forms/PlayerFormDialog';
+import type { Player } from '@/types';
 
 export default function DivisionPlayerDetailPage() {
   const { teamSlug = '', playerId = '' } = useParams();
@@ -13,6 +18,9 @@ export default function DivisionPlayerDetailPage() {
     divisionSlug,
     teamSlug,
   );
+
+  const canEdit = useCanAdminEdit();
+  const [editOpen, setEditOpen] = useState(false);
 
   const player = team?.rosters
     ?.map((r) => r.player)
@@ -42,9 +50,22 @@ export default function DivisionPlayerDetailPage() {
 
             <div className="mb-6 overflow-hidden rounded-xl bg-card shadow-sm border border-border">
               <div
-                className="px-6 py-8 text-center text-white"
+                className="relative px-6 py-8 text-center text-white"
                 style={{ backgroundColor: team.primary_color ?? 'var(--division-primary)' }}
               >
+                {/* Admin edit button */}
+                {canEdit && (
+                  <div className="absolute right-3 top-3">
+                    <AdminActionButton
+                      size="xs"
+                      onClick={() => setEditOpen(true)}
+                    >
+                      <Pencil className="h-3 w-3" />
+                      Edit player
+                    </AdminActionButton>
+                  </div>
+                )}
+
                 {player.profile_image ? (
                   <img
                     src={player.profile_image}
@@ -88,6 +109,14 @@ export default function DivisionPlayerDetailPage() {
                   </div>
                 ))}
               </div>
+            )}
+
+            {canEdit && (
+              <PlayerFormDialog
+                open={editOpen}
+                onOpenChange={setEditOpen}
+                player={player as Player}
+              />
             )}
           </>
         )}

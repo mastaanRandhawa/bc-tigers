@@ -11,7 +11,16 @@ import { useListSearch } from '@/hooks/useListSearch';
 import { matchSearchText } from '@/lib/search-text';
 import { formatScheduleDay } from '@/lib/date';
 import { cn } from '@/lib/utils';
-import type { MatchStatus } from '@/types';
+import { useCanAdminEdit } from '@/hooks/useCanAdminEdit';
+import { AdminContextBar } from '@/components/admin/inline/AdminContextBar';
+import { AdminActionButton } from '@/components/admin/inline/AdminActionButton';
+import { ConfirmDialog } from '@/components/admin/inline/ConfirmDialog';
+import MatchFormDialog from '@/components/admin/forms/MatchFormDialog';
+import { useDeleteMatch } from '@/hooks/useMatches';
+import { useFormDialog } from '@/hooks/useFormDialog';
+import { useQueryClient } from '@tanstack/react-query';
+import { Plus, Pencil, Trash2 } from 'lucide-react';
+import type { Match, MatchStatus } from '@/types';
 
 const filters: { label: string; value: MatchStatus | 'ALL' }[] = [
   { label: 'All', value: 'ALL' },
@@ -23,7 +32,7 @@ const filters: { label: string; value: MatchStatus | 'ALL' }[] = [
 type ViewMode = 'list' | 'calendar';
 
 export default function DivisionMatchesAndSchedulePage() {
-  const { tournamentSlug, divisionSlug } = useDivisionRoute();
+  const { tournamentSlug, divisionSlug, division } = useDivisionRoute();
   const [searchParams, setSearchParams] = useSearchParams();
   const view: ViewMode = searchParams.get('view') === 'calendar' ? 'calendar' : 'list';
   const [filter, setFilter] = useState<MatchStatus | 'ALL'>('ALL');
@@ -32,6 +41,12 @@ export default function DivisionMatchesAndSchedulePage() {
     tournamentSlug,
     divisionSlug,
   );
+
+  const canEdit = useCanAdminEdit();
+  const matchDialog = useFormDialog<Match>();
+  const deleteMutation = useDeleteMatch();
+  const [deleteTarget, setDeleteTarget] = useState<Match | null>(null);
+  const qc = useQueryClient();
 
   const matches = useMemo(() => {
     if (filter === 'ALL') return allMatches;
@@ -76,12 +91,60 @@ export default function DivisionMatchesAndSchedulePage() {
     setSearchParams(nextParams, { replace: true });
   };
 
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    await deleteMutation.mutateAsync(deleteTarget.id);
+    qc.invalidateQueries({ queryKey: ['division-resources'] });
+    setDeleteTarget(null);
+  };
+
+  const renderMatchRow = (m: Match, index: number) => (
+    <div key={m.id} className="group relative flex items-stretch">
+      <div className="min-w-0 flex-1">
+        <MatchCard match={m} flat divider={index > 0} />
+      </div>
+      {canEdit && (
+        <div className="mr-2 flex shrink-0 flex-col items-center justify-center gap-1 border-l border-border/40 pl-2 opacity-0 transition-opacity group-hover:opacity-100">
+          <AdminActionButton
+            size="xs"
+            variant="ghost"
+            onClick={() => matchDialog.openEdit(m)}
+            aria-label={`Edit match`}
+          >
+            <Pencil className="h-3 w-3" />
+          </AdminActionButton>
+          <AdminActionButton
+            size="xs"
+            variant="destructive"
+            onClick={() => setDeleteTarget(m)}
+            aria-label={`Delete match`}
+          >
+            <Trash2 className="h-3 w-3" />
+          </AdminActionButton>
+        </div>
+      )}
+    </div>
+  );
+
   return (
     <>
       <DivisionPageHeader
         title="Matches & Schedule"
         subtitle="Live, upcoming, and completed fixtures"
       />
+
+      <AdminContextBar
+        label="Editing matches"
+        advancedHref="/admin/matches"
+        advancedLabel="All matches"
+        actions={
+          <AdminActionButton onClick={matchDialog.openCreate}>
+            <Plus className="h-3 w-3" />
+            Add match
+          </AdminActionButton>
+        }
+      />
+
       <div className="mb-4 flex flex-col gap-3">
         <div className="flex flex-wrap items-center gap-2">
           <div className="inline-flex rounded-lg border border-border bg-card p-0.5">
@@ -155,21 +218,32 @@ export default function DivisionMatchesAndSchedulePage() {
                   {formatScheduleDay(date)}
                 </h3>
                 <div className="overflow-hidden rounded-md border border-border/60 bg-card">
-                  {grouped[date].map((m, index) => (
-                    <MatchCard key={m.id} match={m} flat divider={index > 0} />
-                  ))}
+                  {grouped[date].map((m, index) => renderMatchRow(m, index))}
                 </div>
               </div>
             ))}
           </div>
         ) : (
           <div className="match-list-perf overflow-hidden rounded-md border border-border/60 bg-card">
-            {filtered.map((m, index) => (
-              <MatchCard key={m.id} match={m} flat divider={index > 0} />
-            ))}
+            {filtered.map((m, index) => renderMatchRow(m, index))}
           </div>
         )}
       </QueryState>
+
+      {/* Dialogs */}
+      <MatchFormDialog
+        open={matchDialog.open}
+        onOpenChange={matchDialog.setOpen}
+        match={matchDialog.editing}
+        defaultDivisionId={division.id}
+      />
+      <ConfirmDialog
+        open={!!deleteTarget}
+        onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}
+        title="Delete match?"
+        description="This match and all its events will be permanently removed."
+        onConfirm={handleDelete}
+      />
     </>
   );
 }

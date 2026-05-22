@@ -3,7 +3,7 @@ import type { Player } from '@/types';
 
 export const playersService = {
   getAll: (params?: { teamId?: string; page?: number; limit?: number }) =>
-    apiClient.get<Player[]>('/players', { params }),
+    apiClient.get<Player[]>('/players', { params: { limit: 500, ...params } }),
 
   getOne: (slug: string) => apiClient.get<Player>(`/players/${slug}`),
 

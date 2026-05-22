@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import FormDialog from '@/components/admin/FormDialog';
@@ -12,12 +12,15 @@ interface PlayerFormDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   player?: Player | null;
+  /** Called with the created/updated player on successful save */
+  onSuccess?: (player: Player) => void;
 }
 
-export default function PlayerFormDialog({ open, onOpenChange, player }: PlayerFormDialogProps) {
+export default function PlayerFormDialog({ open, onOpenChange, player, onSuccess }: PlayerFormDialogProps) {
   const createMutation = useCreatePlayer();
   const updateMutation = useUpdatePlayer();
   const isEditing = !!player;
+  const [apiError, setApiError] = useState('');
 
   const form = useForm<PlayerFormValues>({
     resolver: zodResolver(playerSchema),
@@ -25,14 +28,17 @@ export default function PlayerFormDialog({ open, onOpenChange, player }: PlayerF
       first_name: '',
       last_name: '',
       nationality: '',
-      jersey_number: undefined,
+      jersey_number: '',
       preferred_position: '',
       profile_image: '',
     },
   });
 
   useEffect(() => {
-    if (!open) return;
+    if (!open) {
+      setApiError('');
+      return;
+    }
     if (player) {
       form.reset({
         first_name: player.first_name,
@@ -55,45 +61,66 @@ export default function PlayerFormDialog({ open, onOpenChange, player }: PlayerF
   }, [open, player, form]);
 
   const onSubmit = form.handleSubmit(async (values) => {
+    setApiError('');
     try {
       const payload = {
         ...values,
         profile_image: values.profile_image || undefined,
         jersey_number: values.jersey_number ? Number(values.jersey_number) : undefined,
+        // Strip empty optional strings so they don't create bad API payloads
+        nationality: values.nationality || undefined,
+        preferred_position: values.preferred_position || undefined,
       };
       if (isEditing && player) {
-        await updateMutation.mutateAsync({ id: player.id, data: payload });
+        const res = await updateMutation.mutateAsync({ id: player.id, data: payload });
+        onOpenChange(false);
+        onSuccess?.(res.data);
       } else {
-        await createMutation.mutateAsync(payload);
+        const res = await createMutation.mutateAsync(payload);
+        onOpenChange(false);
+        onSuccess?.(res.data);
       }
-      onOpenChange(false);
     } catch (err) {
-      form.setError('root', { message: getApiErrorMessage(err) });
+      const message = getApiErrorMessage(err);
+      setApiError(message);
+      form.setError('root', { message });
     }
   });
+
+  const fieldErrors = form.formState.errors;
 
   return (
     <FormDialog
       open={open}
-      onOpenChange={onOpenChange}
+      onOpenChange={(next) => {
+        if (!next) setApiError('');
+        onOpenChange(next);
+      }}
       title={isEditing ? 'Edit Player' : 'Create Player'}
       onSubmit={onSubmit}
       isSubmitting={createMutation.isPending || updateMutation.isPending}
     >
-      <FormError message={form.formState.errors.root?.message} />
+      {/* Prominent error banner — shown for both API and root-level errors */}
+      {(apiError || fieldErrors.root?.message) && (
+        <div className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2.5 text-sm text-destructive">
+          {apiError || fieldErrors.root?.message}
+        </div>
+      )}
+
+      <FormError message={undefined} />
+
       <div className="grid grid-cols-2 gap-3">
         <TextInputField control={form.control} name="first_name" label="First Name" />
         <TextInputField control={form.control} name="last_name" label="Last Name" />
       </div>
-      <p className="text-xs text-muted-foreground">
-        Player URLs use an auto-generated ID. No manual slug required.
-      </p>
+
       <div className="grid grid-cols-2 gap-3">
         <TextInputField control={form.control} name="jersey_number" label="Jersey #" type="number" />
-        <TextInputField control={form.control} name="preferred_position" label="Position" />
+        <TextInputField control={form.control} name="preferred_position" label="Position" placeholder="e.g. Forward" />
       </div>
-      <TextInputField control={form.control} name="nationality" label="Nationality" />
-      <TextInputField control={form.control} name="profile_image" label="Photo URL" />
+
+      <TextInputField control={form.control} name="nationality" label="Nationality" placeholder="e.g. Canadian" />
+      <TextInputField control={form.control} name="profile_image" label="Photo URL" placeholder="https://…" />
     </FormDialog>
   );
 }

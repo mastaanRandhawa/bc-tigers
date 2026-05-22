@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import SearchField from '@/components/shared/SearchField';
 import SearchEmpty from '@/components/shared/SearchEmpty';
@@ -16,16 +16,20 @@ import { Badge } from '@/components/ui/badge';
 import { useHomeHub } from '@/hooks/useHomeHub';
 import { formatDate } from '@/lib/date';
 import { pickFeaturedTournament } from '@/lib/featured-tournament';
-import { ChevronRight, Trophy, Megaphone } from 'lucide-react';
+import { ChevronRight, Trophy, Megaphone, Plus } from 'lucide-react';
 import { RevealOnScroll } from '@/components/motion/RevealOnScroll';
+import { useCanAdminEdit } from '@/hooks/useCanAdminEdit';
+import { AdminActionButton } from '@/components/admin/inline/AdminActionButton';
+import { AnnouncementDialog } from '@/components/admin/inline/AnnouncementDialog';
 
 export default function HomePage() {
   const { data, isLoading, isError, refetch } = useHomeHub();
+  const canEdit = useCanAdminEdit();
+  const [announcementOpen, setAnnouncementOpen] = useState(false);
 
   const tournaments = data?.tournaments ?? [];
   const liveMatches = data?.liveMatches ?? [];
   const announcements = data?.announcements ?? [];
-  const featuredMedia = data?.featuredMedia ?? [];
 
   const featuredTournament = useMemo(
     () => pickFeaturedTournament(tournaments),
@@ -101,70 +105,46 @@ export default function HomePage() {
               </div>
             )}
 
-            {liveMatches.length > 0 && (
-              <RevealOnScroll>
-                <Section className="mb-6">
-                  <SectionHeader title="Live now" linkLabel="View tournaments" href="/tournaments" />
-                  <div className="overflow-hidden rounded-md border border-border/60 bg-card">
-                    {liveMatches.slice(0, 6).map((match, index) => (
-                      <MatchCard key={match.id} match={match} flat divider={index > 0} />
-                    ))}
+            {(announcements.length > 0 || canEdit) && (
+              <Section className="mb-6">
+                <div className="flex items-center gap-3">
+                  <div className="flex-1">
+                    <SectionHeader title="Announcements" />
                   </div>
-                </Section>
-              </RevealOnScroll>
-            )}
-
-            {featuredMedia.length > 0 && (
-              <RevealOnScroll>
-              <Section className="mb-6">
-                <SectionHeader title="Featured media" />
-                <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
-                  {featuredMedia.slice(0, 6).map((item) => (
-                    <a
-                      key={item.id}
-                      href={item.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="group overflow-hidden rounded-lg border border-border bg-card"
+                  {canEdit && (
+                    <AdminActionButton
+                      size="xs"
+                      onClick={() => setAnnouncementOpen(true)}
                     >
-                      <div className="aspect-video overflow-hidden bg-muted">
-                        <img
-                          src={item.url}
-                          alt={item.title ?? ''}
-                          className="h-full w-full object-cover transition-transform group-hover:scale-105"
-                        />
-                      </div>
-                      {item.title && (
-                        <p className="truncate px-2 py-1.5 text-xs font-medium text-foreground">
-                          {item.title}
-                        </p>
-                      )}
-                    </a>
-                  ))}
+                      <Plus className="h-3 w-3" />
+                      Publish
+                    </AdminActionButton>
+                  )}
                 </div>
-              </Section>
-              </RevealOnScroll>
-            )}
-
-            {announcements.length > 0 && (
-              <Section className="mb-6">
-                <SectionHeader title="Announcements" />
-                <ul className="space-y-2">
-                  {announcements.map((a) => (
-                    <li
-                      key={a.id}
-                      className="rounded-lg border border-border bg-card px-4 py-3"
-                    >
-                      <div className="flex items-start gap-2">
-                        <Megaphone className="mt-0.5 h-4 w-4 shrink-0 text-primary" aria-hidden />
-                        <div>
-                          <p className="font-medium text-foreground">{a.title}</p>
-                          <p className="mt-0.5 text-sm text-muted-foreground">{a.message}</p>
+                {announcements.length > 0 ? (
+                  <ul className="space-y-2">
+                    {announcements.map((a) => (
+                      <li
+                        key={a.id}
+                        className="rounded-lg border border-border bg-card px-4 py-3"
+                      >
+                        <div className="flex items-start gap-2">
+                          <Megaphone className="mt-0.5 h-4 w-4 shrink-0 text-primary" aria-hidden />
+                          <div>
+                            <p className="font-medium text-foreground">{a.title}</p>
+                            <p className="mt-0.5 text-sm text-muted-foreground">{a.message}</p>
+                          </div>
                         </div>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  canEdit && (
+                    <p className="py-4 text-sm text-muted-foreground">
+                      No announcements yet. Publish one to show it here.
+                    </p>
+                  )
+                )}
               </Section>
             )}
 
@@ -227,10 +207,27 @@ export default function HomePage() {
               </QueryState>
             </section>
           </QueryState>
+
+          {liveMatches.length > 0 && (
+            <RevealOnScroll>
+              <Section className="mt-6">
+                <SectionHeader title="Live now" linkLabel="View tournaments" href="/tournaments" />
+                <div className="overflow-hidden rounded-md border border-border/60 bg-card">
+                  {liveMatches.slice(0, 6).map((match, index) => (
+                    <MatchCard key={match.id} match={match} flat divider={index > 0} />
+                  ))}
+                </div>
+              </Section>
+            </RevealOnScroll>
+          )}
         </div>
 
         <Footer className="mt-10 md:mt-12" />
       </section>
+
+      {canEdit && (
+        <AnnouncementDialog open={announcementOpen} onOpenChange={setAnnouncementOpen} />
+      )}
     </PageLayout>
   );
 }

@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import QueryState from '@/components/shared/QueryState';
 import SearchField from '@/components/shared/SearchField';
@@ -10,7 +10,11 @@ import SectionHeader from '@/components/shared/SectionHeader';
 import MatchCard from '@/components/MatchCard';
 import { useDivisionRoute } from '@/context/DivisionContext';
 import { useDivisionVenue } from '@/hooks/useDivisionResources';
-import { MapPin } from 'lucide-react';
+import { MapPin, Pencil } from 'lucide-react';
+import { useCanAdminEdit } from '@/hooks/useCanAdminEdit';
+import { AdminActionButton } from '@/components/admin/inline/AdminActionButton';
+import VenueFormDialog from '@/components/admin/forms/VenueFormDialog';
+import type { Venue } from '@/types';
 
 export default function DivisionVenueDetailPage() {
   const { venueSlug = '' } = useParams();
@@ -20,6 +24,9 @@ export default function DivisionVenueDetailPage() {
     divisionSlug,
     venueSlug,
   );
+
+  const canEdit = useCanAdminEdit();
+  const [editOpen, setEditOpen] = useState(false);
 
   const matches = venue?.matches ?? [];
   const getMatchText = useCallback((m: (typeof matches)[0]) => matchSearchText(m), []);
@@ -36,9 +43,17 @@ export default function DivisionVenueDetailPage() {
       {venue && (
         <div className="space-y-5">
           <div
-            className="overflow-hidden rounded-xl p-6 text-white shadow-sm"
+            className="relative overflow-hidden rounded-xl p-6 text-white shadow-sm"
             style={{ backgroundColor: 'var(--division-primary)' }}
           >
+            {canEdit && (
+              <div className="absolute right-3 top-3">
+                <AdminActionButton size="xs" onClick={() => setEditOpen(true)}>
+                  <Pencil className="h-3 w-3" />
+                  Edit venue
+                </AdminActionButton>
+              </div>
+            )}
             <MapPin className="mb-2 h-6 w-6" aria-hidden />
             <h1 className="text-2xl font-bold tracking-tight font-display">{venue.name}</h1>
             <p className="mt-2 text-sm text-white/85">{venue.address}</p>
@@ -69,6 +84,14 @@ export default function DivisionVenueDetailPage() {
               <p className="text-sm text-muted-foreground">No matches at this venue.</p>
             )}
           </Section>
+
+          {canEdit && (
+            <VenueFormDialog
+              open={editOpen}
+              onOpenChange={setEditOpen}
+              venue={venue as Venue}
+            />
+          )}
         </div>
       )}
     </QueryState>

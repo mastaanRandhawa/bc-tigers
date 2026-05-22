@@ -169,10 +169,10 @@ function TournamentsLink({ onDark }: { onDark: boolean }) {
 }
 
 export default function SiteHeader({ variant = 'hero', showLiveTicker = true }: SiteHeaderProps) {
-  const { isVisible, isAtTop, isScrolled } = useSmartHeader();
-  const { isAuthenticated, user } = useAuthStore();
   const isAdmin = variant === 'admin';
   const isMinimal = variant === 'minimal';
+  const { isVisible, isAtTop, isScrolled } = useSmartHeader();
+  const { isAuthenticated, user } = useAuthStore();
   const showTicker = showLiveTicker && !isMinimal;
   const onDark = true;
 

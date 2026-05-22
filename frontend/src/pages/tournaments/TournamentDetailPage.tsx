@@ -1,4 +1,4 @@
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import SearchField from '@/components/shared/SearchField';
 import SearchEmpty from '@/components/shared/SearchEmpty';
@@ -8,15 +8,28 @@ import PageContent from '@/components/shared/PageContent';
 import QueryState from '@/components/shared/QueryState';
 import DivisionDirectoryCard from '@/components/shared/DivisionDirectoryCard';
 import { useTournamentOverview } from '@/hooks/useTournaments';
-import { Trophy, Calendar, MapPin, Flag } from 'lucide-react';
+import { Trophy, Calendar, MapPin, Flag, Plus, Pencil, Trash2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { formatDate } from '@/lib/utils';
+import { useCanAdminEdit } from '@/hooks/useCanAdminEdit';
+import { AdminContextBar } from '@/components/admin/inline/AdminContextBar';
+import { AdminActionButton } from '@/components/admin/inline/AdminActionButton';
+import { ConfirmDialog } from '@/components/admin/inline/ConfirmDialog';
+import DivisionFormDialog from '@/components/admin/forms/DivisionFormDialog';
+import TournamentFormDialog from '@/components/admin/forms/TournamentFormDialog';
+import { useDeleteDivision } from '@/hooks/useDivisions';
+import { useFormDialog } from '@/hooks/useFormDialog';
+import { useQueryClient } from '@tanstack/react-query';
+import type { Division, Tournament } from '@/types';
 
 export default function TournamentDetailPage() {
   const { tournamentSlug } = useParams();
   const { data: overview, isLoading, isError, refetch } = useTournamentOverview(tournamentSlug);
   const tournament = overview?.tournament;
   const divisions = tournament?.divisions ?? [];
+  const canEdit = useCanAdminEdit();
+  const qc = useQueryClient();
+
   const getDivisionText = useCallback(
     (d: (typeof divisions)[0]) => divisionSearchText(d),
     [],
@@ -28,6 +41,18 @@ export default function TournamentDetailPage() {
     debouncedSearch: debouncedDivisionSearch,
     hasQuery: hasDivisionQuery,
   } = useListSearch(divisions, getDivisionText);
+
+  const divisionDialog = useFormDialog<Division>();
+  const tournamentDialog = useFormDialog<Tournament>();
+  const deleteMutation = useDeleteDivision();
+  const [deleteTarget, setDeleteTarget] = useState<Division | null>(null);
+
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    await deleteMutation.mutateAsync(deleteTarget.id);
+    qc.invalidateQueries({ queryKey: ['tournaments'] });
+    setDeleteTarget(null);
+  };
 
   return (
     <QueryState
@@ -72,12 +97,28 @@ export default function TournamentDetailPage() {
                     </span>
                   </div>
                 </div>
+                {canEdit && (
+                  <AdminActionButton
+                    size="xs"
+                    onClick={() => tournamentDialog.openEdit(tournament as Tournament)}
+                  >
+                    <Pencil className="h-3 w-3" />
+                    Edit tournament
+                  </AdminActionButton>
+                )}
               </div>
             </div>
           </div>
 
           {/* ── Body ──────────────────────────────────────────────────────────── */}
           <PageContent>
+            {/* Admin bar — context label + link to bulk admin only, no duplicate Add button */}
+            <AdminContextBar
+              label="Editing tournament"
+              advancedHref="/admin/divisions"
+              advancedLabel="All divisions"
+            />
+
             {/* One unified card that groups About + Divisions */}
             <div className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
 
@@ -93,12 +134,11 @@ export default function TournamentDetailPage() {
                 </div>
               )}
 
-              {/* Divider between About and Divisions */}
               {tournament.description && (
                 <div className="border-t border-border/60" />
               )}
 
-              {/* Divisions header row */}
+              {/* Divisions header row — single Add action lives here */}
               <div className="flex items-center justify-between gap-3 px-5 py-3.5">
                 <div>
                   <p className="mb-0.5 text-[11px] font-semibold uppercase tracking-widest text-muted-foreground/60">
@@ -108,15 +148,23 @@ export default function TournamentDetailPage() {
                     {divisions.length} {divisions.length === 1 ? 'division' : 'divisions'} in this tournament
                   </p>
                 </div>
-                {divisions.length > 3 && (
-                  <SearchField
-                    value={divisionSearch}
-                    onChange={setDivisionSearch}
-                    placeholder="Search divisions…"
-                    className="w-48 sm:w-64"
-                    aria-label="Search divisions"
-                  />
-                )}
+                <div className="flex items-center gap-2">
+                  {canEdit && (
+                    <AdminActionButton onClick={divisionDialog.openCreate} size="xs">
+                      <Plus className="h-3 w-3" />
+                      Add division
+                    </AdminActionButton>
+                  )}
+                  {divisions.length > 3 && (
+                    <SearchField
+                      value={divisionSearch}
+                      onChange={setDivisionSearch}
+                      placeholder="Search divisions…"
+                      className="w-48 sm:w-64"
+                      aria-label="Search divisions"
+                    />
+                  )}
+                </div>
               </div>
 
               {/* Divisions list */}
@@ -126,17 +174,62 @@ export default function TournamentDetailPage() {
                 </div>
               ) : (
                 <div className="divide-y divide-border/60 border-t border-border/60">
-                  {filteredDivisions.map((div) => (
-                    <DivisionDirectoryCard
-                      key={div.id}
-                      variant="row"
-                      division={{ ...div, tournament }}
-                    />
-                  ))}
+                  {filteredDivisions.map((div) => {
+                    const divisionWithTournament = { ...div, tournament };
+                    return (
+                      <div key={div.id} className="group relative flex items-center">
+                        <div className="min-w-0 flex-1">
+                          <DivisionDirectoryCard
+                            variant="row"
+                            division={divisionWithTournament}
+                          />
+                        </div>
+                        {canEdit && (
+                          <div className="mr-3 flex shrink-0 items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
+                            <AdminActionButton
+                              size="xs"
+                              variant="ghost"
+                              onClick={() => divisionDialog.openEdit(divisionWithTournament as Division)}
+                              aria-label={`Edit ${div.name}`}
+                            >
+                              <Pencil className="h-3 w-3" />
+                            </AdminActionButton>
+                            <AdminActionButton
+                              size="xs"
+                              variant="destructive"
+                              onClick={() => setDeleteTarget(divisionWithTournament as Division)}
+                              aria-label={`Delete ${div.name}`}
+                            >
+                              <Trash2 className="h-3 w-3" />
+                            </AdminActionButton>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
               )}
             </div>
           </PageContent>
+
+          {/* Dialogs */}
+          <DivisionFormDialog
+            open={divisionDialog.open}
+            onOpenChange={divisionDialog.setOpen}
+            division={divisionDialog.editing}
+          />
+          <TournamentFormDialog
+            open={tournamentDialog.open}
+            onOpenChange={(open) => (open ? tournamentDialog.setOpen(true) : tournamentDialog.close())}
+            tournament={tournamentDialog.editing}
+          />
+          <ConfirmDialog
+            open={!!deleteTarget}
+            onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}
+            title="Delete division?"
+            description={`"${deleteTarget?.name}" and all its data will be permanently removed.`}
+            onConfirm={handleDelete}
+          />
         </>
       )}
     </QueryState>

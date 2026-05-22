@@ -18,11 +18,20 @@ export function usePlayer(slug?: string) {
   });
 }
 
+function invalidatePlayerCaches(qc: ReturnType<typeof useQueryClient>) {
+  // Invalidate standalone player list (admin portal)
+  qc.invalidateQueries({ queryKey: ['players'] });
+  // Invalidate all division-team queries — they embed player data in rosters
+  qc.invalidateQueries({ queryKey: ['divisions'] });
+  // Invalidate roster queries
+  qc.invalidateQueries({ queryKey: ['rosters'] });
+}
+
 export function useCreatePlayer() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (data: Partial<Player>) => playersService.create(data),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['players'] }),
+    onSuccess: () => invalidatePlayerCaches(qc),
   });
 }
 
@@ -31,7 +40,7 @@ export function useUpdatePlayer() {
   return useMutation({
     mutationFn: ({ id, data }: { id: string; data: Partial<Player> }) =>
       playersService.update(id, data),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['players'] }),
+    onSuccess: () => invalidatePlayerCaches(qc),
   });
 }
 
@@ -39,6 +48,6 @@ export function useDeletePlayer() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => playersService.delete(id),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['players'] }),
+    onSuccess: () => invalidatePlayerCaches(qc),
   });
 }

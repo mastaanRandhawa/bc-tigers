@@ -14,7 +14,8 @@ export default function AdminLayout({ children, title, description, action }: Ad
     <div className="min-h-dvh min-h-screen flex flex-col w-full overflow-x-hidden admin-shell">
       <SiteHeader variant="admin" />
 
-      <div className="flex flex-1 min-h-0 w-full">
+      {/* pt-14 pushes content below the fixed header (h-14 = 56px) */}
+      <div className="flex flex-1 min-h-0 w-full pt-14">
         <AdminSidebar />
 
         <div className="flex flex-1 flex-col min-w-0">

@@ -35,6 +35,8 @@ interface MatchFormDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   match?: Match | null;
+  /** Pre-fill division when creating a match from a division context */
+  defaultDivisionId?: string;
 }
 
 const REFEREE_ROLE_OPTIONS = [
@@ -42,7 +44,7 @@ const REFEREE_ROLE_OPTIONS = [
   { value: 'ASSISTANT', label: 'Assistant' },
 ];
 
-export default function MatchFormDialog({ open, onOpenChange, match }: MatchFormDialogProps) {
+export default function MatchFormDialog({ open, onOpenChange, match, defaultDivisionId }: MatchFormDialogProps) {
   const { data: tournaments = [] } = useTournaments();
   const { data: divisions = [] } = useDivisions();
   const { data: venues = [] } = useVenues();
@@ -97,9 +99,13 @@ export default function MatchFormDialog({ open, onOpenChange, match }: MatchForm
         round: match.round != null ? String(match.round) : '',
       });
     } else {
+      const prefilledDivision = defaultDivisionId ?? '';
+      const prefilledTournament = defaultDivisionId
+        ? (divisions.find((d) => d.id === defaultDivisionId)?.tournament_id ?? tournaments[0]?.id ?? '')
+        : (tournaments[0]?.id ?? '');
       form.reset({
-        tournament_id: tournaments[0]?.id ?? '',
-        division_id: '',
+        tournament_id: prefilledTournament,
+        division_id: prefilledDivision,
         home_team_id: '',
         away_team_id: '',
         venue_id: '__none__',
@@ -108,7 +114,7 @@ export default function MatchFormDialog({ open, onOpenChange, match }: MatchForm
         round: '',
       });
     }
-  }, [open, match, form, tournaments]);
+  }, [open, match, form, tournaments, divisions, defaultDivisionId]);
 
   const onSubmit = form.handleSubmit(async (values) => {
     try {
