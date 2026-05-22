@@ -18,21 +18,34 @@ Full-stack web app for **BC Tigers FC** tournament operations and public fan exp
 
 ```bash
 cd backend
+cp .env.example .env   # set DATABASE_URL
 npm install
 npx prisma migrate dev
 npm run seed          # demo data (~90s)
 npm run start:dev     # http://localhost:3000
 ```
 
+Prisma schema lives in `backend/prisma/` (also mirrored at repo root `prisma/` for reference).
+
 ### Frontend
 
 ```bash
 cd frontend
+cp .env.example .env
 npm install
 npm run dev           # http://localhost:5173
 ```
 
-Set the API base URL in frontend env if needed (see `frontend` Vite config / services).
+### Architecture (enforced hierarchy)
+
+This is a **competition hierarchy**, not a flat directory:
+
+`Home → Tournaments → Division → Team → Player → Match`
+
+- No global `/teams`, `/divisions`, or `/players` routes (redirect to `/tournaments`)
+- Canonical match URL: `/matches/:matchId`
+- Home shows tournaments, live/upcoming matches, announcements, and media only
+- Admin flat CRUD under `/admin/*` manages data; public UI stays hierarchical
 
 ---
 
@@ -55,7 +68,8 @@ Set the API base URL in frontend env if needed (see `frontend` Vite config / ser
 
 | URL | Page | What you can do |
 |-----|------|-----------------|
-| `/` | **Home** | Hero hub; quick links to schedule, live/results, divisions; live matches; recent results; upcoming; tournament cards; search when many tournaments |
+| `/` | **Home** | Featured tournaments, live/recent/upcoming matches, announcements, media — **no** division or team directories |
+| `/matches/:matchId` | **Match detail** | Canonical match page (score, events, venue, referees) |
 | `/tournaments` | **Tournaments list** | Browse all competitions; search by name, location, status |
 | `/tournaments/:slug` | **Tournament detail** | Info, rules, dates, location; division directory; featured live/recent/upcoming matches; standings snapshot; top scorers; search divisions |
 
@@ -71,7 +85,7 @@ Each division has its own theme (colors) and pill navigation:
 | `/teams/:teamSlug/players/:playerId` | **Player profile** | Bio, position, stats |
 | `/schedule` | **Schedule** | Matches grouped by day; search |
 | `/matches` | **Matches** | Filter by status (all / live / scheduled / completed); search |
-| `/matches/:matchId` | **Match detail** | Scoreline, status, venue, time, referee; match timeline (goals, cards, subs, assists) |
+| `.../matches/:matchId` | *(redirect)* | Redirects to `/matches/:matchId` |
 | `/standings` | **Standings** | Full table with form indicators; search |
 | `/stats` | **Stats hub** | Links to leaderboards |
 | `/stats/top-scorers` | **Top scorers** | Leaderboard + search |

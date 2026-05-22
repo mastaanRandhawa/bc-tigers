@@ -11,10 +11,7 @@ import StandingsTable from '@/components/StandingsTable';
 import SectionHeader from '@/components/shared/SectionHeader';
 import Section from '@/components/shared/Section';
 import DivisionDirectoryCard from '@/components/shared/DivisionDirectoryCard';
-import { useTournament } from '@/hooks/useTournaments';
-import { useMatches } from '@/hooks/useMatches';
-import { useTopScorers } from '@/hooks/useStats';
-import { useStandings } from '@/hooks/useStandings';
+import { useTournamentOverview } from '@/hooks/useTournaments';
 import { Trophy, Calendar, MapPin, Flag, ChevronRight } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -26,16 +23,13 @@ import { formatDate } from '@/lib/utils';
 
 export default function TournamentDetailPage() {
   const { tournamentSlug } = useParams();
-  const { data: tournament, isLoading, isError, refetch } = useTournament(tournamentSlug);
-  const { data: matches = [] } = useMatches(tournament ? { tournamentId: tournament.id } : undefined);
-  const { data: topScorers = [] } = useTopScorers(
-    tournament ? { tournamentId: tournament.id, limit: 5 } : undefined,
-  );
-  const firstDivision = tournament?.divisions?.[0];
-  const { data: standings = [] } = useStandings(firstDivision?.id);
-
-  const featured = matches.filter((m) => m.status === 'LIVE' || m.status === 'COMPLETED').slice(0, 2);
-  const upcoming = matches.filter((m) => m.status === 'SCHEDULED').slice(0, 3);
+  const { data: overview, isLoading, isError, refetch } = useTournamentOverview(tournamentSlug);
+  const tournament = overview?.tournament;
+  const liveMatches = overview?.liveMatches ?? [];
+  const featured = [...liveMatches, ...(overview?.recentMatches ?? [])].slice(0, 2);
+  const upcoming = overview?.upcomingMatches ?? [];
+  const topScorers = overview?.topScorers ?? [];
+  const standings = overview?.standingsPreview ?? [];
   const divisions = tournament?.divisions ?? [];
   const getDivisionText = useCallback(
     (d: (typeof divisions)[0]) => divisionSearchText(d),
@@ -162,7 +156,7 @@ export default function TournamentDetailPage() {
                   <StandingsTable
                     standings={standings}
                     compact
-                    division={firstDivision}
+                    division={primaryDivision}
                     searchable={false}
                   />
                 </Section>

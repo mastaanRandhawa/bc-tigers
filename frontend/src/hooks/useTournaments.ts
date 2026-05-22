@@ -21,6 +21,15 @@ export function useTournament(slug?: string) {
   });
 }
 
+export function useTournamentOverview(slug?: string) {
+  return useQuery({
+    queryKey: [...queryKeys.tournaments.detail(slug ?? ''), 'overview'],
+    queryFn: async () => (await tournamentsService.getOverview(slug!)).data,
+    enabled: !!slug,
+    ...queryTiming.feed,
+  });
+}
+
 export function useCreateTournament() {
   const qc = useQueryClient();
   return useMutation({

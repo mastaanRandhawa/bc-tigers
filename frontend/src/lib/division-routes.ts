@@ -124,13 +124,13 @@ export function getDivisionVenuesPath(division: Division) {
   return divisionVenuesPath(tournamentSlug, division.slug);
 }
 
+/** Canonical public match URL — same for fans, coaches, and refs */
+export function matchPath(matchId: string) {
+  return `/matches/${matchId}`;
+}
+
 export function getMatchPath(match: Match): string {
-  const tournamentSlug = match.division?.tournament?.slug ?? match.tournament?.slug;
-  const divisionSlug = match.division?.slug;
-  if (tournamentSlug && divisionSlug) {
-    return divisionMatchPath(tournamentSlug, divisionSlug, match.id);
-  }
-  return '/tournaments';
+  return matchPath(match.id);
 }
 
 export function getDivisionPublicPath(tournamentSlug: string, divisionSlug: string) {

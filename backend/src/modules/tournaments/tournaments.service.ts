@@ -1,5 +1,5 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import type { Prisma } from '@prisma/client';
+import type { MatchStatus, Prisma } from '@prisma/client';
 import prisma from '../../prisma/prisma';
 
 @Injectable()
@@ -21,11 +21,77 @@ export class TournamentsService {
     const t = await prisma.tournament.findUnique({
       where: { slug },
       include: {
-        divisions: { include: { teams: true } },
+        divisions: {
+          select: {
+            id: true,
+            name: true,
+            slug: true,
+            age_group: true,
+            gender: true,
+            format: true,
+            primary_color: true,
+            accent_color: true,
+            _count: { select: { teams: true } },
+          },
+        },
       },
     });
     if (!t) throw new NotFoundException('Tournament not found');
     return t;
+  }
+
+  async getOverview(slug: string) {
+    const tournament = await this.findOne(slug);
+    const divisionIds = tournament.divisions.map((d) => d.id);
+
+    const [matches, topScorers, standingsPreview] = await Promise.all([
+      prisma.match.findMany({
+        where: { tournament_id: tournament.id },
+        include: {
+          home_team: true,
+          away_team: true,
+          division: { include: { tournament: true } },
+          venue: true,
+        },
+        orderBy: { scheduled_start: 'asc' },
+        take: 40,
+      }),
+      prisma.playerStat.findMany({
+        where: { tournament_id: tournament.id },
+        include: { player: true, team: true, division: true },
+        orderBy: { goals: 'desc' },
+        take: 5,
+      }),
+      divisionIds.length
+        ? prisma.standing.findMany({
+            where: { division_id: divisionIds[0] },
+            include: { team: true },
+            orderBy: [
+              { points: 'desc' },
+              { goal_difference: 'desc' },
+              { goals_for: 'desc' },
+              { fair_play: 'desc' },
+            ],
+            take: 3,
+          })
+        : Promise.resolve([]),
+    ]);
+
+    const liveMatches = matches.filter((m) => m.status === ('LIVE' as MatchStatus));
+    const recentMatches = matches
+      .filter((m) => m.status === 'COMPLETED')
+      .slice(-4)
+      .reverse();
+    const upcomingMatches = matches.filter((m) => m.status === 'SCHEDULED').slice(0, 4);
+
+    return {
+      tournament,
+      liveMatches,
+      recentMatches,
+      upcomingMatches,
+      topScorers,
+      standingsPreview,
+    };
   }
 
   create(data: Prisma.TournamentCreateInput) {

@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient, type QueryClient } from '@tansta
 import { queryKeys } from '@/lib/query-keys';
 import { queryTiming } from '@/lib/query-options';
 import { matchesService } from '@/services/matches.service';
+import { hubService } from '@/services/hub.service';
 import { getSocket, SOCKET_EVENTS } from '@/lib/socket';
 import type { Match, MatchEventType } from '@/types';
 
@@ -28,15 +29,9 @@ export function useMatches(params?: {
 
 export function useLiveMatches(params?: { divisionId?: string }) {
   return useQuery({
-    queryKey: queryKeys.matches.live,
+    queryKey: [...queryKeys.matches.live, params?.divisionId ?? 'all'],
     queryFn: async () =>
-      (
-        await matchesService.getAll({
-          status: 'LIVE',
-          divisionId: params?.divisionId,
-          limit: 20,
-        })
-      ).data,
+      (await hubService.getLiveMatches(params?.divisionId)).data,
     ...queryTiming.live,
   });
 }

@@ -16,6 +16,7 @@ export class PlayersController {
   constructor(private service: PlayersService) {}
 
   @Get()
+  @AdminOnly()
   findAll(@Query() query: { teamId?: string; page?: string; limit?: string }) {
     return this.service.findAll({
       teamId: query.teamId,
@@ -26,6 +27,7 @@ export class PlayersController {
 
   /** Accepts player UUID or legacy slug */
   @Get(':idOrSlug')
+  @AdminOnly()
   findOne(@Param('idOrSlug') idOrSlug: string) {
     return this.service.findOne(idOrSlug);
   }

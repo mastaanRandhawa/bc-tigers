@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import { queryKeys } from '@/lib/query-keys';
 import { divisionResourcesService } from '@/services/division-resources.service';
-import { divisionsService } from '@/services/divisions.service';
+import { hubService } from '@/services/hub.service';
 import type { Division } from '@/types';
 
 function enabled(tournamentSlug?: string, divisionSlug?: string) {
@@ -11,7 +11,7 @@ function enabled(tournamentSlug?: string, divisionSlug?: string) {
 export function useDivisionLookup(divisionSlug?: string) {
   return useQuery({
     queryKey: queryKeys.divisions.bySlugGlobal(divisionSlug ?? ''),
-    queryFn: async () => (await divisionsService.getBySlugGlobal(divisionSlug!)).data,
+    queryFn: async () => (await hubService.resolveDivision(divisionSlug!)).data,
     enabled: !!divisionSlug,
   });
 }

@@ -24,6 +24,11 @@ export class TournamentsController {
     });
   }
 
+  @Get(':slug/overview')
+  getOverview(@Param('slug') slug: string) {
+    return this.service.getOverview(slug);
+  }
+
   @Get(':slug')
   findOne(@Param('slug') slug: string) {
     return this.service.findOne(slug);

@@ -59,6 +59,30 @@ export class PlayersService {
     return player;
   }
 
+  async findOneOnTeam(teamId: string, playerId: string) {
+    const player = await prisma.player.findFirst({
+      where: {
+        ...playerLookupWhere(playerId),
+        rosters: { some: { team_id: teamId, active: true } },
+      },
+      include: {
+        rosters: {
+          where: { team_id: teamId },
+          include: { team: { include: { division: { include: { tournament: true } } } } },
+        },
+        player_stats: { include: { tournament: true, division: true, team: true } },
+        match_events: {
+          where: { team_id: teamId },
+          include: { match: true },
+          orderBy: { created_at: 'desc' },
+          take: 20,
+        },
+      },
+    });
+    if (!player) throw new NotFoundException('Player not found on this team');
+    return player;
+  }
+
   async create(data: unknown) {
     const input = data as PlayerWriteInput;
     const first_name = String(input.first_name ?? '').trim();
