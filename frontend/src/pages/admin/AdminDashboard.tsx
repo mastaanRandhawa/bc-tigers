@@ -30,7 +30,7 @@ export default function AdminDashboard() {
 
       <QueryState isLoading={isLoading} isError={isError} onRetry={() => refetch()}>
         <h2 className="text-subsection mb-4">Divisions</h2>
-        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+        <div className="grid grid-cols-1 gap-3 sm:gap-4 md:grid-cols-2">
           {divisions.map((division) => {
             const theme = getDivisionTheme(division);
             const tournamentSlug = division.tournament?.slug;
@@ -42,19 +42,19 @@ export default function AdminDashboard() {
             const matchCount = matches.filter((m) => m.division_id === division.id).length;
 
             return (
-              <div key={division.id} className="admin-card p-4 transition-all duration-200 hover:shadow-md">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex min-w-0 items-start gap-3">
+              <div key={division.id} className="admin-card p-3 sm:p-4 transition-all duration-200 hover:shadow-md">
+                <div className="flex items-start justify-between gap-2 sm:gap-3">
+                  <div className="flex min-w-0 items-start gap-2 sm:gap-3">
                     <div
-                      className="h-10 w-10 shrink-0 rounded-lg ring-1 ring-border"
+                      className="h-9 w-9 sm:h-10 sm:w-10 shrink-0 rounded-lg ring-1 ring-border"
                       style={{ backgroundColor: theme.primary }}
                     />
                     <div className="min-w-0">
-                      <h3 className="truncate text-base font-semibold font-display text-foreground">
+                      <h3 className="truncate text-sm sm:text-base font-semibold font-display text-foreground">
                         {division.name}
                       </h3>
                       <p className="mt-0.5 truncate text-body-sm">{division.tournament?.name}</p>
-                      <div className="mt-2 flex gap-3 text-caption">
+                      <div className="mt-1.5 flex flex-wrap gap-2 sm:gap-3 text-caption">
                         <span className="inline-flex items-center gap-1">
                           <Shield className="h-3 w-3" aria-hidden /> {teamCount} teams
                         </span>
@@ -73,11 +73,11 @@ export default function AdminDashboard() {
                       style={{ color: theme.primary }}
                     >
                       <ExternalLink className="h-3.5 w-3.5" aria-hidden />
-                      View
+                      <span className="hidden sm:inline">View</span>
                     </a>
                   )}
                 </div>
-                <div className="mt-4 flex flex-wrap gap-x-4 gap-y-1 border-t border-border pt-4">
+                <div className="mt-3 sm:mt-4 flex flex-wrap gap-x-3 gap-y-2 border-t border-border pt-3 sm:pt-4">
                   {division.tournament?.id && (
                     <Link
                       to={`/admin/tournaments/${division.tournament.id}`}
@@ -85,7 +85,7 @@ export default function AdminDashboard() {
                         'text-xs font-medium text-muted-foreground transition-colors hover:text-primary',
                       )}
                     >
-                      Open Tournament Workspace
+                      Tournament Workspace
                     </Link>
                   )}
                   {division.tournament?.id && (
@@ -95,7 +95,7 @@ export default function AdminDashboard() {
                         'text-xs font-medium text-muted-foreground transition-colors hover:text-primary',
                       )}
                     >
-                      Open Division Workspace
+                      Division Workspace
                     </Link>
                   )}
                   {publicPath && (

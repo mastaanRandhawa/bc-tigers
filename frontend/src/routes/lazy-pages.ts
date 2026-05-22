@@ -9,6 +9,10 @@ function lazyPage(
 // Public — keep home eager for fastest first paint
 export { default as HomePage } from "@/pages/HomePage";
 
+export const LiveMatchesPage = lazyPage(
+  () => import("@/pages/LiveMatchesPage"),
+);
+
 export const TournamentsPage = lazyPage(
   () => import("@/pages/tournaments/TournamentsPage"),
 );

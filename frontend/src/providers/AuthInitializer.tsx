@@ -5,24 +5,17 @@ interface AuthInitializerProps {
   children: ReactNode;
 }
 
+/**
+ * Kicks off auth initialization on mount without blocking public route rendering.
+ * Protected routes (ProtectedRoute) handle their own "not yet initialized" state
+ * by returning null. Public routes render immediately for guests.
+ */
 export function AuthInitializer({ children }: AuthInitializerProps) {
   const initialize = useAuthStore((s) => s.initialize);
-  const isInitialized = useAuthStore((s) => s.isInitialized);
 
   useEffect(() => {
     initialize();
   }, [initialize]);
-
-  if (!isInitialized) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-muted">
-        <div className="text-center">
-          <div className="w-10 h-10 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto" />
-          <p className="mt-4 text-sm text-muted-foreground font-medium">Loading BC Tigers...</p>
-        </div>
-      </div>
-    );
-  }
 
   return <>{children}</>;
 }

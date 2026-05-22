@@ -63,7 +63,7 @@ export const useAuthStore = create<AuthState>()(
           localStorage.setItem('bc_token', access_token);
           set({ token: access_token });
           const user = await fetchCurrentUser();
-          set({ user, isAuthenticated: true, isLoading: false });
+          set({ user, isAuthenticated: true, isInitialized: true, isLoading: false });
           return user;
         } catch (err: unknown) {
           const message =
@@ -82,7 +82,7 @@ export const useAuthStore = create<AuthState>()(
           localStorage.setItem('bc_token', access_token);
           set({ token: access_token });
           const user = await fetchCurrentUser();
-          set({ user, isAuthenticated: true, isLoading: false });
+          set({ user, isAuthenticated: true, isInitialized: true, isLoading: false });
           return user;
         } catch (err: unknown) {
           const message =

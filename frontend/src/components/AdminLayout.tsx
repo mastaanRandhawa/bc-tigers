@@ -18,24 +18,31 @@ export default function AdminLayout({ children, title, description, action }: Ad
       <div className="flex flex-1 min-h-0 w-full pt-14">
         <AdminSidebar />
 
-        <div className="flex flex-1 flex-col min-w-0">
+        <div className="flex flex-1 flex-col min-w-0 overflow-x-hidden">
           <AdminMobileNav />
 
           <main className="flex-1 w-full min-w-0">
-            <div className="page-container py-4 sm:py-5">
+            <div className="page-container py-4 sm:py-6 max-w-full">
               {(title || action) && (
-                <div className="flex flex-wrap items-start justify-between gap-4 mb-5">
-                  <div className="min-w-0">
-                    {title && <h1 className="text-page-title m-0">{title}</h1>}
+                <div className="flex flex-col gap-3 mb-5 sm:flex-row sm:flex-wrap sm:items-start sm:justify-between sm:gap-4">
+                  <div className="min-w-0 flex-1">
+                    {title && (
+                      <h1 className="text-xl sm:text-2xl font-bold font-display text-foreground m-0 truncate">
+                        {title}
+                      </h1>
+                    )}
                     {description && (
-                      <p className="text-body-sm mt-1.5 max-w-2xl">{description}</p>
+                      <p className="text-body-sm mt-1 max-w-2xl text-muted-foreground">{description}</p>
                     )}
                   </div>
-                  {action && <div className="shrink-0">{action}</div>}
+                  {action && <div className="shrink-0 self-start">{action}</div>}
                 </div>
               )}
 
-              {children}
+              {/* overflow-x-auto wrapper ensures dense tables don't break mobile layout */}
+              <div className="min-w-0 overflow-x-auto">
+                {children}
+              </div>
             </div>
           </main>
         </div>

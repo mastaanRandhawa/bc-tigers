@@ -1,15 +1,23 @@
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, Suspense } from 'react-router-dom';
 import { tournamentRoutes } from '@/routes/tournament.routes';
 import { authRoutes } from '@/routes/auth.routes';
 import { adminRoutes } from '@/routes/admin.routes';
 import { portalRoutes } from '@/routes/portal.routes';
 import { redirectRoutes } from '@/routes/redirect.routes';
-import { HomePage } from '@/routes/lazy-pages';
+import { HomePage, LiveMatchesPage } from '@/routes/lazy-pages';
 
 export default function App() {
   return (
     <Routes>
       <Route path="/" element={<HomePage />} />
+      <Route
+        path="/live"
+        element={
+          <Suspense fallback={null}>
+            <LiveMatchesPage />
+          </Suspense>
+        }
+      />
       {redirectRoutes()}
       {tournamentRoutes()}
       {authRoutes()}

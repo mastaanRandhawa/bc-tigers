@@ -1,11 +1,11 @@
 import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import AuthLayout from '@/components/AuthLayout';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { useAuthStore } from '@/store/authStore';
-import { getPostLoginPath } from '@/lib/auth-utils';
+import { isAdminRole } from '@/lib/auth-utils';
 import { Eye, EyeOff, LogIn } from 'lucide-react';
 
 export default function LoginPage() {
@@ -14,13 +14,20 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const { login, isLoading, error, clearError } = useAuthStore();
   const navigate = useNavigate();
+  const location = useLocation();
+  const from = (location.state as { from?: string } | null)?.from;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     clearError();
     try {
       const user = await login(email, password);
-      navigate(getPostLoginPath(user));
+      // Admins always go to their dashboard, restoring any pre-login admin page they tried to visit
+      if (isAdminRole(user.role)) {
+        navigate(from?.startsWith('/admin') ? from : '/admin/dashboard', { replace: true });
+      } else {
+        navigate(from ?? '/', { replace: true });
+      }
     } catch {
       // Error displayed via store
     }
