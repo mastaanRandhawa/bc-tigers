@@ -60,3 +60,22 @@ export function useDeleteDivision() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['divisions'] }),
   });
 }
+
+export function useGenerateSchedule() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      id,
+      body,
+      force,
+    }: {
+      id: string;
+      body?: Parameters<typeof divisionsService.generateSchedule>[1];
+      force?: boolean;
+    }) => divisionsService.generateSchedule(id, body, force),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['divisions'] });
+      qc.invalidateQueries({ queryKey: ['matches'] });
+    },
+  });
+}

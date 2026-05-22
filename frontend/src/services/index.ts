@@ -13,3 +13,6 @@ export * from './media.service';
 export * from './users.service';
 export * from './settings.service';
 export * from './coaches.service';
+export * from './rosters.service';
+export * from './notifications.service';
+export * from './me.service';

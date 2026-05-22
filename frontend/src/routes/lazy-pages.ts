@@ -108,6 +108,15 @@ export const AdminUsers = lazyPage(() => import("@/pages/admin/AdminUsers"));
 export const AdminSettings = lazyPage(
   () => import("@/pages/admin/AdminSettings"),
 );
+export const AdminCoaches = lazyPage(
+  () => import("@/pages/admin/AdminCoaches"),
+);
+export const AdminBrackets = lazyPage(
+  () => import("@/pages/admin/AdminBrackets"),
+);
+export const AdminAnnouncements = lazyPage(
+  () => import("@/pages/admin/AdminAnnouncements"),
+);
 
 // Role portals
 export const CoachDashboard = lazyPage(
@@ -115,6 +124,9 @@ export const CoachDashboard = lazyPage(
 );
 export const RefereeDashboard = lazyPage(
   () => import("@/pages/referee/RefereeDashboard"),
+);
+export const RefereeMatchControlPage = lazyPage(
+  () => import("@/pages/referee/RefereeMatchControlPage"),
 );
 export const PlayerDashboard = lazyPage(
   () => import("@/pages/player/PlayerDashboard"),

@@ -7,14 +7,14 @@ import { useListSearch } from '@/hooks/useListSearch';
 import { divisionSearchText } from '@/lib/search-text';
 import DivisionFormDialog from '@/components/admin/forms/DivisionFormDialog';
 import { useFormDialog } from '@/hooks/useFormDialog';
-import { useDivisions, useDeleteDivision } from '@/hooks/useDivisions';
+import { useDivisions, useDeleteDivision, useGenerateSchedule } from '@/hooks/useDivisions';
 import { useTeams } from '@/hooks/useTeams';
 import { useMatches } from '@/hooks/useMatches';
 import type { Division } from '@/types';
 import { getApiErrorMessage } from '@/lib/errors';
 import { getDivisionPublicPath } from '@/lib/division-routes';
 import { getDivisionTheme } from '@/lib/division-theme';
-import { ExternalLink, Pencil, Trash2 } from 'lucide-react';
+import { ExternalLink, Pencil, Trash2, Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 export default function AdminDivisions() {
@@ -22,12 +22,28 @@ export default function AdminDivisions() {
   const { data: teams = [] } = useTeams();
   const { data: matches = [] } = useMatches();
   const deleteMutation = useDeleteDivision();
+  const generateMutation = useGenerateSchedule();
   const formDialog = useFormDialog<Division>();
   const getText = useCallback((d: Division) => divisionSearchText(d), []);
   const { search, setSearch, filtered, debouncedSearch, hasQuery } = useListSearch(
     divisions,
     getText,
   );
+
+  const handleGenerateSchedule = async (d: Division, existingMatches: number) => {
+    if (existingMatches > 0 && !confirm('Division already has matches. Replace all matches?')) return;
+    try {
+      const res = await generateMutation.mutateAsync({
+        id: d.id,
+        body: { matchIntervalMinutes: 90 },
+        force: existingMatches > 0,
+      });
+      alert(`Created ${res.data.created} matches.`);
+      refetch();
+    } catch (err) {
+      alert(getApiErrorMessage(err, 'Failed to generate schedule'));
+    }
+  };
 
   const handleDelete = async (d: Division) => {
     if (!confirm(`Delete "${d.name}"?`)) return;
@@ -105,6 +121,15 @@ export default function AdminDivisions() {
                       View public
                     </a>
                   )}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleGenerateSchedule(division, matchCount)}
+                    disabled={teamCount < 2 || generateMutation.isPending}
+                  >
+                    <Calendar className="mr-1 h-3.5 w-3.5" aria-hidden />
+                    Schedule
+                  </Button>
                   <Button variant="outline" size="sm" onClick={() => formDialog.openEdit(division)}>
                     <Pencil className="mr-1 h-3.5 w-3.5" aria-hidden />
                     Edit

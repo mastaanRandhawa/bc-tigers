@@ -81,4 +81,62 @@ export class HubService {
   resolveDivisionSlug(divisionSlug: string) {
     return this.divisionsService.findBySlugGlobal(divisionSlug);
   }
+
+  async search(query: string) {
+    const q = query.trim().toLowerCase();
+    if (!q) {
+      return { tournaments: [], divisions: [], teams: [] };
+    }
+
+    const [tournaments, divisions, teams] = await Promise.all([
+      prisma.tournament.findMany({
+        where: {
+          OR: [
+            { name: { contains: q, mode: 'insensitive' } },
+            { location: { contains: q, mode: 'insensitive' } },
+          ],
+        },
+        take: 8,
+        select: { id: true, name: true, slug: true, location: true, status: true },
+      }),
+      prisma.division.findMany({
+        where: { name: { contains: q, mode: 'insensitive' } },
+        take: 8,
+        include: { tournament: { select: { slug: true, name: true } } },
+      }),
+      prisma.team.findMany({
+        where: {
+          OR: [
+            { name: { contains: q, mode: 'insensitive' } },
+            { city: { contains: q, mode: 'insensitive' } },
+          ],
+        },
+        take: 12,
+        include: {
+          division: {
+            include: { tournament: { select: { slug: true, name: true } } },
+          },
+        },
+      }),
+    ]);
+
+    return {
+      tournaments,
+      divisions: divisions.map((d) => ({
+        id: d.id,
+        name: d.name,
+        slug: d.slug,
+        tournament_slug: d.tournament.slug,
+        tournament_name: d.tournament.name,
+      })),
+      teams: teams.map((t) => ({
+        id: t.id,
+        name: t.name,
+        slug: t.slug,
+        city: t.city,
+        division_slug: t.division.slug,
+        tournament_slug: t.division.tournament.slug,
+      })),
+    };
+  }
 }

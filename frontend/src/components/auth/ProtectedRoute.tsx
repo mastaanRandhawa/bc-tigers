@@ -6,12 +6,14 @@ import type { UserRole } from '@/types';
 interface ProtectedRouteProps {
   children: React.ReactNode;
   adminOnly?: boolean;
+  superAdminOnly?: boolean;
   allowedRoles?: UserRole[];
 }
 
 export default function ProtectedRoute({
   children,
   adminOnly = false,
+  superAdminOnly = false,
   allowedRoles,
 }: ProtectedRouteProps) {
   const { isAuthenticated, user, isInitialized } = useAuthStore();
@@ -20,6 +22,10 @@ export default function ProtectedRoute({
 
   if (!isAuthenticated) {
     return <Navigate to="/login" replace state={{ from: window.location.pathname }} />;
+  }
+
+  if (superAdminOnly && user?.role !== 'ADMIN') {
+    return <Navigate to={getRoleDashboardPath(user?.role)} replace />;
   }
 
   if (adminOnly && !isAdminRole(user?.role)) {

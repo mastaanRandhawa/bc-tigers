@@ -4,15 +4,22 @@ import {
   ConflictException,
   NotFoundException,
   BadRequestException,
+  ForbiddenException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { randomBytes } from 'crypto';
 import prisma from '../../prisma/prisma';
+import { SettingsService } from '../settings/settings.service';
+import { MailService } from '../mail/mail.service';
 
 @Injectable()
 export class AuthService {
-  constructor(private jwt: JwtService) {}
+  constructor(
+    private jwt: JwtService,
+    private settingsService: SettingsService,
+    private mailService: MailService,
+  ) {}
 
   async register(data: {
     first_name: string;
@@ -21,6 +28,11 @@ export class AuthService {
     password: string;
     phone?: string;
   }) {
+    const settings = await this.settingsService.getAdmin();
+    if (!settings.registration_open) {
+      throw new ForbiddenException('Registration is currently closed');
+    }
+
     const exists = await prisma.user.findUnique({
       where: { email: data.email },
     });
@@ -152,6 +164,14 @@ export class AuthService {
 
     await prisma.passwordResetToken.create({
       data: { user_id: user.id, token, expires_at },
+    });
+
+    const resetUrl = this.mailService.appUrl(`/reset-password?token=${token}`);
+    await this.mailService.send({
+      to: user.email,
+      subject: 'Reset your BC Tigers password',
+      text: `Use this link to reset your password (expires in 1 hour): ${resetUrl}`,
+      html: `<p>Use this link to reset your password (expires in 1 hour):</p><p><a href="${resetUrl}">${resetUrl}</a></p>`,
     });
 
     return {

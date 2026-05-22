@@ -1,8 +1,9 @@
 import { cn } from '@/lib/utils';
 
 import SiteHeader from '@/components/SiteHeader';
-
 import Footer from '@/components/Footer';
+import MobileBottomNav from '@/components/shared/MobileBottomNav';
+import { useRealtimeInvalidation } from '@/hooks/useMatches';
 
 interface AppShellProps {
   children: React.ReactNode;
@@ -25,6 +26,7 @@ export default function AppShell({
 }: AppShellProps) {
   const headerVariant = headerMode ?? (heroTheme ? 'hero' : 'site');
   const tickerVisible = showLiveTicker ?? true;
+  useRealtimeInvalidation();
 
   return (
     <div
@@ -35,8 +37,9 @@ export default function AppShell({
     >
       <SiteHeader variant={headerVariant} showLiveTicker={tickerVisible} />
       {subNav}
-      <main className={cn('flex-1 w-full min-w-0', className)}>{children}</main>
+      <main className={cn('flex-1 w-full min-w-0 pb-16 lg:pb-0', className)}>{children}</main>
       {showFooter && <Footer />}
+      <MobileBottomNav />
     </div>
   );
 }

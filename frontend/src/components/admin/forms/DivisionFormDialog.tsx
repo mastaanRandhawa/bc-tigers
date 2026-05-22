@@ -40,6 +40,9 @@ export default function DivisionFormDialog({ open, onOpenChange, division }: Div
       format: 'Round Robin',
       primary_color: '#F48735',
       accent_color: '#FEF3EB',
+      points_win: '3',
+      points_draw: '1',
+      points_loss: '0',
     },
   });
 
@@ -56,6 +59,9 @@ export default function DivisionFormDialog({ open, onOpenChange, division }: Div
         format: division.format,
         primary_color: division.primary_color ?? '#F48735',
         accent_color: division.accent_color ?? '#FEF3EB',
+        points_win: String(division.points_win ?? 3),
+        points_draw: String(division.points_draw ?? 1),
+        points_loss: String(division.points_loss ?? 0),
       });
     } else {
       form.reset({
@@ -68,6 +74,9 @@ export default function DivisionFormDialog({ open, onOpenChange, division }: Div
         format: 'Round Robin',
         primary_color: '#F48735',
         accent_color: '#FEF3EB',
+        points_win: '3',
+        points_draw: '1',
+        points_loss: '0',
       });
     }
   }, [open, division, form, tournaments]);
@@ -79,13 +88,17 @@ export default function DivisionFormDialog({ open, onOpenChange, division }: Div
 
   const onSubmit = form.handleSubmit(async (values) => {
     try {
+      const payload = {
+        ...values,
+        max_teams: Number(values.max_teams),
+        points_win: values.points_win ? Number(values.points_win) : undefined,
+        points_draw: values.points_draw ? Number(values.points_draw) : undefined,
+        points_loss: values.points_loss ? Number(values.points_loss) : undefined,
+      };
       if (isEditing && division) {
-        await updateMutation.mutateAsync({
-          id: division.id,
-          data: { ...values, max_teams: Number(values.max_teams) },
-        });
+        await updateMutation.mutateAsync({ id: division.id, data: payload });
       } else {
-        await createMutation.mutateAsync({ ...values, max_teams: Number(values.max_teams) });
+        await createMutation.mutateAsync(payload);
       }
       onOpenChange(false);
     } catch (err) {
@@ -116,6 +129,12 @@ export default function DivisionFormDialog({ open, onOpenChange, division }: Div
       <TextInputField control={form.control} name="format" label="Format" />
       <TextInputField control={form.control} name="primary_color" label="Primary Color" placeholder="#F48735" />
       <TextInputField control={form.control} name="accent_color" label="Accent Color" placeholder="#FEF3EB" />
+      <p className="text-xs font-medium text-muted-foreground pt-2">Standings points</p>
+      <div className="grid grid-cols-3 gap-3">
+        <TextInputField control={form.control} name="points_win" label="Win" type="number" />
+        <TextInputField control={form.control} name="points_draw" label="Draw" type="number" />
+        <TextInputField control={form.control} name="points_loss" label="Loss" type="number" />
+      </div>
     </FormDialog>
   );
 }

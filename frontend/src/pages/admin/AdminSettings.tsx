@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Switch } from '@/components/ui/switch';
 import QueryState from '@/components/shared/QueryState';
 import { useAdminSettings, useUpdateSettings } from '@/hooks/useSettings';
-import { Save, Globe, Bell, Shield, Database } from 'lucide-react';
+import { Save, Globe, Bell, Shield } from 'lucide-react';
 import type { SiteSettings } from '@/types';
 
 function SettingsSection({ icon: Icon, title, children }: { icon: React.ElementType; title: string; children: React.ReactNode }) {
@@ -101,22 +101,9 @@ export default function AdminSettings() {
             </div>
           </SettingsSection>
 
-          <SettingsSection icon={Database} title="Points System">
-            <div className="grid grid-cols-3 gap-4">
-              <div className="space-y-1.5">
-                <Label>Win</Label>
-                <Input type="number" value={form.points_win ?? 3} onChange={(e) => setForm({ ...form, points_win: parseInt(e.target.value) || 0 })} />
-              </div>
-              <div className="space-y-1.5">
-                <Label>Draw</Label>
-                <Input type="number" value={form.points_draw ?? 1} onChange={(e) => setForm({ ...form, points_draw: parseInt(e.target.value) || 0 })} />
-              </div>
-              <div className="space-y-1.5">
-                <Label>Loss</Label>
-                <Input type="number" value={form.points_loss ?? 0} onChange={(e) => setForm({ ...form, points_loss: parseInt(e.target.value) || 0 })} />
-              </div>
-            </div>
-          </SettingsSection>
+          <p className="text-sm text-muted-foreground">
+            Standings points are configured per division under Admin → Divisions → Edit.
+          </p>
 
           <Button onClick={handleSave} size="lg" disabled={updateSettings.isPending}>
             <Save className="w-4 h-4" aria-hidden /> {updateSettings.isPending ? 'Saving…' : 'Save Settings'}

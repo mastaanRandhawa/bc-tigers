@@ -3,6 +3,7 @@ import { useQuery, useMutation, useQueryClient, type QueryClient } from '@tansta
 import { queryKeys } from '@/lib/query-keys';
 import { queryTiming } from '@/lib/query-options';
 import { matchesService } from '@/services/matches.service';
+import { meService } from '@/services/me.service';
 import { hubService } from '@/services/hub.service';
 import { getSocket, SOCKET_EVENTS } from '@/lib/socket';
 import type { Match, MatchEventType } from '@/types';
@@ -11,6 +12,13 @@ function invalidateMatchLists(qc: QueryClient) {
   qc.invalidateQueries({ queryKey: ['matches'] });
   qc.invalidateQueries({ queryKey: queryKeys.matches.live });
   qc.invalidateQueries({ queryKey: queryKeys.hub.home });
+}
+
+export function useMyMatches(params?: { status?: string; limit?: number }) {
+  return useQuery({
+    queryKey: ['me', 'matches', params],
+    queryFn: async () => (await meService.getMatches(params)).data,
+  });
 }
 
 export function useMatches(params?: {
@@ -129,4 +137,66 @@ export function useDeleteMatch() {
     mutationFn: (id: string) => matchesService.delete(id),
     onSuccess: () => invalidateMatchLists(qc),
   });
+}
+
+export function useAssignMatchReferee() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      matchId,
+      referee_id,
+      role,
+    }: {
+      matchId: string;
+      referee_id: string;
+      role?: string;
+    }) => matchesService.assignReferee(matchId, { referee_id, role }),
+    onSuccess: (_, { matchId }) => {
+      qc.invalidateQueries({ queryKey: queryKeys.matches.detail(matchId) });
+      invalidateMatchLists(qc);
+    },
+  });
+}
+
+export function useRemoveMatchReferee() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      matchId,
+      matchRefereeId,
+    }: {
+      matchId: string;
+      matchRefereeId: string;
+    }) => matchesService.removeReferee(matchId, matchRefereeId),
+    onSuccess: (_, { matchId }) => {
+      qc.invalidateQueries({ queryKey: queryKeys.matches.detail(matchId) });
+      invalidateMatchLists(qc);
+    },
+  });
+}
+
+/** Invalidate caches when standings, brackets, or notifications change. */
+export function useRealtimeInvalidation() {
+  const qc = useQueryClient();
+
+  useEffect(() => {
+    const socket = getSocket();
+
+    const onStandings = () => {
+      qc.invalidateQueries({ queryKey: ['standings'] });
+      qc.invalidateQueries({ queryKey: ['divisions'] });
+    };
+    const onBracket = () => qc.invalidateQueries({ queryKey: ['brackets'] });
+    const onNotification = () => qc.invalidateQueries({ queryKey: ['notifications'] });
+
+    socket.on(SOCKET_EVENTS.STANDINGS_UPDATED, onStandings);
+    socket.on(SOCKET_EVENTS.BRACKET_UPDATED, onBracket);
+    socket.on(SOCKET_EVENTS.NOTIFICATION, onNotification);
+
+    return () => {
+      socket.off(SOCKET_EVENTS.STANDINGS_UPDATED, onStandings);
+      socket.off(SOCKET_EVENTS.BRACKET_UPDATED, onBracket);
+      socket.off(SOCKET_EVENTS.NOTIFICATION, onNotification);
+    };
+  }, [qc]);
 }

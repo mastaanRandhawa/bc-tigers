@@ -6,6 +6,7 @@ import {
   Delete,
   Param,
   Body,
+  Query,
 } from '@nestjs/common';
 import { DivisionsService } from './divisions.service';
 import { AdminOnly } from '../auth/admin.decorator';
@@ -57,5 +58,21 @@ export class DivisionsController {
   @AdminOnly()
   remove(@Param('id') id: string) {
     return this.service.remove(id);
+  }
+
+  @Post('divisions/:id/generate-schedule')
+  @AdminOnly()
+  generateSchedule(
+    @Param('id') id: string,
+    @Body()
+    body: {
+      startDate?: string;
+      matchIntervalMinutes?: number;
+      venueId?: string;
+      fieldId?: string;
+    },
+    @Query('force') force?: string,
+  ) {
+    return this.service.generateSchedule(id, { ...body, force: force === 'true' });
   }
 }

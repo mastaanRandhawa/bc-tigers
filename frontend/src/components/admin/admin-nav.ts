@@ -4,7 +4,10 @@ import {
   Flag,
   Shield,
   UserCircle,
+  UserCog,
   Calendar,
+  GitBranch,
+  Megaphone,
   MapPin,
   Users,
   Image,
@@ -41,13 +44,16 @@ export const adminNavGroups: AdminNavGroup[] = [
     items: [
       { label: 'Teams', href: '/admin/teams', icon: Shield },
       { label: 'Players', href: '/admin/players', icon: UserCircle },
+      { label: 'Coaches', href: '/admin/coaches', icon: UserCog },
       { label: 'Matches', href: '/admin/matches', icon: Calendar },
+      { label: 'Brackets', href: '/admin/brackets', icon: GitBranch },
     ],
   },
   {
     label: 'System',
     items: [
       { label: 'Users', href: '/admin/users', icon: Users },
+      { label: 'Announcements', href: '/admin/announcements', icon: Megaphone },
       { label: 'Referees', href: '/admin/referees', icon: Shield },
       { label: 'Media', href: '/admin/media', icon: Image },
       { label: 'Settings', href: '/admin/settings', icon: Settings },

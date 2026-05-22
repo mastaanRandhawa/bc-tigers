@@ -4,6 +4,7 @@ import { LazyPage } from '@/routes/LazyPage';
 import {
   CoachDashboard,
   RefereeDashboard,
+  RefereeMatchControlPage,
   PlayerDashboard,
 } from '@/routes/lazy-pages';
 
@@ -28,6 +29,14 @@ export function portalRoutes() {
         element={
           <ProtectedRoute allowedRoles={['REFEREE', 'ADMIN', 'TOURNAMENT_ADMIN']}>
             <L><RefereeDashboard /></L>
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/referee/matches/:id"
+        element={
+          <ProtectedRoute allowedRoles={['REFEREE', 'ADMIN', 'TOURNAMENT_ADMIN']}>
+            <L><RefereeMatchControlPage /></L>
           </ProtectedRoute>
         }
       />

@@ -13,7 +13,14 @@ import {
   AdminMedia,
   AdminUsers,
   AdminSettings,
+  AdminCoaches,
+  AdminBrackets,
+  AdminAnnouncements,
 } from '@/routes/lazy-pages';
+
+function SuperAdminRoute({ children }: { children: React.ReactNode }) {
+  return <ProtectedRoute superAdminOnly>{children}</ProtectedRoute>;
+}
 
 function L({ children }: { children: React.ReactNode }) {
   return <LazyPage>{children}</LazyPage>;
@@ -33,11 +40,14 @@ export function adminRoutes() {
       <Route path="/admin/divisions" element={<AdminRoute><L><AdminDivisions /></L></AdminRoute>} />
       <Route path="/admin/teams" element={<AdminRoute><L><AdminTeams /></L></AdminRoute>} />
       <Route path="/admin/players" element={<AdminRoute><L><AdminPlayers /></L></AdminRoute>} />
+      <Route path="/admin/coaches" element={<AdminRoute><L><AdminCoaches /></L></AdminRoute>} />
       <Route path="/admin/matches" element={<AdminRoute><L><AdminMatches /></L></AdminRoute>} />
+      <Route path="/admin/brackets" element={<AdminRoute><L><AdminBrackets /></L></AdminRoute>} />
       <Route path="/admin/venues" element={<AdminRoute><L><AdminVenues /></L></AdminRoute>} />
       <Route path="/admin/referees" element={<AdminRoute><L><AdminReferees /></L></AdminRoute>} />
       <Route path="/admin/media" element={<AdminRoute><L><AdminMedia /></L></AdminRoute>} />
-      <Route path="/admin/users" element={<AdminRoute><L><AdminUsers /></L></AdminRoute>} />
+      <Route path="/admin/users" element={<SuperAdminRoute><L><AdminUsers /></L></SuperAdminRoute>} />
+      <Route path="/admin/announcements" element={<AdminRoute><L><AdminAnnouncements /></L></AdminRoute>} />
       <Route path="/admin/settings" element={<AdminRoute><L><AdminSettings /></L></AdminRoute>} />
     </>
   );

@@ -1,13 +1,19 @@
+import { useState } from 'react';
 import AdminLayout from '@/components/AdminLayout';
 import AdminTable from '@/components/AdminTable';
 import QueryState from '@/components/shared/QueryState';
 import TeamFormDialog from '@/components/admin/forms/TeamFormDialog';
+import TeamRosterPanel from '@/components/admin/TeamRosterPanel';
 import { useFormDialog } from '@/hooks/useFormDialog';
 import { useTeams, useDeleteTeam } from '@/hooks/useTeams';
 import type { Team } from '@/types';
 import { getApiErrorMessage } from '@/lib/errors';
+import { Button } from '@/components/ui/button';
+import { Users } from 'lucide-react';
 
-const columns = [
+const columns = (
+  onRoster: (t: Team) => void,
+) => [
   {
     key: 'name',
     label: 'Team',
@@ -39,16 +45,13 @@ const columns = [
   },
   { key: 'city', label: 'City' },
   {
-    key: 'primary_color',
-    label: 'Color',
+    key: 'roster',
+    label: 'Roster',
     render: (t: Team) => (
-      <div className="flex items-center gap-2">
-        <div
-          className="w-5 h-5 rounded-full border border-border"
-          style={{ backgroundColor: t.primary_color ?? '#ccc' }}
-        />
-        <span className="text-xs text-muted-foreground">{t.primary_color ?? '—'}</span>
-      </div>
+      <Button variant="outline" size="sm" onClick={() => onRoster(t)}>
+        <Users className="h-3.5 w-3.5 mr-1" aria-hidden />
+        Manage
+      </Button>
     ),
   },
 ];
@@ -57,6 +60,7 @@ export default function AdminTeams() {
   const { data: teams = [], isLoading, isError, refetch } = useTeams();
   const deleteMutation = useDeleteTeam();
   const formDialog = useFormDialog<Team>();
+  const [rosterTeam, setRosterTeam] = useState<Team | null>(null);
 
   const handleDelete = async (t: Team) => {
     if (!confirm(`Delete "${t.name}"?`)) return;
@@ -73,13 +77,22 @@ export default function AdminTeams() {
         <AdminTable
           title="All Teams"
           data={teams}
-          columns={columns}
+          columns={columns(setRosterTeam)}
           onAdd={formDialog.openCreate}
           onEdit={formDialog.openEdit}
           onDelete={handleDelete}
           searchKeys={['name', 'city']}
         />
       </QueryState>
+
+      {rosterTeam && (
+        <div className="mt-6">
+          <TeamRosterPanel team={rosterTeam} />
+          <Button variant="ghost" size="sm" className="mt-2" onClick={() => setRosterTeam(null)}>
+            Close roster panel
+          </Button>
+        </div>
+      )}
 
       <TeamFormDialog
         open={formDialog.open}

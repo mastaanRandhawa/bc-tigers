@@ -198,6 +198,12 @@ export interface Match {
   away_team?: Team;
   venue?: Venue;
   referee?: Referee;
+  referees?: Array<{
+    id: string;
+    referee_id: string;
+    role: string;
+    referee?: Referee;
+  }>;
   events?: MatchEvent[];
   tournament?: Tournament;
   division?: Division;

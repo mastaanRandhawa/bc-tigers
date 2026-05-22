@@ -17,6 +17,8 @@ import {
 } from '@/lib/auth-utils';
 import type { UserRole } from '@/types';
 import BrandLogo from '@/components/shared/BrandLogo';
+import GlobalSearch from '@/components/shared/GlobalSearch';
+import NotificationBell from '@/components/shared/NotificationBell';
 import { AnimatedThemeToggler } from '@/components/ui/animated-theme-toggler';
 import { cn } from '@/lib/utils';
 
@@ -211,10 +213,16 @@ export default function SiteHeader({ variant = 'site', showLiveTicker = true }: 
           <div className="flex h-14 items-center justify-between gap-2 sm:gap-3">
             <BrandLogo compact />
             <div className="ml-auto flex shrink-0 items-center gap-1.5 sm:gap-2">
+              <div className="hidden md:block">
+                <GlobalSearch />
+              </div>
               <TournamentsLink onDark={false} />
               <AnimatedThemeToggler />
               {isAuthenticated && user ? (
-                <UserMenu onDark={false} />
+                <>
+                  <NotificationBell onDark={false} />
+                  <UserMenu onDark={false} />
+                </>
               ) : (
                 <SignInButton isHero={false} />
               )}
@@ -264,10 +272,16 @@ export default function SiteHeader({ variant = 'site', showLiveTicker = true }: 
           )}
 
           <div className="ml-auto flex shrink-0 items-center gap-1.5 sm:gap-2">
+            <div className="hidden md:block">
+              <GlobalSearch />
+            </div>
             <TournamentsLink onDark={isHero} />
             <AnimatedThemeToggler />
             {isAuthenticated && user ? (
-              <UserMenu onDark={isHero} />
+              <>
+                <NotificationBell onDark={isHero} />
+                <UserMenu onDark={isHero} />
+              </>
             ) : (
               <SignInButton isHero={isHero} />
             )}

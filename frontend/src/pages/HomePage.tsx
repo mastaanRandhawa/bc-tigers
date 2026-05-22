@@ -24,6 +24,7 @@ export default function HomePage() {
   const tournaments = data?.tournaments ?? [];
   const liveMatches = data?.liveMatches ?? [];
   const announcements = data?.announcements ?? [];
+  const featuredMedia = data?.featuredMedia ?? [];
 
   const featuredTournament = useMemo(
     () => pickFeaturedTournament(tournaments),
@@ -105,6 +106,36 @@ export default function HomePage() {
                 <div className="divide-y divide-border">
                   {liveMatches.slice(0, 3).map((match) => (
                     <MatchCard key={match.id} match={match} flat />
+                  ))}
+                </div>
+              </Section>
+            )}
+
+            {featuredMedia.length > 0 && (
+              <Section className="mb-6">
+                <SectionHeader title="Featured media" />
+                <div className="grid grid-cols-2 gap-3 md:grid-cols-3">
+                  {featuredMedia.slice(0, 6).map((item) => (
+                    <a
+                      key={item.id}
+                      href={item.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="group overflow-hidden rounded-lg border border-border bg-card"
+                    >
+                      <div className="aspect-video overflow-hidden bg-muted">
+                        <img
+                          src={item.url}
+                          alt={item.title ?? ''}
+                          className="h-full w-full object-cover transition-transform group-hover:scale-105"
+                        />
+                      </div>
+                      {item.title && (
+                        <p className="truncate px-2 py-1.5 text-xs font-medium text-foreground">
+                          {item.title}
+                        </p>
+                      )}
+                    </a>
                   ))}
                 </div>
               </Section>

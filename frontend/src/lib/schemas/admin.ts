@@ -27,6 +27,9 @@ export const divisionSchema = z.object({
   format: z.string().min(1),
   primary_color: z.string().optional(),
   accent_color: z.string().optional(),
+  points_win: z.string().optional(),
+  points_draw: z.string().optional(),
+  points_loss: z.string().optional(),
 });
 
 export const teamSchema = z.object({

@@ -2,7 +2,7 @@ import PortalLayout from '@/components/layouts/PortalLayout';
 import PortalStatGrid from '@/components/shared/PortalStatGrid';
 import PortalMatchList from '@/components/shared/PortalMatchList';
 import { Badge } from '@/components/ui/badge';
-import { useMatches } from '@/hooks/useMatches';
+import { useMyMatches } from '@/hooks/useMatches';
 import { useAuthStore } from '@/store/authStore';
 import { formatTime, getMatchStatusBadgeVariant } from '@/lib/utils';
 import { MapPin, LayoutDashboard, Calendar, Zap, ClipboardList, Trophy } from 'lucide-react';
@@ -17,17 +17,12 @@ const nav = [
 ];
 
 export default function RefereeDashboard() {
-  const { user, refreshUser } = useAuthStore();
-  const { data: matches = [], isLoading } = useMatches();
+  const { refreshUser } = useAuthStore();
+  const { data: myMatches = [], isLoading } = useMyMatches({ limit: 100 });
 
   useEffect(() => { refreshUser(); }, [refreshUser]);
 
-  const assignedMatchIds = new Set(
-    user?.referee?.match_referees?.map((mr) => mr.match?.id).filter(Boolean) as string[],
-  );
-  const myMatches = assignedMatchIds.size > 0
-    ? matches.filter((m) => assignedMatchIds.has(m.id))
-    : matches;
+  const refereeLink = (m: Match) => `/referee/matches/${m.id}`;
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -76,6 +71,7 @@ export default function RefereeDashboard() {
           hasQuery={hasTodayQuery}
           isLoading={isLoading}
           emptyMessage="No matches scheduled today"
+          getLink={refereeLink}
           rowSub={(m) => (
             <>
               {formatTime(m.scheduled_start)}
@@ -103,6 +99,7 @@ export default function RefereeDashboard() {
           debouncedSearch={debouncedLive}
           hasQuery={hasLiveQuery}
           emptyMessage="No live matches"
+          getLink={refereeLink}
           rowRight={(m) => (
             <div className="text-lg font-bold text-primary tabular-nums shrink-0">
               {m.home_score} – {m.away_score}

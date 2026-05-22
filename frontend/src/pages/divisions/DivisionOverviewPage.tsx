@@ -153,46 +153,11 @@ export default function DivisionOverviewPage() {
         {standings.length > 0 ? (
           <StandingsTable standings={standings.slice(0, 6)} compact division={division} />
         ) : (
-          <div className="overflow-hidden rounded-xl border border-border bg-card">
-            {teams.length === 0 ? (
-              <p className="py-6 text-center text-sm text-muted-foreground">
-                No teams registered yet.
-              </p>
-            ) : (
-              <>
-                {[...teams]
-                  .sort((a, b) => a.name.localeCompare(b.name))
-                  .map((team, i) => (
-                    <div
-                      key={team.id}
-                      className={cn(
-                        'flex items-center gap-3 px-4 py-3 text-sm',
-                        i > 0 && 'border-t border-border',
-                      )}
-                    >
-                      <span className="w-5 text-right text-xs tabular-nums text-muted-foreground/60">
-                        {i + 1}
-                      </span>
-                      <div
-                        className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full"
-                        style={{ backgroundColor: team.primary_color ?? accentColor ?? '#F48735' }}
-                      >
-                        {team.logo ? (
-                          <img src={team.logo} alt="" className="h-full w-full rounded-full object-cover" />
-                        ) : (
-                          <Shield className="h-3.5 w-3.5 text-white/90" aria-hidden />
-                        )}
-                      </div>
-                      <span className="flex-1 font-medium text-foreground">{team.name}</span>
-                      <span className="text-xs text-muted-foreground">—</span>
-                    </div>
-                  ))}
-                <p className="border-t border-border px-4 py-2.5 text-center text-xs text-muted-foreground">
-                  Standings will update once matches begin.
-                </p>
-              </>
-            )}
-          </div>
+          <p className="py-6 text-center text-sm text-muted-foreground rounded-xl border border-border bg-card">
+            {teams.length === 0
+              ? 'No teams registered yet.'
+              : 'Standings will appear after matches are played.'}
+          </p>
         )}
       </Section>
     </div>

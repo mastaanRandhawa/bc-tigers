@@ -6,7 +6,7 @@ import Section from '@/components/shared/Section';
 import SectionHeader from '@/components/shared/SectionHeader';
 import SearchField from '@/components/shared/SearchField';
 import SearchEmpty from '@/components/shared/SearchEmpty';
-import { useMatches } from '@/hooks/useMatches';
+import { useMyMatches } from '@/hooks/useMatches';
 import { useTopScorers } from '@/hooks/useStats';
 import { useTournaments } from '@/hooks/useTournaments';
 import { useAuthStore } from '@/store/authStore';
@@ -23,7 +23,7 @@ const nav = [
 
 export default function PlayerDashboard() {
   const { user, refreshUser } = useAuthStore();
-  const { data: matches = [], isLoading: matchesLoading } = useMatches();
+  const { data: matches = [], isLoading: matchesLoading } = useMyMatches({ limit: 100 });
   const { data: scorers = [], isLoading: scorersLoading } = useTopScorers({ limit: 5 });
   const { data: tournaments = [] } = useTournaments();
 
@@ -36,9 +36,7 @@ export default function PlayerDashboard() {
   const matchesPath = myDivision ? getDivisionMatchesPath(myDivision) : '/tournaments';
   const statsPath = myDivision ? getDivisionStatsPath(myDivision) ?? '/tournaments' : '/tournaments';
 
-  const myMatches = myTeamIds.size > 0
-    ? matches.filter((m) => myTeamIds.has(m.home_team_id) || myTeamIds.has(m.away_team_id))
-    : matches;
+  const myMatches = matches;
 
   const upcomingAll = myMatches
     .filter((m) => m.status === 'SCHEDULED')

@@ -13,9 +13,9 @@ import {
   RefreshCw,
   ArrowLeftRight,
   ArrowLeft,
-  ShieldAlert,
   Flag,
 } from 'lucide-react';
+import MatchLineups from '@/components/matches/MatchLineups';
 import { formatDate, formatTime, cn, getInitials, getMatchStatusBadgeVariant } from '@/lib/utils';
 import { divisionMatchesPath } from '@/lib/division-routes';
 import { useMatch } from '@/hooks/useMatches';
@@ -301,20 +301,12 @@ export default function MatchDetailPage() {
                   )}
                 </div>
 
-                {/* Lineups */}
+                {/* Lineups (active rosters) */}
                 <div>
                   <h3 className="mb-3 px-1 text-sm font-semibold uppercase tracking-widest text-muted-foreground">
                     Lineups
                   </h3>
-                  <GlassCard className="border border-border/60 p-8 text-center">
-                    <div className="mx-auto mb-3 flex h-10 w-10 items-center justify-center rounded-full border border-border bg-muted/60">
-                      <ShieldAlert className="h-5 w-5 text-muted-foreground/60" aria-hidden />
-                    </div>
-                    <p className="text-sm font-medium text-muted-foreground">Lineups not available</p>
-                    <p className="mt-1 text-xs text-muted-foreground/60">
-                      Rosters have not been submitted for this match yet.
-                    </p>
-                  </GlassCard>
+                  <MatchLineups homeTeam={match.home_team} awayTeam={match.away_team} />
                 </div>
               </div>
 

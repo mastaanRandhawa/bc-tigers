@@ -66,7 +66,7 @@ export default function MediaFormDialog({ open, onOpenChange }: MediaFormDialogP
       open={open}
       onOpenChange={onOpenChange}
       title="Add Media"
-      description="Paste an image or video URL. File upload requires cloud storage integration."
+      description="Paste a public URL to an image or video hosted elsewhere."
       onSubmit={onSubmit}
       isSubmitting={uploadMutation.isPending}
       submitLabel="Add Media"

@@ -8,7 +8,7 @@ import SectionHeader from '@/components/shared/SectionHeader';
 import SearchField from '@/components/shared/SearchField';
 import SearchEmpty from '@/components/shared/SearchEmpty';
 import { useTeams } from '@/hooks/useTeams';
-import { useMatches } from '@/hooks/useMatches';
+import { useMyMatches } from '@/hooks/useMatches';
 import { useTournaments } from '@/hooks/useTournaments';
 import { useAuthStore } from '@/store/authStore';
 import { getTeamPath, getDivisionMatchesPath, getMatchPath } from '@/lib/division-routes';
@@ -25,7 +25,7 @@ const nav = [
 export default function CoachDashboard() {
   const { user, refreshUser } = useAuthStore();
   const { data: teams = [], isLoading: teamsLoading } = useTeams();
-  const { data: matches = [], isLoading: matchesLoading } = useMatches();
+  const { data: matches = [], isLoading: matchesLoading } = useMyMatches({ limit: 100 });
   const { data: tournaments = [] } = useTournaments();
 
   useEffect(() => { refreshUser(); }, [refreshUser]);
@@ -33,15 +33,13 @@ export default function CoachDashboard() {
   const myTeamIds = new Set(
     user?.coach?.team_coaches?.map((tc) => tc.team?.id).filter(Boolean) as string[],
   );
-  const myTeams = myTeamIds.size > 0 ? teams.filter((t) => myTeamIds.has(t.id)) : teams;
+  const myTeams = teams.filter((t) => myTeamIds.size === 0 || myTeamIds.has(t.id));
   const primaryTeam = myTeams[0];
   const matchesPath = primaryTeam?.division
     ? getDivisionMatchesPath(primaryTeam.division)
     : '/tournaments';
 
-  const myMatches = myTeamIds.size > 0
-    ? matches.filter((m) => myTeamIds.has(m.home_team_id) || myTeamIds.has(m.away_team_id))
-    : matches;
+  const myMatches = matches;
 
   const upcoming = myMatches
     .filter((m) => m.status === 'SCHEDULED')

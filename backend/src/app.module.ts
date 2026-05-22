@@ -18,10 +18,14 @@ import { CoachesModule } from './modules/coaches/coaches.module';
 import { SettingsModule } from './modules/settings/settings.module';
 import { NotificationsModule } from './modules/notifications/notifications.module';
 import { HubModule } from './modules/hub/hub.module';
+import { MailModule } from './modules/mail/mail.module';
+import { MeModule } from './modules/me/me.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
+    MailModule,
+    MeModule,
     AuthModule,
     TournamentsModule,
     DivisionsModule,

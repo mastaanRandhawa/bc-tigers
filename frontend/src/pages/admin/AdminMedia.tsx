@@ -6,7 +6,7 @@ import SearchEmpty from '@/components/shared/SearchEmpty';
 import { useListSearch } from '@/hooks/useListSearch';
 import MediaFormDialog from '@/components/admin/forms/MediaFormDialog';
 import { useMedia, useDeleteMedia } from '@/hooks/useMedia';
-import { Upload, Image, Trash2 } from 'lucide-react';
+import { Image, Trash2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { getApiErrorMessage } from '@/lib/errors';
 
@@ -30,17 +30,12 @@ export default function AdminMedia() {
   };
 
   return (
-    <AdminLayout title="Division Media">
+    <AdminLayout title="Media URLs">
       <div className="space-y-6">
-        <div
-          className="bg-card rounded-2xl border-2 border-dashed border-border p-10 text-center hover:border-primary transition-colors cursor-pointer"
-          onClick={() => setFormOpen(true)}
-        >
-          <Upload className="w-10 h-10 text-gray-300 mx-auto mb-3" />
-          <p className="font-bold text-muted-foreground">Add media by URL</p>
-          <p className="text-xs text-muted-foreground mt-1">Photos, videos, and documents</p>
-          <Button size="sm" className="mt-4" onClick={() => setFormOpen(true)}>
-            <Upload className="w-4 h-4" /> Add Media
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <p className="text-sm text-muted-foreground">Link photos and videos by URL (hosted elsewhere).</p>
+          <Button size="sm" onClick={() => setFormOpen(true)}>
+            <Image className="w-4 h-4" aria-hidden /> Add media URL
           </Button>
         </div>
 
@@ -58,7 +53,7 @@ export default function AdminMedia() {
           isError={isError}
           isEmpty={media.length === 0}
           onRetry={() => refetch()}
-          emptyMessage="No media uploaded yet."
+          emptyMessage="No media URLs added yet."
         >
           {hasQuery && filtered.length === 0 ? (
             <SearchEmpty query={debouncedSearch} entityLabel="media" />

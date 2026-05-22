@@ -26,6 +26,8 @@ interface PortalMatchListProps {
   rowRight?: (match: Match) => ReactNode;
   /** Optional sub-text per row (defaults to date · time) */
   rowSub?: (match: Match) => ReactNode;
+  /** Override match link (e.g. referee control page) */
+  getLink?: (match: Match) => string;
 }
 
 /**
@@ -47,6 +49,7 @@ export default function PortalMatchList({
   searchThreshold = 3,
   rowRight,
   rowSub,
+  getLink,
 }: PortalMatchListProps) {
   return (
     <Section className="p-0 overflow-hidden">
@@ -82,7 +85,7 @@ export default function PortalMatchList({
             {filteredMatches.map((m) => (
               <Link
                 key={m.id}
-                to={getMatchPath(m)}
+                to={getLink ? getLink(m) : getMatchPath(m)}
                 className="flex items-start gap-3 px-4 py-3 hover:bg-muted transition-colors"
               >
                 <div className="flex-1 min-w-0 text-sm">

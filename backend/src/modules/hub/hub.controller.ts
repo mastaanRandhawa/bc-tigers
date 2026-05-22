@@ -22,4 +22,10 @@ export class HubController {
   resolveDivision(@Param('divisionSlug') divisionSlug: string) {
     return this.hubService.resolveDivisionSlug(divisionSlug);
   }
+
+  @Get('search')
+  @Header('Cache-Control', 'public, max-age=30, stale-while-revalidate=60')
+  search(@Query('q') q = '') {
+    return this.hubService.search(q);
+  }
 }

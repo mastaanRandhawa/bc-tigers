@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import type { Prisma } from '@prisma/client';
+import type { Prisma, UserRole } from '@prisma/client';
 import prisma from '../../prisma/prisma';
+import { ensureRoleProfile } from '../../common/ensure-role-profile';
 
 const SELECT = {
   id: true,
@@ -29,12 +30,30 @@ export class UsersService {
     return prisma.user.findUniqueOrThrow({ where: { id }, select: SELECT });
   }
 
-  update(id: string, data: unknown) {
-    return prisma.user.update({
+  async update(id: string, data: unknown) {
+    const input = data as Prisma.UserUpdateInput & { role?: UserRole };
+    const existing = await prisma.user.findUnique({ where: { id } });
+    if (!existing) throw new NotFoundException('User not found');
+
+    const user = await prisma.user.update({
       where: { id },
-      data: data as Prisma.UserUpdateInput,
+      data: input,
       select: SELECT,
     });
+
+    const newRole = input.role ?? existing.role;
+    if (newRole !== existing.role || ['COACH', 'PLAYER', 'REFEREE'].includes(newRole)) {
+      if (newRole === 'COACH' || newRole === 'PLAYER' || newRole === 'REFEREE') {
+        await ensureRoleProfile(id, newRole, {
+          first_name: user.first_name,
+          last_name: user.last_name,
+          email: user.email,
+          phone: user.phone,
+        });
+      }
+    }
+
+    return user;
   }
 
   remove(id: string) {

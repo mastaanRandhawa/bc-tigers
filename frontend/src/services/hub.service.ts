@@ -36,4 +36,24 @@ export const hubService = {
     }),
   resolveDivision: (divisionSlug: string) =>
     apiClient.get<Division | Division[]>('/hub/resolve-division/' + divisionSlug),
+
+  search: (q: string) =>
+    apiClient.get<{
+      tournaments: Array<{ id: string; name: string; slug: string; location?: string }>;
+      divisions: Array<{
+        id: string;
+        name: string;
+        slug: string;
+        tournament_slug: string;
+        tournament_name: string;
+      }>;
+      teams: Array<{
+        id: string;
+        name: string;
+        slug: string;
+        city?: string;
+        division_slug: string;
+        tournament_slug: string;
+      }>;
+    }>('/hub/search', { params: { q } }),
 };

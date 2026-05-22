@@ -29,13 +29,13 @@ export default function ForgotPasswordPage() {
   };
 
   return (
-    <AuthLayout title="Reset Password" subtitle="We'll email you a reset link">
+    <AuthLayout title="Reset Password" subtitle="Enter your email and we'll send a reset link">
       {sent ? (
         <div className="text-center py-8">
           <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
           <h3 className="font-semibold text-foreground text-lg">Check Your Email</h3>
           <p className="text-sm text-muted-foreground mt-2">
-            If <strong>{email}</strong> is registered, you'll receive a reset link shortly.
+            If <strong>{email}</strong> is registered, check your inbox for a reset link (expires in 1 hour).
           </p>
           <Link to="/login" className="block mt-6 text-sm text-primary font-semibold hover:underline">
             Back to Sign In

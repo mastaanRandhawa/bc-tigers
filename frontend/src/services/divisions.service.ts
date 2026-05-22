@@ -19,4 +19,18 @@ export const divisionsService = {
     apiClient.patch<Division>(`/divisions/${id}`, data),
 
   delete: (id: string) => apiClient.delete<Division>(`/divisions/${id}`),
+
+  generateSchedule: (
+    id: string,
+    body?: {
+      startDate?: string;
+      matchIntervalMinutes?: number;
+      venueId?: string;
+      fieldId?: string;
+    },
+    force?: boolean,
+  ) =>
+    apiClient.post<{ created: number }>(`/divisions/${id}/generate-schedule`, body ?? {}, {
+      params: force ? { force: 'true' } : undefined,
+    }),
 };

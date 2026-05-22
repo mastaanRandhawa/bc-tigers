@@ -32,4 +32,10 @@ export const matchesService = {
   ) => apiClient.post<MatchEvent>(`/matches/${matchId}/events`, data),
 
   delete: (id: string) => apiClient.delete<Match>(`/matches/${id}`),
+
+  assignReferee: (matchId: string, data: { referee_id: string; role?: string }) =>
+    apiClient.post(`/matches/${matchId}/referees`, data),
+
+  removeReferee: (matchId: string, matchRefereeId: string) =>
+    apiClient.delete(`/matches/${matchId}/referees/${matchRefereeId}`),
 };

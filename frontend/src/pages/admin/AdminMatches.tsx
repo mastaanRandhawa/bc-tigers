@@ -4,6 +4,7 @@ import AdminTable from '@/components/AdminTable';
 import QueryState from '@/components/shared/QueryState';
 import MatchFormDialog from '@/components/admin/forms/MatchFormDialog';
 import MatchScoreFormDialog from '@/components/admin/forms/MatchScoreFormDialog';
+import MatchEventFormDialog from '@/components/admin/forms/MatchEventFormDialog';
 import { useFormDialog } from '@/hooks/useFormDialog';
 import { useMatches, useDeleteMatch } from '@/hooks/useMatches';
 import type { Match } from '@/types';
@@ -12,9 +13,9 @@ import { Button } from '@/components/ui/button';
 import { formatDate, formatTime, getMatchStatusBadgeVariant } from '@/lib/utils';
 import { getApiErrorMessage } from '@/lib/errors';
 import { matchSearchText } from '@/lib/search-text';
-import { Zap } from 'lucide-react';
+import { Zap, PlusCircle } from 'lucide-react';
 
-const columns = (onScore: (m: Match) => void) => [
+const columns = (onScore: (m: Match) => void, onEvent: (m: Match) => void) => [
   {
     key: 'teams',
     label: 'Match',
@@ -57,6 +58,17 @@ const columns = (onScore: (m: Match) => void) => [
         >
           <Zap className="w-3 h-3" />
         </Button>
+        <Button
+          size="sm"
+          variant="outline"
+          className="h-7 px-2"
+          onClick={(e) => {
+            e.stopPropagation();
+            onEvent(m);
+          }}
+        >
+          <PlusCircle className="w-3 h-3" />
+        </Button>
       </div>
     ),
   },
@@ -68,6 +80,7 @@ export default function AdminMatches() {
   const deleteMutation = useDeleteMatch();
   const formDialog = useFormDialog<Match>();
   const [scoreMatch, setScoreMatch] = useState<Match | null>(null);
+  const [eventMatch, setEventMatch] = useState<Match | null>(null);
 
   const handleDelete = async (m: Match) => {
     if (!confirm('Delete this match?')) return;
@@ -84,7 +97,7 @@ export default function AdminMatches() {
         <AdminTable
           title="All Matches"
           data={matches}
-          columns={columns(setScoreMatch)}
+          columns={columns(setScoreMatch, setEventMatch)}
           onAdd={formDialog.openCreate}
           onEdit={formDialog.openEdit}
           onDelete={handleDelete}
@@ -102,6 +115,11 @@ export default function AdminMatches() {
         open={!!scoreMatch}
         onOpenChange={(open) => !open && setScoreMatch(null)}
         match={scoreMatch}
+      />
+      <MatchEventFormDialog
+        open={!!eventMatch}
+        onOpenChange={(open) => !open && setEventMatch(null)}
+        match={eventMatch}
       />
     </AdminLayout>
   );

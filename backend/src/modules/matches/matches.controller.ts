@@ -7,10 +7,14 @@ import {
   Param,
   Body,
   Query,
+  Request,
 } from '@nestjs/common';
 import { MatchesService } from './matches.service';
 import { AdminOnly } from '../auth/admin.decorator';
-import type { MatchStatus } from '@prisma/client';
+import { RefereeOrAdmin } from '../auth/referee-or-admin.decorator';
+import type { MatchStatus, UserRole } from '@prisma/client';
+
+type AuthUser = { userId: string; role: UserRole };
 
 @Controller('matches')
 export class MatchesController {
@@ -54,27 +58,33 @@ export class MatchesController {
   }
 
   @Patch(':id')
-  @AdminOnly()
-  update(@Param('id') id: string, @Body() body: Record<string, unknown>) {
-    return this.service.update(id, body);
+  @RefereeOrAdmin()
+  update(
+    @Request() req: { user: AuthUser },
+    @Param('id') id: string,
+    @Body() body: Record<string, unknown>,
+  ) {
+    return this.service.update(id, body, req.user);
   }
 
   @Patch(':id/score')
-  @AdminOnly()
+  @RefereeOrAdmin()
   updateScore(
+    @Request() req: { user: AuthUser },
     @Param('id') id: string,
     @Body() body: { home_score: number; away_score: number },
   ) {
-    return this.service.updateScore(id, body.home_score, body.away_score);
+    return this.service.updateScore(id, body.home_score, body.away_score, req.user);
   }
 
   @Post(':matchId/events')
-  @AdminOnly()
+  @RefereeOrAdmin()
   addEvent(
+    @Request() req: { user: AuthUser },
     @Param('matchId') matchId: string,
     @Body() body: Record<string, unknown>,
   ) {
-    return this.service.addEvent(matchId, body);
+    return this.service.addEvent(matchId, body, req.user);
   }
 
   @Delete(':id')
