@@ -90,14 +90,15 @@ export default function DivisionTeamDetailPage() {
             </div>
           )}
 
-          <Section>
-            <SectionHeader title="Roster" />
-            {roster.length > 0 && (
+          {/* Roster */}
+          <div className="space-y-2.5">
+            {/* Search only shown when there's a roster to search */}
+            {roster.length > 3 && (
               <SearchField
                 value={rosterSearch}
                 onChange={setRosterSearch}
                 placeholder="Search players…"
-                className="mb-4 max-w-md"
+                className="max-w-xs"
               />
             )}
             {hasRosterQuery && filteredRoster.length === 0 ? (
@@ -108,9 +109,10 @@ export default function DivisionTeamDetailPage() {
                 tournamentSlug={tournamentSlug}
                 divisionSlug={divisionSlug}
                 teamSlug={teamSlug}
+                teamColor={team.primary_color}
               />
             )}
-          </Section>
+          </div>
 
           <Section>
             <SectionHeader title="Matches" />
