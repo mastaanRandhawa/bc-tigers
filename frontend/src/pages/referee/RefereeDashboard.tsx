@@ -1,9 +1,12 @@
 import { Link } from 'react-router-dom';
 import PortalLayout from '@/components/layouts/PortalLayout';
 import QueryState from '@/components/shared/QueryState';
+import Section from '@/components/shared/Section';
+import SectionHeader from '@/components/shared/SectionHeader';
+import { Badge } from '@/components/ui/badge';
 import { useMatches } from '@/hooks/useMatches';
 import { useAuthStore } from '@/store/authStore';
-import { formatDate, formatTime, getStatusColor } from '@/lib/utils';
+import { formatDate, formatTime, getMatchStatusBadgeVariant } from '@/lib/utils';
 import { getMatchPath } from '@/lib/division-routes';
 import { LayoutDashboard, Calendar, Zap, MapPin, ClipboardList, Trophy } from 'lucide-react';
 import { useCallback, useEffect } from 'react';
@@ -66,33 +69,32 @@ export default function RefereeDashboard() {
     hasQuery: hasLiveQuery,
   } = useListSearch(live, getLiveText);
 
+  const stats = [
+    { label: "Today's Matches", value: todayMatches.length, icon: Calendar },
+    { label: 'Live Now', value: live.length, icon: Zap },
+    { label: 'Assigned', value: myMatches.length, icon: ClipboardList },
+  ];
+
   return (
     <PortalLayout title="Referee Portal" subtitle="Match Assignments" nav={nav}>
-      <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 mb-8">
-        {[
-          { label: "Today's Matches", value: todayMatches.length, icon: Calendar },
-          { label: 'Live Now', value: live.length, icon: Zap },
-          { label: 'Assigned', value: myMatches.length, icon: ClipboardList },
-        ].map((stat) => (
-          <div key={stat.label} className="rounded-lg border border-border bg-card shadow-sm p-5 flex items-center gap-4">
-            <div className="bg-violet-600 p-3 rounded-xl">
-              <stat.icon className="w-5 h-5 text-white" />
+      <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 mb-6">
+        {stats.map((stat) => (
+          <div key={stat.label} className="portal-stat-card">
+            <div className="portal-stat-icon" style={{ pointerEvents: 'none' }}>
+              <stat.icon className="w-5 h-5" aria-hidden />
             </div>
             <div>
-              <p className="text-2xl font-semibold text-foreground">{stat.value}</p>
+              <p className="text-2xl font-semibold text-foreground tabular-nums">{stat.value}</p>
               <p className="text-sm text-muted-foreground font-medium">{stat.label}</p>
             </div>
           </div>
         ))}
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="rounded-lg border border-border bg-card shadow-sm">
-          <div className="flex items-center justify-between p-5 border-b border-border">
-            <div className="flex items-center gap-2">
-              <Calendar className="w-4 h-4 text-violet-600" />
-              <h2 className="font-semibold text-foreground">Today's Schedule</h2>
-            </div>
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        <Section className="p-0 overflow-hidden">
+          <div className="flex items-center justify-between px-4 py-3.5 border-b border-border">
+            <SectionHeader title="Today's Schedule" className="mb-0" />
           </div>
           {todayMatches.length > 3 && (
             <div className="border-b border-border px-4 py-2">
@@ -108,47 +110,50 @@ export default function RefereeDashboard() {
             {hasQuery && filteredToday.length === 0 ? (
               <SearchEmpty query={debouncedSearch} entityLabel="matches" />
             ) : (
-            <div className="divide-y divide-gray-50">
-              {filteredToday.map((m) => (
-                <Link
-                  key={m.id}
-                  to={getMatchPath(m)}
-                  className="flex items-start gap-3 p-4 hover:bg-muted transition-colors"
-                >
-                  <div className="flex-1 text-sm">
-                    <p className="font-bold text-foreground">
-                      {m.home_team?.name} vs {m.away_team?.name}
-                    </p>
-                    <p className="text-muted-foreground text-xs mt-0.5">
-                      {formatTime(m.scheduled_start)}
-                      {m.venue && (
-                        <>
-                          {' · '}
-                          <MapPin className="w-3 h-3 inline -mt-0.5" /> {m.venue.name}
-                        </>
-                      )}
-                    </p>
-                  </div>
-                  <span className={`text-xs px-2 py-0.5 rounded-full font-semibold ${getStatusColor(m.status)}`}>
-                    {m.status}
-                  </span>
-                </Link>
-              ))}
-            </div>
+              <div className="divide-y divide-border">
+                {filteredToday.map((m) => (
+                  <Link
+                    key={m.id}
+                    to={getMatchPath(m)}
+                    className="flex items-start gap-3 px-4 py-3 hover:bg-muted transition-colors"
+                  >
+                    <div className="flex-1 min-w-0 text-sm">
+                      <p className="font-semibold text-foreground truncate">
+                        {m.home_team?.name} vs {m.away_team?.name}
+                      </p>
+                      <p className="text-muted-foreground text-xs mt-0.5">
+                        {formatTime(m.scheduled_start)}
+                        {m.venue && (
+                          <>
+                            {' · '}
+                            <MapPin className="w-3 h-3 inline -mt-0.5" aria-hidden /> {m.venue.name}
+                          </>
+                        )}
+                      </p>
+                    </div>
+                    <Badge variant={getMatchStatusBadgeVariant(m.status)} className="shrink-0">
+                      {m.status}
+                    </Badge>
+                  </Link>
+                ))}
+              </div>
             )}
           </QueryState>
-        </div>
+        </Section>
 
-        <div className="rounded-lg border border-border bg-card shadow-sm">
-          <div className="flex items-center justify-between p-5 border-b border-border">
+        <Section className="p-0 overflow-hidden">
+          <div className="flex items-center justify-between px-4 py-3.5 border-b border-border">
             <div className="flex items-center gap-2">
-              <Zap className="w-4 h-4 text-red-500" />
-              <h2 className="font-semibold text-foreground">Live Matches</h2>
-              {live.length > 0 && <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />}
+              <SectionHeader
+                title="Live Matches"
+                href={livePath}
+                linkLabel="View Live"
+                className="mb-0"
+              />
+              {live.length > 0 && (
+                <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse shrink-0" aria-hidden />
+              )}
             </div>
-            <Link to={livePath} className="text-xs text-violet-600 font-semibold hover:underline">
-              View Live →
-            </Link>
           </div>
           {live.length > 3 && (
             <div className="border-b border-border px-4 py-2">
@@ -164,28 +169,28 @@ export default function RefereeDashboard() {
             {hasLiveQuery && filteredLive.length === 0 ? (
               <SearchEmpty query={debouncedLiveSearch} entityLabel="matches" />
             ) : (
-            <div className="divide-y divide-gray-50">
-              {filteredLive.map((m) => (
-                <Link
-                  key={m.id}
-                  to={getMatchPath(m)}
-                  className="flex items-center gap-3 p-4 hover:bg-muted transition-colors"
-                >
-                  <div className="flex-1 text-sm">
-                    <p className="font-bold text-foreground">
-                      {m.home_team?.name} vs {m.away_team?.name}
-                    </p>
-                    <p className="text-muted-foreground text-xs">{formatDate(m.scheduled_start)}</p>
-                  </div>
-                  <div className="text-lg font-black text-red-600">
-                    {m.home_score} – {m.away_score}
-                  </div>
-                </Link>
-              ))}
-            </div>
+              <div className="divide-y divide-border">
+                {filteredLive.map((m) => (
+                  <Link
+                    key={m.id}
+                    to={getMatchPath(m)}
+                    className="flex items-center gap-3 px-4 py-3 hover:bg-muted transition-colors"
+                  >
+                    <div className="flex-1 min-w-0 text-sm">
+                      <p className="font-semibold text-foreground truncate">
+                        {m.home_team?.name} vs {m.away_team?.name}
+                      </p>
+                      <p className="text-muted-foreground text-xs">{formatDate(m.scheduled_start)}</p>
+                    </div>
+                    <div className="text-lg font-bold text-primary tabular-nums shrink-0">
+                      {m.home_score} – {m.away_score}
+                    </div>
+                  </Link>
+                ))}
+              </div>
             )}
           </QueryState>
-        </div>
+        </Section>
       </div>
     </PortalLayout>
   );

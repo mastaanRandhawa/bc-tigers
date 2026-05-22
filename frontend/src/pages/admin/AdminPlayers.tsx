@@ -13,7 +13,7 @@ const columns = [
     label: 'Player',
     render: (p: Player) => (
       <div>
-        <p className="font-bold text-foreground">
+        <p className="font-semibold text-foreground">
           {p.first_name} {p.last_name}
         </p>
         <p className="font-mono text-xs text-muted-foreground">{p.id.slice(0, 8)}…</p>

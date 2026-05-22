@@ -1,22 +1,26 @@
 import { Link, Outlet } from 'react-router-dom';
 import {
   Users,
-  Calendar,
   Swords,
   Trophy,
   TrendingUp,
   GitBranch,
   MapPin,
   LayoutDashboard,
-  ChevronRight,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
-import LiveScoreTicker from '@/components/LiveScoreTicker';
-import BrandLogo from '@/components/shared/BrandLogo';
 import PageContent from '@/components/shared/PageContent';
 import { type PillNavItem } from '@/components/shared/PillNav';
 import DivisionNav from '@/components/divisions/DivisionNav';
 import DivisionHero from '@/components/divisions/DivisionHero';
+import {
+  Breadcrumb,
+  BreadcrumbList,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from '@/components/ui/breadcrumb';
 import { divisionThemeStyle, type DivisionTheme } from '@/lib/division-theme';
 import type { Division } from '@/types';
 
@@ -34,9 +38,8 @@ export function buildDivisionNavItems(basePath: string): DivisionNavItem[] {
   return [
     { label: 'Overview', href: basePath, icon: LayoutDashboard, end: true },
     { label: 'Teams', href: `${basePath}/teams`, icon: Users },
-    { label: 'Schedule', href: `${basePath}/schedule`, icon: Calendar },
-    { label: 'Standings', href: `${basePath}/standings`, icon: Trophy },
     { label: 'Matches', href: `${basePath}/matches`, icon: Swords },
+    { label: 'Standings', href: `${basePath}/standings`, icon: Trophy },
     { label: 'Stats', href: `${basePath}/stats`, icon: TrendingUp },
     { label: 'Brackets', href: `${basePath}/brackets`, icon: GitBranch },
     { label: 'Venues', href: `${basePath}/venues`, icon: MapPin },
@@ -45,8 +48,8 @@ export function buildDivisionNavItems(basePath: string): DivisionNavItem[] {
 
 export function splitDivisionNavItems(items: DivisionNavItem[]) {
   return {
-    primary: items.slice(0, 4),
-    more: items.slice(4),
+    primary: items.slice(0, 6),
+    more: items.slice(6),
   };
 }
 
@@ -61,7 +64,7 @@ export default function DivisionShell({
 
   return (
     <div
-      className="division-theme-root flex min-h-dvh min-h-screen w-full flex-col overflow-x-hidden bg-zinc-50"
+      className="division-theme-root flex min-h-dvh min-h-screen w-full flex-col overflow-x-hidden bg-surface-muted"
       style={divisionThemeStyle(theme)}
     >
       <div
@@ -70,64 +73,59 @@ export default function DivisionShell({
         aria-hidden
       />
 
-      <header className="relative shrink-0 overflow-hidden border-b border-border bg-white">
+      {/* Hero header — breadcrumbs sit above the division title, no duplicate nav bar */}
+      <header className="relative shrink-0 overflow-hidden border-b border-border bg-card">
         <div
           className="pointer-events-none absolute inset-0"
           style={{
-            background: `linear-gradient(180deg, color-mix(in srgb, ${theme.accent} 45%, white) 0%, white 100%)`,
+            background: `linear-gradient(180deg, color-mix(in srgb, ${theme.accent} 30%, transparent) 0%, transparent 100%)`,
           }}
           aria-hidden
         />
 
-        <div className="page-container relative z-10 border-b border-border/50 py-2">
-          <div className="flex min-w-0 items-center gap-3">
-            <BrandLogo compact />
-            <div className="hidden min-w-0 flex-1 border-l border-border pl-3 md:block">
-              <LiveScoreTicker embedded alwaysShow divisionId={division.id} variant="light" />
-            </div>
-          </div>
-        </div>
-
-        <div className="border-b border-border/50 md:hidden">
-          <LiveScoreTicker embedded alwaysShow divisionId={division.id} variant="light" />
+        {/* Breadcrumbs — above the hero title inside the card band */}
+        <div className="page-container relative z-10 pt-3 pb-0">
+          <Breadcrumb>
+            <BreadcrumbList className="text-xs flex-nowrap">
+              <BreadcrumbItem>
+                <BreadcrumbLink asChild>
+                  <Link to="/tournaments">Tournaments</Link>
+                </BreadcrumbLink>
+              </BreadcrumbItem>
+              {tournament && (
+                <>
+                  <BreadcrumbSeparator />
+                  <BreadcrumbItem>
+                    <BreadcrumbLink asChild>
+                      <Link
+                        to={`/tournaments/${tournament.slug}`}
+                        className="max-w-[10rem] truncate sm:max-w-xs"
+                        title={tournament.name}
+                      >
+                        {tournament.name}
+                      </Link>
+                    </BreadcrumbLink>
+                  </BreadcrumbItem>
+                </>
+              )}
+              <BreadcrumbSeparator />
+              <BreadcrumbItem>
+                <BreadcrumbPage className="truncate font-semibold">{division.name}</BreadcrumbPage>
+              </BreadcrumbItem>
+            </BreadcrumbList>
+          </Breadcrumb>
         </div>
 
         <DivisionHero division={division} theme={theme} />
       </header>
 
-      <div className="sticky top-0 z-40 shrink-0 border-b border-border bg-white/95 shadow-sm backdrop-blur-sm">
-        <nav
-          aria-label="Tournament context"
-          className="page-container flex min-w-0 items-center gap-1.5 overflow-x-auto border-b border-border/60 py-1.5 text-xs no-scrollbar"
-        >
-          <Link
-            to="/tournaments"
-            className="inline-flex shrink-0 items-center gap-1 rounded-md border border-border bg-zinc-50 px-2 py-1 font-semibold text-foreground transition-colors hover:border-primary/30 hover:text-primary sm:border-transparent sm:bg-transparent sm:px-0 sm:py-0 sm:font-medium sm:text-zinc-500 sm:hover:text-foreground"
-          >
-            <span aria-hidden className="sm:hidden">←</span>
-            Tournaments
-          </Link>
-          {tournament && (
-            <>
-              <ChevronRight className="h-3 w-3 shrink-0 text-zinc-300" aria-hidden />
-              <Link
-                to={`/tournaments/${tournament.slug}`}
-                className="max-w-[10rem] truncate font-medium text-zinc-500 transition-colors hover:text-foreground sm:max-w-xs"
-                title={tournament.name}
-              >
-                {tournament.name}
-              </Link>
-            </>
-          )}
-          <ChevronRight className="h-3 w-3 shrink-0 text-zinc-300" aria-hidden />
-          <span className="truncate font-semibold text-foreground">{division.name}</span>
-        </nav>
+      {/* Sticky nav — tabs only, no repeated breadcrumbs */}
+      <div className="sticky top-0 z-40 shrink-0 border-b border-border bg-card/95 shadow-sm backdrop-blur-sm">
         <div className="py-2">
           <DivisionNav
             primaryItems={primaryNavItems}
             moreItems={moreNavItems}
             allItems={navItems}
-            theme={theme}
           />
         </div>
       </div>

@@ -66,7 +66,7 @@ export default function DivisionVenueDetailPage() {
               </div>
               )
             ) : (
-              <p className="text-sm text-zinc-500">No matches at this venue.</p>
+              <p className="text-sm text-muted-foreground">No matches at this venue.</p>
             )}
           </Section>
         </div>

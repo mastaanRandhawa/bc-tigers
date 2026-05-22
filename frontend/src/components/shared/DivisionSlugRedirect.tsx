@@ -1,7 +1,10 @@
 import { Navigate, useLocation, useParams } from 'react-router-dom';
 import PageLoader from '@/components/shared/PageLoader';
 import { useDivisionLookup } from '@/hooks/useDivisionResources';
-import { divisionBasePath } from '@/lib/division-routes';
+import {
+  divisionBasePath,
+  divisionMatchesCalendarPath,
+} from '@/lib/division-routes';
 import type { Division } from '@/types';
 
 export default function DivisionSlugRedirect() {
@@ -18,8 +21,10 @@ export default function DivisionSlugRedirect() {
   }
 
   const tournamentSlug = division.tournament.slug;
-  const suffix = section === 'brackets' ? 'brackets' : section;
-  const target = `${divisionBasePath(tournamentSlug, division.slug)}/${suffix}`;
+  const target =
+    section === 'schedule'
+      ? divisionMatchesCalendarPath(tournamentSlug, division.slug)
+      : `${divisionBasePath(tournamentSlug, division.slug)}/${section === 'brackets' ? 'brackets' : 'standings'}`;
 
   return <Navigate to={target} replace />;
 }

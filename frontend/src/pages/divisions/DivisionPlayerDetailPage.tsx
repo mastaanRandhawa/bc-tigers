@@ -40,7 +40,7 @@ export default function DivisionPlayerDetailPage() {
               Back to {team.name}
             </Link>
 
-            <div className="mb-6 overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-border/60">
+            <div className="mb-6 overflow-hidden rounded-xl bg-card shadow-sm border border-border">
               <div
                 className="px-6 py-8 text-center text-white"
                 style={{ backgroundColor: team.primary_color ?? 'var(--division-primary)' }}
@@ -74,7 +74,7 @@ export default function DivisionPlayerDetailPage() {
                 ].map((s) => (
                   <div
                     key={s.label}
-                    className="rounded-xl bg-white px-3 py-3 text-center shadow-sm ring-1 ring-border/60"
+                    className="rounded-xl bg-card px-3 py-3 text-center shadow-sm border border-border"
                   >
                     <p
                       className="text-2xl font-bold tabular-nums font-display"
@@ -82,7 +82,7 @@ export default function DivisionPlayerDetailPage() {
                     >
                       {s.value}
                     </p>
-                    <p className="mt-1 text-xs font-medium uppercase tracking-wide text-zinc-500">
+                    <p className="mt-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">
                       {s.label}
                     </p>
                   </div>

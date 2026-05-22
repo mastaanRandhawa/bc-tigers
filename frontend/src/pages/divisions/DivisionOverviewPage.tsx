@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import QueryState from '@/components/shared/QueryState';
+import { Shield } from 'lucide-react';
 import MatchCard from '@/components/MatchCard';
 import DivisionQuickStats from '@/components/divisions/DivisionQuickStats';
 import SectionHeader from '@/components/shared/SectionHeader';
@@ -12,19 +12,43 @@ import {
   useDivisionStandingsResource,
   useDivisionTeams,
 } from '@/hooks/useDivisionResources';
-import { Calendar, MapPin } from 'lucide-react';
-import { formatDate } from '@/lib/utils';
+import { divisionTeamPath } from '@/lib/division-routes';
+import { cn } from '@/lib/utils';
+
+function getCountdownDays(dateStr?: string): number | null {
+  if (!dateStr) return null;
+  const diff = new Date(dateStr).getTime() - Date.now();
+  return diff > 0 ? Math.ceil(diff / 86_400_000) : null;
+}
 
 export default function DivisionOverviewPage() {
   const { division, basePath, tournamentSlug, divisionSlug, theme } = useDivisionRoute();
-  const tournament = division.tournament;
   const { data: teams = [] } = useDivisionTeams(tournamentSlug, divisionSlug);
   const { data: matches = [] } = useDivisionMatches(tournamentSlug, divisionSlug);
   const { data: standings = [] } = useDivisionStandingsResource(tournamentSlug, divisionSlug);
 
   const liveMatches = matches.filter((m) => m.status === 'LIVE');
-  const upcoming = matches.filter((m) => m.status === 'SCHEDULED').slice(0, 4);
-  const recent = matches.filter((m) => m.status === 'COMPLETED').slice(0, 4);
+  const upcomingMatches = matches
+    .filter((m) => m.status === 'SCHEDULED')
+    .sort((a, b) => new Date(a.scheduled_start).getTime() - new Date(b.scheduled_start).getTime());
+
+  const showLive = liveMatches.length > 0;
+  const displayMatches = showLive ? liveMatches : upcomingMatches.slice(0, 3);
+  const hasNoMatches = matches.length === 0;
+  const isUpcoming = division.tournament?.status === 'UPCOMING' || hasNoMatches;
+
+  const countdownDays = isUpcoming
+    ? getCountdownDays(upcomingMatches[0]?.scheduled_start ?? division.tournament?.start_date)
+    : null;
+
+  const firstMatchDate = upcomingMatches[0]?.scheduled_start
+    ? new Date(upcomingMatches[0].scheduled_start).toLocaleDateString('en-US', {
+        month: 'short',
+        day: 'numeric',
+      })
+    : null;
+
+  const accentColor = theme?.primary;
 
   return (
     <div className="space-y-5">
@@ -33,107 +57,144 @@ export default function DivisionOverviewPage() {
         subtitle="Division snapshot, live action, and standings"
       />
 
+      {/* Metric cards — uniform style across all 4 */}
       <DivisionQuickStats
-        theme={theme}
         stats={[
           { value: teams.length, label: 'Teams' },
-          { value: matches.length, label: 'Matches' },
+          { value: matches.length > 0 ? matches.length : '—', label: 'Matches' },
           {
-            value: liveMatches.length,
-            label: 'Live now',
-            accent: liveMatches.length > 0,
+            value: liveMatches.length > 0 ? liveMatches.length : (countdownDays != null ? `${countdownDays}d` : '—'),
+            label: liveMatches.length > 0 ? 'Live Now' : (countdownDays != null ? 'Until Kickoff' : 'Live Now'),
+            liveIndicator: liveMatches.length > 0,
           },
           {
             value: standings[0]?.points ?? '—',
-            label: 'Leader pts',
+            label: 'Leader Pts',
             sublabel: standings[0]?.team?.name,
           },
         ]}
       />
 
-      {/* Live — full prominence */}
-      {liveMatches.length > 0 && (
-        <Section>
-          <SectionHeader title="Live matches" subtitle="Scores updating in real time" />
-          <div className="divide-y divide-border">
-            {liveMatches.map((m) => (
-              <MatchCard key={m.id} match={m} flat />
-            ))}
-          </div>
-        </Section>
-      )}
-
-      {/* Upcoming + Recent results side-by-side on lg */}
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+      {/* Matches section — show teams roster when no matches exist */}
+      {isUpcoming && hasNoMatches ? (
         <Section>
           <SectionHeader
-            title="Upcoming"
-            href={`${basePath}/schedule`}
-            linkLabel="Full schedule"
+            title="Competing Teams"
+            subtitle="Teams registered for this division"
+            href={`${basePath}/teams`}
+            linkLabel="All teams"
           />
-          <QueryState isEmpty={upcoming.length === 0} emptyMessage="No upcoming matches.">
-            <div className="divide-y divide-border">
-              {upcoming.map((m) => (
-                <MatchCard key={m.id} match={m} flat />
-              ))}
+          {teams.length === 0 ? (
+            <p className="py-6 text-center text-sm text-muted-foreground">
+              No teams registered yet.
+            </p>
+          ) : (
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+              {teams.map((team) => {
+                const color = team.primary_color ?? accentColor ?? '#F48735';
+                return (
+                  <Link
+                    key={team.id}
+                    to={divisionTeamPath(tournamentSlug, divisionSlug, team.slug)}
+                    className="group flex flex-col items-center gap-2 rounded-xl border border-border bg-card p-4 text-center shadow-sm transition-all hover:shadow-md hover:border-primary/30"
+                  >
+                    <div
+                      className="flex h-12 w-12 items-center justify-center rounded-full border-2 border-white/20"
+                      style={{ backgroundColor: color }}
+                    >
+                      {team.logo ? (
+                        <img
+                          src={team.logo}
+                          alt=""
+                          className="h-full w-full rounded-full object-cover"
+                        />
+                      ) : (
+                        <Shield className="h-6 w-6 text-white/90" aria-hidden />
+                      )}
+                    </div>
+                    <span className="text-xs font-semibold text-foreground transition-colors group-hover:text-primary line-clamp-2">
+                      {team.name}
+                    </span>
+                  </Link>
+                );
+              })}
             </div>
-          </QueryState>
+          )}
         </Section>
-
+      ) : (
         <Section>
           <SectionHeader
-            title="Recent results"
+            title={showLive ? 'Live Matches' : 'Upcoming'}
+            subtitle={showLive ? 'Scores updating in real time' : 'Next fixtures in this division'}
             href={`${basePath}/matches`}
             linkLabel="All matches"
           />
-          <QueryState isEmpty={recent.length === 0} emptyMessage="No completed matches yet.">
+          {displayMatches.length === 0 ? (
+            <p className="py-6 text-center text-sm text-muted-foreground">
+              No matches scheduled yet.
+            </p>
+          ) : (
             <div className="divide-y divide-border">
-              {recent.map((m) => (
+              {displayMatches.map((m) => (
                 <MatchCard key={m.id} match={m} flat />
               ))}
             </div>
-          </QueryState>
+          )}
         </Section>
-      </div>
+      )}
 
-      {/* Standings snapshot */}
-      {standings.length > 0 && (
-        <Section>
-          <SectionHeader
-            title="Standings"
-            href={`${basePath}/standings`}
-            linkLabel="Full table"
-          />
+      {/* Standings — show placeholder when empty */}
+      <Section>
+        <SectionHeader
+          title="Standings"
+          href={standings.length > 0 ? `${basePath}/standings` : undefined}
+          linkLabel="Full table"
+        />
+        {standings.length > 0 ? (
           <StandingsTable standings={standings.slice(0, 6)} compact division={division} />
-        </Section>
-      )}
-
-      {/* Tournament info — minimal */}
-      {tournament && (
-        <div className="flex flex-col gap-1 rounded-xl bg-white px-4 py-3 ring-1 ring-border/60 shadow-sm sm:flex-row sm:items-center sm:justify-between">
-          <div className="min-w-0">
-            <Link
-              to={`/tournaments/${tournament.slug}`}
-              className="text-sm font-semibold text-foreground transition-colors hover:underline"
-              style={{ color: theme.primary }}
-            >
-              {tournament.name}
-            </Link>
-            <div className="mt-1 flex flex-wrap gap-x-4 gap-y-0.5 text-xs text-zinc-500">
-              <span className="inline-flex items-center gap-1">
-                <Calendar className="h-3.5 w-3.5 text-zinc-400" aria-hidden />
-                {formatDate(tournament.start_date)} – {formatDate(tournament.end_date)}
-              </span>
-              {tournament.location && (
-                <span className="inline-flex items-center gap-1">
-                  <MapPin className="h-3.5 w-3.5 text-zinc-400" aria-hidden />
-                  {tournament.location}
-                </span>
-              )}
-            </div>
+        ) : (
+          <div className="overflow-hidden rounded-xl border border-border bg-card">
+            {teams.length === 0 ? (
+              <p className="py-6 text-center text-sm text-muted-foreground">
+                No teams registered yet.
+              </p>
+            ) : (
+              <>
+                {[...teams]
+                  .sort((a, b) => a.name.localeCompare(b.name))
+                  .map((team, i) => (
+                    <div
+                      key={team.id}
+                      className={cn(
+                        'flex items-center gap-3 px-4 py-3 text-sm',
+                        i > 0 && 'border-t border-border',
+                      )}
+                    >
+                      <span className="w-5 text-right text-xs tabular-nums text-muted-foreground/60">
+                        {i + 1}
+                      </span>
+                      <div
+                        className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full"
+                        style={{ backgroundColor: team.primary_color ?? accentColor ?? '#F48735' }}
+                      >
+                        {team.logo ? (
+                          <img src={team.logo} alt="" className="h-full w-full rounded-full object-cover" />
+                        ) : (
+                          <Shield className="h-3.5 w-3.5 text-white/90" aria-hidden />
+                        )}
+                      </div>
+                      <span className="flex-1 font-medium text-foreground">{team.name}</span>
+                      <span className="text-xs text-muted-foreground">—</span>
+                    </div>
+                  ))}
+                <p className="border-t border-border px-4 py-2.5 text-center text-xs text-muted-foreground">
+                  Standings will update once matches begin.
+                </p>
+              </>
+            )}
           </div>
-        </div>
-      )}
+        )}
+      </Section>
     </div>
   );
 }

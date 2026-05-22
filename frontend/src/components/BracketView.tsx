@@ -131,7 +131,7 @@ export default function BracketView({ nodes }: BracketViewProps) {
       <div className="py-10 text-center">
         <Trophy className="mx-auto mb-3 h-9 w-9 text-zinc-300" aria-hidden />
         <p className="font-medium text-foreground">Bracket not yet generated</p>
-        <p className="mt-1 text-sm text-zinc-500">Check back once knockout rounds are set.</p>
+        <p className="mt-1 text-sm text-muted-foreground">Check back once knockout rounds are set.</p>
       </div>
     );
   }

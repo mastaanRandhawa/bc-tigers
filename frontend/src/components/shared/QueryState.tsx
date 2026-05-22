@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Skeleton } from '@/components/ui/skeleton';
 
@@ -80,14 +81,16 @@ export default function QueryState({
   if (isError) {
     return (
       <div className="py-8 px-4">
-        <div className="max-w-lg mx-auto rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
-          <p className="font-medium">{errorMessage}</p>
-          {onRetry && (
-            <Button variant="outline" size="sm" onClick={onRetry} className="mt-3">
-              Try Again
-            </Button>
-          )}
-        </div>
+        <Alert variant="destructive" className="max-w-lg mx-auto">
+          <AlertDescription>
+            <p className="font-medium">{errorMessage}</p>
+            {onRetry && (
+              <Button variant="outline" size="sm" onClick={onRetry} className="mt-3">
+                Try Again
+              </Button>
+            )}
+          </AlertDescription>
+        </Alert>
       </div>
     );
   }

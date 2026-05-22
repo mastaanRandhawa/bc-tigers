@@ -16,17 +16,14 @@ import { Badge } from '@/components/ui/badge';
 import { useHomeHub } from '@/hooks/useHomeHub';
 import { formatDate } from '@/lib/date';
 import { pickFeaturedTournament } from '@/lib/featured-tournament';
-import { ChevronRight, Trophy, Megaphone, ImageIcon } from 'lucide-react';
+import { ChevronRight, Trophy, Megaphone } from 'lucide-react';
 
 export default function HomePage() {
   const { data, isLoading, isError, refetch } = useHomeHub();
 
   const tournaments = data?.tournaments ?? [];
   const liveMatches = data?.liveMatches ?? [];
-  const liveAndRecent = data?.recentMatches ?? [];
-  const upcoming = data?.upcomingMatches ?? [];
   const announcements = data?.announcements ?? [];
-  const featuredMedia = data?.featuredMedia ?? [];
 
   const featuredTournament = useMemo(
     () => pickFeaturedTournament(tournaments),
@@ -58,12 +55,12 @@ export default function HomePage() {
     <PageLayout heroTheme showFooter={false}>
       <TournamentHubHeader />
 
-      <section className="w-full bg-zinc-50">
+      <section className="w-full bg-surface-muted">
         <div className="page-container py-5 md:py-6">
           <div className="mb-6 flex flex-wrap items-center justify-between gap-3 border-b border-border pb-5">
             <div>
-              <h2 className="text-section m-0">Competitions</h2>
-              <p className="text-body-sm mt-1 text-zinc-500">
+              <h2 className="text-section m-0">Active Competitions</h2>
+              <p className="text-body-sm mt-1 text-muted-foreground">
                 {featuredTournament
                   ? `Featured: ${featuredTournament.name}`
                   : 'Browse active and upcoming tournaments'}
@@ -93,7 +90,7 @@ export default function HomePage() {
                     <Link
                       key={t.id}
                       to={`/tournaments/${t.slug}`}
-                      className="rounded-md border border-border bg-white px-2.5 py-1 text-xs font-medium text-foreground transition-colors hover:border-primary/30 hover:text-primary"
+                      className="rounded-md border border-border bg-card px-2.5 py-1 text-xs font-medium text-foreground transition-colors hover:border-primary/30 hover:text-primary"
                     >
                       {t.name}
                     </Link>
@@ -113,32 +110,6 @@ export default function HomePage() {
               </Section>
             )}
 
-            <div className="mb-6 grid grid-cols-1 gap-4 lg:grid-cols-3">
-              <Section className="lg:col-span-2">
-                <SectionHeader title="Recent results" href="/tournaments" linkLabel="Tournaments" />
-                <QueryState isEmpty={liveAndRecent.length === 0} emptyMessage="No recent matches.">
-                  <div className="divide-y divide-border">
-                    {liveAndRecent.map((match) => (
-                      <MatchCard key={match.id} match={match} flat />
-                    ))}
-                  </div>
-                </QueryState>
-              </Section>
-
-              <Section>
-                <SectionHeader title="Upcoming" href="/tournaments" linkLabel="Tournaments" />
-                {upcoming.length > 0 ? (
-                  <div className="divide-y divide-border">
-                    {upcoming.map((match) => (
-                      <MatchCard key={match.id} match={match} compact />
-                    ))}
-                  </div>
-                ) : (
-                  <p className="py-4 text-center text-sm text-zinc-500">No upcoming matches</p>
-                )}
-              </Section>
-            </div>
-
             {announcements.length > 0 && (
               <Section className="mb-6">
                 <SectionHeader title="Announcements" />
@@ -146,53 +117,18 @@ export default function HomePage() {
                   {announcements.map((a) => (
                     <li
                       key={a.id}
-                      className="rounded-lg border border-border bg-white px-4 py-3"
+                      className="rounded-lg border border-border bg-card px-4 py-3"
                     >
                       <div className="flex items-start gap-2">
                         <Megaphone className="mt-0.5 h-4 w-4 shrink-0 text-primary" aria-hidden />
                         <div>
                           <p className="font-medium text-foreground">{a.title}</p>
-                          <p className="mt-0.5 text-sm text-zinc-600">{a.message}</p>
+                          <p className="mt-0.5 text-sm text-muted-foreground">{a.message}</p>
                         </div>
                       </div>
                     </li>
                   ))}
                 </ul>
-              </Section>
-            )}
-
-            {featuredMedia.length > 0 && (
-              <Section className="mb-6">
-                <SectionHeader title="Featured media" />
-                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-                  {featuredMedia.map((m) => (
-                    <a
-                      key={m.id}
-                      href={m.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="group overflow-hidden rounded-lg border border-border bg-white"
-                    >
-                      <div className="flex aspect-video items-center justify-center bg-zinc-100">
-                        {m.type === 'PHOTO' ? (
-                          <img
-                            src={m.url}
-                            alt={m.title ?? ''}
-                            className="h-full w-full object-cover"
-                            loading="lazy"
-                          />
-                        ) : (
-                          <ImageIcon className="h-8 w-8 text-zinc-400" aria-hidden />
-                        )}
-                      </div>
-                      {m.title && (
-                        <p className="truncate px-2 py-1.5 text-xs font-medium text-foreground group-hover:text-primary">
-                          {m.title}
-                        </p>
-                      )}
-                    </a>
-                  ))}
-                </div>
               </Section>
             )}
 
@@ -222,8 +158,8 @@ export default function HomePage() {
                         tournamentSlug={t.slug}
                         className="group ds-card-hover overflow-hidden"
                       >
-                        <div className="relative flex h-20 items-center justify-center border-b border-border bg-zinc-50">
-                          <div className="rounded-xl border border-border bg-white p-2 shadow-sm">
+                        <div className="relative flex h-20 items-center justify-center border-b border-border bg-surface-muted">
+                          <div className="rounded-xl border border-border bg-card p-2 shadow-sm">
                             <Trophy className="h-6 w-6 text-primary" aria-hidden />
                           </div>
                           <Badge
@@ -243,8 +179,8 @@ export default function HomePage() {
                           <h3 className="font-semibold text-foreground transition-colors group-hover:text-primary">
                             {t.name}
                           </h3>
-                          <p className="mt-0.5 text-sm text-zinc-500">{t.location}</p>
-                          <p className="mt-1.5 text-xs text-zinc-400">
+                          <p className="mt-0.5 text-sm text-muted-foreground">{t.location}</p>
+                          <p className="mt-1.5 text-xs text-muted-foreground">
                             {formatDate(t.start_date)} – {formatDate(t.end_date)}
                           </p>
                         </div>

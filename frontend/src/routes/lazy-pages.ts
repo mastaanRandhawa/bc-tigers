@@ -12,6 +12,9 @@ export { default as HomePage } from "@/pages/HomePage";
 export const TournamentsPage = lazyPage(
   () => import("@/pages/tournaments/TournamentsPage"),
 );
+export const TournamentLayout = lazyPage(
+  () => import("@/components/layouts/TournamentLayout"),
+);
 export const TournamentDetailPage = lazyPage(
   () => import("@/pages/tournaments/TournamentDetailPage"),
 );
@@ -43,29 +46,17 @@ export const DivisionPlayerLegacyRedirect = lazyPage(
       default: m.DivisionPlayerLegacyRedirect,
     })),
 );
-export const DivisionSchedulePage = lazyPage(
-  () => import("@/pages/divisions/DivisionSchedulePage"),
+export const DivisionMatchesAndSchedulePage = lazyPage(
+  () => import("@/pages/divisions/DivisionMatchesAndSchedulePage"),
 );
-export const DivisionMatchesPage = lazyPage(
-  () => import("@/pages/divisions/DivisionMatchesPage"),
-);
-export const GlobalMatchDetailPage = lazyPage(
-  () => import("@/pages/matches/MatchDetailPage"),
+export const DivisionMatchDetailPage = lazyPage(
+  () => import("@/pages/divisions/DivisionMatchDetailPage"),
 );
 export const DivisionStandingsPage = lazyPage(
   () => import("@/pages/divisions/DivisionStandingsPage"),
 );
 export const DivisionStatsPage = lazyPage(
   () => import("@/pages/divisions/DivisionStatsPage"),
-);
-export const DivisionTopScorersPage = lazyPage(
-  () => import("@/pages/divisions/DivisionTopScorersPage"),
-);
-export const DivisionTopAssistsPage = lazyPage(
-  () => import("@/pages/divisions/DivisionTopAssistsPage"),
-);
-export const DivisionDisciplinePage = lazyPage(
-  () => import("@/pages/divisions/DivisionDisciplinePage"),
 );
 export const DivisionBracketPage = lazyPage(
   () => import("@/pages/divisions/DivisionBracketPage"),
@@ -80,9 +71,6 @@ export const DivisionVenueDetailPage = lazyPage(
 export const DivisionSlugRedirect = lazyPage(
   () => import("@/components/shared/DivisionSlugRedirect"),
 );
-
-// Legacy division player URLs (redirect only — no DivisionPlayersPage)
-// /players → teams list; /players/:slug → team-scoped player profile
 
 // Auth
 export const LoginPage = lazyPage(() => import("@/pages/auth/LoginPage"));
@@ -110,15 +98,6 @@ export const AdminPlayers = lazyPage(
 );
 export const AdminMatches = lazyPage(
   () => import("@/pages/admin/AdminMatches"),
-);
-export const AdminSchedules = lazyPage(
-  () => import("@/pages/admin/AdminSchedules"),
-);
-export const AdminStandings = lazyPage(
-  () => import("@/pages/admin/AdminStandings"),
-);
-export const AdminBrackets = lazyPage(
-  () => import("@/pages/admin/AdminBrackets"),
 );
 export const AdminVenues = lazyPage(() => import("@/pages/admin/AdminVenues"));
 export const AdminReferees = lazyPage(

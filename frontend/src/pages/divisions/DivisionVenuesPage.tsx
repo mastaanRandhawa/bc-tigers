@@ -52,7 +52,7 @@ export default function DivisionVenuesPage() {
               <Link
                 key={venue.id}
                 to={`${basePath}/venues/${venue.slug}`}
-                className="rounded-xl bg-white p-4 shadow-sm ring-1 ring-border/60 transition-all duration-200 hover:shadow-md hover:ring-zinc-300"
+                className="rounded-xl bg-card p-4 shadow-sm border border-border transition-all duration-200 hover:shadow-md hover:border-primary/30"
               >
                 <MapPin
                   className="mb-2 h-5 w-5"
@@ -60,7 +60,7 @@ export default function DivisionVenuesPage() {
                   aria-hidden
                 />
                 <h3 className="font-semibold text-foreground">{venue.name}</h3>
-                <p className="mt-1 text-sm text-zinc-500">{venue.address}</p>
+                <p className="mt-1 text-sm text-muted-foreground">{venue.address}</p>
                 {venue.city && <p className="mt-0.5 text-xs text-zinc-400">{venue.city}</p>}
               </Link>
             ))}

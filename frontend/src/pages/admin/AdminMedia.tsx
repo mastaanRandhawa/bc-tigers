@@ -33,7 +33,7 @@ export default function AdminMedia() {
     <AdminLayout title="Division Media">
       <div className="space-y-6">
         <div
-          className="bg-white rounded-2xl border-2 border-dashed border-border p-10 text-center hover:border-primary transition-colors cursor-pointer"
+          className="bg-card rounded-2xl border-2 border-dashed border-border p-10 text-center hover:border-primary transition-colors cursor-pointer"
           onClick={() => setFormOpen(true)}
         >
           <Upload className="w-10 h-10 text-gray-300 mx-auto mb-3" />
@@ -67,7 +67,7 @@ export default function AdminMedia() {
             {filtered.map((item) => (
               <div
                 key={item.id}
-                className="group relative bg-white rounded-2xl overflow-hidden border border-border shadow-sm hover:shadow-md transition-all"
+                className="group relative bg-card rounded-2xl overflow-hidden border border-border shadow-sm hover:shadow-md transition-all"
               >
                 <div className="aspect-video overflow-hidden">
                   <img

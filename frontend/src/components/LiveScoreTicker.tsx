@@ -90,7 +90,7 @@ export default function LiveScoreTicker({
         </div>
 
         {liveMatches.length === 0 ? (
-          <p className={cn('text-xs sm:text-sm truncate', light ? 'text-zinc-500' : 'text-white/70')}>
+          <p className={cn('text-xs sm:text-sm truncate', light ? 'text-muted-foreground' : 'text-white/70')}>
             No live matches right now
           </p>
         ) : (

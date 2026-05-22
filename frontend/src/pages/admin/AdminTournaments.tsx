@@ -15,7 +15,7 @@ const columns = [
     label: 'Tournament',
     render: (t: Tournament) => (
       <div>
-        <p className="font-bold text-foreground">{t.name}</p>
+        <p className="font-semibold text-foreground">{t.name}</p>
         <p className="text-xs text-muted-foreground">{t.slug}</p>
       </div>
     ),

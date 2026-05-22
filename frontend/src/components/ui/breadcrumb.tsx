@@ -1,6 +1,7 @@
-import { cn } from '@/lib/utils';
-import { ChevronRight, MoreHorizontal } from 'lucide-react';
 import * as React from 'react';
+import { Slot } from '@radix-ui/react-slot';
+import { ChevronRight, MoreHorizontal } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 export function Breadcrumb({ ...props }: React.ComponentProps<'nav'>) {
   return <nav aria-label="breadcrumb" data-slot="breadcrumb" {...props} />;
@@ -29,9 +30,14 @@ export function BreadcrumbItem({ className, ...props }: React.ComponentProps<'li
   );
 }
 
-export function BreadcrumbLink({ className, ...props }: React.ComponentProps<'a'>) {
+export function BreadcrumbLink({
+  asChild,
+  className,
+  ...props
+}: React.ComponentProps<'a'> & { asChild?: boolean }) {
+  const Comp = asChild ? Slot : 'a';
   return (
-    <a
+    <Comp
       className={cn('transition-colors hover:text-foreground', className)}
       data-slot="breadcrumb-link"
       {...props}

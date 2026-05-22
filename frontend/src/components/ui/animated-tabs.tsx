@@ -23,7 +23,7 @@ export function AnimatedTabs({ tabs, defaultTab, className }: AnimatedTabsProps)
 
   return (
     <div className={cn('flex w-full flex-col gap-y-3', className)}>
-      <div className="flex flex-wrap gap-2 rounded-xl border border-border bg-zinc-100 p-1">
+      <div className="flex flex-wrap gap-2 rounded-xl border border-border bg-secondary p-1">
         {tabs.map((tab) => (
           <button
             key={tab.id}
@@ -37,7 +37,7 @@ export function AnimatedTabs({ tabs, defaultTab, className }: AnimatedTabsProps)
             {activeTab === tab.id && (
               <motion.div
                 layoutId="active-tab"
-                className="absolute inset-0 rounded-lg bg-white shadow-sm"
+                className="absolute inset-0 rounded-lg bg-card shadow-sm"
                 transition={{ type: 'spring', duration: 0.5 }}
               />
             )}

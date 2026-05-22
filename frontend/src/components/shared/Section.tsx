@@ -23,7 +23,7 @@ export default function Section({ children, className, variant = 'default' }: Se
   return (
     <section
       className={cn(
-        'rounded-xl bg-white shadow-sm ring-1 ring-border/60 p-3.5 md:p-4',
+        'rounded-xl border border-border bg-card shadow-sm p-3.5 md:p-4',
         className,
       )}
     >

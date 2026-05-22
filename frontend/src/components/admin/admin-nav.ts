@@ -5,8 +5,6 @@ import {
   Shield,
   UserCircle,
   Calendar,
-  BarChart2,
-  GitBranch,
   MapPin,
   Users,
   Image,
@@ -44,9 +42,6 @@ export const adminNavGroups: AdminNavGroup[] = [
       { label: 'Teams', href: '/admin/teams', icon: Shield },
       { label: 'Players', href: '/admin/players', icon: UserCircle },
       { label: 'Matches', href: '/admin/matches', icon: Calendar },
-      { label: 'Schedules', href: '/admin/schedules', icon: Calendar },
-      { label: 'Standings', href: '/admin/standings', icon: BarChart2 },
-      { label: 'Brackets', href: '/admin/brackets', icon: GitBranch },
     ],
   },
   {

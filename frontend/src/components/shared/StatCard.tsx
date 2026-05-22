@@ -31,22 +31,22 @@ export default function StatCard({
   return (
     <div
       className={cn(
-        'flex items-center gap-3 rounded-xl bg-white px-3.5 py-3 shadow-sm transition-all duration-200 hover:shadow-md',
+        'flex items-center gap-3 rounded-xl bg-card px-3.5 py-3 shadow-sm transition-all duration-200 hover:shadow-md border',
+        accent ? 'border-transparent' : 'border-border',
         className,
       )}
-      style={
-        accent
-          ? { outline: `1px solid ${accentBorder}` }
-          : { outline: '1px solid hsl(var(--border) / 0.6)' }
-      }
+      style={accent && accentBorder ? { borderColor: accentBorder } : undefined}
     >
       {Icon && (
         <div
-          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg"
+          className={cn(
+            'flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border',
+            accent ? 'border-transparent' : 'bg-secondary text-muted-foreground border-border',
+          )}
           style={
             accent
-              ? { backgroundColor: accentBg, color: accentColor, border: `1px solid ${accentBorder}` }
-              : { backgroundColor: '#f4f4f5', color: '#71717a', border: '1px solid hsl(var(--border))' }
+              ? { backgroundColor: accentBg, color: accentColor, borderColor: accentBorder }
+              : undefined
           }
         >
           <Icon className="h-4 w-4" aria-hidden />
@@ -59,9 +59,9 @@ export default function StatCard({
         >
           {value}
         </p>
-        <p className="mt-1 text-xs font-medium text-zinc-500">{label}</p>
+        <p className="mt-1 text-xs font-medium text-muted-foreground">{label}</p>
         {trend && (
-          <p className="mt-0.5 truncate text-[11px] text-zinc-400" title={trend}>
+          <p className="mt-0.5 truncate text-[11px] text-muted-foreground/70" title={trend}>
             {trend}
           </p>
         )}

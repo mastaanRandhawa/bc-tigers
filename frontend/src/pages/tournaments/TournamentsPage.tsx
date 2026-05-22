@@ -52,8 +52,8 @@ export default function TournamentsPage() {
                   to={`/tournaments/${t.slug}`}
                   className="group ds-card-hover h-full overflow-hidden"
                 >
-                  <div className="relative flex h-24 items-center justify-center border-b border-border bg-zinc-50">
-                    <div className="rounded-xl border border-border bg-white p-2.5 shadow-sm transition-transform duration-200 group-hover:scale-105">
+                  <div className="relative flex h-24 items-center justify-center border-b border-border bg-surface-muted">
+                    <div className="rounded-xl border border-border bg-card p-2.5 shadow-sm transition-transform duration-200 group-hover:scale-105">
                       <Trophy className="h-7 w-7 text-primary" aria-hidden />
                     </div>
                     <Badge
@@ -68,7 +68,7 @@ export default function TournamentsPage() {
                     >
                       {t.status === 'ACTIVE' ? 'Active' : t.status}
                     </Badge>
-                    <span className="absolute right-2.5 top-2.5 rounded-md border border-border bg-white/90 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-zinc-500">
+                    <span className="absolute right-2.5 top-2.5 rounded-md border border-border bg-card/90 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
                       {t.tournament_type.replace(/_/g, ' ')}
                     </span>
                   </div>
@@ -78,20 +78,20 @@ export default function TournamentsPage() {
                       {t.name}
                     </h2>
                     {t.description && (
-                      <p className="mt-1.5 line-clamp-2 flex-1 text-sm text-zinc-500">
+                      <p className="mt-1.5 line-clamp-2 flex-1 text-sm text-muted-foreground">
                         {t.description}
                       </p>
                     )}
 
                     <div className="mt-3 space-y-1.5">
-                      <div className="flex items-center gap-2 text-sm text-zinc-500">
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
                         <Calendar className="h-3.5 w-3.5 shrink-0 text-zinc-400" aria-hidden />
                         <span>
                           {formatDate(t.start_date)} – {formatDate(t.end_date)}
                         </span>
                       </div>
                       {t.location && (
-                        <div className="flex items-center gap-2 text-sm text-zinc-500">
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
                           <MapPin className="h-3.5 w-3.5 shrink-0 text-zinc-400" aria-hidden />
                           <span>{t.location}</span>
                         </div>
@@ -99,7 +99,7 @@ export default function TournamentsPage() {
                     </div>
 
                     <div className="mt-3 flex items-center justify-between border-t border-border pt-3">
-                      <span className="text-xs font-medium text-zinc-500">
+                      <span className="text-xs font-medium text-muted-foreground">
                         View divisions & schedule
                       </span>
                       <ChevronRight

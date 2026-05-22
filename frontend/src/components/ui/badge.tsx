@@ -11,7 +11,7 @@ const badgeVariants = cva(
         accent: 'bg-primary text-white',
         secondary: 'bg-secondary text-secondary-foreground',
         destructive: 'bg-red-50 text-red-700 border border-red-200',
-        outline: 'border border-border text-foreground bg-white',
+        outline: 'border border-border text-foreground bg-card',
         live: 'bg-red-600 text-white animate-pulse',
         success: 'bg-emerald-50 text-emerald-700 border border-emerald-200',
         warning: 'bg-amber-50 text-amber-800 border border-amber-200',

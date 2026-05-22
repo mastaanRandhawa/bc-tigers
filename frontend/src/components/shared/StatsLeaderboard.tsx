@@ -58,7 +58,7 @@ export default function StatsLeaderboard({
           hasQuery ? (
             <SearchEmpty query={debouncedSearch} entityLabel="players" />
           ) : (
-            <p className="py-8 text-center text-sm text-zinc-500">No stats recorded yet.</p>
+            <p className="py-8 text-center text-sm text-muted-foreground">No stats recorded yet.</p>
           )
         ) : (
           <Table>
@@ -100,12 +100,12 @@ export default function StatsLeaderboard({
                       {stat.player && href ? (
                         <Link to={href} className="transition-colors hover:text-primary">
                           <p className="font-semibold text-foreground">{name}</p>
-                          <p className="text-xs text-zinc-500">{stat.team?.name}</p>
+                          <p className="text-xs text-muted-foreground">{stat.team?.name}</p>
                         </Link>
                       ) : stat.player ? (
                         <div>
                           <p className="font-semibold text-foreground">{name}</p>
-                          <p className="text-xs text-zinc-500">{stat.team?.name}</p>
+                          <p className="text-xs text-muted-foreground">{stat.team?.name}</p>
                         </div>
                       ) : (
                         '—'
@@ -116,7 +116,7 @@ export default function StatsLeaderboard({
                       {stat[statField]}
                     </TableCell>
                     {statField === 'goals' && (
-                      <TableCell className="text-center text-zinc-500">{stat.assists}</TableCell>
+                      <TableCell className="text-center text-muted-foreground">{stat.assists}</TableCell>
                     )}
                     {statField !== 'goals' && statField !== 'assists' && (
                       <>

@@ -25,13 +25,22 @@ export function divisionTeamPlayerPath(
   return `${divisionTeamPath(tournamentSlug, divisionSlug, teamSlug)}/players/${playerId}`;
 }
 
-/** Legacy bookmark only — redirects resolve team slug via API. */
-export function divisionLegacyPlayerPath(
+/** Canonical player profile under division (resolver may redirect to team path). */
+export function divisionPlayerPath(
   tournamentSlug: string,
   divisionSlug: string,
   playerId: string,
 ) {
   return `${divisionBasePath(tournamentSlug, divisionSlug)}/players/${playerId}`;
+}
+
+/** @deprecated Use divisionPlayerPath */
+export function divisionLegacyPlayerPath(
+  tournamentSlug: string,
+  divisionSlug: string,
+  playerId: string,
+) {
+  return divisionPlayerPath(tournamentSlug, divisionSlug, playerId);
 }
 
 export function getDivisionTeamPlayerPath(
@@ -44,12 +53,17 @@ export function getDivisionTeamPlayerPath(
   return divisionTeamPlayerPath(tournamentSlug, division.slug, teamSlug, playerId);
 }
 
+/** @deprecated Schedule merged into matches — use divisionMatchesPath with ?view=calendar */
 export function divisionSchedulePath(tournamentSlug: string, divisionSlug: string) {
-  return `${divisionBasePath(tournamentSlug, divisionSlug)}/schedule`;
+  return `${divisionMatchesPath(tournamentSlug, divisionSlug)}?view=calendar`;
 }
 
 export function divisionMatchesPath(tournamentSlug: string, divisionSlug: string) {
   return `${divisionBasePath(tournamentSlug, divisionSlug)}/matches`;
+}
+
+export function divisionMatchesCalendarPath(tournamentSlug: string, divisionSlug: string) {
+  return `${divisionMatchesPath(tournamentSlug, divisionSlug)}?view=calendar`;
 }
 
 export function divisionMatchPath(
@@ -66,6 +80,14 @@ export function divisionStandingsPath(tournamentSlug: string, divisionSlug: stri
 
 export function divisionStatsPath(tournamentSlug: string, divisionSlug: string) {
   return `${divisionBasePath(tournamentSlug, divisionSlug)}/stats`;
+}
+
+export function divisionStatsTabPath(
+  tournamentSlug: string,
+  divisionSlug: string,
+  tab: 'scorers' | 'assists' | 'discipline',
+) {
+  return `${divisionStatsPath(tournamentSlug, divisionSlug)}?tab=${tab}`;
 }
 
 export function divisionBracketsPath(tournamentSlug: string, divisionSlug: string) {
@@ -88,16 +110,23 @@ export function getDivisionStandingsPath(division: Division) {
   return divisionStandingsPath(tournamentSlug, division.slug);
 }
 
+/** @deprecated Use getDivisionMatchesPath with calendar view */
 export function getDivisionSchedulePath(division: Division) {
   const tournamentSlug = division.tournament?.slug;
   if (!tournamentSlug) return null;
-  return divisionSchedulePath(tournamentSlug, division.slug);
+  return divisionMatchesCalendarPath(tournamentSlug, division.slug);
 }
 
 export function getDivisionMatchesPath(division: Division) {
   const tournamentSlug = division.tournament?.slug;
   if (!tournamentSlug) return null;
   return divisionMatchesPath(tournamentSlug, division.slug);
+}
+
+export function getDivisionStatsPath(division: Division) {
+  const tournamentSlug = division.tournament?.slug;
+  if (!tournamentSlug) return null;
+  return divisionStatsPath(tournamentSlug, division.slug);
 }
 
 export function getDivisionBracketsPath(division: Division) {
@@ -124,13 +153,19 @@ export function getDivisionVenuesPath(division: Division) {
   return divisionVenuesPath(tournamentSlug, division.slug);
 }
 
-/** Canonical public match URL — same for fans, coaches, and refs */
-export function matchPath(matchId: string) {
+/** Legacy global match URL — prefer getMatchPath(match) with full match object */
+export function legacyGlobalMatchPath(matchId: string) {
   return `/matches/${matchId}`;
 }
 
+/** Contextual match URL under tournament → division */
 export function getMatchPath(match: Match): string {
-  return matchPath(match.id);
+  const tournamentSlug = match.division?.tournament?.slug;
+  const divisionSlug = match.division?.slug;
+  if (tournamentSlug && divisionSlug) {
+    return divisionMatchPath(tournamentSlug, divisionSlug, match.id);
+  }
+  return legacyGlobalMatchPath(match.id);
 }
 
 export function getDivisionPublicPath(tournamentSlug: string, divisionSlug: string) {

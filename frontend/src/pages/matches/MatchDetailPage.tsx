@@ -42,8 +42,9 @@ function EventIcon({ type }: { type: MatchEventType }) {
   }
 }
 
-export default function MatchDetailPage({ embedded = false }: { embedded?: boolean }) {
-  const { matchId } = useParams();
+export default function MatchDetailPage() {
+  const { matchId, tournamentSlug, divisionSlug } = useParams();
+  const nestedInDivision = !!(tournamentSlug && divisionSlug);
   const { data: match, isLoading, isError, refetch } = useMatch(matchId);
   const isLive = match?.status === 'LIVE';
   const events = match?.events ?? [];
@@ -52,8 +53,9 @@ export default function MatchDetailPage({ embedded = false }: { embedded?: boole
     ? `${match.referee.first_name} ${match.referee.last_name}`
     : undefined;
 
-  const backPath =
-    match?.division?.tournament?.slug && match?.division?.slug
+  const backPath = nestedInDivision
+    ? divisionMatchesPath(tournamentSlug!, divisionSlug!)
+    : match?.division?.tournament?.slug && match?.division?.slug
       ? divisionMatchesPath(match.division.tournament.slug, match.division.slug)
       : '/tournaments';
 
@@ -70,14 +72,12 @@ export default function MatchDetailPage({ embedded = false }: { embedded?: boole
           <div className="relative overflow-hidden bg-primary px-4 py-10 md:py-12">
             <div className="absolute inset-0 bg-[linear-gradient(to_right,#ffffff10_1px,transparent_1px),linear-gradient(to_bottom,#ffffff10_1px,transparent_1px)] bg-[size:3rem_3rem]" />
             <div className="page-container relative z-10 text-center">
-              {!embedded && (
-                <Link
-                  to={backPath}
-                  className="mb-4 inline-flex items-center gap-1 text-sm text-white/60 transition-colors hover:text-white"
-                >
-                  <ArrowLeft className="h-4 w-4" /> Back to matches
-                </Link>
-              )}
+              <Link
+                to={backPath}
+                className="mb-4 inline-flex items-center gap-1 text-sm text-white/60 transition-colors hover:text-white"
+              >
+                <ArrowLeft className="h-4 w-4" /> Back to matches
+              </Link>
               <div className="mb-6 flex items-center justify-center gap-3">
                 <Badge variant={isLive ? 'live' : 'secondary'} className="text-sm">
                   {isLive ? '● LIVE' : match.status}
@@ -215,8 +215,8 @@ export default function MatchDetailPage({ embedded = false }: { embedded?: boole
     </QueryState>
   );
 
-  if (embedded) {
-    return <div className="px-4 py-6">{content}</div>;
+  if (nestedInDivision) {
+    return content;
   }
 
   return <PageLayout>{content}</PageLayout>;

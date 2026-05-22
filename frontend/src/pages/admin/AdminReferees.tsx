@@ -13,7 +13,7 @@ const columns = [
     label: 'Referee',
     render: (r: Referee) => (
       <div>
-        <p className="font-bold text-foreground">
+        <p className="font-semibold text-foreground">
           {r.first_name} {r.last_name}
         </p>
         <p className="text-xs text-muted-foreground">{r.email ?? '—'}</p>

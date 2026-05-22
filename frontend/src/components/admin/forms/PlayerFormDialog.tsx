@@ -85,7 +85,7 @@ export default function PlayerFormDialog({ open, onOpenChange, player }: PlayerF
         <TextInputField control={form.control} name="first_name" label="First Name" />
         <TextInputField control={form.control} name="last_name" label="Last Name" />
       </div>
-      <p className="text-xs text-zinc-500">
+      <p className="text-xs text-muted-foreground">
         Player URLs use an auto-generated ID. No manual slug required.
       </p>
       <div className="grid grid-cols-2 gap-3">

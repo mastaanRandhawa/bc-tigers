@@ -131,7 +131,7 @@ export default function DivisionTeamDetailPage() {
                 ))}
               </div>
             ) : (
-              <p className="text-sm text-zinc-500">No matches for this team yet.</p>
+              <p className="text-sm text-muted-foreground">No matches for this team yet.</p>
             )}
           </Section>
         </div>

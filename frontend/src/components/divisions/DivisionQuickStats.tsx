@@ -7,7 +7,10 @@ export interface DivisionQuickStat {
   label: string;
   sublabel?: string;
   icon?: LucideIcon;
+  /** @deprecated use liveIndicator instead; kept for backwards compatibility */
   accent?: boolean;
+  /** Show a pulsing live dot next to the value */
+  liveIndicator?: boolean;
 }
 
 interface DivisionQuickStatsProps {
@@ -18,40 +21,40 @@ interface DivisionQuickStatsProps {
 
 export default function DivisionQuickStats({
   stats,
-  theme,
   className,
 }: DivisionQuickStatsProps) {
-  const accentColor = theme?.primary ?? 'var(--color-primary)';
-
   return (
-    <div
-      className={cn(
-        'grid grid-cols-2 divide-x divide-y divide-border overflow-hidden rounded-xl border border-border bg-white shadow-sm sm:grid-cols-4 sm:divide-y-0',
-        className,
-      )}
-    >
-      {stats.map((stat) => (
-        <div
-          key={stat.label}
-          className={cn(
-            'flex flex-col items-center px-3 py-3 text-center sm:items-start sm:px-4 sm:py-3.5 sm:text-left',
-            stat.accent && 'bg-primary-muted/40',
-          )}
-        >
-          <p
-            className="text-2xl font-bold tabular-nums leading-none font-display sm:text-3xl"
-            style={stat.accent ? { color: accentColor } : undefined}
+    <div className={cn('grid grid-cols-2 gap-3 sm:grid-cols-4', className)}>
+      {stats.map((stat) => {
+        const showLive = stat.liveIndicator ?? (stat.accent && Number(stat.value) > 0);
+        return (
+          <div
+            key={stat.label}
+            className="flex flex-col rounded-xl border border-border bg-card px-4 py-3.5 shadow-sm"
           >
-            {stat.value}
-          </p>
-          <p className="mt-1 text-xs font-medium text-zinc-500">{stat.label}</p>
-          {stat.sublabel && (
-            <p className="mt-0.5 max-w-full truncate text-[11px] text-zinc-400" title={stat.sublabel}>
-              {stat.sublabel}
-            </p>
-          )}
-        </div>
-      ))}
+            <div className="flex items-center gap-2">
+              <p className="text-3xl font-bold tabular-nums leading-none font-display text-foreground">
+                {stat.value}
+              </p>
+              {showLive && (
+                <span
+                  className="mt-0.5 inline-flex h-2 w-2 shrink-0 animate-pulse rounded-full bg-red-500"
+                  aria-label="Live"
+                />
+              )}
+            </div>
+            <p className="mt-1.5 text-xs font-medium text-muted-foreground">{stat.label}</p>
+            {stat.sublabel && (
+              <p
+                className="mt-0.5 max-w-full truncate text-[11px] font-medium text-foreground/70"
+                title={stat.sublabel}
+              >
+                {stat.sublabel}
+              </p>
+            )}
+          </div>
+        );
+      })}
     </div>
   );
 }

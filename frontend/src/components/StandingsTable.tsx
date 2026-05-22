@@ -78,8 +78,8 @@ export default function StandingsTable({
               <TableRow
                 key={s.id}
                 className={cn(
-                  idx === 0 && 'bg-zinc-50',
-                  idx > 0 && idx < 3 && 'bg-zinc-50/50'
+                  idx === 0 && 'bg-surface-muted',
+                  idx > 0 && idx < 3 && 'bg-surface-muted/50'
                 )}
               >
                 <TableCell className="text-muted-foreground font-medium">{s.rank}</TableCell>
@@ -111,9 +111,9 @@ export default function StandingsTable({
                   )}
                 </TableCell>
                 <TableCell className="text-center">{s.played}</TableCell>
-                <TableCell className="text-center text-green-700 font-semibold">{s.wins}</TableCell>
-                <TableCell className="text-center text-amber-600 font-semibold">{s.draws}</TableCell>
-                <TableCell className="text-center text-red-600 font-semibold">{s.losses}</TableCell>
+                <TableCell className="text-center text-green-600 dark:text-green-400 font-semibold">{s.wins}</TableCell>
+                <TableCell className="text-center text-muted-foreground font-medium">{s.draws}</TableCell>
+                <TableCell className="text-center text-foreground/70 font-medium">{s.losses}</TableCell>
                 {!compact && (
                   <>
                     <TableCell className="text-center">{s.goals_for}</TableCell>

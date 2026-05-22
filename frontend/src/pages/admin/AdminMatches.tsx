@@ -20,7 +20,7 @@ const columns = (onScore: (m: Match) => void) => [
     label: 'Match',
     render: (m: Match) => (
       <div>
-        <p className="font-bold text-foreground">
+        <p className="font-semibold text-foreground">
           {m.home_team?.name ?? 'TBD'} vs {m.away_team?.name ?? 'TBD'}
         </p>
         <p className="text-xs text-muted-foreground">
@@ -43,7 +43,7 @@ const columns = (onScore: (m: Match) => void) => [
     label: 'Score',
     render: (m: Match) => (
       <div className="flex items-center gap-2">
-        <span className="font-bold text-foreground">
+        <span className="font-semibold text-foreground">
           {m.status !== 'SCHEDULED' ? `${m.home_score} – ${m.away_score}` : '–'}
         </span>
         <Button

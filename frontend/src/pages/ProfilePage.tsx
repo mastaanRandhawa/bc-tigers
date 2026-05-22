@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { useAuthStore } from '@/store/authStore';
 import { authService } from '@/services/auth.service';
 import { getRoleLabel } from '@/lib/auth-utils';
+import { getTeamPath } from '@/lib/division-routes';
 import { Save, Lock } from 'lucide-react';
 
 export default function ProfilePage() {
@@ -123,14 +124,22 @@ export default function ProfilePage() {
             </Button>
           </form>
 
-          {user.role === 'COACH' && user.coach?.team_coaches?.[0]?.team && (
-            <div className="rounded-lg border border-border bg-card shadow-sm p-6">
-              <h2 className="font-semibold text-foreground mb-2">Your Team</h2>
-              <Link to={`/teams/${user.coach.team_coaches[0].team!.slug}`} className="text-primary font-semibold hover:underline">
-                {user.coach.team_coaches[0].team!.name}
-              </Link>
-            </div>
-          )}
+          {user.role === 'COACH' && user.coach?.team_coaches?.[0]?.team && (() => {
+            const team = user.coach!.team_coaches![0].team!;
+            const teamPath = getTeamPath(team);
+            return (
+              <div className="rounded-lg border border-border bg-card shadow-sm p-6">
+                <h2 className="font-semibold text-foreground mb-2">Your Team</h2>
+                {teamPath ? (
+                  <Link to={teamPath} className="text-primary font-semibold hover:underline">
+                    {team.name}
+                  </Link>
+                ) : (
+                  <span className="font-semibold text-foreground">{team.name}</span>
+                )}
+              </div>
+            );
+          })()}
         </div>
       </section>
     </PageLayout>

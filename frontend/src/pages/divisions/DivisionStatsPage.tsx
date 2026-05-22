@@ -1,51 +1,108 @@
-import { Link } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
+import QueryState from '@/components/shared/QueryState';
 import StatsLeaderboard from '@/components/shared/StatsLeaderboard';
-import Section from '@/components/shared/Section';
-import SectionHeader from '@/components/shared/SectionHeader';
 import DivisionPageHeader from '@/components/divisions/DivisionPageHeader';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useDivisionRoute } from '@/context/DivisionContext';
-import { useDivisionTopScorers } from '@/hooks/useDivisionResources';
+import {
+  useDivisionTopScorers,
+  useDivisionTopAssists,
+  useDivisionDiscipline,
+} from '@/hooks/useDivisionResources';
 import { useDivisionPlayerHref } from '@/hooks/useDivisionPlayerHref';
-import { TrendingUp, Award, AlertTriangle, ChevronRight } from 'lucide-react';
+
+const TABS = ['scorers', 'assists', 'discipline'] as const;
+type StatsTab = (typeof TABS)[number];
+
+function isStatsTab(value: string | null): value is StatsTab {
+  return TABS.includes(value as StatsTab);
+}
 
 export default function DivisionStatsPage() {
-  const { basePath, tournamentSlug, divisionSlug } = useDivisionRoute();
-  const { data: topScorers = [] } = useDivisionTopScorers(tournamentSlug, divisionSlug, 5);
+  const { tournamentSlug, divisionSlug } = useDivisionRoute();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tabParam = searchParams.get('tab');
+  const [tab, setTab] = useState<StatsTab>(isStatsTab(tabParam) ? tabParam : 'scorers');
   const getPlayerHref = useDivisionPlayerHref();
 
-  const cats = [
-    { label: 'Top Scorers', href: `${basePath}/stats/top-scorers`, icon: TrendingUp },
-    { label: 'Top Assists', href: `${basePath}/stats/top-assists`, icon: Award },
-    { label: 'Discipline', href: `${basePath}/stats/discipline`, icon: AlertTriangle },
-  ];
+  const scorers = useDivisionTopScorers(tournamentSlug, divisionSlug);
+  const assists = useDivisionTopAssists(tournamentSlug, divisionSlug);
+  const discipline = useDivisionDiscipline(tournamentSlug, divisionSlug);
+
+  useEffect(() => {
+    if (isStatsTab(tabParam) && tabParam !== tab) {
+      setTab(tabParam);
+    }
+  }, [tabParam, tab]);
+
+  const onTabChange = (value: string) => {
+    const next = isStatsTab(value) ? value : 'scorers';
+    setTab(next);
+    const params = new URLSearchParams(searchParams);
+    if (next === 'scorers') {
+      params.delete('tab');
+    } else {
+      params.set('tab', next);
+    }
+    setSearchParams(params, { replace: true });
+  };
 
   return (
     <>
       <DivisionPageHeader title="Statistics" subtitle="Player leaders and discipline" />
-      <div className="mb-6 grid grid-cols-1 gap-3 md:grid-cols-3">
-        {cats.map((cat) => (
-          <Link
-            key={cat.href}
-            to={cat.href}
-            className="feature-card flex-row items-center justify-between gap-3"
+      <Tabs value={tab} onValueChange={onTabChange} className="w-full">
+        <TabsList className="mb-4 w-full justify-start sm:w-auto">
+          <TabsTrigger value="scorers">Top Scorers</TabsTrigger>
+          <TabsTrigger value="assists">Top Assists</TabsTrigger>
+          <TabsTrigger value="discipline">Discipline</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="scorers">
+          <QueryState
+            isLoading={scorers.isLoading}
+            isError={scorers.isError}
+            onRetry={() => scorers.refetch()}
           >
-            <div className="flex items-center gap-2">
-              <cat.icon className="h-5 w-5 shrink-0" style={{ color: 'var(--division-primary)' }} />
-              <span className="font-semibold text-foreground">{cat.label}</span>
-            </div>
-            <ChevronRight className="h-4 w-4 shrink-0 text-zinc-300" style={{ color: 'var(--division-primary)' }} />
-          </Link>
-        ))}
-      </div>
-      <Section>
-        <SectionHeader title="Top scorers preview" />
-        <StatsLeaderboard
-          stats={topScorers}
-          statField="goals"
-          statLabel="Goals"
-          getPlayerHref={getPlayerHref}
-        />
-      </Section>
+            <StatsLeaderboard
+              stats={scorers.data ?? []}
+              statField="goals"
+              statLabel="Goals"
+              getPlayerHref={getPlayerHref}
+            />
+          </QueryState>
+        </TabsContent>
+
+        <TabsContent value="assists">
+          <QueryState
+            isLoading={assists.isLoading}
+            isError={assists.isError}
+            onRetry={() => assists.refetch()}
+          >
+            <StatsLeaderboard
+              stats={assists.data ?? []}
+              statField="assists"
+              statLabel="Assists"
+              getPlayerHref={getPlayerHref}
+            />
+          </QueryState>
+        </TabsContent>
+
+        <TabsContent value="discipline">
+          <QueryState
+            isLoading={discipline.isLoading}
+            isError={discipline.isError}
+            onRetry={() => discipline.refetch()}
+          >
+            <StatsLeaderboard
+              stats={discipline.data ?? []}
+              statField="yellow_cards"
+              statLabel="YC"
+              getPlayerHref={getPlayerHref}
+            />
+          </QueryState>
+        </TabsContent>
+      </Tabs>
     </>
   );
 }

@@ -18,8 +18,18 @@ interface MatchCardProps {
   flat?: boolean;
 }
 
-function TeamLogo({ logo, size = 'md' }: { logo?: string | null; size?: 'sm' | 'md' }) {
+function getInitials(name: string) {
+  return name
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((w) => w[0].toUpperCase())
+    .join('');
+}
+
+function TeamLogo({ logo, name, size = 'md' }: { logo?: string | null; name?: string; size?: 'sm' | 'md' }) {
   const dim = size === 'sm' ? 'h-6 w-6' : 'h-7 w-7';
+  const textSize = size === 'sm' ? 'text-[8px]' : 'text-[9px]';
   return logo ? (
     <img
       src={logo}
@@ -29,7 +39,16 @@ function TeamLogo({ logo, size = 'md' }: { logo?: string | null; size?: 'sm' | '
       className={cn(dim, 'shrink-0 rounded-full border border-border object-cover')}
     />
   ) : (
-    <div className={cn(dim, 'shrink-0 rounded-full bg-zinc-100')} />
+    <div
+      className={cn(
+        dim,
+        textSize,
+        'shrink-0 rounded-full bg-secondary border border-border flex items-center justify-center font-bold text-muted-foreground tracking-tight select-none',
+      )}
+      aria-hidden
+    >
+      {name ? getInitials(name) : '?'}
+    </div>
   );
 }
 
@@ -41,7 +60,7 @@ function TeamLine({ name, logo, align }: { name: string; logo?: string | null; a
         align === 'right' ? 'flex-row-reverse text-right' : 'text-left',
       )}
     >
-      <TeamLogo logo={logo} />
+      <TeamLogo logo={logo} name={name} />
       <p className="truncate text-sm font-medium text-foreground leading-tight">{name}</p>
     </div>
   );
@@ -56,7 +75,7 @@ function MatchCard({ match, compact = false, flat = false }: MatchCardProps) {
   if (compact) {
     return (
       <Link to={getMatchPath(match)} className="group block min-w-0">
-        <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2 rounded-lg px-1 py-2 transition-colors hover:bg-zinc-50">
+        <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2 rounded-lg px-1 py-2 transition-colors hover:bg-muted">
           <p className="truncate text-right text-sm font-medium text-foreground">
             {match.home_team?.name ?? 'TBD'}
           </p>
@@ -71,7 +90,7 @@ function MatchCard({ match, compact = false, flat = false }: MatchCardProps) {
                 {match.home_score} – {match.away_score}
               </span>
             ) : (
-              <span className="whitespace-nowrap text-xs font-medium text-zinc-500">
+              <span className="whitespace-nowrap text-xs font-medium text-muted-foreground">
                 {formatTime(match.scheduled_start)}
               </span>
             )}
@@ -96,10 +115,10 @@ function MatchCard({ match, compact = false, flat = false }: MatchCardProps) {
         <Badge variant={getMatchStatusBadgeVariant(match.status)}>
           {isLive ? '● LIVE' : match.status.replace(/_/g, ' ')}
         </Badge>
-        <time className="text-xs text-zinc-400" dateTime={match.scheduled_start}>
+        <time className="text-xs text-muted-foreground/70" dateTime={match.scheduled_start}>
           {formatDate(match.scheduled_start)}
           {!showScore && (
-            <span className="ml-1.5 font-medium text-zinc-600">
+            <span className="ml-1.5 font-medium text-muted-foreground">
               {formatTime(match.scheduled_start)}
             </span>
           )}
@@ -122,11 +141,11 @@ function MatchCard({ match, compact = false, flat = false }: MatchCardProps) {
               )}
             >
               {match.home_score}
-              <span className="mx-1 font-light text-zinc-300">–</span>
+              <span className="mx-1 font-light text-border">–</span>
               {match.away_score}
             </div>
           ) : (
-            <span className="text-[11px] font-semibold uppercase tracking-widest text-zinc-400">vs</span>
+            <span className="text-[11px] font-semibold uppercase tracking-widest text-muted-foreground/60">vs</span>
           )}
         </div>
 
@@ -138,7 +157,7 @@ function MatchCard({ match, compact = false, flat = false }: MatchCardProps) {
       </div>
 
       {(match.venue || match.round !== undefined || match.referee) && (
-        <div className="mt-2.5 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 border-t border-border pt-2 text-xs text-zinc-500">
+        <div className="mt-2.5 flex flex-wrap items-center justify-center gap-x-3 gap-y-1 border-t border-border pt-2 text-xs text-muted-foreground">
           {match.venue && (
             <span className="inline-flex items-center gap-1">
               <MapPin className="h-3 w-3 shrink-0" aria-hidden />
@@ -165,7 +184,7 @@ function MatchCard({ match, compact = false, flat = false }: MatchCardProps) {
   /* ── Flat variant — no card chrome, separated by dividers ─────────── */
   if (flat) {
     return (
-      <Link to={getMatchPath(match)} className="group block transition-colors hover:bg-zinc-50/80 rounded-lg -mx-0.5 px-0.5">
+      <Link to={getMatchPath(match)} className="group block transition-colors hover:bg-muted/60 rounded-lg -mx-0.5 px-0.5">
         {inner}
       </Link>
     );
@@ -174,7 +193,7 @@ function MatchCard({ match, compact = false, flat = false }: MatchCardProps) {
   /* ── Card variant — standalone elevated card ──────────────────────── */
   return (
     <Link to={getMatchPath(match)} className="group block">
-      <article className="rounded-xl border border-border bg-white shadow-sm transition-all duration-200 hover:shadow-md hover:border-zinc-300">
+      <article className="rounded-xl border border-border bg-card shadow-sm transition-all duration-200 hover:shadow-md hover:border-primary/30">
         {inner}
       </article>
     </Link>

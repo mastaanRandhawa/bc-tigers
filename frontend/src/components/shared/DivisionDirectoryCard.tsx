@@ -2,30 +2,46 @@ import { Link } from 'react-router-dom';
 import { ChevronRight } from 'lucide-react';
 import { getDivisionBasePath } from '@/lib/division-routes';
 import { getDivisionTheme } from '@/lib/division-theme';
+import { cn } from '@/lib/utils';
 import type { Division } from '@/types';
 
 interface DivisionDirectoryCardProps {
   division: Division;
+  /**
+   * card — standalone rounded card with border + shadow (default, used in listings)
+   * row  — borderless list row; relies on parent container for separation
+   */
+  variant?: 'card' | 'row';
   description?: string;
 }
 
 export default function DivisionDirectoryCard({
   division,
+  variant = 'card',
   description,
 }: DivisionDirectoryCardProps) {
   const href = getDivisionBasePath(division);
   if (!href) return null;
 
   const theme = getDivisionTheme(division);
+  const isRow = variant === 'row';
 
   return (
     <Link
       to={href}
-      className="group flex items-center gap-3 rounded-xl bg-white p-3.5 shadow-sm ring-1 ring-border/60 transition-all duration-200 hover:shadow-md hover:ring-zinc-300"
+      className={cn(
+        'group flex items-center gap-3 transition-colors duration-150',
+        isRow
+          ? 'px-4 py-3.5 hover:bg-secondary/50'
+          : 'rounded-xl bg-card p-3.5 shadow-sm border border-border hover:shadow-md hover:border-primary/30',
+      )}
     >
-      {/* Division color swatch */}
+      {/* Colored initials swatch */}
       <div
-        className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg text-xs font-black uppercase tracking-wider"
+        className={cn(
+          'flex shrink-0 items-center justify-center text-xs font-black uppercase tracking-wider',
+          isRow ? 'h-9 w-9 rounded-lg' : 'h-10 w-10 rounded-lg',
+        )}
         style={{
           backgroundColor: theme.accent,
           color: theme.primary,
@@ -38,34 +54,30 @@ export default function DivisionDirectoryCard({
 
       <div className="min-w-0 flex-1">
         <h3
-          className="truncate text-sm font-semibold text-foreground transition-colors"
+          className="truncate text-sm font-semibold text-foreground"
           style={{ ['--hover-color' as string]: theme.primary }}
         >
-          <span className="group-hover:text-[var(--hover-color,theme(colors.primary))]">
+          <span className="transition-colors group-hover:text-[var(--hover-color,theme(colors.primary))]">
             {division.name}
           </span>
         </h3>
-        <p className="mt-0.5 truncate text-xs text-zinc-500">
-          {description ?? division.tournament?.name}
-        </p>
-        <div className="mt-1.5 flex flex-wrap gap-1">
+        {!isRow && (
+          <p className="mt-0.5 truncate text-xs text-muted-foreground">
+            {description ?? division.tournament?.name}
+          </p>
+        )}
+        <div className="mt-1 flex flex-wrap gap-1">
           {division.age_group && (
             <span
               className="rounded px-1.5 py-0.5 text-[10px] font-medium"
-              style={{
-                backgroundColor: theme.accent,
-                color: theme.accentForeground,
-              }}
+              style={{ backgroundColor: theme.accent, color: theme.accentForeground }}
             >
               {division.age_group}
             </span>
           )}
           <span
             className="rounded px-1.5 py-0.5 text-[10px] font-medium"
-            style={{
-              backgroundColor: theme.accent,
-              color: theme.accentForeground,
-            }}
+            style={{ backgroundColor: theme.accent, color: theme.accentForeground }}
           >
             {division.format}
           </span>
@@ -73,8 +85,7 @@ export default function DivisionDirectoryCard({
       </div>
 
       <ChevronRight
-        className="h-4 w-4 shrink-0 text-zinc-300 transition-all duration-200 group-hover:translate-x-0.5"
-        style={{ color: undefined }}
+        className="h-4 w-4 shrink-0 text-muted-foreground/30 transition-all duration-200 group-hover:translate-x-0.5 group-hover:text-muted-foreground/70"
         aria-hidden
       />
     </Link>

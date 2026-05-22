@@ -1,7 +1,7 @@
 import type { Division, Match, Tournament } from '@/types';
 import {
   getDivisionMatchesPath,
-  getDivisionSchedulePath,
+  divisionMatchesCalendarPath,
 } from '@/lib/division-routes';
 
 function tournamentStartMs(t: Tournament) {
@@ -52,10 +52,11 @@ function divisionPathFromMatch(
   const divisionSlug = division?.slug;
   if (!tournamentSlug || !divisionSlug || !division) return null;
 
+  if (kind === 'schedule') {
+    return divisionMatchesCalendarPath(tournamentSlug, divisionSlug);
+  }
   const withTournament = { ...division, tournament: division.tournament } as Division;
-  return kind === 'schedule'
-    ? getDivisionSchedulePath(withTournament)
-    : getDivisionMatchesPath(withTournament);
+  return getDivisionMatchesPath(withTournament);
 }
 
 /** Prefer a path tied to real fixtures; otherwise tournament overview. */

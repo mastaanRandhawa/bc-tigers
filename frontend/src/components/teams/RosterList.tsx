@@ -18,7 +18,7 @@ export default function RosterList({
   const roster = players.filter(Boolean) as Player[];
 
   if (roster.length === 0) {
-    return <p className="text-sm text-zinc-500">No players on roster.</p>;
+    return <p className="text-sm text-muted-foreground">No players on roster.</p>;
   }
 
   return (
@@ -42,7 +42,7 @@ export default function RosterList({
             {player.first_name} {player.last_name}
           </span>
           {player.preferred_position && (
-            <span className="ml-auto text-xs text-zinc-500">{player.preferred_position}</span>
+            <span className="ml-auto text-xs text-muted-foreground">{player.preferred_position}</span>
           )}
         </Link>
       ))}

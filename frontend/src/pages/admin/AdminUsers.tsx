@@ -24,7 +24,7 @@ const columns = [
     label: 'User',
     render: (u: User) => (
       <div>
-        <p className="font-bold text-foreground">
+        <p className="font-semibold text-foreground">
           {u.first_name} {u.last_name}
         </p>
         <p className="text-xs text-muted-foreground">{u.email}</p>

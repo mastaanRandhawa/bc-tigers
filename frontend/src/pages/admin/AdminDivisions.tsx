@@ -82,10 +82,10 @@ export default function AdminDivisions() {
                     <h3 className="font-semibold" style={{ color: theme.primary }}>
                       {division.name}
                     </h3>
-                    <p className="mt-1 text-sm text-zinc-500">
+                    <p className="mt-1 text-sm text-muted-foreground">
                       {division.tournament?.name ?? '—'}
                     </p>
-                    <p className="mt-2 text-xs text-zinc-500">
+                    <p className="mt-2 text-xs text-muted-foreground">
                       {teamCount} teams · {matchCount} matches
                     </p>
                     {publicPath && (
@@ -99,7 +99,7 @@ export default function AdminDivisions() {
                       href={publicPath}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-xs font-medium transition-colors hover:bg-zinc-50"
+                      className="inline-flex items-center gap-1.5 rounded-lg border border-border px-3 py-1.5 text-xs font-medium transition-colors hover:bg-muted"
                     >
                       <ExternalLink className="h-3.5 w-3.5" aria-hidden />
                       View public

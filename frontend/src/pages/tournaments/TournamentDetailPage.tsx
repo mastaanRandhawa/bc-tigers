@@ -1,35 +1,21 @@
 import { useCallback } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import SearchField from '@/components/shared/SearchField';
 import SearchEmpty from '@/components/shared/SearchEmpty';
 import { useListSearch } from '@/hooks/useListSearch';
 import { divisionSearchText } from '@/lib/search-text';
-import PageLayout from '@/components/PageLayout';
+import PageContent from '@/components/shared/PageContent';
 import QueryState from '@/components/shared/QueryState';
-import MatchCard from '@/components/MatchCard';
-import StandingsTable from '@/components/StandingsTable';
-import SectionHeader from '@/components/shared/SectionHeader';
-import Section from '@/components/shared/Section';
 import DivisionDirectoryCard from '@/components/shared/DivisionDirectoryCard';
 import { useTournamentOverview } from '@/hooks/useTournaments';
-import { Trophy, Calendar, MapPin, Flag, ChevronRight } from 'lucide-react';
+import { Trophy, Calendar, MapPin, Flag } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import {
-  getDivisionStandingsPath,
-  getDivisionSchedulePath,
-  divisionStatsPath,
-} from '@/lib/division-routes';
 import { formatDate } from '@/lib/utils';
 
 export default function TournamentDetailPage() {
   const { tournamentSlug } = useParams();
   const { data: overview, isLoading, isError, refetch } = useTournamentOverview(tournamentSlug);
   const tournament = overview?.tournament;
-  const liveMatches = overview?.liveMatches ?? [];
-  const featured = [...liveMatches, ...(overview?.recentMatches ?? [])].slice(0, 2);
-  const upcoming = overview?.upcomingMatches ?? [];
-  const topScorers = overview?.topScorers ?? [];
-  const standings = overview?.standingsPreview ?? [];
   const divisions = tournament?.divisions ?? [];
   const getDivisionText = useCallback(
     (d: (typeof divisions)[0]) => divisionSearchText(d),
@@ -42,171 +28,117 @@ export default function TournamentDetailPage() {
     debouncedSearch: debouncedDivisionSearch,
     hasQuery: hasDivisionQuery,
   } = useListSearch(divisions, getDivisionText);
-  const primaryDivision = divisions[0];
-  const standingsPath = primaryDivision
-    ? getDivisionStandingsPath({ ...primaryDivision, tournament })
-    : null;
-  const schedulePath = primaryDivision
-    ? getDivisionSchedulePath({ ...primaryDivision, tournament })
-    : null;
-  const statsPath =
-    tournament && primaryDivision
-      ? `${divisionStatsPath(tournament.slug, primaryDivision.slug)}/top-scorers`
-      : null;
 
   return (
-    <PageLayout>
-      <QueryState
-        isLoading={isLoading}
-        isError={isError}
-        isEmpty={!tournament}
-        onRetry={() => refetch()}
-        emptyMessage="Tournament not found."
-      >
-        {tournament && (
-          <>
-            <div className="relative overflow-hidden border-b border-border bg-hero-gradient py-6 sm:py-8">
-              <div className="pointer-events-none absolute inset-0 bg-brand-grid opacity-40" />
-              <div className="relative z-10 mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
-                <div className="flex flex-col items-start gap-4 md:flex-row md:items-center">
-                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-border bg-white shadow-sm">
-                    <Trophy className="h-6 w-6 text-primary" aria-hidden />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <Badge
-                      variant={tournament.status === 'ACTIVE' ? 'success' : 'default'}
-                      className="mb-2 rounded-md"
-                    >
-                      {tournament.status}
-                    </Badge>
-                    <h1 className="text-page-title m-0">{tournament.name}</h1>
-                    <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-zinc-500">
-                      <span className="inline-flex items-center gap-1">
-                        <Calendar className="h-4 w-4" aria-hidden />
-                        {formatDate(tournament.start_date)} – {formatDate(tournament.end_date)}
+    <QueryState
+      isLoading={isLoading}
+      isError={isError}
+      isEmpty={!tournament}
+      onRetry={() => refetch()}
+      emptyMessage="Tournament not found."
+    >
+      {tournament && (
+        <>
+          {/* ── Hero band ─────────────────────────────────────────────────────── */}
+          <div className="relative overflow-hidden border-b border-border bg-hero-gradient py-7 sm:py-10">
+            <div className="pointer-events-none absolute inset-0 bg-brand-grid opacity-40" />
+            <div className="relative z-10 page-container">
+              <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center">
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-border bg-card shadow-sm">
+                  <Trophy className="h-6 w-6 text-primary" aria-hidden />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <Badge
+                    variant={tournament.status === 'ACTIVE' ? 'success' : 'default'}
+                    className="mb-2 rounded-md"
+                  >
+                    {tournament.status}
+                  </Badge>
+                  <h1 className="text-page-title m-0">{tournament.name}</h1>
+                  <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
+                    <span className="inline-flex items-center gap-1.5">
+                      <Calendar className="h-3.5 w-3.5" aria-hidden />
+                      {formatDate(tournament.start_date)} – {formatDate(tournament.end_date)}
+                    </span>
+                    {tournament.location && (
+                      <span className="inline-flex items-center gap-1.5">
+                        <MapPin className="h-3.5 w-3.5" aria-hidden />
+                        {tournament.location}
                       </span>
-                      {tournament.location && (
-                        <span className="inline-flex items-center gap-1">
-                          <MapPin className="h-4 w-4" aria-hidden />
-                          {tournament.location}
-                        </span>
-                      )}
-                      <span className="inline-flex items-center gap-1">
-                        <Flag className="h-4 w-4" aria-hidden />
-                        {tournament.tournament_type.replace(/_/g, ' ')}
-                      </span>
-                    </div>
+                    )}
+                    <span className="inline-flex items-center gap-1.5">
+                      <Flag className="h-3.5 w-3.5" aria-hidden />
+                      {tournament.tournament_type.replace(/_/g, ' ')}
+                    </span>
                   </div>
                 </div>
               </div>
             </div>
+          </div>
 
-            <div className="mx-auto grid max-w-6xl grid-cols-1 gap-5 px-4 py-5 sm:px-6 sm:py-6 lg:grid-cols-3 lg:gap-6 lg:px-8">
-              <div className="space-y-5 lg:col-span-2">
-                {tournament.description && (
-                  <Section>
-                    <h2 className="text-subsection mb-2">About</h2>
-                    <p className="text-body m-0">{tournament.description}</p>
-                  </Section>
+          {/* ── Body ──────────────────────────────────────────────────────────── */}
+          <PageContent>
+            {/* One unified card that groups About + Divisions */}
+            <div className="overflow-hidden rounded-xl border border-border bg-card shadow-sm">
+
+              {/* About */}
+              {tournament.description && (
+                <div className="px-5 py-5">
+                  <p className="mb-1 text-[11px] font-semibold uppercase tracking-widest text-muted-foreground/60">
+                    About
+                  </p>
+                  <p className="text-sm leading-relaxed text-foreground/80">
+                    {tournament.description}
+                  </p>
+                </div>
+              )}
+
+              {/* Divider between About and Divisions */}
+              {tournament.description && (
+                <div className="border-t border-border/60" />
+              )}
+
+              {/* Divisions header row */}
+              <div className="flex items-center justify-between gap-3 px-5 py-3.5">
+                <div>
+                  <p className="mb-0.5 text-[11px] font-semibold uppercase tracking-widest text-muted-foreground/60">
+                    Divisions
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    {divisions.length} {divisions.length === 1 ? 'division' : 'divisions'} in this tournament
+                  </p>
+                </div>
+                {divisions.length > 3 && (
+                  <SearchField
+                    value={divisionSearch}
+                    onChange={setDivisionSearch}
+                    placeholder="Search divisions…"
+                    className="w-48 sm:w-64"
+                    aria-label="Search divisions"
+                  />
                 )}
+              </div>
 
-                <section>
-                  <SectionHeader title="Divisions" />
-                  {divisions.length > 3 && (
-                    <SearchField
-                      value={divisionSearch}
-                      onChange={setDivisionSearch}
-                      placeholder="Search divisions…"
-                      className="mb-3 max-w-md"
+              {/* Divisions list */}
+              {hasDivisionQuery && filteredDivisions.length === 0 ? (
+                <div className="border-t border-border/60 px-5 py-8">
+                  <SearchEmpty query={debouncedDivisionSearch} entityLabel="divisions" />
+                </div>
+              ) : (
+                <div className="divide-y divide-border/60 border-t border-border/60">
+                  {filteredDivisions.map((div) => (
+                    <DivisionDirectoryCard
+                      key={div.id}
+                      variant="row"
+                      division={{ ...div, tournament }}
                     />
-                  )}
-                  {hasDivisionQuery && filteredDivisions.length === 0 ? (
-                    <SearchEmpty query={debouncedDivisionSearch} entityLabel="divisions" />
-                  ) : (
-                    <div className="space-y-2">
-                      {filteredDivisions.map((div) => (
-                        <DivisionDirectoryCard
-                          key={div.id}
-                          division={{ ...div, tournament }}
-                        />
-                      ))}
-                    </div>
-                  )}
-                </section>
-
-                <Section>
-                  <SectionHeader title="Featured matches" />
-                  {featured.length > 0 ? (
-                    <div className="divide-y divide-border">
-                      {featured.map((m) => (
-                        <MatchCard key={m.id} match={m} flat />
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="text-sm text-zinc-500">No featured matches yet.</p>
-                  )}
-                </Section>
-
-                <Section>
-                  <SectionHeader
-                    title="Standings"
-                    href={standingsPath ?? `/tournaments/${tournament.slug}`}
-                    linkLabel="Full table"
-                  />
-                  <StandingsTable
-                    standings={standings}
-                    compact
-                    division={primaryDivision}
-                    searchable={false}
-                  />
-                </Section>
-              </div>
-
-              <div className="space-y-4">
-                <section className="rounded-xl bg-white shadow-sm ring-1 ring-border/60 p-3.5">
-                  <SectionHeader
-                    title="Upcoming"
-                    href={schedulePath ?? `/tournaments/${tournament.slug}`}
-                    linkLabel="Schedule"
-                  />
-                  <div className="divide-y divide-border">
-                    {upcoming.map((m) => (
-                      <MatchCard key={m.id} match={m} compact />
-                    ))}
-                  </div>
-                  {upcoming.length === 0 && (
-                    <p className="text-sm text-zinc-500">No upcoming fixtures.</p>
-                  )}
-                </section>
-
-                <Section>
-                  <SectionHeader
-                    title="Top scorers"
-                    href={statsPath ?? `/tournaments/${tournament.slug}`}
-                    linkLabel="All stats"
-                  />
-                  <div className="space-y-2.5">
-                    {topScorers.map((stat, i) => (
-                      <div key={stat.id} className="flex items-center gap-3">
-                        <span className="w-5 text-center text-sm font-medium tabular-nums text-zinc-400">
-                          {i + 1}
-                        </span>
-                        <div className="min-w-0 flex-1">
-                          <p className="truncate text-sm font-semibold text-foreground">
-                            {stat.player?.first_name} {stat.player?.last_name}
-                          </p>
-                          <p className="truncate text-xs text-zinc-500">{stat.team?.name}</p>
-                        </div>
-                        <span className="text-sm font-bold tabular-nums text-primary">{stat.goals}G</span>
-                      </div>
-                    ))}
-                  </div>
-                </Section>
-              </div>
+                  ))}
+                </div>
+              )}
             </div>
-          </>
-        )}
-      </QueryState>
-    </PageLayout>
+          </PageContent>
+        </>
+      )}
+    </QueryState>
   );
 }

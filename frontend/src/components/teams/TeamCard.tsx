@@ -16,7 +16,7 @@ export default function TeamCard({ team, tournamentSlug, divisionSlug }: TeamCar
   return (
     <Link
       to={href}
-      className="group overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-border/60 transition-all duration-200 hover:shadow-md hover:ring-zinc-300"
+      className="group overflow-hidden rounded-xl bg-card shadow-sm border border-border transition-all duration-200 hover:shadow-md hover:border-primary/30"
     >
       <div
         className="flex h-20 items-center justify-center"
@@ -36,13 +36,13 @@ export default function TeamCard({ team, tournamentSlug, divisionSlug }: TeamCar
         <h3 className="truncate font-semibold text-foreground transition-colors group-hover:text-primary">
           {team.name}
         </h3>
-        {team.city && <p className="mt-0.5 truncate text-sm text-zinc-500">{team.city}</p>}
+        {team.city && <p className="mt-0.5 truncate text-sm text-muted-foreground">{team.city}</p>}
         <div className="mt-2 flex items-center justify-between">
           {team.founded_year && (
-            <span className="text-xs text-zinc-400">Est. {team.founded_year}</span>
+            <span className="text-xs text-muted-foreground/70">Est. {team.founded_year}</span>
           )}
           <ChevronRight
-            className="ml-auto h-4 w-4 text-zinc-300 transition-all group-hover:translate-x-0.5 group-hover:text-primary"
+            className="ml-auto h-4 w-4 text-muted-foreground/40 transition-all group-hover:translate-x-0.5 group-hover:text-primary"
             aria-hidden
           />
         </div>

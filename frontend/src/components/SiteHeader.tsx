@@ -53,7 +53,7 @@ function UserMenu({ onDark = true }: { onDark?: boolean }) {
           'flex items-center gap-1.5 px-2.5 py-1.5 rounded-full transition-colors',
           onDark
             ? 'border border-white/30 text-white hover:bg-white/10'
-            : 'border border-border bg-white hover:bg-muted',
+            : 'border border-border bg-card hover:bg-muted',
         )}
       >
         <div
@@ -80,7 +80,7 @@ function UserMenu({ onDark = true }: { onDark?: boolean }) {
         <>
           <div
             role="menu"
-            className="absolute right-0 top-full mt-1.5 w-52 bg-white rounded-xl shadow-lg border border-border overflow-hidden z-50"
+            className="absolute right-0 top-full mt-1.5 w-52 bg-popover rounded-xl shadow-lg border border-border overflow-hidden z-50"
           >
             {(['COACH', 'REFEREE', 'PLAYER'] as UserRole[]).includes(user.role) && (
               <Link
@@ -179,7 +179,7 @@ export default function SiteHeader({ variant = 'site', showLiveTicker = true }: 
           <div className="flex h-14 items-center justify-between gap-4">
             <div className="flex min-w-0 items-center gap-2.5">
               <BrandLogo compact />
-              <span className="shrink-0 rounded-md border border-border bg-zinc-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-zinc-600 sm:text-xs">
+              <span className="shrink-0 rounded-md border border-border bg-secondary px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground sm:text-xs">
                 Admin
               </span>
             </div>
@@ -206,7 +206,7 @@ export default function SiteHeader({ variant = 'site', showLiveTicker = true }: 
 
   if (isMinimal) {
     return (
-      <header className="sticky top-0 z-50 w-full bg-white border-b border-border shadow-sm">
+      <header className="sticky top-0 z-50 w-full bg-card border-b border-border shadow-sm">
         <div className="page-container">
           <div className="flex h-14 items-center justify-between gap-2 sm:gap-3">
             <BrandLogo compact />
@@ -231,7 +231,7 @@ export default function SiteHeader({ variant = 'site', showLiveTicker = true }: 
         'z-50 w-full',
         isHero
           ? 'relative bg-primary text-white'
-          : 'sticky top-0 border-b border-border bg-white/95 text-foreground shadow-sm backdrop-blur-sm',
+          : 'sticky top-0 border-b border-border bg-card/95 text-foreground shadow-sm backdrop-blur-sm',
       )}
     >
       {isHero && (

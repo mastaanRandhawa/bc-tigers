@@ -24,7 +24,7 @@ const columns = [
           </div>
         )}
         <div>
-          <p className="font-bold text-foreground">{t.name}</p>
+          <p className="font-semibold text-foreground">{t.name}</p>
           <p className="text-xs text-muted-foreground">{t.city}</p>
         </div>
       </div>

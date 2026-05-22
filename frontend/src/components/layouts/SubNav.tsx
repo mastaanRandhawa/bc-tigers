@@ -9,7 +9,7 @@ interface SubNavProps {
 
 export default function SubNav({ items, label }: SubNavProps) {
   return (
-    <div className="border-b border-border bg-white">
+    <div className="border-b border-border bg-card">
       {label && (
         <div className="page-container pt-3">
           <p className="text-label m-0">{label}</p>

@@ -22,7 +22,7 @@ const columns = [
           </div>
         )}
         <div>
-          <p className="font-bold text-foreground">{v.name}</p>
+          <p className="font-semibold text-foreground">{v.name}</p>
           <p className="text-xs text-muted-foreground">{v.slug}</p>
         </div>
       </div>

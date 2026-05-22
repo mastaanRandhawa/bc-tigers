@@ -69,7 +69,7 @@ export default function AdminDashboard() {
                       href={publicPath}
                       target="_blank"
                       rel="noopener noreferrer"
-                      className="nav-pill-dark shrink-0 border border-border bg-white text-xs"
+                      className="nav-pill-dark shrink-0 border border-border bg-card text-xs"
                       style={{ color: theme.primary }}
                     >
                       <ExternalLink className="h-3.5 w-3.5" aria-hidden />
@@ -87,7 +87,7 @@ export default function AdminDashboard() {
                       key={link.to}
                       to={link.to}
                       className={cn(
-                        'text-xs font-medium text-zinc-500 transition-colors hover:text-primary',
+                        'text-xs font-medium text-muted-foreground transition-colors hover:text-primary',
                       )}
                     >
                       {link.label}

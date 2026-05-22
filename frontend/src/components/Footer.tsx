@@ -16,7 +16,7 @@ export default function Footer({ className }: FooterProps) {
   return (
     <footer
       className={cn(
-        'w-full shrink-0 border-t border-border bg-white',
+        'w-full shrink-0 border-t border-border bg-card',
         className,
       )}
     >
@@ -24,7 +24,7 @@ export default function Footer({ className }: FooterProps) {
         <div className="grid w-full grid-cols-1 gap-8 md:grid-cols-2">
           <div className="min-w-0">
             <BrandLogo className="mb-4" imageClassName="h-10" />
-            <p className="max-w-md text-sm leading-relaxed text-zinc-500">
+            <p className="max-w-md text-sm leading-relaxed text-muted-foreground">
               {siteName} Tournament Hub — pick a tournament, then browse each division for
               schedules, scores, and standings.
             </p>
@@ -37,7 +37,7 @@ export default function Footer({ className }: FooterProps) {
                 <li key={link.href}>
                   <Link
                     to={link.href}
-                    className="text-sm text-zinc-500 transition-colors hover:text-primary"
+                    className="text-sm text-muted-foreground transition-colors hover:text-primary"
                   >
                     {link.label}
                   </Link>
@@ -48,7 +48,7 @@ export default function Footer({ className }: FooterProps) {
         </div>
 
         <div className="mt-8 border-t border-border pt-6">
-          <p className="text-center text-sm text-zinc-500 sm:text-left">
+          <p className="text-center text-sm text-muted-foreground sm:text-left">
             © {new Date().getFullYear()} {siteName}. All rights reserved.
           </p>
         </div>

@@ -9,14 +9,14 @@ interface PageHeaderProps {
 
 export default function PageHeader({ title, subtitle, icon: Icon, children }: PageHeaderProps) {
   return (
-    <div className="relative overflow-hidden border-b border-border bg-white">
+    <div className="relative overflow-hidden border-b border-border bg-card">
       <div className="pointer-events-none absolute inset-0 bg-hero-gradient opacity-70" />
       <div className="absolute top-0 left-0 right-0 h-0.5 bg-primary/40" />
       <div className="page-container relative py-6">
         <div className="flex min-w-0 flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div className="min-w-0 flex-1">
             {Icon && (
-              <div className="mb-2 inline-flex rounded-lg border border-border bg-white p-2 shadow-sm">
+              <div className="mb-2 inline-flex rounded-lg border border-border bg-card p-2 shadow-sm">
                 <Icon className="h-4 w-4 text-primary" aria-hidden />
               </div>
             )}
