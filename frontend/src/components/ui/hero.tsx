@@ -40,6 +40,43 @@ const ArrowAccentRight = () => (
   </svg>
 );
 
+/** SVG filter that creates the liquid-glass distortion effect */
+function GlassFilter() {
+  return (
+    <svg className="absolute w-0 h-0 pointer-events-none" aria-hidden>
+      <defs>
+        <filter
+          id="hero-glass"
+          x="-10%"
+          y="-10%"
+          width="120%"
+          height="120%"
+          colorInterpolationFilters="sRGB"
+        >
+          <feTurbulence
+            type="fractalNoise"
+            baseFrequency="0.045 0.045"
+            numOctaves="1"
+            seed="3"
+            result="turbulence"
+          />
+          <feGaussianBlur in="turbulence" stdDeviation="1.5" result="blurredNoise" />
+          <feDisplacementMap
+            in="SourceGraphic"
+            in2="blurredNoise"
+            scale="55"
+            xChannelSelector="R"
+            yChannelSelector="B"
+            result="displaced"
+          />
+          <feGaussianBlur in="displaced" stdDeviation="3.5" result="finalBlur" />
+          <feComposite in="finalBlur" in2="finalBlur" operator="over" />
+        </filter>
+      </defs>
+    </svg>
+  );
+}
+
 function CircularBadge({
   schedulePath,
   className,
@@ -93,53 +130,82 @@ function LiveMatchCard({
     <Link
       to={getMatchPath(match)}
       className={cn(
-        "flex flex-col items-center justify-center rounded-[1.5rem] border border-white/30 shadow-xl",
+        "flex flex-col items-center justify-center rounded-2xl relative overflow-hidden",
+        "border border-white/30",
         compact
-          ? "min-w-[160px] shrink-0 p-4 bg-primary-hover/90"
-          : "w-[7.5rem] sm:w-36 md:w-40 lg:w-52 aspect-[3/3.5] p-3 sm:p-4 md:p-5 bg-primary-hover/85 backdrop-blur-md rotate-0 hover:rotate-0 transition-transform duration-500",
+          ? "min-w-[140px] shrink-0 p-3"
+          : "w-[5.5rem] sm:w-32 md:w-38 lg:w-44 aspect-[3/3.5] p-2 sm:p-3.5 md:p-5",
         className,
       )}
+      style={{
+        boxShadow:
+          "0 6px 24px rgba(0,0,0,0.22), 0 2px 6px rgba(0,0,0,0.12), inset 2px 2px 1px -2px rgba(255,255,255,0.55), inset -2px -2px 1px -2px rgba(255,255,255,0.2), inset 0 0 8px 3px rgba(255,255,255,0.06)",
+      }}
     >
+      {/* Liquid-glass backdrop distortion layer */}
       <div
-        className={cn(
-          "rounded-full flex items-center justify-center mb-2 shadow-inner border-[3px] border-white/40 bg-primary",
-          compact ? "w-12 h-12" : "w-11 h-11 sm:w-14 sm:h-14 md:w-16 md:h-16 lg:w-20 lg:h-20 mb-2 sm:mb-3",
-        )}
-      >
-        <span
+        className="absolute inset-0 rounded-2xl"
+        style={{ backdropFilter: 'url("#hero-glass") blur(10px)' }}
+      />
+      {/* Warm tint overlay */}
+      <div className="absolute inset-0 bg-[#B85E0F]/35 rounded-2xl" />
+      {/* Top highlight edge */}
+      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/50 to-transparent" />
+      {/* Bottom shadow edge */}
+      <div className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-black/20 to-transparent" />
+
+      {/* Content */}
+      <div className="relative z-10 flex flex-col items-center w-full gap-0.5 sm:gap-1">
+        {/* LIVE pill */}
+        <div
           className={cn(
-            "text-white font-black",
-            compact ? "text-xs" : "text-[10px] sm:text-sm md:text-lg",
+            "rounded-full flex items-center justify-center border border-white/50 bg-white/15 backdrop-blur-sm mb-1",
+            compact ? "w-10 h-10" : "w-8 h-8 sm:w-11 sm:h-11 md:w-13 md:h-13",
           )}
+          style={{
+            boxShadow: "inset 0 1px 2px rgba(255,255,255,0.4), 0 2px 4px rgba(0,0,0,0.18)",
+          }}
         >
-          LIVE
-        </span>
-      </div>
-      <div className="text-center w-full min-w-0">
-        <p
-          className={cn(
-            "font-bold text-white truncate max-w-full drop-shadow-sm",
-            compact ? "text-xs" : "text-[10px] sm:text-xs md:text-sm lg:text-base max-w-[5.5rem] sm:max-w-[120px] md:max-w-[140px]",
-          )}
-        >
-          {match.home_team?.name ?? "Home"}
-        </p>
-        <p
-          className={cn(
-            "font-black text-white my-0.5 drop-shadow-md",
-            compact ? "text-lg" : "text-base sm:text-lg md:text-xl lg:text-2xl",
-          )}
-        >
-          {match.home_score} – {match.away_score}
-        </p>
-        <p
-          className={cn(
-            "font-bold text-white truncate max-w-full drop-shadow-sm",
-            compact ? "text-xs" : "text-[10px] sm:text-xs md:text-sm lg:text-base max-w-[5.5rem] sm:max-w-[120px] md:max-w-[140px]",
-          )}
-        >
-          {match.away_team?.name ?? "Away"}
-        </p>
+          <span
+            className={cn(
+              "text-white font-black drop-shadow-sm leading-none",
+              compact ? "text-[10px]" : "text-[8px] sm:text-[10px] md:text-xs",
+            )}
+          >
+            LIVE
+          </span>
+        </div>
+
+        <div className="text-center w-full min-w-0">
+          <p
+            className={cn(
+              "font-semibold text-white leading-tight drop-shadow-md",
+              compact
+                ? "text-xs truncate max-w-[120px]"
+                : "text-[9px] sm:text-[11px] md:text-sm truncate max-w-[4.5rem] sm:max-w-[110px] md:max-w-[130px]",
+            )}
+          >
+            {match.home_team?.name ?? "Home"}
+          </p>
+          <p
+            className={cn(
+              "font-black text-white drop-shadow-lg leading-tight my-0.5",
+              compact ? "text-base" : "text-sm sm:text-lg md:text-xl lg:text-2xl",
+            )}
+          >
+            {match.home_score} – {match.away_score}
+          </p>
+          <p
+            className={cn(
+              "font-semibold text-white leading-tight drop-shadow-md",
+              compact
+                ? "text-xs truncate max-w-[120px]"
+                : "text-[9px] sm:text-[11px] md:text-sm truncate max-w-[4.5rem] sm:max-w-[110px] md:max-w-[130px]",
+            )}
+          >
+            {match.away_team?.name ?? "Away"}
+          </p>
+        </div>
       </div>
     </Link>
   );
@@ -156,6 +222,7 @@ export function TournamentHubHeader() {
 
   return (
     <section className="relative bg-primary overflow-x-hidden w-full">
+      <GlassFilter />
       <div className="absolute inset-0 bg-brand-grid pointer-events-none z-0" />
 
       <div className="relative z-10 px-4 pt-[calc(3.5rem+1.25rem)] pb-28 sm:pt-[calc(3.5rem+1.5rem)] sm:pb-32 md:pt-[calc(3.5rem+2rem)] md:pb-48 flex flex-col items-center w-full max-w-[1440px] mx-auto max-md:pt-[calc(6.75rem+1rem)]">
@@ -208,46 +275,39 @@ export function TournamentHubHeader() {
           )}
 
           <div className="absolute inset-0 w-full h-full pointer-events-none min-h-[300px] sm:min-h-[360px] md:min-h-[420px]">
+            {/* Left card — pushed to the far left edge */}
             {featuredLive[0] && (
               <motion.div
-                animate={{ y: [0, -15, 0] }}
-                transition={{
-                  duration: 5,
-                  repeat: Infinity,
-                  ease: "easeInOut",
-                }}
-                className="absolute bottom-[6%] left-[2%] sm:bottom-[8%] sm:left-[10%] md:bottom-[10%] md:left-[18%] z-30 pointer-events-auto"
+                animate={{ y: [0, -10, 0] }}
+                transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
+                className="absolute bottom-[8%] left-[-3%] sm:bottom-[6%] sm:left-[-1%] md:bottom-[8%] md:left-[0%] z-30 pointer-events-auto"
               >
                 <LiveMatchCard
                   match={featuredLive[0]}
-                  className="rotate-[-10deg] sm:rotate-[-12deg] hover:rotate-0"
+                  className="rotate-[-8deg] sm:rotate-[-16deg] md:rotate-[-20deg] hover:rotate-[-2deg] transition-transform duration-500"
                 />
               </motion.div>
             )}
 
+            {/* Right card — pushed to the far right edge */}
             {featuredLive[1] && (
               <motion.div
-                animate={{ y: [0, -20, 0] }}
-                transition={{
-                  duration: 6,
-                  repeat: Infinity,
-                  ease: "easeInOut",
-                  delay: 1,
-                }}
-                className="absolute top-[10%] right-[2%] sm:top-[12%] sm:right-[12%] md:top-[15%] md:right-[20%] z-30 pointer-events-auto"
+                animate={{ y: [0, -12, 0] }}
+                transition={{ duration: 6, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+                className="absolute top-[6%] right-[-3%] sm:top-[10%] sm:right-[-1%] md:top-[12%] md:right-[0%] z-30 pointer-events-auto"
               >
                 <LiveMatchCard
                   match={featuredLive[1]}
-                  className="rotate-[10deg] sm:rotate-[12deg] hover:rotate-0"
+                  className="rotate-[8deg] sm:rotate-[16deg] md:rotate-[20deg] hover:rotate-[2deg] transition-transform duration-500"
                 />
               </motion.div>
             )}
 
-            <div className="absolute bottom-[2%] left-[4%] w-16 h-16 sm:bottom-[0%] sm:left-[8%] sm:w-24 sm:h-24 md:w-32 md:h-32 z-20">
+            <div className="absolute bottom-[30%] left-[6%] w-14 h-14 hidden sm:block sm:bottom-[35%] sm:left-[8%] sm:w-20 sm:h-20 md:w-28 md:h-28 z-20 opacity-80">
               <ArrowAccentLeft />
             </div>
 
-            <div className="absolute top-[4%] right-[4%] w-16 h-16 sm:top-[5%] sm:right-[8%] sm:w-24 sm:h-24 md:w-32 md:h-32 z-20">
+            <div className="absolute top-[2%] right-[6%] w-14 h-14 hidden sm:block sm:top-[3%] sm:right-[8%] sm:w-20 sm:h-20 md:w-28 md:h-28 z-20 opacity-80">
               <ArrowAccentRight />
             </div>
 

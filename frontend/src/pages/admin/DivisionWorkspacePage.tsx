@@ -159,26 +159,26 @@ export default function DivisionWorkspacePage() {
           <div className="flex items-center gap-2">
             <Button variant="outline" size="sm" onClick={() => setEditDivisionOpen(true)}>
               <Pencil className="h-3.5 w-3.5 mr-1" />
-              Edit Division
+              <span className="hidden xs:inline">Edit</span>
             </Button>
           </div>
         )
       }
     >
       {/* Breadcrumb */}
-      <nav className="flex items-center gap-1.5 text-sm text-muted-foreground mb-5">
-        <Link to="/admin/tournaments" className="hover:text-foreground transition-colors">
+      <nav className="flex items-center gap-1.5 text-sm text-muted-foreground mb-4 min-w-0 overflow-hidden">
+        <Link to="/admin/tournaments" className="hover:text-foreground transition-colors shrink-0">
           Tournaments
         </Link>
-        <span>/</span>
+        <span className="shrink-0">/</span>
         <Link
           to={`/admin/tournaments/${tournamentId}`}
-          className="hover:text-foreground transition-colors"
+          className="hover:text-foreground transition-colors truncate min-w-0 max-w-[120px] sm:max-w-none"
         >
           {division?.tournament?.name ?? 'Tournament'}
         </Link>
-        <span>/</span>
-        <span className="text-foreground font-medium">{division?.name ?? 'Division'}</span>
+        <span className="shrink-0">/</span>
+        <span className="text-foreground font-medium truncate min-w-0">{division?.name ?? 'Division'}</span>
       </nav>
 
       <QueryState
@@ -191,7 +191,7 @@ export default function DivisionWorkspacePage() {
         {division && (
           <>
             <AdminStatGrid
-              className="mb-6"
+              className="mb-5"
               items={[
                 { value: teams.length, label: 'Teams' },
                 { value: matches.length, label: 'Matches' },
@@ -203,35 +203,41 @@ export default function DivisionWorkspacePage() {
             {/* Division color accent */}
             {theme && (
               <div
-                className="mb-5 h-1 w-24 rounded-full"
+                className="mb-4 h-1 w-20 rounded-full"
                 style={{ backgroundColor: theme.primary }}
               />
             )}
 
             <Tabs defaultValue="teams">
-              <TabsList className="mb-5">
-                <TabsTrigger value="teams">
-                  <Shield className="h-3.5 w-3.5 mr-1.5" />
-                  Teams
-                </TabsTrigger>
-                <TabsTrigger value="matches">
-                  <Calendar className="h-3.5 w-3.5 mr-1.5" />
-                  Matches
-                </TabsTrigger>
-                <TabsTrigger value="schedule">
-                  <Calendar className="h-3.5 w-3.5 mr-1.5" />
-                  Schedule
-                </TabsTrigger>
-                <TabsTrigger value="bracket">
-                  <GitBranch className="h-3.5 w-3.5 mr-1.5" />
-                  Bracket
-                </TabsTrigger>
-              </TabsList>
+              {/* Scrollable tab list on mobile */}
+              <div className="overflow-x-auto no-scrollbar -mx-4 px-4 sm:mx-0 sm:px-0 mb-5">
+                <TabsList className="w-max sm:w-auto">
+                  <TabsTrigger value="teams">
+                    <Shield className="h-3.5 w-3.5 mr-1.5" />
+                    Teams
+                  </TabsTrigger>
+                  <TabsTrigger value="matches">
+                    <Calendar className="h-3.5 w-3.5 mr-1.5" />
+                    Matches
+                  </TabsTrigger>
+                  <TabsTrigger value="schedule">
+                    <Calendar className="h-3.5 w-3.5 mr-1.5" />
+                    Schedule
+                  </TabsTrigger>
+                  <TabsTrigger value="bracket">
+                    <GitBranch className="h-3.5 w-3.5 mr-1.5" />
+                    Bracket
+                  </TabsTrigger>
+                </TabsList>
+              </div>
 
               {/* TEAMS TAB */}
               <TabsContent value="teams">
                 <div className="mb-4 flex justify-end">
-                  <Button onClick={() => teamDialog.openCreate()}>Add Team</Button>
+                  <Button onClick={() => teamDialog.openCreate()} className="w-full sm:w-auto">
+                    <PlusCircle className="h-4 w-4 mr-1.5" />
+                    Add Team
+                  </Button>
                 </div>
                 <AdminTable
                   title=""
@@ -246,7 +252,10 @@ export default function DivisionWorkspacePage() {
               {/* MATCHES TAB */}
               <TabsContent value="matches">
                 <div className="mb-4 flex justify-end">
-                  <Button onClick={() => matchDialog.openCreate()}>Add Match</Button>
+                  <Button onClick={() => matchDialog.openCreate()} className="w-full sm:w-auto">
+                    <PlusCircle className="h-4 w-4 mr-1.5" />
+                    Add Match
+                  </Button>
                 </div>
                 <AdminTable
                   title=""
@@ -279,7 +288,7 @@ export default function DivisionWorkspacePage() {
                   ) : (
                     <Button
                       onClick={() => setScheduleOpen(true)}
-                      className="gap-2"
+                      className="gap-2 w-full sm:w-auto"
                     >
                       <Calendar className="h-4 w-4" />
                       Configure & Generate

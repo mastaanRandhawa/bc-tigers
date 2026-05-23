@@ -90,8 +90,8 @@ export default function AdminTable<T extends { id: string }>({
 
   return (
     <Card className="overflow-hidden">
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-5 border-b border-border">
-        <h2 className="font-semibold text-foreground text-lg">{title}</h2>
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-4 sm:p-5 border-b border-border">
+        <h2 className="font-semibold text-foreground text-base sm:text-lg">{title}</h2>
         <div className="flex items-center gap-2 w-full sm:w-auto">
           {searchable && (
             <div className="relative flex-1 sm:w-64">
@@ -103,12 +103,12 @@ export default function AdminTable<T extends { id: string }>({
                   setSearch(e.target.value);
                   setPage(1);
                 }}
-                className="pl-9 h-9"
+                className="pl-9 h-10 sm:h-9"
               />
             </div>
           )}
           {onAdd && (
-            <Button onClick={onAdd} size="sm" className="flex-shrink-0">
+            <Button onClick={onAdd} size="sm" className="flex-shrink-0 h-10 sm:h-9">
               <Plus className="w-4 h-4" /> Add New
             </Button>
           )}
@@ -140,12 +140,12 @@ export default function AdminTable<T extends { id: string }>({
                   ))}
                   {(onEdit || onDelete) && (
                     <TableCell className="text-right">
-                      <div className="flex items-center justify-end gap-1">
+                      <div className="flex items-center justify-end gap-0.5">
                         {onEdit && (
                           <button
                             type="button"
                             onClick={() => onEdit(row)}
-                            className="p-1.5 text-muted-foreground hover:text-primary hover:bg-primary-muted rounded-lg transition-colors"
+                            className="flex items-center justify-center w-9 h-9 sm:w-8 sm:h-8 text-muted-foreground hover:text-primary hover:bg-primary-muted rounded-lg transition-colors touch-manipulation"
                             aria-label="Edit"
                           >
                             <Edit2 className="w-4 h-4" />
@@ -155,7 +155,7 @@ export default function AdminTable<T extends { id: string }>({
                           <button
                             type="button"
                             onClick={() => onDelete(row)}
-                            className="p-1.5 text-muted-foreground hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                            className="flex items-center justify-center w-9 h-9 sm:w-8 sm:h-8 text-muted-foreground hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors touch-manipulation"
                             aria-label="Delete"
                           >
                             <Trash2 className="w-4 h-4" />
@@ -172,7 +172,7 @@ export default function AdminTable<T extends { id: string }>({
       )}
 
       {totalPages > 1 && (
-        <div className="flex items-center justify-between px-5 py-3 border-t border-border">
+        <div className="flex items-center justify-between px-4 sm:px-5 py-3 border-t border-border">
           <span className="text-xs text-muted-foreground">
             Showing {(page - 1) * pageSize + 1}–{Math.min(page * pageSize, filtered.length)} of {filtered.length}
           </span>
@@ -181,13 +181,13 @@ export default function AdminTable<T extends { id: string }>({
               type="button"
               onClick={() => setPage((p) => Math.max(1, p - 1))}
               disabled={page === 1}
-              className="p-1 text-muted-foreground hover:text-foreground disabled:opacity-30"
+              className="w-8 h-8 sm:w-7 sm:h-7 flex items-center justify-center text-muted-foreground hover:text-foreground disabled:opacity-30 touch-manipulation"
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
             {buildPageWindows(page, totalPages).map((item, i) =>
               item === '…' ? (
-                <span key={`ellipsis-${i}`} className="w-7 h-7 flex items-center justify-center text-xs text-muted-foreground select-none">
+                <span key={`ellipsis-${i}`} className="w-8 h-8 sm:w-7 sm:h-7 flex items-center justify-center text-xs text-muted-foreground select-none">
                   …
                 </span>
               ) : (
@@ -196,7 +196,7 @@ export default function AdminTable<T extends { id: string }>({
                   type="button"
                   onClick={() => setPage(item as number)}
                   className={cn(
-                    'w-7 h-7 rounded-md text-xs font-semibold',
+                    'w-8 h-8 sm:w-7 sm:h-7 rounded-md text-xs font-semibold touch-manipulation',
                     item === page ? 'bg-primary text-white' : 'text-muted-foreground hover:bg-muted',
                   )}
                 >
@@ -208,7 +208,7 @@ export default function AdminTable<T extends { id: string }>({
               type="button"
               onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
               disabled={page === totalPages}
-              className="p-1 text-muted-foreground hover:text-foreground disabled:opacity-30"
+              className="w-8 h-8 sm:w-7 sm:h-7 flex items-center justify-center text-muted-foreground hover:text-foreground disabled:opacity-30 touch-manipulation"
             >
               <ChevronRight className="w-4 h-4" />
             </button>

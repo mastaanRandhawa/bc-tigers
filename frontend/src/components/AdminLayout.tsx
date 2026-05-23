@@ -24,18 +24,22 @@ export default function AdminLayout({ children, title, description, action }: Ad
           <main className="flex-1 w-full min-w-0">
             <div className="page-container py-4 sm:py-6 max-w-full">
               {(title || action) && (
-                <div className="flex flex-col gap-3 mb-5 sm:flex-row sm:flex-wrap sm:items-start sm:justify-between sm:gap-4">
-                  <div className="min-w-0 flex-1">
-                    {title && (
-                      <h1 className="text-xl sm:text-2xl font-bold font-display text-foreground m-0 truncate">
-                        {title}
-                      </h1>
-                    )}
-                    {description && (
-                      <p className="text-body-sm mt-1 max-w-2xl text-muted-foreground">{description}</p>
+                <div className="mb-5 pb-4 border-b border-border sm:border-b-0 sm:pb-0">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0 flex-1">
+                      {title && (
+                        <h1 className="text-xl sm:text-2xl font-bold font-display text-foreground m-0 truncate leading-tight">
+                          {title}
+                        </h1>
+                      )}
+                      {description && (
+                        <p className="text-body-sm mt-1 max-w-2xl text-muted-foreground">{description}</p>
+                      )}
+                    </div>
+                    {action && (
+                      <div className="shrink-0 self-start pt-0.5">{action}</div>
                     )}
                   </div>
-                  {action && <div className="shrink-0 self-start">{action}</div>}
                 </div>
               )}
 

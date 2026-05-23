@@ -44,24 +44,23 @@ export function AdminMobileNav({ groups = adminNavGroups }: { groups?: AdminNavG
     <div className="admin-mobile-nav">
       <nav
         aria-label="Admin mobile navigation"
-        className="flex gap-1.5 overflow-x-auto no-scrollbar px-4 py-2.5 safe-x snap-x snap-mandatory"
+        className="flex gap-1 overflow-x-auto no-scrollbar px-3 py-2 safe-x snap-x snap-mandatory"
       >
         {items.map((item) => (
           <NavLink
             key={item.href}
             to={item.href}
             end={item.href === '/admin/dashboard'}
-            title={item.label}
             aria-label={item.label}
             className={({ isActive }) =>
               cn(
-                'nav-pill-dark shrink-0 snap-start text-xs sm:text-sm px-3 py-1.5',
-                isActive && 'nav-pill-dark-active',
+                'admin-mobile-nav-item',
+                isActive ? 'admin-mobile-nav-item-active' : 'admin-mobile-nav-item-inactive',
               )
             }
           >
-            <item.icon className="w-3.5 h-3.5 shrink-0" aria-hidden />
-            <span className="hidden sm:inline">{item.label}</span>
+            <item.icon className="w-[18px] h-[18px] shrink-0" aria-hidden />
+            <span>{item.label}</span>
           </NavLink>
         ))}
       </nav>

@@ -692,11 +692,27 @@
   }
 
   .admin-sidebar-link-active {
-    @apply bg-secondary text-foreground font-semibold border-l-2 border-foreground pl-[calc(0.625rem-2px)];
+    @apply bg-primary-muted text-primary font-semibold border-l-2 border-primary pl-[calc(0.625rem-2px)];
   }
 
   .admin-mobile-nav {
-    @apply lg:hidden sticky top-14 z-30 border-b border-border bg-card/95 backdrop-blur-sm;
+    @apply lg:hidden sticky top-14 z-30 border-b border-border bg-card/95 backdrop-blur-sm shadow-sm;
+  }
+
+  .admin-mobile-nav-item {
+    @apply flex flex-col items-center gap-0.5 min-w-[52px] px-2 py-1.5 rounded-lg text-[10px] font-medium shrink-0 snap-start transition-all duration-150 whitespace-nowrap;
+  }
+
+  .admin-mobile-nav-item-inactive {
+    @apply text-muted-foreground;
+  }
+
+  .admin-mobile-nav-item-inactive:hover {
+    @apply text-foreground bg-secondary;
+  }
+
+  .admin-mobile-nav-item-active {
+    @apply text-primary bg-primary-muted;
   }
 
   .admin-card {

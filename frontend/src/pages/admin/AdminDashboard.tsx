@@ -2,12 +2,13 @@ import AdminLayout from '@/components/AdminLayout';
 import AdminStatGrid from '@/components/admin/AdminStatGrid';
 import { Link } from 'react-router-dom';
 import QueryState from '@/components/shared/QueryState';
+import { StaggerList, StaggerItem } from '@/components/motion';
 import { useDivisions } from '@/hooks/useDivisions';
 import { useTeams } from '@/hooks/useTeams';
 import { useMatches } from '@/hooks/useMatches';
 import { getDivisionPublicPath } from '@/lib/division-routes';
 import { getDivisionTheme } from '@/lib/division-theme';
-import { ExternalLink, Shield, Calendar, Zap } from 'lucide-react';
+import { ExternalLink, Shield, Calendar, Zap, ArrowRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export default function AdminDashboard() {
@@ -30,7 +31,7 @@ export default function AdminDashboard() {
 
       <QueryState isLoading={isLoading} isError={isError} onRetry={() => refetch()}>
         <h2 className="text-subsection mb-4">Divisions</h2>
-        <div className="grid grid-cols-1 gap-3 sm:gap-4 md:grid-cols-2">
+        <StaggerList className="grid grid-cols-1 gap-3 sm:gap-4 md:grid-cols-2">
           {divisions.map((division) => {
             const theme = getDivisionTheme(division);
             const tournamentSlug = division.tournament?.slug;
@@ -42,79 +43,72 @@ export default function AdminDashboard() {
             const matchCount = matches.filter((m) => m.division_id === division.id).length;
 
             return (
-              <div key={division.id} className="admin-card p-3 sm:p-4 transition-all duration-200 hover:shadow-md">
-                <div className="flex items-start justify-between gap-2 sm:gap-3">
-                  <div className="flex min-w-0 items-start gap-2 sm:gap-3">
-                    <div
-                      className="h-9 w-9 sm:h-10 sm:w-10 shrink-0 rounded-lg ring-1 ring-border"
-                      style={{ backgroundColor: theme.primary }}
-                    />
-                    <div className="min-w-0">
-                      <h3 className="truncate text-sm sm:text-base font-semibold font-display text-foreground">
-                        {division.name}
-                      </h3>
-                      <p className="mt-0.5 truncate text-body-sm">{division.tournament?.name}</p>
-                      <div className="mt-1.5 flex flex-wrap gap-2 sm:gap-3 text-caption">
-                        <span className="inline-flex items-center gap-1">
-                          <Shield className="h-3 w-3" aria-hidden /> {teamCount} teams
-                        </span>
-                        <span className="inline-flex items-center gap-1">
-                          <Calendar className="h-3 w-3" aria-hidden /> {matchCount} matches
-                        </span>
+              <StaggerItem key={division.id}>
+                <div className="admin-card p-3.5 sm:p-4 transition-all duration-200 hover:shadow-md active:scale-[0.99] touch-manipulation h-full">
+                  <div className="flex items-start justify-between gap-2 sm:gap-3">
+                    <div className="flex min-w-0 items-start gap-3">
+                      <div
+                        className="h-10 w-10 sm:h-11 sm:w-11 shrink-0 rounded-xl ring-1 ring-border shadow-sm"
+                        style={{ backgroundColor: theme.primary }}
+                      />
+                      <div className="min-w-0">
+                        <h3 className="truncate text-sm sm:text-base font-semibold font-display text-foreground leading-snug">
+                          {division.name}
+                        </h3>
+                        <p className="mt-0.5 truncate text-body-sm">{division.tournament?.name}</p>
+                        <div className="mt-2 flex flex-wrap gap-2 sm:gap-3 text-caption">
+                          <span className="inline-flex items-center gap-1 bg-secondary rounded-md px-1.5 py-0.5 font-medium">
+                            <Shield className="h-3 w-3" aria-hidden /> {teamCount} teams
+                          </span>
+                          <span className="inline-flex items-center gap-1 bg-secondary rounded-md px-1.5 py-0.5 font-medium">
+                            <Calendar className="h-3 w-3" aria-hidden /> {matchCount} matches
+                          </span>
+                        </div>
                       </div>
                     </div>
+                    {publicPath && (
+                      <a
+                        href={publicPath}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="shrink-0 p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors touch-manipulation"
+                        aria-label="View on site"
+                        style={{ color: theme.primary }}
+                      >
+                        <ExternalLink className="h-4 w-4" aria-hidden />
+                      </a>
+                    )}
                   </div>
-                  {publicPath && (
-                    <a
-                      href={publicPath}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="nav-pill-dark shrink-0 border border-border bg-card text-xs"
-                      style={{ color: theme.primary }}
-                    >
-                      <ExternalLink className="h-3.5 w-3.5" aria-hidden />
-                      <span className="hidden sm:inline">View</span>
-                    </a>
-                  )}
+                  <div className="mt-3 sm:mt-4 flex flex-wrap gap-x-1 gap-y-1.5 border-t border-border pt-3">
+                    {division.tournament?.id && (
+                      <Link
+                        to={`/admin/tournaments/${division.tournament.id}`}
+                        className={cn(
+                          'inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1.5 rounded-lg bg-secondary text-muted-foreground transition-colors hover:text-foreground hover:bg-secondary/80 touch-manipulation',
+                        )}
+                      >
+                        Tournament
+                        <ArrowRight className="h-3 w-3" aria-hidden />
+                      </Link>
+                    )}
+                    {division.tournament?.id && (
+                      <Link
+                        to={`/admin/tournaments/${division.tournament.id}/divisions/${division.id}`}
+                        className={cn(
+                          'inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1.5 rounded-lg transition-colors touch-manipulation',
+                        )}
+                        style={{ backgroundColor: `color-mix(in srgb, ${theme.primary} 12%, transparent)`, color: theme.primary }}
+                      >
+                        Division Workspace
+                        <ArrowRight className="h-3 w-3" aria-hidden />
+                      </Link>
+                    )}
+                  </div>
                 </div>
-                <div className="mt-3 sm:mt-4 flex flex-wrap gap-x-3 gap-y-2 border-t border-border pt-3 sm:pt-4">
-                  {division.tournament?.id && (
-                    <Link
-                      to={`/admin/tournaments/${division.tournament.id}`}
-                      className={cn(
-                        'text-xs font-medium text-muted-foreground transition-colors hover:text-primary',
-                      )}
-                    >
-                      Tournament Workspace
-                    </Link>
-                  )}
-                  {division.tournament?.id && (
-                    <Link
-                      to={`/admin/tournaments/${division.tournament.id}/divisions/${division.id}`}
-                      className={cn(
-                        'text-xs font-medium text-muted-foreground transition-colors hover:text-primary',
-                      )}
-                    >
-                      Division Workspace
-                    </Link>
-                  )}
-                  {publicPath && (
-                    <a
-                      href={publicPath}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className={cn(
-                        'text-xs font-medium text-muted-foreground transition-colors hover:text-primary',
-                      )}
-                    >
-                      View on site
-                    </a>
-                  )}
-                </div>
-              </div>
+              </StaggerItem>
             );
           })}
-        </div>
+        </StaggerList>
       </QueryState>
     </AdminLayout>
   );

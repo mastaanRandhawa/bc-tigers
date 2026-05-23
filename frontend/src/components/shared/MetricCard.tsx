@@ -1,7 +1,9 @@
 import { Link } from 'react-router-dom';
+import { m } from 'motion/react';
 import type { LucideIcon } from 'lucide-react';
 import type { DivisionTheme } from '@/lib/division-theme';
 import { cn } from '@/lib/utils';
+import { usePrefersReducedMotion } from '@/hooks/usePrefersReducedMotion';
 
 export interface MetricCardProps {
   value: string | number;
@@ -29,6 +31,7 @@ function MetricCardInner({
   liveIndicator = false,
   theme,
 }: MetricCardProps) {
+  const reduced = usePrefersReducedMotion();
   const accentColor = theme?.primary ?? 'var(--color-primary)';
   const accentBg = theme?.accent ?? 'var(--color-accent)';
   const accentBorder = theme
@@ -37,18 +40,17 @@ function MetricCardInner({
 
   const showLive = liveIndicator ?? (accent && Number(value) > 0);
 
-  return (
-    <div
-      className={cn(
-        'flex h-full flex-col rounded-xl border bg-card px-4 py-3.5 shadow-sm transition-all duration-200 hover:shadow-md hover:-translate-y-px',
-        accent ? 'border-transparent' : 'border-border',
-      )}
-      style={accent && accentBorder ? { borderColor: accentBorder } : undefined}
-    >
+  const cardClasses = cn(
+    'flex h-full flex-col rounded-xl border bg-card px-4 py-3.5 shadow-sm transition-shadow duration-200 hover:shadow-md active:scale-[0.98] touch-manipulation',
+    accent ? 'border-transparent' : 'border-border',
+  );
+
+  const inner = (
+    <>
       {Icon && (
         <div
           className={cn(
-            'mb-2 flex h-9 w-9 items-center justify-center rounded-lg border',
+            'mb-2.5 flex h-9 w-9 items-center justify-center rounded-lg border',
             accent ? 'border-transparent' : 'bg-secondary text-muted-foreground border-border',
           )}
           style={
@@ -62,7 +64,7 @@ function MetricCardInner({
       )}
       <div className="flex items-center gap-2">
         <p
-          className="text-3xl font-bold tabular-nums leading-none font-display"
+          className="text-2xl sm:text-3xl font-bold tabular-nums leading-none font-display"
           style={accent ? { color: accentColor } : undefined}
         >
           {value}
@@ -74,7 +76,7 @@ function MetricCardInner({
           />
         )}
       </div>
-      <p className="mt-1.5 text-xs font-medium text-muted-foreground">{label}</p>
+      <p className="mt-1.5 text-xs font-medium text-muted-foreground leading-snug">{label}</p>
       {sublabel && (
         <p
           className="mt-0.5 max-w-full truncate text-[11px] font-medium text-foreground/70"
@@ -83,7 +85,30 @@ function MetricCardInner({
           {sublabel}
         </p>
       )}
-    </div>
+    </>
+  );
+
+  if (reduced) {
+    return (
+      <div
+        className={cardClasses}
+        style={accent && accentBorder ? { borderColor: accentBorder } : undefined}
+      >
+        {inner}
+      </div>
+    );
+  }
+
+  return (
+    <m.div
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
+      className={cardClasses}
+      style={accent && accentBorder ? { borderColor: accentBorder } : undefined}
+    >
+      {inner}
+    </m.div>
   );
 }
 

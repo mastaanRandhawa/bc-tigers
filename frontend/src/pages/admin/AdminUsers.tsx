@@ -15,13 +15,13 @@ import { Badge } from '@/components/ui/badge';
 import { formatDate } from '@/lib/utils';
 import { getApiErrorMessage } from '@/lib/errors';
 
-const roleVariant: Record<string, 'default' | 'accent' | 'secondary' | 'success' | 'warning'> = {
+const roleVariant: Record<string, 'default' | 'accent' | 'secondary' | 'success' | 'warning' | 'info' | 'purple' | 'outline'> = {
   ADMIN: 'default',
-  TOURNAMENT_ADMIN: 'accent',
+  TOURNAMENT_ADMIN: 'purple',
   COACH: 'success',
   REFEREE: 'warning',
-  PLAYER: 'secondary',
-  VIEWER: 'secondary',
+  PLAYER: 'info',
+  VIEWER: 'outline',
 };
 
 export default function AdminUsers() {
