@@ -2,7 +2,6 @@ import { cn } from '@/lib/utils';
 
 import SiteHeader from '@/components/SiteHeader';
 import Footer from '@/components/Footer';
-import MobileBottomNav from '@/components/shared/MobileBottomNav';
 import { useRealtimeInvalidation } from '@/hooks/useMatches';
 
 interface AppShellProps {
@@ -39,7 +38,7 @@ export default function AppShell({
       {subNav}
       <main
         className={cn(
-          'flex-1 w-full min-w-0 pb-16 lg:pb-0',
+          'flex-1 w-full min-w-0',
           !heroTheme && 'pt-14',
           !heroTheme && tickerVisible && headerVariant !== 'admin' && 'max-md:pt-[6.75rem]',
           className,
@@ -48,7 +47,6 @@ export default function AppShell({
         {children}
       </main>
       {showFooter && <Footer />}
-      <MobileBottomNav />
     </div>
   );
 }

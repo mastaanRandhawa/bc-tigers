@@ -240,9 +240,9 @@ export function TournamentHubHeader() {
               </h1>
             </div>
 
-            <div className="w-full flex justify-start pl-[12%] md:pl-[30%] relative z-10">
+            <div className="w-full flex justify-end pr-[8%] md:pr-[25%] relative z-10">
               <h1 className="hero-headline hero-headline-shadow text-[clamp(2.75rem,14vw,160px)] text-white m-0 p-0">
-                SOCCER
+                FC
               </h1>
             </div>
           </div>
@@ -280,7 +280,7 @@ export function TournamentHubHeader() {
               <motion.div
                 animate={{ y: [0, -10, 0] }}
                 transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
-                className="absolute bottom-[8%] left-[-3%] sm:bottom-[6%] sm:left-[-1%] md:bottom-[8%] md:left-[0%] z-30 pointer-events-auto"
+                className="absolute bottom-[42%] left-[-3%] sm:bottom-[6%] sm:left-[-1%] md:bottom-[8%] md:left-[0%] z-30 pointer-events-auto"
               >
                 <LiveMatchCard
                   match={featuredLive[0]}
@@ -294,7 +294,7 @@ export function TournamentHubHeader() {
               <motion.div
                 animate={{ y: [0, -12, 0] }}
                 transition={{ duration: 6, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-                className="absolute top-[6%] right-[-3%] sm:top-[10%] sm:right-[-1%] md:top-[12%] md:right-[0%] z-30 pointer-events-auto"
+                className="absolute top-[4%] right-[-3%] sm:top-[10%] sm:right-[-1%] md:top-[12%] md:right-[0%] z-30 pointer-events-auto"
               >
                 <LiveMatchCard
                   match={featuredLive[1]}
@@ -311,7 +311,7 @@ export function TournamentHubHeader() {
               <ArrowAccentRight />
             </div>
 
-            <div className="absolute bottom-[-6%] right-[4%] sm:bottom-[-8%] sm:right-[8%] md:bottom-[-10%] md:right-[12%] z-40 pointer-events-auto scale-90 sm:scale-100">
+            <div className="absolute bottom-[-18%] right-[4%] sm:bottom-[-8%] sm:right-[8%] md:bottom-[-10%] md:right-[12%] z-40 pointer-events-auto scale-90 sm:scale-100">
               <CircularBadge schedulePath={schedulePath} />
             </div>
           </div>

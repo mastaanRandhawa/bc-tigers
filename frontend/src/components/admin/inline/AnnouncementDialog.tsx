@@ -24,11 +24,18 @@ import {
 import { getApiErrorMessage } from '@/lib/errors';
 import type { Notification } from '@/types';
 
+type AnnouncementLike = {
+  id: string;
+  title: string;
+  message: string;
+  tournament_id?: string | null;
+};
+
 interface AnnouncementDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   /** Pass an existing announcement to enter edit mode */
-  announcement?: Notification | null;
+  announcement?: AnnouncementLike | null;
 }
 
 export function AnnouncementDialog({ open, onOpenChange, announcement }: AnnouncementDialogProps) {

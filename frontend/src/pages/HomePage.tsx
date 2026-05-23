@@ -16,16 +16,21 @@ import { Badge } from '@/components/ui/badge';
 import { useHomeHub } from '@/hooks/useHomeHub';
 import { formatDate } from '@/lib/date';
 import { pickFeaturedTournament } from '@/lib/featured-tournament';
-import { ChevronRight, Trophy, Megaphone, Plus } from 'lucide-react';
+import { ChevronRight, Trophy, Megaphone, Plus, Pencil, Trash2 } from 'lucide-react';
 import { RevealOnScroll } from '@/components/motion/RevealOnScroll';
 import { useCanAdminEdit } from '@/hooks/useCanAdminEdit';
 import { AdminActionButton } from '@/components/admin/inline/AdminActionButton';
 import { AnnouncementDialog } from '@/components/admin/inline/AnnouncementDialog';
+import { useDeleteAnnouncement } from '@/hooks/useAnnouncements';
+import type { HubAnnouncement } from '@/services/hub.service';
 
 export default function HomePage() {
   const { data, isLoading, isError, refetch } = useHomeHub();
   const canEdit = useCanAdminEdit();
   const [announcementOpen, setAnnouncementOpen] = useState(false);
+  const [editingAnnouncement, setEditingAnnouncement] = useState<HubAnnouncement | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+  const deleteMutation = useDeleteAnnouncement();
 
   const tournaments = data?.tournaments ?? [];
   const liveMatches = data?.liveMatches ?? [];
@@ -114,7 +119,7 @@ export default function HomePage() {
                   {canEdit && (
                     <AdminActionButton
                       size="xs"
-                      onClick={() => setAnnouncementOpen(true)}
+                      onClick={() => { setEditingAnnouncement(null); setAnnouncementOpen(true); }}
                     >
                       <Plus className="h-3 w-3" />
                       Publish
@@ -128,13 +133,52 @@ export default function HomePage() {
                         key={a.id}
                         className="rounded-lg border border-border bg-card px-4 py-3"
                       >
-                        <div className="flex items-start gap-2">
-                          <Megaphone className="mt-0.5 h-4 w-4 shrink-0 text-primary" aria-hidden />
-                          <div>
-                            <p className="font-medium text-foreground">{a.title}</p>
-                            <p className="mt-0.5 text-sm text-muted-foreground">{a.message}</p>
+                        {deletingId === a.id ? (
+                          <div className="flex items-center justify-between gap-3">
+                            <p className="text-sm text-muted-foreground">Delete this announcement?</p>
+                            <div className="flex items-center gap-2 shrink-0">
+                              <AdminActionButton
+                                size="xs"
+                                variant="destructive"
+                                onClick={() => deleteMutation.mutate(a.id, { onSuccess: () => setDeletingId(null) })}
+                                disabled={deleteMutation.isPending}
+                              >
+                                {deleteMutation.isPending ? 'Deleting…' : 'Delete'}
+                              </AdminActionButton>
+                              <AdminActionButton size="xs" variant="ghost" onClick={() => setDeletingId(null)}>
+                                Cancel
+                              </AdminActionButton>
+                            </div>
                           </div>
-                        </div>
+                        ) : (
+                          <div className="flex items-start gap-2">
+                            <Megaphone className="mt-0.5 h-4 w-4 shrink-0 text-primary" aria-hidden />
+                            <div className="flex-1 min-w-0">
+                              <p className="font-medium text-foreground">{a.title}</p>
+                              <p className="mt-0.5 text-sm text-muted-foreground">{a.message}</p>
+                            </div>
+                            {canEdit && (
+                              <div className="flex items-center gap-1 shrink-0 ml-2">
+                                <AdminActionButton
+                                  size="xs"
+                                  variant="ghost"
+                                  onClick={() => { setEditingAnnouncement(a); setAnnouncementOpen(true); }}
+                                  aria-label="Edit announcement"
+                                >
+                                  <Pencil className="h-3 w-3" />
+                                </AdminActionButton>
+                                <AdminActionButton
+                                  size="xs"
+                                  variant="destructive"
+                                  onClick={() => setDeletingId(a.id)}
+                                  aria-label="Delete announcement"
+                                >
+                                  <Trash2 className="h-3 w-3" />
+                                </AdminActionButton>
+                              </div>
+                            )}
+                          </div>
+                        )}
                       </li>
                     ))}
                   </ul>
@@ -226,7 +270,11 @@ export default function HomePage() {
       </section>
 
       {canEdit && (
-        <AnnouncementDialog open={announcementOpen} onOpenChange={setAnnouncementOpen} />
+        <AnnouncementDialog
+          open={announcementOpen}
+          onOpenChange={(open) => { setAnnouncementOpen(open); if (!open) setEditingAnnouncement(null); }}
+          announcement={editingAnnouncement}
+        />
       )}
     </PageLayout>
   );
