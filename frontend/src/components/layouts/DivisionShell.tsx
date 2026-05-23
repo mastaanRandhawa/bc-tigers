@@ -48,9 +48,10 @@ export function buildDivisionNavItems(basePath: string): DivisionNavItem[] {
 }
 
 export function splitDivisionNavItems(items: DivisionNavItem[]) {
+  // Mobile grid is grid-cols-5: 4 primary items + 1 "More" button = 5 cells exactly.
   return {
-    primary: items.slice(0, 6),
-    more: items.slice(6),
+    primary: items.slice(0, 4),
+    more: items.slice(4),
   };
 }
 

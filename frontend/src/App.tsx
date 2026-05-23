@@ -5,7 +5,7 @@ import { authRoutes } from '@/routes/auth.routes';
 import { adminRoutes } from '@/routes/admin.routes';
 import { portalRoutes } from '@/routes/portal.routes';
 import { redirectRoutes } from '@/routes/redirect.routes';
-import { HomePage, LiveMatchesPage } from '@/routes/lazy-pages';
+import { HomePage, LiveMatchesPage, NotFoundPage } from '@/routes/lazy-pages';
 
 export default function App() {
   return (
@@ -24,7 +24,7 @@ export default function App() {
       {authRoutes()}
       {portalRoutes()}
       {adminRoutes()}
-      <Route path="*" element={<Navigate to="/" replace />} />
+      <Route path="*" element={<NotFoundPage />} />
     </Routes>
   );
 }

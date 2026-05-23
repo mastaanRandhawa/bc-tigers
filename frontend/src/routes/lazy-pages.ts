@@ -8,6 +8,7 @@ function lazyPage(
 
 // Public — keep home eager for fastest first paint
 export { default as HomePage } from "@/pages/HomePage";
+export { default as NotFoundPage } from "@/pages/NotFoundPage";
 
 export const LiveMatchesPage = lazyPage(
   () => import("@/pages/LiveMatchesPage"),
