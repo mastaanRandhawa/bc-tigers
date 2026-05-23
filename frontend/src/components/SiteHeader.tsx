@@ -172,7 +172,7 @@ export default function SiteHeader({ variant = 'hero', showLiveTicker = true }: 
   const isAdmin = variant === 'admin';
   const isMinimal = variant === 'minimal';
   const { isVisible, isAtTop, isScrolled } = useSmartHeader();
-  const { isAuthenticated, user } = useAuthStore();
+  const { isAuthenticated, isInitialized, user } = useAuthStore();
   const showTicker = showLiveTicker && !isMinimal;
   const onDark = true;
 
@@ -211,10 +211,12 @@ export default function SiteHeader({ variant = 'hero', showLiveTicker = true }: 
                 <ExternalLink className="w-3.5 h-3.5" aria-hidden />
                 View Site
               </Link>
-              {isAuthenticated && user ? (
-                <UserMenu onDark />
-              ) : (
-                <SignInButton isHero />
+              {isInitialized && (
+                isAuthenticated && user ? (
+                  <UserMenu onDark />
+                ) : (
+                  <SignInButton isHero />
+                )
               )}
             </div>
           </div>
@@ -248,13 +250,15 @@ export default function SiteHeader({ variant = 'hero', showLiveTicker = true }: 
             )}
             <TournamentsLink onDark={onDark} />
             <AnimatedThemeToggler onDark={onDark} />
-            {isAuthenticated && user ? (
-              <>
-                {!isMinimal && <NotificationBell onDark={onDark} />}
-                <UserMenu onDark={onDark} />
-              </>
-            ) : (
-              <SignInButton isHero />
+            {isInitialized && (
+              isAuthenticated && user ? (
+                <>
+                  {!isMinimal && <NotificationBell onDark={onDark} />}
+                  <UserMenu onDark={onDark} />
+                </>
+              ) : (
+                <SignInButton isHero />
+              )
             )}
           </div>
         </div>
