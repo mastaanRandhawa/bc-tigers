@@ -88,4 +88,7 @@ export const queryKeys = {
     all: (params?: object) => ['users', params ?? {}] as const,
     detail: (id: string) => ['users', id] as const,
   },
+  announcements: {
+    all: () => ['announcements'] as const,
+  },
 } as const;

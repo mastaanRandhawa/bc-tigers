@@ -291,11 +291,13 @@ export interface AuditLog {
 export interface Notification {
   id: string;
   user_id?: string;
+  tournament_id?: string;
   title: string;
   message: string;
   type: string;
   read: boolean;
   created_at: string;
+  tournament?: { id: string; name: string };
 }
 
 export interface Media {

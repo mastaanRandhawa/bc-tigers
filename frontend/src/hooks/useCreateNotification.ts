@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { notificationsService } from '@/services/notifications.service';
+import { queryKeys } from '@/lib/query-keys';
 
 export function useCreateNotification() {
   const qc = useQueryClient();
@@ -13,7 +14,8 @@ export function useCreateNotification() {
     }) => notificationsService.create(data),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ['notifications'] });
-      qc.invalidateQueries({ queryKey: ['hub'] });
+      qc.invalidateQueries({ queryKey: queryKeys.hub.home });
+      qc.invalidateQueries({ queryKey: queryKeys.announcements.all() });
     },
   });
 }

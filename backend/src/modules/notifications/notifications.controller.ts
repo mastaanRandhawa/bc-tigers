@@ -3,6 +3,7 @@ import {
   Get,
   Patch,
   Post,
+  Delete,
   Param,
   Body,
   Request,
@@ -22,6 +23,12 @@ export class NotificationsController {
     return this.service.findForUser(req.user.userId);
   }
 
+  @Get('announcements')
+  @AdminOnly()
+  findAnnouncements() {
+    return this.service.findAnnouncements();
+  }
+
   @Patch('read-all')
   @UseGuards(JwtAuthGuard)
   markAllRead(@Request() req: { user: { userId: string } }) {
@@ -35,6 +42,27 @@ export class NotificationsController {
     @Param('id') id: string,
   ) {
     return this.service.markRead(req.user.userId, id);
+  }
+
+  @Patch(':id')
+  @AdminOnly()
+  updateAnnouncement(
+    @Param('id') id: string,
+    @Body()
+    body: {
+      title?: string;
+      message?: string;
+      tournament_id?: string | null;
+      type?: string;
+    },
+  ) {
+    return this.service.updateAnnouncement(id, body);
+  }
+
+  @Delete(':id')
+  @AdminOnly()
+  removeAnnouncement(@Param('id') id: string) {
+    return this.service.removeAnnouncement(id);
   }
 
   @Post()

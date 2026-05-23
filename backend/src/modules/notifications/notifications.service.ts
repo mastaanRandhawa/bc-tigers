@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import prisma from '../../prisma/prisma';
 import { SettingsService } from '../settings/settings.service';
 import { MailService } from '../mail/mail.service';
@@ -36,6 +36,39 @@ export class NotificationsService {
       data: { read: true },
     });
     return { message: 'All notifications marked as read.' };
+  }
+
+  findAnnouncements() {
+    return prisma.notification.findMany({
+      where: { user_id: null },
+      orderBy: { created_at: 'desc' },
+      include: { tournament: { select: { id: true, name: true } } },
+    });
+  }
+
+  async updateAnnouncement(
+    id: string,
+    data: {
+      title?: string;
+      message?: string;
+      tournament_id?: string | null;
+      type?: string;
+    },
+  ) {
+    const existing = await prisma.notification.findFirst({
+      where: { id, user_id: null },
+    });
+    if (!existing) throw new NotFoundException('Announcement not found');
+    return prisma.notification.update({ where: { id }, data });
+  }
+
+  async removeAnnouncement(id: string) {
+    const existing = await prisma.notification.findFirst({
+      where: { id, user_id: null },
+    });
+    if (!existing) throw new NotFoundException('Announcement not found');
+    await prisma.notification.delete({ where: { id } });
+    return { message: 'Announcement deleted.' };
   }
 
   async create(data: {
