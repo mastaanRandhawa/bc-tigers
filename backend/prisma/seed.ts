@@ -590,9 +590,20 @@ async function main() {
     },
   });
 
-  await prisma.siteSettings.create({
-    data: {
+  await prisma.siteSettings.upsert({
+    where: { id: 'default' },
+    create: {
       id: 'default',
+      site_name: 'BC Tigers FC',
+      contact_email: 'bctigersfc@gmail.com',
+      contact_phone:
+        'Ajinderpal Mangat (604) 240-9742 · Youth: Rakesh Kumar (778) 233-7338 · Adult: Vicky Virk (604) 760-3506',
+      contact_address:
+        'Newton Athletic Park, 7395 128 St, Surrey, BC V3W 2M7 · www.bctigers.com',
+      max_teams_per_division: 16,
+      registration_open: true,
+    },
+    update: {
       site_name: 'BC Tigers FC',
       contact_email: 'bctigersfc@gmail.com',
       contact_phone:
