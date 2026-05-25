@@ -126,7 +126,7 @@ export function BracketCanvas({ divisionId, divisionSlug, teams = [] }: BracketC
           </div>
         ) : (
           <div className="space-y-6">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
               <p className="text-sm text-muted-foreground">
                 Drag teams from the pool into bracket slots. Click winner buttons to advance.
               </p>
@@ -135,6 +135,7 @@ export function BracketCanvas({ divisionId, divisionSlug, teams = [] }: BracketC
                 size="sm"
                 onClick={() => setShowGenerateConfirm(true)}
                 disabled={generateMutation.isPending}
+                className="self-start sm:self-auto"
               >
                 Regenerate
               </Button>
@@ -163,8 +164,11 @@ export function BracketCanvas({ divisionId, divisionSlug, teams = [] }: BracketC
               </div>
             )}
 
-            {/* Bracket stages */}
-            <div className="overflow-x-auto">
+            {/* Bracket stages — horizontally scrollable; overscroll-x-contain prevents page scroll bleed on mobile */}
+            <p className="text-xs text-muted-foreground sm:hidden mb-2">
+              Scroll left/right to view all stages.
+            </p>
+            <div className="overflow-x-auto overscroll-x-contain rounded-lg">
               <div className="flex gap-6 min-w-max pb-4">
                 {presentStages.map((stage, stageIdx) => {
                   const stageNodes = nodes

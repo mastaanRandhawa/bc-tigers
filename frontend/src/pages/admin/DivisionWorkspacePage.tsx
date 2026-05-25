@@ -23,6 +23,13 @@ import { getDivisionTheme } from '@/lib/division-theme';
 import { formatDate, formatTime } from '@/lib/utils';
 import { matchSearchText } from '@/lib/search-text';
 import { getApiErrorMessage } from '@/lib/errors';
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetBody,
+} from '@/components/ui/sheet';
 import { Calendar, GitBranch, Pencil, Shield, Users, Zap, PlusCircle } from 'lucide-react';
 import type { Match, Team } from '@/types';
 
@@ -159,7 +166,7 @@ export default function DivisionWorkspacePage() {
           <div className="flex items-center gap-2">
             <Button variant="outline" size="sm" onClick={() => setEditDivisionOpen(true)}>
               <Pencil className="h-3.5 w-3.5 mr-1" />
-              <span className="hidden xs:inline">Edit</span>
+              <span className="hidden sm:inline">Edit</span>
             </Button>
           </div>
         )
@@ -364,25 +371,18 @@ export default function DivisionWorkspacePage() {
       />
 
       {/* Roster drawer */}
-      {rosterTeam && (
-        <div
-          className="fixed inset-0 z-40 bg-black/50"
-          onClick={() => setRosterTeam(null)}
-        >
-          <div
-            className="absolute right-0 top-0 h-full w-full max-w-md bg-card overflow-y-auto p-6 shadow-2xl"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="font-semibold text-foreground">Roster — {rosterTeam.name}</h2>
-              <Button variant="ghost" size="sm" onClick={() => setRosterTeam(null)}>
-                Close
-              </Button>
-            </div>
-            <TeamRosterPanel team={rosterTeam} />
-          </div>
-        </div>
-      )}
+      <Sheet open={!!rosterTeam} onOpenChange={(open) => !open && setRosterTeam(null)}>
+        <SheetContent side="right" className="w-full max-w-md gap-0 p-0">
+          <SheetHeader className="border-b border-border px-5 py-4">
+            <SheetTitle className="truncate">
+              Roster — {rosterTeam?.name ?? ''}
+            </SheetTitle>
+          </SheetHeader>
+          <SheetBody className="px-5 py-4">
+            {rosterTeam && <TeamRosterPanel team={rosterTeam} />}
+          </SheetBody>
+        </SheetContent>
+      </Sheet>
 
       <ConfirmDialog
         open={!!deleteTarget}

@@ -135,7 +135,13 @@ export default function AdminTable<T extends { id: string }>({
                 <TableRow key={row.id}>
                   {columns.map((col) => (
                     <TableCell key={col.key} className={col.className}>
-                      {col.render ? col.render(row) : String((row as Record<string, unknown>)[col.key] ?? '—')}
+                      {col.render
+                        ? col.render(row)
+                        : (
+                          <span className="break-words">
+                            {String((row as Record<string, unknown>)[col.key] ?? '—')}
+                          </span>
+                        )}
                     </TableCell>
                   ))}
                   {(onEdit || onDelete) && (
@@ -172,9 +178,9 @@ export default function AdminTable<T extends { id: string }>({
       )}
 
       {totalPages > 1 && (
-        <div className="flex items-center justify-between px-4 sm:px-5 py-3 border-t border-border">
-          <span className="text-xs text-muted-foreground">
-            Showing {(page - 1) * pageSize + 1}–{Math.min(page * pageSize, filtered.length)} of {filtered.length}
+        <div className="flex flex-wrap items-center justify-between gap-2 px-4 sm:px-5 py-3 border-t border-border">
+          <span className="text-xs text-muted-foreground whitespace-nowrap">
+            {(page - 1) * pageSize + 1}–{Math.min(page * pageSize, filtered.length)} of {filtered.length}
           </span>
           <div className="flex items-center gap-1">
             <button

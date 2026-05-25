@@ -27,6 +27,13 @@ import { formatDate, formatTime, getMatchStatusBadgeVariant } from '@/lib/utils'
 import { getApiErrorMessage } from '@/lib/errors';
 import { matchSearchText } from '@/lib/search-text';
 import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetBody,
+} from '@/components/ui/sheet';
+import {
   ArrowLeft,
   Calendar,
   ExternalLink,
@@ -184,25 +191,30 @@ export default function TournamentWorkspacePage() {
             />
 
             <Tabs defaultValue="divisions">
-              <TabsList className="mb-5">
-                <TabsTrigger value="divisions">
-                  <Flag className="h-3.5 w-3.5 mr-1.5" />
-                  Divisions
-                </TabsTrigger>
-                <TabsTrigger value="teams">
-                  <Users className="h-3.5 w-3.5 mr-1.5" />
-                  Teams
-                </TabsTrigger>
-                <TabsTrigger value="matches">
-                  <Calendar className="h-3.5 w-3.5 mr-1.5" />
-                  Matches
-                </TabsTrigger>
-              </TabsList>
+              {/* Scrollable tab list on mobile */}
+              <div className="overflow-x-auto no-scrollbar -mx-4 px-4 sm:mx-0 sm:px-0 mb-5">
+                <TabsList className="w-max sm:w-auto">
+                  <TabsTrigger value="divisions">
+                    <Flag className="h-3.5 w-3.5 mr-1.5" />
+                    Divisions
+                  </TabsTrigger>
+                  <TabsTrigger value="teams">
+                    <Users className="h-3.5 w-3.5 mr-1.5" />
+                    Teams
+                  </TabsTrigger>
+                  <TabsTrigger value="matches">
+                    <Calendar className="h-3.5 w-3.5 mr-1.5" />
+                    Matches
+                  </TabsTrigger>
+                </TabsList>
+              </div>
 
               {/* DIVISIONS TAB */}
               <TabsContent value="divisions">
                 <div className="mb-4 flex justify-end">
-                  <Button onClick={() => divisionDialog.openCreate()}>Add Division</Button>
+                  <Button onClick={() => divisionDialog.openCreate()} className="w-full sm:w-auto">
+                    Add Division
+                  </Button>
                 </div>
 
                 {tournamentDivisions.length === 0 ? (
@@ -277,7 +289,9 @@ export default function TournamentWorkspacePage() {
               {/* TEAMS TAB */}
               <TabsContent value="teams">
                 <div className="mb-4 flex justify-end">
-                  <Button onClick={() => teamDialog.openCreate()}>Add Team</Button>
+                  <Button onClick={() => teamDialog.openCreate()} className="w-full sm:w-auto">
+                    Add Team
+                  </Button>
                 </div>
                 <AdminTable
                   title=""
@@ -292,7 +306,9 @@ export default function TournamentWorkspacePage() {
               {/* MATCHES TAB */}
               <TabsContent value="matches">
                 <div className="mb-4 flex justify-end">
-                  <Button onClick={() => matchDialog.openCreate()}>Add Match</Button>
+                  <Button onClick={() => matchDialog.openCreate()} className="w-full sm:w-auto">
+                    Add Match
+                  </Button>
                 </div>
                 <AdminTable
                   title=""
@@ -347,17 +363,18 @@ export default function TournamentWorkspacePage() {
         onOpenChange={(open) => !open && setScheduleDiv(null)}
         onSuccess={(created) => alert(`Created ${created} matches.`)}
       />
-      {rosterTeam && (
-        <div className="fixed inset-0 z-40 bg-black/50 flex items-end justify-end" onClick={() => setRosterTeam(null)}>
-          <div className="w-full max-w-md h-full overflow-y-auto bg-card p-6" onClick={(e) => e.stopPropagation()}>
-            <div className="flex justify-between items-center mb-4">
-              <h2 className="font-semibold text-foreground">Roster — {rosterTeam.name}</h2>
-              <Button variant="ghost" size="sm" onClick={() => setRosterTeam(null)}>Close</Button>
-            </div>
-            <TeamRosterPanel team={rosterTeam} />
-          </div>
-        </div>
-      )}
+      <Sheet open={!!rosterTeam} onOpenChange={(open) => !open && setRosterTeam(null)}>
+        <SheetContent side="right" className="w-full max-w-md gap-0 p-0">
+          <SheetHeader className="border-b border-border px-5 py-4">
+            <SheetTitle className="truncate">
+              Roster — {rosterTeam?.name ?? ''}
+            </SheetTitle>
+          </SheetHeader>
+          <SheetBody className="px-5 py-4">
+            {rosterTeam && <TeamRosterPanel team={rosterTeam} />}
+          </SheetBody>
+        </SheetContent>
+      </Sheet>
       {tournament && (
         <TournamentAdminSheet
           tournamentId={tournament.id}
