@@ -34,25 +34,38 @@ export const useAuthStore = create<AuthState>()(
       error: null,
 
       initialize: async () => {
+        // Prevent double-invocation from React StrictMode or concurrent renders.
+        if (get().isInitialized || get().isLoading) return;
+
         const token = localStorage.getItem('bc_token') ?? get().token;
         if (!token) {
           set({ isInitialized: true, isAuthenticated: false, user: null, token: null });
           return;
         }
 
+        set({ isLoading: true });
         try {
           const user = await fetchCurrentUser();
-          set({ user, token, isAuthenticated: true, isInitialized: true });
+          set({ user, token, isAuthenticated: true, isInitialized: true, isLoading: false });
         } catch {
+          // Token is invalid or expired. Clear it so the user is treated as a
+          // guest and ProtectedRoute handles the /login redirect client-side.
           localStorage.removeItem('bc_token');
-          set({ user: null, token: null, isAuthenticated: false, isInitialized: true });
+          set({ user: null, token: null, isAuthenticated: false, isInitialized: true, isLoading: false });
         }
       },
 
       refreshUser: async () => {
         if (!get().token) return;
-        const user = await fetchCurrentUser();
-        set({ user, isAuthenticated: true });
+        try {
+          const user = await fetchCurrentUser();
+          set({ user, isAuthenticated: true });
+        } catch {
+          // Session expired mid-session. Clear auth state so ProtectedRoute
+          // redirects to /login via React Router instead of a hard reload.
+          localStorage.removeItem('bc_token');
+          set({ user: null, token: null, isAuthenticated: false });
+        }
       },
 
       login: async (email, password) => {

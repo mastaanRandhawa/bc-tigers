@@ -14,9 +14,9 @@ export default function ProtectedRoute({
   adminOnly = false,
   allowedRoles,
 }: ProtectedRouteProps) {
-  const { isAuthenticated, user, isInitialized } = useAuthStore();
+  const { isAuthenticated, user, isInitialized, isLoading } = useAuthStore();
 
-  if (!isInitialized) return null;
+  if (!isInitialized || isLoading) return null;
 
   if (!isAuthenticated) {
     return <Navigate to="/login" replace state={{ from: window.location.pathname }} />;
