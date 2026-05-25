@@ -1,7 +1,6 @@
 import type { ReactNode } from 'react';
 import SiteHeader from '@/components/SiteHeader';
 import { AdminSidebar, AdminMobileNav } from '@/components/admin/AdminNav';
-import { useSmartHeader } from '@/hooks/useSmartHeader';
 
 interface AdminLayoutProps {
   children: ReactNode;
@@ -11,8 +10,6 @@ interface AdminLayoutProps {
 }
 
 export default function AdminLayout({ children, title, description, action }: AdminLayoutProps) {
-  const { isVisible: isHeaderVisible } = useSmartHeader();
-
   return (
     <div className="min-h-dvh min-h-screen flex flex-col w-full overflow-x-hidden admin-shell">
       <SiteHeader variant="admin" />
@@ -22,7 +19,7 @@ export default function AdminLayout({ children, title, description, action }: Ad
         <AdminSidebar />
 
         <div className="flex flex-1 flex-col min-w-0 overflow-x-hidden">
-          <AdminMobileNav headerVisible={isHeaderVisible} />
+          <AdminMobileNav />
 
           <main className="flex-1 w-full min-w-0">
             <div className="page-container py-4 sm:py-6 max-w-full">

@@ -696,7 +696,7 @@
   }
 
   .admin-mobile-nav {
-    @apply lg:hidden sticky top-14 z-30 border-b border-border bg-card/95 backdrop-blur-sm shadow-sm;
+    @apply lg:hidden sticky top-0 z-30 border-b border-border bg-card/95 backdrop-blur-sm shadow-sm;
   }
 
   .admin-card {

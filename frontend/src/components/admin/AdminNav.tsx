@@ -49,10 +49,8 @@ export function AdminSidebar({ groups = adminNavGroups }: { groups?: AdminNavGro
 
 export function AdminMobileNav({
   groups = adminNavGroups,
-  headerVisible = true,
 }: {
   groups?: AdminNavGroup[];
-  headerVisible?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const location = useLocation();
@@ -70,7 +68,7 @@ export function AdminMobileNav({
   );
 
   return (
-    <div className="admin-mobile-nav" style={{ top: headerVisible ? '3.5rem' : '0px' }}>
+    <div className="admin-mobile-nav">
       <div className="flex items-center gap-3 px-3 py-2 safe-x">
         <Sheet open={open} onOpenChange={setOpen}>
           <SheetTrigger asChild>
