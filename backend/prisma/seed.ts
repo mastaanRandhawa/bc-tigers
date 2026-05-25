@@ -19,6 +19,36 @@ function slugify(s: string) {
     .replace(/^-+|-+$/g, '');
 }
 
+function hexToRgb(hex: string) {
+  const normalized = hex.replace('#', '');
+  const value = normalized.length === 3
+    ? normalized.split('').map((c) => `${c}${c}`).join('')
+    : normalized;
+
+  return {
+    r: parseInt(value.slice(0, 2), 16),
+    g: parseInt(value.slice(2, 4), 16),
+    b: parseInt(value.slice(4, 6), 16),
+  };
+}
+
+function teamLogoUrl(name: string, primaryColor: string) {
+  const { r, g, b } = hexToRgb(primaryColor);
+  const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+  const textColor = luminance > 0.6 ? '111827' : 'ffffff';
+  const params = new URLSearchParams({
+    name,
+    background: primaryColor.replace('#', ''),
+    color: textColor,
+    bold: 'true',
+    rounded: 'true',
+    size: '256',
+    format: 'png',
+  });
+
+  return `https://ui-avatars.com/api/?${params.toString()}`;
+}
+
 /** Miri Piri 2026 — July 3–5 (local Pacific) */
 function cupDate(day: number, hour = 10, minute = 0) {
   return new Date(2026, 6, day, hour, minute, 0);
@@ -300,16 +330,34 @@ const DIVISIONS: DivisionSeed[] = [
 
 const FIRST_NAMES_M = [
   'Harjot', 'Gurpreet', 'Jasleen', 'Aman', 'Navdeep', 'Karan', 'Ravi', 'Simran',
-  'Arjun', 'Dev', 'Raj', 'Vikram',
+  'Arjun', 'Dev', 'Raj', 'Vikram', 'Manpreet', 'Kabir', 'Sukhman', 'Param',
+  'Ekam', 'Taj', 'Noah', 'Liam', 'Milan', 'Sahil', 'Aarav', 'Krish',
+  'Yuvraj', 'Jovan', 'Roshan', 'Ishaan', 'Ayaan', 'Tej', 'Rohan', 'Farhan',
 ];
 const FIRST_NAMES_F = [
   'Simran', 'Priya', 'Ananya', 'Kiran', 'Meera', 'Sonia', 'Neha', 'Riya',
-  'Aisha', 'Emma', 'Maya', 'Leila',
+  'Aisha', 'Emma', 'Maya', 'Leila', 'Jiya', 'Diya', 'Amrita', 'Nisha',
+  'Jasmeet', 'Navya', 'Isha', 'Avani', 'Saanvi', 'Zoya', 'Alina', 'Heer',
+  'Mira', 'Tanya', 'Reet', 'Suhani', 'Anika', 'Guneet', 'Kavya', 'Rupinder',
+];
+const FIRST_NAMES_X = [
+  'Alex', 'Jordan', 'Taylor', 'Avery', 'Rowan', 'Parker', 'Reese', 'Quinn',
+  'Hayden', 'Skyler', 'Morgan', 'Casey', 'Dakota', 'Jules', 'Kendall', 'Riley',
+  'Peyton', 'Emerson', 'Charlie', 'Phoenix', 'Micah', 'Blake', 'Cameron', 'Sage',
 ];
 const LAST_NAMES = [
   'Singh', 'Kaur', 'Gill', 'Sandhu', 'Bains', 'Dhaliwal', 'Mangat', 'Virk',
   'Kumar', 'Sharma', 'Patel', 'Chen', 'Nguyen', 'Williams', 'Martinez', 'Johnson',
+  'Toor', 'Sekhon', 'Sidhu', 'Dosanjh', 'Brar', 'Pannu', 'Chahal', 'Deol',
+  'Grewal', 'Johal', 'Bhullar', 'Atwal', 'Sran', 'Basra', 'Randhawa', 'Aujla',
+  'Dhillon', 'Boparai', 'Bassi', 'Khela', 'Saini', 'Dhindsa', 'Rai', 'Birdi',
 ];
+const PLAYER_POSITIONS = ['GK', 'CB', 'CB', 'LB', 'RB', 'CM', 'CM', 'CAM', 'LW', 'RW', 'ST', 'ST'] as const;
+const PLAYER_NAME_CURSOR: Record<Gender, number> = {
+  MALE: 0,
+  FEMALE: 0,
+  MIXED: 0,
+};
 
 function slugifySeedName(first: string, last: string, teamSlug: string, index: number) {
   const base = `${first}-${last}`
@@ -319,17 +367,39 @@ function slugifySeedName(first: string, last: string, teamSlug: string, index: n
   return `${base}-${teamSlug}-${index}`;
 }
 
-function makePlayers(teamSlug: string, count: number, female: boolean) {
-  const firstNames = female ? FIRST_NAMES_F : FIRST_NAMES_M;
+function firstNamesForGender(gender: Gender) {
+  if (gender === 'FEMALE') return FIRST_NAMES_F;
+  if (gender === 'MIXED') return FIRST_NAMES_X;
+  return FIRST_NAMES_M;
+}
+
+function uniqueSeedName(gender: Gender, offset: number) {
+  const firstNames = firstNamesForGender(gender);
+  const totalCombos = firstNames.length * LAST_NAMES.length;
+
+  if (offset >= totalCombos) {
+    throw new Error(`Not enough unique seeded player names for ${gender.toLowerCase()} rosters.`);
+  }
+
+  return {
+    first_name: firstNames[offset % firstNames.length],
+    last_name: LAST_NAMES[Math.floor(offset / firstNames.length)],
+  };
+}
+
+function makePlayers(teamSlug: string, count: number, gender: Gender) {
+  const start = PLAYER_NAME_CURSOR[gender];
+  PLAYER_NAME_CURSOR[gender] += count;
+
   return Array.from({ length: count }, (_, i) => {
-    const first_name = firstNames[i % firstNames.length];
-    const last_name = LAST_NAMES[(i + (female ? 5 : 0)) % LAST_NAMES.length];
+    const { first_name, last_name } = uniqueSeedName(gender, start + i);
+
     return {
       first_name,
       last_name,
       slug: slugifySeedName(first_name, last_name, teamSlug, i),
       jersey_number: i + 1,
-      preferred_position: ['GK', 'CB', 'CB', 'LB', 'RB', 'CM', 'CM', 'CAM', 'LW', 'RW', 'ST', 'ST'][i % 12],
+      preferred_position: PLAYER_POSITIONS[i % PLAYER_POSITIONS.length],
       nationality: 'Canadian',
     };
   });
@@ -598,9 +668,6 @@ async function main() {
       },
     });
 
-    const isFemale = divConfig.gender === 'FEMALE';
-    const isMixed = divConfig.gender === 'MIXED';
-
     const teams = await Promise.all(
       divConfig.teams.map((t) =>
         prisma.team.create({
@@ -608,6 +675,7 @@ async function main() {
             division_id: division.id,
             name: t.name,
             slug: slugify(`${divConfig.slug}-${t.name}`),
+            logo: teamLogoUrl(t.name, t.primaryColor),
             city: t.city,
             primary_color: t.primaryColor,
             created_by: adminUser.id,
@@ -618,7 +686,7 @@ async function main() {
     totalTeams += teams.length;
 
     for (const team of teams) {
-      const playerDefs = makePlayers(team.slug, 12, isFemale || isMixed);
+      const playerDefs = makePlayers(team.slug, 12, divConfig.gender);
       const players = await prisma.player.createManyAndReturn({ data: playerDefs });
       await prisma.teamRoster.createMany({
         data: players.map((player) => ({
