@@ -184,7 +184,7 @@ Shared components: `SearchField`, `useListSearch`, `lib/search-text.ts`
 The default seed builds **Miri Piri 2026**:
 
 - **1 tournament** — `miri-piri-2026`, status `UPCOMING`, $70k prize pool copy, full rules text
-- **20 divisions** — Premier, Gold, Silver, Bronze, U19, U14–U18, U6–U13, 6-a-side, Over 35/40/50, etc.
+- **21 divisions** — Premier, Gold, Silver, Bronze, Men's/Women's Recreational, Co-Ed, U19, U13–U18, U6–U12, Over 35/40/50, etc.
 - **80 teams** (4 per division), **960 players** (12 per team)
 - **Newton Athletic Park** — 4 grass fields, 6 referees
 - **Sample matches** in 4 featured divisions with standings recalculated

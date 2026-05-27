@@ -72,12 +72,14 @@ Location: Newton Athletic Park, 7395 128 St, Surrey, BC V3W 2M7
 
 Total prize pool: $70,000 (all prize money sponsored)
 Early bird registration deadline: May 15, 2026
-Registration deadline: June 15, 2026
+District team entry deadline: June 15, 2026
+Final registration deadline: June 15, 2026
 
 Division rules:
 • Maximum 16 teams per division
-• Age groups: Youth U6–U19, Adults, and Masters divisions
+• Age groups: Youth U6–U19, Adults, Recreational, and Masters divisions
 • Youth U6–U19: minimum 3 games guaranteed
+• Youth U13–U18: participation medals for all players
 
 Event perks:
 • Free appetizers / lunch for all on Saturday & Sunday
@@ -218,6 +220,69 @@ const DIVISIONS: DivisionSeed[] = [
     teams: teamsFor('Bronze', 'Abbotsford'),
   },
   {
+    name: "Men's Recreational Division",
+    slug: 'mens-recreational',
+    age_group: 'Adult',
+    gender: 'MALE',
+    format: '6-a-side recreational',
+    prize_note: 'Medals — winners & finalists',
+    teams: teamsFor('Rec Men'),
+  },
+  {
+    name: "Women's Recreational Division",
+    slug: 'womens-recreational',
+    age_group: 'Adult',
+    gender: 'FEMALE',
+    format: '6-a-side recreational',
+    prize_note: 'Medals — winners & finalists',
+    teams: teamsFor('Rec Women', 'Burnaby'),
+  },
+  {
+    name: 'Co-Ed 6-a-side',
+    slug: 'coed-6aside',
+    age_group: 'Adult',
+    gender: 'MIXED',
+    format: '6-a-side co-ed',
+    prize_note: 'Medals — winners & finalists',
+    teams: teamsFor('Co-Ed'),
+  },
+  {
+    name: "Men's Over 35",
+    slug: 'mens-over-35',
+    age_group: '35+',
+    gender: 'MALE',
+    format: '11-a-side masters',
+    prize_note: 'Trophy & medals — winners & finalists',
+    teams: teamsFor('Masters 35'),
+  },
+  {
+    name: "Women's Over 35",
+    slug: 'womens-over-35',
+    age_group: '35+',
+    gender: 'FEMALE',
+    format: '11-a-side masters',
+    prize_note: 'Trophy & medals — winners & finalists',
+    teams: teamsFor('Masters 35', 'Burnaby'),
+  },
+  {
+    name: "Over 40 Men's",
+    slug: 'mens-over-40',
+    age_group: '40+',
+    gender: 'MALE',
+    format: '8-a-side',
+    prize_note: 'Trophy & medals — winners & finalists',
+    teams: teamsFor('Masters 40'),
+  },
+  {
+    name: "Over 50 Men's",
+    slug: 'mens-over-50',
+    age_group: '50+',
+    gender: 'MALE',
+    format: '8-a-side',
+    prize_note: 'Trophy & medals — winners & finalists',
+    teams: teamsFor('Masters 50'),
+  },
+  {
     name: "Men's U19 Division",
     slug: 'mens-u19',
     age_group: 'U19',
@@ -237,94 +302,40 @@ const DIVISIONS: DivisionSeed[] = [
     teams: teamsFor('U19', 'North Vancouver'),
   },
   {
-    name: 'Boys U14–U18',
-    slug: 'boys-u14-u18',
-    age_group: 'U14-U18',
+    name: 'Boys U13–U18',
+    slug: 'boys-u13-u18',
+    age_group: 'U13-U18',
     gender: 'MALE',
     format: '11-a-side · Min. 3 games',
-    prize_note: 'Trophies & medals (1st & 2nd)',
+    prize_note: 'Participation medals for all',
     teams: teamsFor('Boys Academy'),
   },
   {
-    name: 'Girls U14–U18',
-    slug: 'girls-u14-u18',
-    age_group: 'U14-U18',
+    name: 'Girls U13–U18',
+    slug: 'girls-u13-u18',
+    age_group: 'U13-U18',
     gender: 'FEMALE',
     format: '11-a-side · Min. 3 games',
-    prize_note: 'Trophies & medals (1st & 2nd)',
+    prize_note: 'Participation medals for all',
     teams: teamsFor('Girls Academy', 'Surrey'),
   },
   {
-    name: 'Boys U6–U13',
-    slug: 'boys-u6-u13',
-    age_group: 'U6-U13',
+    name: 'Boys U6–U12',
+    slug: 'boys-u6-u12',
+    age_group: 'U6-U12',
     gender: 'MALE',
     format: 'Youth · Min. 3 games',
     prize_note: 'Participation medals for all',
     teams: teamsFor('Junior Boys'),
   },
   {
-    name: 'Girls U6–U13',
-    slug: 'girls-u6-u13',
-    age_group: 'U6-U13',
+    name: 'Girls U6–U12',
+    slug: 'girls-u6-u12',
+    age_group: 'U6-U12',
     gender: 'FEMALE',
     format: 'Youth · Min. 3 games',
     prize_note: 'Participation medals for all',
     teams: teamsFor('Junior Girls'),
-  },
-  {
-    name: 'Recreational 6-a-side',
-    slug: 'rec-6aside',
-    age_group: 'Adult',
-    gender: 'MALE',
-    format: '6-a-side recreational',
-    prize_note: 'Trophies & medals (1st & 2nd)',
-    teams: teamsFor('Rec'),
-  },
-  {
-    name: 'Co-Ed 6-a-side',
-    slug: 'coed-6aside',
-    age_group: 'Adult',
-    gender: 'MIXED',
-    format: '6-a-side co-ed',
-    prize_note: 'Trophies & medals (1st & 2nd)',
-    teams: teamsFor('Co-Ed'),
-  },
-  {
-    name: "Men's Over 35",
-    slug: 'mens-over-35',
-    age_group: '35+',
-    gender: 'MALE',
-    format: '11-a-side masters',
-    prize_note: 'Trophies & medals (1st & 2nd)',
-    teams: teamsFor('Masters 35'),
-  },
-  {
-    name: "Women's Over 35",
-    slug: 'womens-over-35',
-    age_group: '35+',
-    gender: 'FEMALE',
-    format: '11-a-side masters',
-    prize_note: 'Trophies & medals (1st & 2nd)',
-    teams: teamsFor('Masters 35', 'Burnaby'),
-  },
-  {
-    name: "Over 40 Men's",
-    slug: 'mens-over-40',
-    age_group: '40+',
-    gender: 'MALE',
-    format: '8-a-side',
-    prize_note: 'Trophies & medals (1st & 2nd)',
-    teams: teamsFor('Masters 40'),
-  },
-  {
-    name: "Over 50 Men's",
-    slug: 'mens-over-50',
-    age_group: '50+',
-    gender: 'MALE',
-    format: '8-a-side',
-    prize_note: 'Trophies & medals (1st & 2nd)',
-    teams: teamsFor('Masters 50'),
   },
 ];
 
@@ -642,7 +653,8 @@ async function main() {
       slug: 'miri-piri-2026',
       description:
         'Miri Piri Canada Soccer Cup — hosted by BC Tigers FC in association with BC Soccer. ' +
-        '$70,000 total sponsored prize pool. Youth U6–U19, adult, and masters divisions. ' +
+        '$70,000 total sponsored prize pool. Youth U6–U19, adult, recreational, and masters divisions. ' +
+        'District team entry deadline June 15, 2026. ' +
         'Free lunch Saturday & Sunday, free parking, refreshments on site.',
       start_date: cupDate(3, 18),
       end_date: cupDate(5, 20),
@@ -808,7 +820,7 @@ async function main() {
         title: '14th Annual Miri Piri Soccer Tournament',
         message:
           'July 3–5, 2026 at Newton Athletic Park, Surrey. $70,000 sponsored prize pool. ' +
-          'Early bird registration by May 15, 2026. Final deadline June 15, 2026.',
+          'District team entry deadline June 15, 2026. Early bird May 15; final registration June 15, 2026.',
         type: 'INFO',
       },
       {
@@ -825,7 +837,7 @@ async function main() {
         title: 'Division rules',
         message:
           'Maximum 16 teams per division. Youth U6–U19: minimum 3 games guaranteed. ' +
-          'Adult and masters divisions available.',
+          'U13–U18: participation medals for all players. Recreational & masters divisions available.',
         type: 'INFO',
       },
       {

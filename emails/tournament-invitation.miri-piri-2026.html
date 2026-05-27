@@ -38,7 +38,7 @@
     img {
       -ms-interpolation-mode: bicubic;
       border: 0;
-      height: 10% !important;
+      height: auto !important;
       line-height: 100%;
       outline: none;
       text-decoration: none;
@@ -141,6 +141,86 @@
         margin: 0 auto !important;
       }
     }
+
+    /* ── Shared typography (inline styles duplicated for clients) ── */
+    .overline {
+      margin: 0;
+      font-family: 'Inter', Arial, Helvetica, sans-serif;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #F48735;
+    }
+
+    .card-label {
+      margin: 0 0 3px;
+      font-family: 'Inter', Arial, Helvetica, sans-serif;
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .card-sub {
+      margin: 0 0 10px;
+      font-family: 'Inter', Arial, Helvetica, sans-serif;
+      font-size: 14px;
+      color: #52525B;
+      line-height: 1.4;
+    }
+
+    .card-detail {
+      margin: 0;
+      font-family: 'Inter', Arial, Helvetica, sans-serif;
+      font-size: 13px;
+      color: #52525B;
+      line-height: 1.5;
+    }
+
+    .card-detail-sm {
+      margin: 5px 0 0;
+      font-family: 'Inter', Arial, Helvetica, sans-serif;
+      font-size: 13px;
+      color: #52525B;
+      line-height: 1.5;
+    }
+
+    .card-amt-lg {
+      margin: 0;
+      font-family: 'Plus Jakarta Sans', 'Inter', Arial, Helvetica, sans-serif;
+      font-size: 26px;
+      font-weight: 800;
+      color: #18181B;
+      line-height: 1.1;
+    }
+
+    .card-amt-sm {
+      margin: 0;
+      font-family: 'Plus Jakarta Sans', 'Inter', Arial, Helvetica, sans-serif;
+      font-size: 18px;
+      font-weight: 700;
+      color: #18181B;
+      line-height: 1.1;
+    }
+
+    .card-pad {
+      padding: 16px 18px;
+    }
+
+    .card-box {
+      border-radius: 8px;
+    }
+
+    .group-heading {
+      padding: 12px 0 8px;
+    }
+
+    .info-box {
+      border: 1px solid #E4E4E7;
+      border-radius: 8px;
+      background-color: #FAFAFA;
+    }
   </style>
 </head>
 
@@ -197,7 +277,7 @@
              ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
           <tr>
             <td class="hero-pad" style="
-              padding: 36px 40px 28px;
+              padding: 36px 24px 28px;
               background-color: #ffffff;
               border-top: 3px solid #F48735;
               border-bottom: 1px solid #E4E4E7;
@@ -231,6 +311,13 @@
               color: #18181B;
               letter-spacing: -0.02em;
             ">14th Annual Miri Piri Canada Soccer Tournament 2026</h1>
+              <p style="
+              margin: 0 0 14px;
+              font-family: 'Inter', Arial, Helvetica, sans-serif;
+              font-size: 14px;
+              color: #52525B;
+              line-height: 1.6;
+            "><strong>Organizer:</strong> BC Tigers FC</p>
 
               <!-- Dates + venue meta row -->
               <table role="presentation" border="0" cellpadding="0" cellspacing="0">
@@ -239,7 +326,7 @@
                     <span style="
                     font-family: 'Inter', Arial, Helvetica, sans-serif;
                     font-size: 14px;
-                    color: #71717A;
+                    color: #52525B;
                   ">
                       <span style="color: #F48735; font-weight: 600;">&#128197;</span>
                       &nbsp;July 3, 4 &amp; 5, 2026
@@ -249,7 +336,7 @@
                     <span style="
                     font-family: 'Inter', Arial, Helvetica, sans-serif;
                     font-size: 14px;
-                    color: #71717A;
+                    color: #52525B;
                   ">
                       <span style="color: #F48735; font-weight: 600;">&#128205;</span>
                       &nbsp;Newton Athletic Park, 7395 128 Street, Surrey, BC V3W 2M7
@@ -264,25 +351,35 @@
              SECTION 3 — BODY COPY (greeting + intro paragraph)
              ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
           <tr>
-            <td class="body-pad" style="padding: 0 40px 28px; background-color: #ffffff;">
+            <td class="body-pad" style="padding: 0 24px 28px; background-color: #ffffff;">
               <p style="
               margin: 0 0 10px;
               font-family: 'Inter', Arial, Helvetica, sans-serif;
-              font-size: 15px;
+              font-size: 16px;
               font-weight: 700;
               color: #18181B;
               line-height: 1.5;
             ">Dear Club Presidents, League Organizers, Coaches &amp; Team Managers,</p>
               <p style="
+              margin: 0 0 14px;
+              font-family: 'Inter', Arial, Helvetica, sans-serif;
+              font-size: 16px;
+              color: #52525B;
+              line-height: 1.8;
+            ">BC Tigers FC warmly invites your club and teams to the <strong>14th Annual Miri Piri Soccer Tournament</strong>
+                (Miri Piri Canada Soccer Cup) at Newton Athletic Park, Surrey, BC. Teams from across Canada are coming
+                together for thrilling matches, top-level competition, and a high-energy community soccer atmosphere.
+                The tournament features youth (U6 to U19), adult, and masters divisions with a
+                <strong>$70,000 total prize pool</strong>. <strong>All prize money is sponsored.</strong></p>
+              <p style="
               margin: 0;
               font-family: 'Inter', Arial, Helvetica, sans-serif;
-              font-size: 15px;
+              font-size: 16px;
               color: #52525B;
-              line-height: 1.75;
-            ">BC Tigers FC warmly invites your club and teams to participate in the <strong>14th Annual Miri Piri
-                  Canada Soccer Tournament 2026</strong>! Get ready for an unforgettable weekend filled with elite
-                competition, huge prize money, and an amazing community atmosphere. Registration is first-come,
-                first-served &#8212; don&#8217;t miss your spot.</p>
+              line-height: 1.8;
+            ">Enjoy refreshments while you watch the games, free appetizers/lunch on Saturday and Sunday, and free
+                parking for all teams and families. Tournament kickoff is Friday evening, July 3. Registration is
+                first-come, first-served while spots remain.</p>
             </td>
           </tr>
 
@@ -293,42 +390,34 @@
           <tr>
             <td class="section-pad" style="padding: 0 24px 28px; background-color: #ffffff;">
               <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%"
-                style="border-radius: 8px; background-color: #F9F9F9;">
+                class="info-box" style="border: 1px solid #E4E4E7; border-radius: 8px; background-color: #FAFAFA;">
                 <tr>
                   <!-- Dates -->
                   <td class="detail-cell" width="33%"
                     style="padding: 20px 22px; vertical-align: top; border-right: 1px solid #E4E4E7;">
+                    <p class="overline" style="margin: 0 0 5px;">Dates</p>
                     <p style="
-                    margin: 0 0 5px;
-                    font-family: 'Inter', Arial, Helvetica, sans-serif;
-                    font-size: 10px;
-                    font-weight: 600;
-                    letter-spacing: 0.08em;
-                    text-transform: uppercase;
-                    color: #F48735;
-                  ">Dates</p>
-                    <p style="
-                    margin: 0;
+                    margin: 0 0 6px;
                     font-family: 'Inter', Arial, Helvetica, sans-serif;
                     font-size: 14px;
                     font-weight: 600;
                     color: #18181B;
                     line-height: 1.4;
                   ">July 3, 4 &amp; 5, 2026</p>
+                    <p style="
+                    margin: 0;
+                    font-family: 'Inter', Arial, Helvetica, sans-serif;
+                    font-size: 13px;
+                    color: #52525B;
+                    line-height: 1.5;
+                  ">Early Bird: <strong style="color:#18181B;">May 15, 2026</strong><br />Registration deadline:
+                      <strong style="color:#18181B;">June 15, 2026</strong></p>
                   </td>
 
                   <!-- Venue -->
                   <td class="detail-cell" width="33%"
                     style="padding: 20px 22px; vertical-align: top; border-right: 1px solid #E4E4E7;">
-                    <p style="
-                    margin: 0 0 5px;
-                    font-family: 'Inter', Arial, Helvetica, sans-serif;
-                    font-size: 10px;
-                    font-weight: 600;
-                    letter-spacing: 0.08em;
-                    text-transform: uppercase;
-                    color: #F48735;
-                  ">Venue</p>
+                    <p class="overline" style="margin: 0 0 5px;">Venue</p>
                     <p style="
                     margin: 0 0 4px;
                     font-family: 'Inter', Arial, Helvetica, sans-serif;
@@ -341,30 +430,22 @@
                     margin: 0;
                     font-family: 'Inter', Arial, Helvetica, sans-serif;
                     font-size: 13px;
-                    color: #71717A;
-                    line-height: 1.4;
+                    color: #52525B;
+                    line-height: 1.5;
                   ">7395 128 Street, Surrey, BC V3W 2M7</p>
                   </td>
 
                   <!-- Features -->
                   <td class="detail-cell" width="34%" style="padding: 20px 22px; vertical-align: top;">
-                    <p style="
-                    margin: 0 0 5px;
-                    font-family: 'Inter', Arial, Helvetica, sans-serif;
-                    font-size: 10px;
-                    font-weight: 600;
-                    letter-spacing: 0.08em;
-                    text-transform: uppercase;
-                    color: #F48735;
-                  ">Features</p>
+                    <p class="overline" style="margin: 0 0 5px;">Features</p>
                     <p style="
                     margin: 0;
                     font-family: 'Inter', Arial, Helvetica, sans-serif;
                     font-size: 14px;
                     color: #52525B;
                     line-height: 1.65;
-                  ">Professional fields &bull; Easy parking &bull; Free food &bull; Food &amp; refreshments &bull; Family-friendly
-                      environment</p>
+                  ">Max 16 teams/division &bull; Youth U6&#8211;U19 &bull; Min 3 games guaranteed &bull; Adult + Masters
+                      divisions &bull; Friday evening kickoff &bull; Free appetizers/lunch Sat/Sun &bull; Free parking</p>
                   </td>
                 </tr>
               </table>
@@ -375,90 +456,58 @@
              SECTION 5 — PRIZES HEADING
              ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
           <tr>
-            <td class="body-pad" style="padding: 0 40px 16px; background-color: #ffffff;">
+            <td class="section-pad" style="padding: 0 24px 16px; background-color: #ffffff;">
               <h2 style="
-              margin: 0 0 4px;
+              margin: 0 0 6px;
               font-family: 'Plus Jakarta Sans', 'Inter', Arial, Helvetica, sans-serif;
-              font-size: 19px;
+              font-size: 21px;
               font-weight: 800;
               color: #18181B;
               letter-spacing: -0.01em;
-            ">Divisions &amp; Top Prizes</h2>
+            ">Divisions &amp; Prize Breakdown</h2>
               <p style="
               margin: 0;
               font-family: 'Inter', Arial, Helvetica, sans-serif;
-              font-size: 13px;
-              color: #71717A;
-            ">Compete for glory — Men's &amp; Women's divisions across all levels.</p>
+              font-size: 14px;
+              color: #52525B;
+              line-height: 1.65;
+            ">Total Prize Pool: <strong>$70,000</strong> &bull; <strong>All Prize Money is Sponsored</strong><br />
+                Men&#8217;s and women&#8217;s brackets across premier, division, U19, youth, recreational, co-ed, and
+                masters categories.</p>
             </td>
           </tr>
 
           <!-- ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-             SECTION 6 — PRIZE CARDS (2×2 grid + special full-width)
-             Mirrors MetricCard.tsx: border, rounded, shadow-sm, top accent line.
+             SECTION 6 — DIVISION CARDS (consistent 2-col grid)
              ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
           <tr>
             <td class="section-pad" style="padding: 0 24px; background-color: #ffffff;">
               <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
 
+                <!-- Competitive divisions -->
+                <tr>
+                  <td colspan="2" class="group-heading">
+                    <p class="overline">Competitive Divisions</p>
+                  </td>
+                </tr>
+
                 <!-- Row 1: Premier + Gold -->
                 <tr>
                   <td class="prize-col prize-col-l" width="50%" style="padding: 0 6px 10px 0; vertical-align: top;">
                     <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="
-                      border: 1px solid #E4E4E7;
+                      border: 2px solid #F48735;
                       border-radius: 8px;
-                      background-color: #ffffff;
-                      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05), 0 1px 3px rgba(0, 0, 0, 0.10);
+                      background-color: #FEF3EB;
                     ">
                       <tr>
-                        <td style="padding: 16px 18px;">
-                          <!-- Top accent line (matches MetricCard accent border) -->
-                          <div style="height: 3px; background-color: #F48735; border-radius: 2px; margin-bottom: 12px;">
-                          </div>
-                          <p style="
-                          margin: 0 0 3px;
-                          font-family: 'Inter', Arial, Helvetica, sans-serif;
-                          font-size: 10px;
-                          font-weight: 600;
-                          letter-spacing: 0.08em;
-                          text-transform: uppercase;
-                          color: #F48735;
-                        ">Premier Division</p>
-                          <p style="
-                          margin: 0 0 10px;
-                          font-family: 'Inter', Arial, Helvetica, sans-serif;
-                          font-size: 13px;
-                          color: #71717A;
-                        ">Men's &amp; Women's</p>
-                          <p style="
-                          margin: 0;
-                          font-family: 'Plus Jakarta Sans', 'Inter', Arial, Helvetica, sans-serif;
-                          font-size: 26px;
-                          font-weight: 800;
-                          color: #0F0F10;
-                          line-height: 1.1;
-                        ">$15,000</p>
-                          <p style="
-                          margin: 5px 0 0;
-                          font-family: 'Inter', Arial, Helvetica, sans-serif;
-                          font-size: 12px;
-                          color: #71717A;
-                        ">1st Prize + Trophy &amp; Medals</p>
-                          <hr style="border: none; border-top: 1px solid #E4E4E7; margin: 12px 0;" />
-                          <p style="
-                          margin: 0;
-                          font-family: 'Plus Jakarta Sans', 'Inter', Arial, Helvetica, sans-serif;
-                          font-size: 18px;
-                          font-weight: 700;
-                          color: #71717A;
-                          line-height: 1.1;
-                        ">$7,000</p>
-                          <p style="
-                          margin: 5px 0 0;
-                          font-family: 'Inter', Arial, Helvetica, sans-serif;
-                          font-size: 12px;
-                          color: #71717A;
-                        ">2nd Prize + Trophy &amp; Medals</p>
+                        <td class="card-pad">
+                          <p class="card-label" style="color: #F48735;">Premier Division</p>
+                          <p class="card-sub">Men&#8217;s &amp; Women&#8217;s &bull; 11-a-side</p>
+                          <p class="card-amt-lg">$15,000</p>
+                          <p class="card-detail-sm">1st Prize + Trophy &amp; Medals</p>
+                          <hr style="border: none; border-top: 1px solid rgba(244, 135, 53, 0.35); margin: 12px 0;" />
+                          <p class="card-amt-sm">$7,000</p>
+                          <p class="card-detail-sm">2nd Prize + Trophy &amp; Medals</p>
                         </td>
                       </tr>
                     </table>
@@ -466,59 +515,19 @@
 
                   <td class="prize-col prize-col-r" width="50%" style="padding: 0 0 10px 6px; vertical-align: top;">
                     <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="
-                      border: 1px solid #E4E4E7;
+                      border: 2px solid #D97706;
                       border-radius: 8px;
-                      background-color: #ffffff;
-                      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05), 0 1px 3px rgba(0, 0, 0, 0.10);
+                      background-color: #FFFBEB;
                     ">
                       <tr>
-                        <td style="padding: 16px 18px;">
-                          <div style="height: 3px; background-color: #F48735; border-radius: 2px; margin-bottom: 12px;">
-                          </div>
-                          <p style="
-                          margin: 0 0 3px;
-                          font-family: 'Inter', Arial, Helvetica, sans-serif;
-                          font-size: 10px;
-                          font-weight: 600;
-                          letter-spacing: 0.08em;
-                          text-transform: uppercase;
-                          color: #D66E1F;
-                        ">Gold Division 1</p>
-                          <p style="
-                          margin: 0 0 10px;
-                          font-family: 'Inter', Arial, Helvetica, sans-serif;
-                          font-size: 13px;
-                          color: #71717A;
-                        ">Men's &amp; Women's</p>
-                          <p style="
-                          margin: 0;
-                          font-family: 'Plus Jakarta Sans', 'Inter', Arial, Helvetica, sans-serif;
-                          font-size: 26px;
-                          font-weight: 800;
-                          color: #0F0F10;
-                          line-height: 1.1;
-                        ">$5,000</p>
-                          <p style="
-                          margin: 5px 0 0;
-                          font-family: 'Inter', Arial, Helvetica, sans-serif;
-                          font-size: 12px;
-                          color: #71717A;
-                        ">1st Prize + Trophy &amp; Medals</p>
-                          <hr style="border: none; border-top: 1px solid #E4E4E7; margin: 12px 0;" />
-                          <p style="
-                          margin: 0;
-                          font-family: 'Plus Jakarta Sans', 'Inter', Arial, Helvetica, sans-serif;
-                          font-size: 18px;
-                          font-weight: 700;
-                          color: #71717A;
-                          line-height: 1.1;
-                        ">$3,000</p>
-                          <p style="
-                          margin: 5px 0 0;
-                          font-family: 'Inter', Arial, Helvetica, sans-serif;
-                          font-size: 12px;
-                          color: #71717A;
-                        ">2nd Prize + Trophy &amp; Medals</p>
+                        <td class="card-pad">
+                          <p class="card-label" style="color: #D97706;">Gold Division 1</p>
+                          <p class="card-sub">Men&#8217;s &amp; Women&#8217;s &bull; 11-a-side</p>
+                          <p class="card-amt-lg">$5,000</p>
+                          <p class="card-detail-sm">1st Prize + Trophy &amp; Medals</p>
+                          <hr style="border: none; border-top: 1px solid rgba(217, 119, 6, 0.35); margin: 12px 0;" />
+                          <p class="card-amt-sm">$3,000</p>
+                          <p class="card-detail-sm">2nd Prize + Trophy &amp; Medals</p>
                         </td>
                       </tr>
                     </table>
@@ -529,59 +538,19 @@
                 <tr>
                   <td class="prize-col prize-col-l" width="50%" style="padding: 0 6px 10px 0; vertical-align: top;">
                     <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="
-                      border: 1px solid #E4E4E7;
+                      border: 2px solid #64748B;
                       border-radius: 8px;
-                      background-color: #ffffff;
-                      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05), 0 1px 3px rgba(0, 0, 0, 0.10);
+                      background-color: #F1F5F9;
                     ">
                       <tr>
-                        <td style="padding: 16px 18px;">
-                          <div style="height: 3px; background-color: #F48735; border-radius: 2px; margin-bottom: 12px;">
-                          </div>
-                          <p style="
-                          margin: 0 0 3px;
-                          font-family: 'Inter', Arial, Helvetica, sans-serif;
-                          font-size: 10px;
-                          font-weight: 600;
-                          letter-spacing: 0.08em;
-                          text-transform: uppercase;
-                          color: #71717A;
-                        ">Silver Division 2</p>
-                          <p style="
-                          margin: 0 0 10px;
-                          font-family: 'Inter', Arial, Helvetica, sans-serif;
-                          font-size: 13px;
-                          color: #71717A;
-                        ">Men's &amp; Women's</p>
-                          <p style="
-                          margin: 0;
-                          font-family: 'Plus Jakarta Sans', 'Inter', Arial, Helvetica, sans-serif;
-                          font-size: 26px;
-                          font-weight: 800;
-                          color: #0F0F10;
-                          line-height: 1.1;
-                        ">$2,000</p>
-                          <p style="
-                          margin: 5px 0 0;
-                          font-family: 'Inter', Arial, Helvetica, sans-serif;
-                          font-size: 12px;
-                          color: #71717A;
-                        ">1st Prize + Trophy &amp; Medals</p>
-                          <hr style="border: none; border-top: 1px solid #E4E4E7; margin: 12px 0;" />
-                          <p style="
-                          margin: 0;
-                          font-family: 'Plus Jakarta Sans', 'Inter', Arial, Helvetica, sans-serif;
-                          font-size: 18px;
-                          font-weight: 700;
-                          color: #71717A;
-                          line-height: 1.1;
-                        ">$1,000</p>
-                          <p style="
-                          margin: 5px 0 0;
-                          font-family: 'Inter', Arial, Helvetica, sans-serif;
-                          font-size: 12px;
-                          color: #71717A;
-                        ">2nd Prize + Trophy &amp; Medals</p>
+                        <td class="card-pad">
+                          <p class="card-label" style="color: #64748B;">Silver Division 2</p>
+                          <p class="card-sub">Men&#8217;s &amp; Women&#8217;s &bull; 11-a-side</p>
+                          <p class="card-amt-lg">$2,000</p>
+                          <p class="card-detail-sm">1st Prize + Trophy &amp; Medals</p>
+                          <hr style="border: none; border-top: 1px solid rgba(100, 116, 139, 0.35); margin: 12px 0;" />
+                          <p class="card-amt-sm">$1,000</p>
+                          <p class="card-detail-sm">2nd Prize + Trophy &amp; Medals</p>
                         </td>
                       </tr>
                     </table>
@@ -589,197 +558,146 @@
 
                   <td class="prize-col prize-col-r" width="50%" style="padding: 0 0 10px 6px; vertical-align: top;">
                     <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="
-                      border: 1px solid #E4E4E7;
+                      border: 2px solid #92400E;
                       border-radius: 8px;
-                      background-color: #ffffff;
-                      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05), 0 1px 3px rgba(0, 0, 0, 0.10);
+                      background-color: #FEF3C7;
                     ">
                       <tr>
-                        <td style="padding: 16px 18px;">
-                          <div style="height: 3px; background-color: #F48735; border-radius: 2px; margin-bottom: 12px;">
-                          </div>
-                          <p style="
-                          margin: 0 0 3px;
-                          font-family: 'Inter', Arial, Helvetica, sans-serif;
-                          font-size: 10px;
-                          font-weight: 600;
-                          letter-spacing: 0.08em;
-                          text-transform: uppercase;
-                          color: #92400E;
-                        ">Bronze Division 3</p>
-                          <p style="
-                          margin: 0 0 10px;
-                          font-family: 'Inter', Arial, Helvetica, sans-serif;
-                          font-size: 13px;
-                          color: #71717A;
-                        ">Men's &amp; Women's</p>
-                          <p style="
-                          margin: 0;
-                          font-family: 'Plus Jakarta Sans', 'Inter', Arial, Helvetica, sans-serif;
-                          font-size: 26px;
-                          font-weight: 800;
-                          color: #0F0F10;
-                          line-height: 1.1;
-                        ">$750</p>
-                          <p style="
-                          margin: 5px 0 0;
-                          font-family: 'Inter', Arial, Helvetica, sans-serif;
-                          font-size: 12px;
-                          color: #71717A;
-                        ">1st Prize + Trophy &amp; Medals</p>
-                          <hr style="border: none; border-top: 1px solid #E4E4E7; margin: 12px 0;" />
-                          <p style="
-                          margin: 0;
-                          font-family: 'Plus Jakarta Sans', 'Inter', Arial, Helvetica, sans-serif;
-                          font-size: 18px;
-                          font-weight: 700;
-                          color: #71717A;
-                          line-height: 1.1;
-                        ">$400</p>
-                          <p style="
-                          margin: 5px 0 0;
-                          font-family: 'Inter', Arial, Helvetica, sans-serif;
-                          font-size: 12px;
-                          color: #71717A;
-                        ">2nd Prize + Trophy &amp; Medals</p>
+                        <td class="card-pad">
+                          <p class="card-label" style="color: #92400E;">Bronze Division 3</p>
+                          <p class="card-sub">Men&#8217;s &amp; Women&#8217;s &bull; 11-a-side</p>
+                          <p class="card-amt-lg">$750</p>
+                          <p class="card-detail-sm">1st Prize + Trophy &amp; Medals</p>
+                          <hr style="border: none; border-top: 1px solid rgba(146, 64, 14, 0.35); margin: 12px 0;" />
+                          <p class="card-amt-sm">$400</p>
+                          <p class="card-detail-sm">2nd Prize + Trophy &amp; Medals</p>
                         </td>
                       </tr>
                     </table>
                   </td>
                 </tr>
 
+                <!-- Recreational, Co-Ed & Masters -->
+                <tr>
+                  <td colspan="2" class="group-heading">
+                    <p class="overline">Recreational, Co-Ed &amp; Masters</p>
+                  </td>
+                </tr>
+                <tr>
+                  <td class="prize-col prize-col-l" width="50%" style="padding: 0 6px 10px 0; vertical-align: top;">
+                    <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="border: 2px solid #2563EB; border-radius: 8px; background-color: #DBEAFE;">
+                      <tr><td class="card-pad">
+                        <p class="card-label" style="color: #2563EB;">Men&#8217;s Recreational</p>
+                        <p class="card-sub">6-a-side</p>
+                        <p class="card-detail">1st: Trophy + Medals</p>
+                        <p class="card-detail-sm">2nd: Trophy + Medals</p>
+                      </td></tr>
+                    </table>
+                  </td>
+                  <td class="prize-col prize-col-r" width="50%" style="padding: 0 0 10px 6px; vertical-align: top;">
+                    <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="border: 2px solid #DB2777; border-radius: 8px; background-color: #FCE7F3;">
+                      <tr><td class="card-pad">
+                        <p class="card-label" style="color: #DB2777;">Women&#8217;s Recreational</p>
+                        <p class="card-sub">6-a-side</p>
+                        <p class="card-detail">1st: Trophy + Medals</p>
+                        <p class="card-detail-sm">2nd: Trophy + Medals</p>
+                      </td></tr>
+                    </table>
+                  </td>
+                </tr>
+                <tr>
+                  <td class="prize-col prize-col-l" width="50%" style="padding: 0 6px 10px 0; vertical-align: top;">
+                    <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="border: 2px solid #7C3AED; border-radius: 8px; background-color: #EDE9FE;">
+                      <tr><td class="card-pad">
+                        <p class="card-label" style="color: #7C3AED;">Co-Ed (6A Side)</p>
+                        <p class="card-sub">6-a-side</p>
+                        <p class="card-detail">1st: Trophy + Medals</p>
+                        <p class="card-detail-sm">2nd: Trophy + Medals</p>
+                      </td></tr>
+                    </table>
+                  </td>
+                  <td class="prize-col prize-col-r" width="50%" style="padding: 0 0 10px 6px; vertical-align: top;">
+                    <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="border: 2px solid #1D4ED8; border-radius: 8px; background-color: #BFDBFE;">
+                      <tr><td class="card-pad">
+                        <p class="card-label" style="color: #1D4ED8;">Men&#8217;s &amp; Women&#8217;s Over 35</p>
+                        <p class="card-sub">11-a-side</p>
+                        <p class="card-detail">1st: Trophy + Medals</p>
+                        <p class="card-detail-sm">2nd: Trophy + Medals</p>
+                      </td></tr>
+                    </table>
+                  </td>
+                </tr>
+                <tr>
+                  <td class="prize-col prize-col-l" width="50%" style="padding: 0 6px 10px 0; vertical-align: top;">
+                    <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="border: 2px solid #4F46E5; border-radius: 8px; background-color: #E0E7FF;">
+                      <tr><td class="card-pad">
+                        <p class="card-label" style="color: #4F46E5;">Over 40 Men&#8217;s</p>
+                        <p class="card-sub">8-a-side</p>
+                        <p class="card-detail">1st: Trophy + Medals</p>
+                        <p class="card-detail-sm">2nd: Trophy + Medals</p>
+                      </td></tr>
+                    </table>
+                  </td>
+                  <td class="prize-col prize-col-r" width="50%" style="padding: 0 0 10px 6px; vertical-align: top;">
+                    <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="border: 2px solid #64748B; border-radius: 8px; background-color: #E2E8F0;">
+                      <tr><td class="card-pad">
+                        <p class="card-label" style="color: #64748B;">Over 50 Men&#8217;s</p>
+                        <p class="card-sub">8-a-side</p>
+                        <p class="card-detail">1st: Trophy + Medals</p>
+                        <p class="card-detail-sm">2nd: Trophy + Medals</p>
+                      </td></tr>
+                    </table>
+                  </td>
+                </tr>
 
-                <!-- Row 2b: Youth Divisions (full-width) -->
+                <!-- U19 -->
+                <tr>
+                  <td colspan="2" class="group-heading">
+                    <p class="overline">U19 Division</p>
+                  </td>
+                </tr>
                 <tr>
                   <td colspan="2" style="padding: 0 0 10px;">
-                    <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="
-                      border: 1px solid rgba(244, 135, 53, 0.20);
-                      border-radius: 8px;
-                      background-color: #FFF8F0;
-                    ">
+                    <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="border: 2px solid #4F46E5; border-radius: 8px; background-color: #EEF2FF;">
                       <tr>
-                        <td style="padding: 20px 24px 16px;">
-                          <p style="
-                          margin: 0 0 14px;
-                          font-family: 'Inter', Arial, Helvetica, sans-serif;
-                          font-size: 10px;
-                          font-weight: 600;
-                          letter-spacing: 0.08em;
-                          text-transform: uppercase;
-                          color: #D66E1F;
-                        ">Youth Divisions</p>
-                          <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
-                            <tr>
-                              <td style="width: 50%; vertical-align: top; padding-right: 16px;">
-                                <p style="
-                                margin: 0 0 2px;
-                                font-family: 'Inter', Arial, Helvetica, sans-serif;
-                                font-size: 13px;
-                                font-weight: 600;
-                                color: #18181B;
-                              ">Boys &amp; Girls U6&#8211;U13</p>
-                                <p style="
-                                margin: 0;
-                                font-family: 'Inter', Arial, Helvetica, sans-serif;
-                                font-size: 12px;
-                                color: #71717A;
-                              ">3 games guaranteed &bull; Participation medals for all players</p>
-                              </td>
-                              <td
-                                style="width: 50%; vertical-align: top; padding-left: 16px; border-left: 1px solid #E4E4E7;">
-                                <p style="
-                                margin: 0 0 2px;
-                                font-family: 'Inter', Arial, Helvetica, sans-serif;
-                                font-size: 13px;
-                                font-weight: 600;
-                                color: #18181B;
-                              ">Boys &amp; Girls U14&#8211;U18</p>
-                                <p style="
-                                margin: 0;
-                                font-family: 'Inter', Arial, Helvetica, sans-serif;
-                                font-size: 12px;
-                                color: #71717A;
-                              ">3 games guaranteed &bull; $5,000 total prizes &bull; Trophy + Medals</p>
-                              </td>
-                            </tr>
-                          </table>
+                        <td class="card-pad">
+                          <p class="card-sub">Boys &amp; Girls &bull; 11-a-side &bull; Min 3 games guaranteed</p>
+                          <p class="card-amt-lg">$500</p>
+                          <p class="card-detail-sm">1st Prize + Trophy &amp; Medals</p>
+                          <hr style="border: none; border-top: 1px solid rgba(79, 70, 229, 0.35); margin: 12px 0;" />
+                          <p class="card-amt-sm">$300</p>
+                          <p class="card-detail-sm">2nd Prize + Trophy &amp; Medals</p>
                         </td>
                       </tr>
                     </table>
                   </td>
-                </tr><!-- Row 3: Special Divisions (full-width, muted accent bg) -->
+                </tr>
+
+                <!-- Youth Divisions (listed last) -->
                 <tr>
-                  <td colspan="2" style="padding: 0 0 16px;">
-                    <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="
-                      border: 1px solid rgba(244, 135, 53, 0.20);
-                      border-radius: 8px;
-                      background-color: #FFF8F0;
-                    ">
-                      <tr>
-                        <td style="padding: 20px 24px;">
-                          <p style="
-                          margin: 0 0 6px;
-                          font-family: 'Inter', Arial, Helvetica, sans-serif;
-                          font-size: 10px;
-                          font-weight: 600;
-                          letter-spacing: 0.08em;
-                          text-transform: uppercase;
-                          color: #D66E1F;
-                        ">Special Divisions</p>
-                          <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%">
-                            <tr>
-                              <td style="width: 50%; vertical-align: top; padding: 0 12px 10px 0;">
-                                <p
-                                  style="margin: 0 0 2px; font-family: 'Inter', Arial, Helvetica, sans-serif; font-size: 13px; font-weight: 600; color: #18181B;">
-                                  Recreational (6A Side)</p>
-                                <p
-                                  style="margin: 0; font-family: 'Inter', Arial, Helvetica, sans-serif; font-size: 12px; color: #71717A;">
-                                  Medals &#8212; winners &amp; finalists</p>
-                              </td>
-                              <td
-                                style="width: 50%; vertical-align: top; padding: 0 0 10px 12px; border-left: 1px solid rgba(244,135,53,0.20);">
-                                <p
-                                  style="margin: 0 0 2px; font-family: 'Inter', Arial, Helvetica, sans-serif; font-size: 13px; font-weight: 600; color: #18181B;">
-                                  Co-Ed (6A Side)</p>
-                                <p
-                                  style="margin: 0; font-family: 'Inter', Arial, Helvetica, sans-serif; font-size: 12px; color: #71717A;">
-                                  Medals &#8212; winners &amp; finalists</p>
-                              </td>
-                            </tr>
-                            <tr>
-                              <td
-                                style="width: 50%; vertical-align: top; padding: 8px 12px 10px 0; border-top: 1px solid rgba(244,135,53,0.15);">
-                                <p
-                                  style="margin: 0 0 2px; font-family: 'Inter', Arial, Helvetica, sans-serif; font-size: 13px; font-weight: 600; color: #18181B;">
-                                  Men&#39;s &amp; Women&#39;s Over 35 (11 Side)</p>
-                                <p
-                                  style="margin: 0; font-family: 'Inter', Arial, Helvetica, sans-serif; font-size: 12px; color: #71717A;">
-                                  Trophy &amp; medals &#8212; winners &amp; finalists</p>
-                              </td>
-                              <td
-                                style="width: 50%; vertical-align: top; padding: 8px 0 10px 12px; border-top: 1px solid rgba(244,135,53,0.15); border-left: 1px solid rgba(244,135,53,0.20);">
-                                <p
-                                  style="margin: 0 0 2px; font-family: 'Inter', Arial, Helvetica, sans-serif; font-size: 13px; font-weight: 600; color: #18181B;">
-                                  Over 40 Men&#39;s Division (8A Side)</p>
-                                <p
-                                  style="margin: 0; font-family: 'Inter', Arial, Helvetica, sans-serif; font-size: 12px; color: #71717A;">
-                                  Trophy &amp; medals &#8212; winners &amp; finalists</p>
-                              </td>
-                            </tr>
-                            <tr>
-                              <td colspan="2"
-                                style="vertical-align: top; padding-top: 8px; border-top: 1px solid rgba(244,135,53,0.15);">
-                                <p
-                                  style="margin: 0 0 2px; font-family: 'Inter', Arial, Helvetica, sans-serif; font-size: 13px; font-weight: 600; color: #18181B;">
-                                  Over 50 Men&#39;s Division (8A Side)</p>
-                                <p
-                                  style="margin: 0; font-family: 'Inter', Arial, Helvetica, sans-serif; font-size: 12px; color: #71717A;">
-                                  Trophy &amp; medals &#8212; winners &amp; finalists</p>
-                              </td>
-                            </tr>
-                          </table>
-                        </td>
-                      </tr>
+                  <td colspan="2" class="group-heading">
+                    <p class="overline">Youth Divisions</p>
+                    <p class="card-sub" style="margin: 6px 0 0;">All youth teams receive a minimum of 3 games guaranteed.</p>
+                  </td>
+                </tr>
+                <tr>
+                  <td class="prize-col prize-col-l" width="50%" style="padding: 0 6px 10px 0; vertical-align: top;">
+                    <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="border: 2px solid #16A34A; border-radius: 8px; background-color: #DCFCE7;">
+                      <tr><td class="card-pad">
+                        <p class="card-label" style="color: #16A34A;">U14&#8211;U18</p>
+                        <p class="card-sub">Boys &amp; Girls</p>
+                        <p class="card-detail">1st: Trophy + Medals</p>
+                        <p class="card-detail-sm">2nd: Trophy + Medals</p>
+                      </td></tr>
+                    </table>
+                  </td>
+                  <td class="prize-col prize-col-r" width="50%" style="padding: 0 0 10px 6px; vertical-align: top;">
+                    <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%" style="border: 2px solid #CA8A04; border-radius: 8px; background-color: #FEF9C3;">
+                      <tr><td class="card-pad">
+                        <p class="card-label" style="color: #CA8A04;">U6&#8211;U13</p>
+                        <p class="card-sub">Boys &amp; Girls</p>
+                        <p class="card-detail">Participation medals</p>
+                      </td></tr>
                     </table>
                   </td>
                 </tr>
@@ -794,7 +712,7 @@
           <tr>
             <td class="section-pad" style="padding: 0 24px 28px; background-color: #ffffff;">
               <table role="presentation" border="0" cellpadding="0" cellspacing="0" width="100%"
-                style="border-left: 4px solid #F48735; background-color: #FFF8F0; border-radius: 0 8px 8px 0;">
+                style="border: 2px solid rgba(244, 135, 53, 0.45); border-radius: 8px; background-color: #FFF8F0;">
                 <tr>
                   <td style="padding: 18px 22px;">
                     <p style="
@@ -802,16 +720,17 @@
                     font-family: 'Inter', Arial, Helvetica, sans-serif;
                     font-size: 14px;
                     font-weight: 600;
-                    color: #D66E1F;
+                    color: #F48735;
                   ">Register Early &#8212; Limited Spots Available!</p>
                     <p style="
                     margin: 0;
                     font-family: 'Inter', Arial, Helvetica, sans-serif;
-                    font-size: 13px;
-                    color: #71717A;
-                    line-height: 1.6;
-                  ">Registration is on a first-come, first-served basis. Spots are limited &#8212; secure your division
-                      early at bctigers.com.</p>
+                    font-size: 14px;
+                    color: #52525B;
+                    line-height: 1.7;
+                  "><strong>Early Bird Discount Deadline:</strong> May 15, 2026 &bull;
+                      <strong>Registration Deadline:</strong> June 15, 2026.<br />
+                      Maximum 16 teams per division. Spots are first-come, first-served &#8212; register early to secure your division.</p>
                   </td>
                 </tr>
               </table>
@@ -824,7 +743,7 @@
              Mirrors button.tsx default variant (bg-primary, white text).
              ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
           <tr>
-            <td class="cta-pad" align="center" style="padding: 0 40px 36px; background-color: #ffffff;">
+            <td class="cta-pad" align="center" style="padding: 0 24px 36px; background-color: #ffffff;">
               <table role="presentation" border="0" cellpadding="0" cellspacing="0">
                 <tr>
                   <td bgcolor="#F48735" align="center" style="
@@ -853,7 +772,7 @@
 
           <!-- ── Divider ── -->
           <tr>
-            <td style="padding: 0 32px; background-color: #ffffff;">
+            <td style="padding: 0 24px; background-color: #ffffff;">
               <div style="border-top: 1px solid #E4E4E7;"></div>
             </td>
           </tr>
@@ -862,7 +781,7 @@
              SECTION 9 — CONTACT + COORDINATORS
              ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ -->
           <tr>
-            <td class="contact-pad" style="padding: 26px 40px; background-color: #ffffff;">
+            <td class="contact-pad" style="padding: 26px 24px; background-color: #ffffff;">
               <h3 style="
               margin: 0 0 14px;
               font-family: 'Plus Jakarta Sans', 'Inter', Arial, Helvetica, sans-serif;
@@ -892,15 +811,7 @@
                   style="color: #F48735; text-decoration: underline; font-weight: 500;">bctigersfc@gmail.com</a>
               </p>
 
-              <p style="
-              margin: 0 0 6px;
-              font-family: 'Inter', Arial, Helvetica, sans-serif;
-              font-size: 11px;
-              font-weight: 600;
-              color: #71717A;
-              letter-spacing: 0.07em;
-              text-transform: uppercase;
-            ">Coordinators</p>
+              <p class="overline" style="margin: 0 0 6px;">Coordinators</p>
               <p style="
               margin: 0;
               font-family: 'Inter', Arial, Helvetica, sans-serif;
