@@ -12,7 +12,6 @@ import TeamFormDialog from '@/components/admin/forms/TeamFormDialog';
 import TeamRosterPanel from '@/components/admin/TeamRosterPanel';
 import TournamentFormDialog from '@/components/admin/forms/TournamentFormDialog';
 import { ScheduleGeneratorSheet } from '@/components/admin/ScheduleGeneratorSheet';
-import { TournamentAdminSheet } from '@/components/admin/TournamentAdminSheet';
 import { ConfirmDialog } from '@/components/admin/inline/ConfirmDialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
@@ -40,10 +39,10 @@ import {
   Pencil,
   Trash2,
   Users,
-  UserCog,
   Zap,
   PlusCircle,
   Flag,
+  Layers,
 } from 'lucide-react';
 import type { Division, Match, Team } from '@/types';
 
@@ -62,7 +61,6 @@ export default function TournamentWorkspacePage() {
   const teamDialog = useFormDialog<Team>();
   const matchDialog = useFormDialog<Match>();
   const [editTournament, setEditTournament] = useState(false);
-  const [adminSheetOpen, setAdminSheetOpen] = useState(false);
   const [scheduleDiv, setScheduleDiv] = useState<Division | null>(null);
   const [rosterTeam, setRosterTeam] = useState<Team | null>(null);
   const [scoreMatch, setScoreMatch] = useState<Match | null>(null);
@@ -161,10 +159,6 @@ export default function TournamentWorkspacePage() {
               <Pencil className="h-3.5 w-3.5 mr-1" />
               Edit
             </Button>
-            <Button variant="outline" size="sm" onClick={() => setAdminSheetOpen(true)}>
-              <UserCog className="h-3.5 w-3.5 mr-1" />
-              Admins
-            </Button>
           </div>
         )
       }
@@ -183,10 +177,10 @@ export default function TournamentWorkspacePage() {
             <AdminStatGrid
               className="mb-6"
               items={[
-                { value: tournamentDivisions.length, label: 'Divisions' },
-                { value: tournamentTeams.length, label: 'Teams' },
-                { value: matches.length, label: 'Matches' },
-                { value: liveMatches.length, label: 'Live', accent: liveMatches.length > 0 },
+                { value: tournamentDivisions.length, label: 'Divisions', icon: Layers },
+                { value: tournamentTeams.length, label: 'Teams', icon: Users },
+                { value: matches.length, label: 'Matches', icon: Calendar },
+                { value: liveMatches.length, label: 'Live', icon: Zap, accent: liveMatches.length > 0 },
               ]}
             />
 
@@ -233,9 +227,11 @@ export default function TournamentWorkspacePage() {
                         <div key={division.id} className="admin-card p-4">
                           <div className="flex items-start gap-3">
                             <div
-                              className="h-10 w-10 shrink-0 rounded-lg"
+                              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg"
                               style={themeChipStyle(theme)}
-                            />
+                            >
+                              <Flag className="h-5 w-5" style={{ color: theme.primary }} aria-hidden />
+                            </div>
                             <div className="min-w-0 flex-1">
                               <h3 className="font-semibold text-base" style={{ color: theme.primary }}>
                                 {division.name}
@@ -375,14 +371,6 @@ export default function TournamentWorkspacePage() {
           </SheetBody>
         </SheetContent>
       </Sheet>
-      {tournament && (
-        <TournamentAdminSheet
-          tournamentId={tournament.id}
-          tournamentName={tournament.name}
-          open={adminSheetOpen}
-          onOpenChange={setAdminSheetOpen}
-        />
-      )}
       <ConfirmDialog
         open={!!deleteId}
         onOpenChange={(open) => !open && setDeleteId(null)}

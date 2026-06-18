@@ -1,12 +1,12 @@
 import { Module } from '@nestjs/common';
 import { TeamsController } from './teams.controller';
-import { TeamRostersController } from './team-rosters.controller';
+import { TeamPlayersController } from './team-players.controller';
 import { TeamsService } from './teams.service';
-import { TeamRostersService } from './team-rosters.service';
+import { TeamPlayersService } from './team-players.service';
 
 @Module({
-  controllers: [TeamsController, TeamRostersController],
-  providers: [TeamsService, TeamRostersService],
-  exports: [TeamsService, TeamRostersService],
+  controllers: [TeamsController, TeamPlayersController],
+  providers: [TeamsService, TeamPlayersService],
+  exports: [TeamsService, TeamPlayersService],
 })
 export class TeamsModule {}

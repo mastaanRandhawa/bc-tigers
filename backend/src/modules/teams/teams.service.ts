@@ -11,7 +11,7 @@ export class TeamsService {
         : undefined,
       include: {
         division: { include: { tournament: true } },
-        rosters: { include: { player: true } },
+        players: { where: { active: true }, orderBy: { last_name: 'asc' } },
       },
     });
   }
@@ -21,8 +21,7 @@ export class TeamsService {
       where: { slug },
       include: {
         division: { include: { tournament: true } },
-        rosters: { include: { player: true } },
-        team_coaches: { include: { coach: true } },
+        players: { orderBy: { last_name: 'asc' } },
         standings: true,
       },
     });
@@ -37,8 +36,7 @@ export class TeamsService {
       },
       include: {
         division: { include: { tournament: true } },
-        rosters: { include: { player: true } },
-        team_coaches: { include: { coach: true } },
+        players: { orderBy: { last_name: 'asc' } },
         standings: true,
       },
     });

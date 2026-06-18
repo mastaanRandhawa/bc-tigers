@@ -1,6 +1,4 @@
-// ─── Enums ───────────────────────────────────────────────────────────────────
-
-export type UserRole = 'ADMIN' | 'TOURNAMENT_ADMIN' | 'COACH' | 'REFEREE' | 'PLAYER' | 'VIEWER';
+export type UserRole = 'ADMIN';
 
 export type TournamentType =
   | 'ROUND_ROBIN'
@@ -11,7 +9,14 @@ export type TournamentType =
 
 export type TournamentStatus = 'UPCOMING' | 'ACTIVE' | 'COMPLETED' | 'CANCELLED';
 
-export type MatchStatus = 'SCHEDULED' | 'LIVE' | 'COMPLETED' | 'POSTPONED' | 'CANCELLED';
+export type MatchStatus =
+  | 'SCHEDULED'
+  | 'LIVE'
+  | 'HALFTIME'
+  | 'COMPLETED'
+  | 'DELAYED'
+  | 'POSTPONED'
+  | 'CANCELLED';
 
 export type MatchEventType =
   | 'GOAL'
@@ -28,8 +33,6 @@ export type BracketStage = 'ROUND_OF_16' | 'QUARTER_FINAL' | 'SEMI_FINAL' | 'FIN
 
 export type MediaType = 'PHOTO' | 'VIDEO' | 'DOCUMENT';
 
-// ─── Entities ────────────────────────────────────────────────────────────────
-
 export interface User {
   id: string;
   first_name: string;
@@ -40,15 +43,6 @@ export interface User {
   profile_image?: string;
   created_at: string;
   updated_at?: string;
-  player?: Player & {
-    rosters?: Array<{ id: string; team?: Team; active: boolean }>;
-  };
-  coach?: Coach & {
-    team_coaches?: Array<{ id: string; role?: string; team?: Team }>;
-  };
-  referee?: Referee & {
-    match_referees?: Array<{ id: string; role: string; match?: Match }>;
-  };
 }
 
 export interface Tournament {
@@ -97,11 +91,11 @@ export interface Team {
   primary_color?: string;
   secondary_color?: string;
   players?: Player[];
-  rosters?: TeamRoster[];
 }
 
 export interface Player {
   id: string;
+  team_id: string;
   first_name: string;
   last_name: string;
   slug: string;
@@ -110,41 +104,18 @@ export interface Player {
   jersey_number?: number;
   preferred_position?: string;
   profile_image?: string;
+  active?: boolean;
   team?: Team;
-  rosters?: TeamRoster[];
   player_stats?: PlayerStat[];
 }
 
-export interface TeamRoster {
+export interface MatchOfficial {
   id: string;
-  team_id: string;
-  player_id: string;
-  season?: string;
-  active: boolean;
-  joined_at: string;
-  player?: Player;
-  team?: Team;
-}
-
-export interface TeamCoach {
-  id: string;
-  team_id: string;
-  coach_id: string;
-  role?: string;
-  joined_at: string;
-  coach?: Coach;
-  team?: Team;
-}
-
-export interface Coach {
-  id: string;
-  first_name: string;
-  last_name: string;
+  match_id: string;
+  name: string;
+  role: string;
   email?: string;
   phone?: string;
-  profile_image?: string;
-  user_id?: string;
-  team_coaches?: TeamCoach[];
 }
 
 export interface Venue {
@@ -169,15 +140,6 @@ export interface Field {
   capacity?: number;
 }
 
-export interface Referee {
-  id: string;
-  first_name: string;
-  last_name: string;
-  email?: string;
-  phone?: string;
-  certification?: string;
-}
-
 export interface Match {
   id: string;
   tournament_id: string;
@@ -185,7 +147,6 @@ export interface Match {
   home_team_id: string;
   away_team_id: string;
   venue_id?: string;
-  referee_id?: string;
   stage_id?: string;
   scheduled_start: string;
   scheduled_end?: string;
@@ -194,16 +155,11 @@ export interface Match {
   match_type?: string;
   home_score: number;
   away_score: number;
+  stream_url?: string;
   home_team?: Team;
   away_team?: Team;
   venue?: Venue;
-  referee?: Referee;
-  referees?: Array<{
-    id: string;
-    referee_id: string;
-    role: string;
-    referee?: Referee;
-  }>;
+  officials?: MatchOfficial[];
   events?: MatchEvent[];
   tournament?: Tournament;
   division?: Division;
@@ -250,8 +206,7 @@ export interface PlayerStat {
   matches_played: number;
   player?: Player;
   team?: Team;
-  /** Rank position returned by the top-scorers / stats endpoints */
-  rank?: number;
+  tournament?: Tournament;
 }
 
 export interface BracketNode {
@@ -265,27 +220,8 @@ export interface BracketNode {
   match_id?: string;
   home_team?: Team;
   away_team?: Team;
+  winner?: Team;
   match?: Match;
-}
-
-export interface TournamentAdmin {
-  id: string;
-  tournament_id: string;
-  user_id: string;
-  role: string;
-  created_at: string;
-  user?: Pick<User, 'id' | 'first_name' | 'last_name' | 'email' | 'role'>;
-}
-
-export interface AuditLog {
-  id: string;
-  user_id?: string;
-  action: string;
-  entity: string;
-  entity_id?: string;
-  metadata?: Record<string, unknown>;
-  created_at: string;
-  user?: Pick<User, 'id' | 'first_name' | 'last_name' | 'email'>;
 }
 
 export interface Notification {
@@ -297,19 +233,7 @@ export interface Notification {
   type: string;
   read: boolean;
   created_at: string;
-  tournament?: { id: string; name: string };
-}
-
-export interface Media {
-  id: string;
-  tournament_id?: string;
-  division_id?: string;
-  match_id?: string;
-  type: MediaType;
-  url: string;
-  title?: string;
-  description?: string;
-  created_at: string;
+  tournament?: Pick<Tournament, 'id' | 'name' | 'slug'>;
 }
 
 export interface SiteSettings {
@@ -326,45 +250,34 @@ export interface SiteSettings {
   points_win: number;
   points_draw: number;
   points_loss: number;
-  updated_at?: string;
 }
 
-export interface PublicSiteSettings {
-  site_name: string;
+export interface Media {
+  id: string;
+  tournament_id?: string;
+  division_id?: string;
+  match_id?: string;
+  type: MediaType;
+  url: string;
+  title?: string;
+  description?: string;
+  created_at: string;
 }
 
-export interface StatsSummary {
-  tournaments: number;
-  teams: number;
-  players: number;
-  matches: number;
-  venues: number;
-  coaches: number;
-  live_matches: number;
-  top_scorer: { name: string; goals: number } | null;
+export interface AuditLog {
+  id: string;
+  user_id?: string;
+  action: string;
+  entity: string;
+  entity_id?: string;
+  metadata?: Record<string, unknown>;
+  created_at: string;
+  user?: Pick<User, 'id' | 'first_name' | 'last_name' | 'email'>;
 }
 
-// ─── API Response Types ───────────────────────────────────────────────────────
-
-export interface PaginatedResponse<T> {
-  data: T[];
-  total: number;
-  page: number;
-  limit: number;
-  totalPages: number;
-}
-
-export interface ApiError {
-  message: string;
-  statusCode: number;
-  error?: string;
-}
-
-// ─── Auth Types ───────────────────────────────────────────────────────────────
-
-export interface LoginRequest {
-  email: string;
-  password: string;
+export interface AuthResponse {
+  access_token: string;
+  user: User;
 }
 
 export interface RegisterRequest {
@@ -375,7 +288,46 @@ export interface RegisterRequest {
   phone?: string;
 }
 
-export interface AuthResponse {
-  access_token: string;
-  user: User;
+export type PublicSiteSettings = Pick<
+  SiteSettings,
+  'site_name' | 'contact_email' | 'contact_phone' | 'contact_address' | 'registration_open'
+>;
+
+export interface StatsSummary {
+  tournaments: number;
+  teams: number;
+  players: number;
+  matches: number;
+  venues: number;
+  admins: number;
+  live_matches: number;
+  top_scorer: { name: string; goals: number } | null;
+}
+
+export interface ApiError {
+  statusCode: number;
+  message: string;
+}
+
+export interface HomeHubData {
+  announcements: Notification[];
+  live_matches: Match[];
+  upcoming_tournaments: Tournament[];
+}
+
+export interface TournamentOverview {
+  tournament: Tournament;
+  live_matches: Match[];
+  recent_matches: Match[];
+  upcoming_matches: Match[];
+  top_scorers: PlayerStat[];
+  standings_preview: Standing[];
+}
+
+export interface GlobalSearchResult {
+  type: 'tournament' | 'division' | 'team' | 'match' | 'player';
+  id: string;
+  label: string;
+  href: string;
+  meta?: string;
 }

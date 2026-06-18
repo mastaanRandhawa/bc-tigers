@@ -16,6 +16,7 @@ interface FieldProps<T extends FieldValues> {
 interface TextInputFieldProps<T extends FieldValues> extends FieldProps<T> {
   type?: string;
   placeholder?: string;
+  disabled?: boolean;
 }
 
 export function TextInputField<T extends FieldValues>({
@@ -25,6 +26,7 @@ export function TextInputField<T extends FieldValues>({
   type = 'text',
   placeholder,
   className,
+  disabled,
 }: TextInputFieldProps<T>) {
   return (
     <Controller
@@ -33,7 +35,7 @@ export function TextInputField<T extends FieldValues>({
       render={({ field, fieldState }) => (
         <div className={cn('space-y-1.5', className)}>
           <Label htmlFor={name}>{label}</Label>
-          <Input id={name} type={type} placeholder={placeholder} {...field} value={field.value ?? ''} />
+          <Input id={name} type={type} placeholder={placeholder} disabled={disabled} {...field} value={field.value ?? ''} />
           {fieldState.error && <p className="text-xs text-red-500">{fieldState.error.message}</p>}
         </div>
       )}

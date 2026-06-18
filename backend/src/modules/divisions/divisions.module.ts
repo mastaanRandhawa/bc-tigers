@@ -4,7 +4,6 @@ import { DivisionResourcesController } from './division-resources.controller';
 import { DivisionsService } from './divisions.service';
 import { DivisionResourcesService } from './division-resources.service';
 import { TeamsModule } from '../teams/teams.module';
-import { PlayersModule } from '../players/players.module';
 import { MatchesModule } from '../matches/matches.module';
 import { StandingsModule } from '../standings/standings.module';
 import { StatsModule } from '../stats/stats.module';
@@ -14,7 +13,6 @@ import { VenuesModule } from '../venues/venues.module';
 @Module({
   imports: [
     TeamsModule,
-    PlayersModule,
     MatchesModule,
     StandingsModule,
     StatsModule,

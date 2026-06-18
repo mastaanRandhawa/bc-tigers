@@ -94,7 +94,8 @@ function ScoreDisplay({
 }
 
 function MatchMeta({ match }: { match: Match }) {
-  if (!match.venue && match.round === undefined && !match.referee) return null;
+  const primaryOfficial = match.officials?.[0];
+  if (!match.venue && match.round === undefined && !primaryOfficial) return null;
 
   return (
     <p className="mt-2 flex flex-wrap items-center justify-center gap-x-3 gap-y-0.5 text-[11px] text-muted-foreground">
@@ -110,10 +111,10 @@ function MatchMeta({ match }: { match: Match }) {
           Round {match.round}
         </span>
       )}
-      {match.referee && (
+      {primaryOfficial && (
         <span className="inline-flex items-center gap-1">
           <User className="h-3 w-3 shrink-0 opacity-60" aria-hidden />
-          {match.referee.first_name} {match.referee.last_name}
+          {primaryOfficial.name}
         </span>
       )}
     </p>

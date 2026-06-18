@@ -4,21 +4,27 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import FormDialog from '@/components/admin/FormDialog';
 import { TextInputField, FormError } from '@/components/admin/form-fields';
 import { playerSchema, type PlayerFormValues } from '@/lib/schemas/admin';
-import { useCreatePlayer, useUpdatePlayer } from '@/hooks/usePlayers';
+import { useCreateTeamPlayer, useUpdateTeamPlayer } from '@/hooks/useTeamPlayers';
 import { getApiErrorMessage } from '@/lib/errors';
 import type { Player } from '@/types';
 
 interface PlayerFormDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  teamId: string;
   player?: Player | null;
-  /** Called with the created/updated player on successful save */
   onSuccess?: (player: Player) => void;
 }
 
-export default function PlayerFormDialog({ open, onOpenChange, player, onSuccess }: PlayerFormDialogProps) {
-  const createMutation = useCreatePlayer();
-  const updateMutation = useUpdatePlayer();
+export default function PlayerFormDialog({
+  open,
+  onOpenChange,
+  teamId,
+  player,
+  onSuccess,
+}: PlayerFormDialogProps) {
+  const createMutation = useCreateTeamPlayer();
+  const updateMutation = useUpdateTeamPlayer();
   const isEditing = !!player;
   const [apiError, setApiError] = useState('');
 
@@ -67,16 +73,19 @@ export default function PlayerFormDialog({ open, onOpenChange, player, onSuccess
         ...values,
         profile_image: values.profile_image || undefined,
         jersey_number: values.jersey_number ? Number(values.jersey_number) : undefined,
-        // Strip empty optional strings so they don't create bad API payloads
         nationality: values.nationality || undefined,
         preferred_position: values.preferred_position || undefined,
       };
       if (isEditing && player) {
-        const res = await updateMutation.mutateAsync({ id: player.id, data: payload });
+        const res = await updateMutation.mutateAsync({
+          teamId,
+          playerId: player.id,
+          data: payload,
+        });
         onOpenChange(false);
         onSuccess?.(res.data);
       } else {
-        const res = await createMutation.mutateAsync(payload);
+        const res = await createMutation.mutateAsync({ teamId, data: payload });
         onOpenChange(false);
         onSuccess?.(res.data);
       }
@@ -96,11 +105,10 @@ export default function PlayerFormDialog({ open, onOpenChange, player, onSuccess
         if (!next) setApiError('');
         onOpenChange(next);
       }}
-      title={isEditing ? 'Edit Player' : 'Create Player'}
+      title={isEditing ? 'Edit Player' : 'Add Player'}
       onSubmit={onSubmit}
       isSubmitting={createMutation.isPending || updateMutation.isPending}
     >
-      {/* Prominent error banner — shown for both API and root-level errors */}
       {(apiError || fieldErrors.root?.message) && (
         <div className="rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2.5 text-sm text-destructive">
           {apiError || fieldErrors.root?.message}
@@ -109,12 +117,12 @@ export default function PlayerFormDialog({ open, onOpenChange, player, onSuccess
 
       <FormError message={undefined} />
 
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <TextInputField control={form.control} name="first_name" label="First Name" />
         <TextInputField control={form.control} name="last_name" label="Last Name" />
       </div>
 
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <TextInputField control={form.control} name="jersey_number" label="Jersey #" type="number" />
         <TextInputField control={form.control} name="preferred_position" label="Position" placeholder="e.g. Forward" />
       </div>

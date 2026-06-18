@@ -1,4 +1,4 @@
-import type { Team } from '@/types';
+import type { Team, Player } from '@/types';
 
 interface MatchLineupsProps {
   homeTeam?: Team | null;
@@ -6,8 +6,7 @@ interface MatchLineupsProps {
 }
 
 function RosterColumn({ team, label }: { team?: Team | null; label: string }) {
-  const players =
-    team?.rosters?.map((r) => r.player).filter(Boolean) ?? [];
+  const players = (team?.players ?? []).filter((p) => p.active !== false);
 
   return (
     <div className="rounded-xl border border-border/60 bg-card/50 p-4">
@@ -16,13 +15,13 @@ function RosterColumn({ team, label }: { team?: Team | null; label: string }) {
         <p className="text-xs text-muted-foreground">No active roster players.</p>
       ) : (
         <ul className="space-y-1.5 max-h-64 overflow-y-auto">
-          {players.map((p) => (
-            <li key={p!.id} className="flex items-center justify-between text-sm">
+          {players.map((p: Player) => (
+            <li key={p.id} className="flex items-center justify-between text-sm">
               <span className="text-foreground">
-                {p!.first_name} {p!.last_name}
+                {p.first_name} {p.last_name}
               </span>
-              {p!.jersey_number != null && (
-                <span className="text-xs text-muted-foreground tabular-nums">#{p!.jersey_number}</span>
+              {p.jersey_number != null && (
+                <span className="text-xs text-muted-foreground tabular-nums">#{p.jersey_number}</span>
               )}
             </li>
           ))}

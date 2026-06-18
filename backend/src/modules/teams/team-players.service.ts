@@ -11,33 +11,27 @@ type PlayerWriteInput = {
   first_name?: string;
   last_name?: string;
   slug?: string;
+  active?: boolean;
   [key: string]: unknown;
 };
 
 @Injectable()
-export class PlayersService {
-  findAll(params?: { teamId?: string; page?: number; limit?: number }) {
-    const { page = 1, limit = 20 } = params ?? {};
+export class TeamPlayersService {
+  async findByTeam(teamId: string) {
+    const team = await prisma.team.findUnique({ where: { id: teamId } });
+    if (!team) throw new NotFoundException('Team not found');
+
     return prisma.player.findMany({
-      where: params?.teamId
-        ? { rosters: { some: { team_id: params.teamId } } }
-        : undefined,
-      skip: (page - 1) * limit,
-      take: limit,
-      orderBy: { last_name: 'asc' },
+      where: { team_id: teamId },
+      orderBy: [{ active: 'desc' }, { last_name: 'asc' }, { first_name: 'asc' }],
     });
   }
 
   findByDivision(divisionId: string) {
     return prisma.player.findMany({
-      where: {
-        rosters: { some: { team: { division_id: divisionId } } },
-      },
+      where: { team: { division_id: divisionId } },
       include: {
-        rosters: {
-          where: { team: { division_id: divisionId } },
-          include: { team: true },
-        },
+        team: true,
         player_stats: {
           where: { division_id: divisionId },
           include: { tournament: true, team: true },
@@ -47,29 +41,14 @@ export class PlayersService {
     });
   }
 
-  async findOne(idOrSlug: string) {
-    const player = await prisma.player.findUnique({
-      where: playerLookupWhere(idOrSlug),
-      include: {
-        rosters: { include: { team: true } },
-        player_stats: { include: { tournament: true } },
-      },
-    });
-    if (!player) throw new NotFoundException('Player not found');
-    return player;
-  }
-
   async findOneOnTeam(teamId: string, playerId: string) {
     const player = await prisma.player.findFirst({
       where: {
-        ...playerLookupWhere(playerId),
-        rosters: { some: { team_id: teamId, active: true } },
+        team_id: teamId,
+        ...playerLookupWhere(playerId, teamId),
       },
       include: {
-        rosters: {
-          where: { team_id: teamId },
-          include: { team: { include: { division: { include: { tournament: true } } } } },
-        },
+        team: { include: { division: { include: { tournament: true } } } },
         player_stats: { include: { tournament: true, division: true, team: true } },
         match_events: {
           where: { team_id: teamId },
@@ -83,7 +62,10 @@ export class PlayersService {
     return player;
   }
 
-  async create(data: unknown) {
+  async create(teamId: string, data: unknown) {
+    const team = await prisma.team.findUnique({ where: { id: teamId } });
+    if (!team) throw new NotFoundException('Team not found');
+
     const input = data as PlayerWriteInput;
     const first_name = String(input.first_name ?? '').trim();
     const last_name = String(input.last_name ?? '').trim();
@@ -91,30 +73,44 @@ export class PlayersService {
       throw new BadRequestException('First and last name are required');
     }
 
-    const { slug: _ignored, ...rest } = input;
     const base = slugifyPlayerName(first_name, last_name);
-    const slug = await ensureUniquePlayerSlug(prisma, base);
+    const slug = await ensureUniquePlayerSlug(prisma, teamId, base);
 
     return prisma.player.create({
       data: {
-        ...(rest as Prisma.PlayerCreateInput),
         first_name,
         last_name,
         slug,
+        team_id: teamId,
+        active: input.active ?? true,
+        nationality: input.nationality as string | undefined,
+        jersey_number: input.jersey_number as number | undefined,
+        preferred_position: input.preferred_position as string | undefined,
+        profile_image: input.profile_image as string | undefined,
+        dob: input.dob ? new Date(String(input.dob)) : undefined,
       },
     });
   }
 
-  async update(id: string, data: unknown) {
+  async update(teamId: string, playerId: string, data: unknown) {
+    const player = await prisma.player.findFirst({
+      where: { team_id: teamId, id: playerId },
+    });
+    if (!player) throw new NotFoundException('Player not found on this team');
+
     const input = data as PlayerWriteInput;
     const { slug: _ignored, ...rest } = input;
     return prisma.player.update({
-      where: { id },
+      where: { id: playerId },
       data: rest as Prisma.PlayerUpdateInput,
     });
   }
 
-  remove(id: string) {
-    return prisma.player.delete({ where: { id } });
+  async remove(teamId: string, playerId: string) {
+    const player = await prisma.player.findFirst({
+      where: { team_id: teamId, id: playerId },
+    });
+    if (!player) throw new NotFoundException('Player not found on this team');
+    return prisma.player.delete({ where: { id: playerId } });
   }
 }

@@ -42,13 +42,13 @@ export default function MatchEventFormDialog({ open, onOpenChange, match }: Matc
   });
 
   const teamId = form.watch('team_id');
-  const homeRoster = match?.home_team?.rosters?.map((r) => r.player).filter(Boolean) ?? [];
-  const awayRoster = match?.away_team?.rosters?.map((r) => r.player).filter(Boolean) ?? [];
+  const homePlayers = match?.home_team?.players?.filter((p) => p.active !== false) ?? [];
+  const awayPlayers = match?.away_team?.players?.filter((p) => p.active !== false) ?? [];
   const players =
     teamId === match?.home_team_id
-      ? homeRoster
+      ? homePlayers
       : teamId === match?.away_team_id
-        ? awayRoster
+        ? awayPlayers
         : [];
 
   useEffect(() => {

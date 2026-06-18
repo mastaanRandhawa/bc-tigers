@@ -2,14 +2,13 @@ import {
   Trophy,
   LayoutDashboard,
   Shield,
-  UserCircle,
-  UserCog,
   Calendar,
   Megaphone,
   MapPin,
   Users,
   Image,
   Settings,
+  GitBranch,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
@@ -39,10 +38,9 @@ export const adminNavGroups: AdminNavGroup[] = [
   {
     label: 'Bulk Operations',
     items: [
-      { label: 'Players', href: '/admin/players', icon: UserCircle },
-      { label: 'Coaches', href: '/admin/coaches', icon: UserCog },
       { label: 'Matches', href: '/admin/matches', icon: Calendar },
       { label: 'Teams', href: '/admin/teams', icon: Shield },
+      { label: 'Brackets', href: '/admin/brackets', icon: GitBranch },
     ],
   },
   {
@@ -50,10 +48,8 @@ export const adminNavGroups: AdminNavGroup[] = [
     items: [
       { label: 'Users', href: '/admin/users', icon: Users },
       { label: 'Announcements', href: '/admin/announcements', icon: Megaphone },
-      { label: 'Referees', href: '/admin/referees', icon: Shield },
       { label: 'Media', href: '/admin/media', icon: Image },
       { label: 'Settings', href: '/admin/settings', icon: Settings },
     ],
   },
 ];
-

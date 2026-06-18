@@ -56,7 +56,7 @@ export class StatsService {
       players,
       matches,
       venues,
-      coaches,
+      admins,
       liveMatches,
     ] = await Promise.all([
       prisma.tournament.count(),
@@ -64,7 +64,7 @@ export class StatsService {
       prisma.player.count(),
       prisma.match.count(),
       prisma.venue.count(),
-      prisma.coach.count(),
+      prisma.user.count({ where: { role: 'ADMIN' } }),
       prisma.match.count({ where: { status: 'LIVE' } }),
     ]);
 
@@ -79,7 +79,7 @@ export class StatsService {
       players,
       matches,
       venues,
-      coaches,
+      admins,
       live_matches: liveMatches,
       top_scorer: topScorer
         ? {

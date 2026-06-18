@@ -30,6 +30,7 @@ import { AdminContextBar } from '@/components/admin/inline/AdminContextBar';
 import { AdminActionButton } from '@/components/admin/inline/AdminActionButton';
 import MatchScoreFormDialog from '@/components/admin/forms/MatchScoreFormDialog';
 import MatchEventFormDialog from '@/components/admin/forms/MatchEventFormDialog';
+import MatchScoreStepper from '@/components/matches/MatchScoreStepper';
 import type { MatchEventType } from '@/types';
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
@@ -125,8 +126,8 @@ export default function MatchDetailPage() {
   const showScore = isLive || isCompleted;
   const events = match?.events ?? [];
 
-  const refereeName = match?.referee
-    ? `${match.referee.first_name} ${match.referee.last_name}`
+  const officialsLabel = match?.officials?.length
+    ? match.officials.map((o) => o.name).join(', ')
     : undefined;
 
   const backPath = nestedInDivision
@@ -259,7 +260,7 @@ export default function MatchDetailPage() {
                   </div>
 
                   {/* Venue + referee meta row */}
-                  {(match.venue || refereeName) && (
+                  {(match.venue || officialsLabel) && (
                     <div className="mt-6 flex flex-wrap items-center justify-center gap-x-4 gap-y-1.5 border-t border-border/50 pt-4 text-xs text-muted-foreground">
                       {match.venue && (
                         <span className="inline-flex items-center gap-1.5">
@@ -267,12 +268,24 @@ export default function MatchDetailPage() {
                           {match.venue.name}
                         </span>
                       )}
-                      {refereeName && (
+                      {officialsLabel && (
                         <span className="inline-flex items-center gap-1.5">
                           <User className="h-3.5 w-3.5" aria-hidden />
-                          {refereeName}
+                          {officialsLabel}
                         </span>
                       )}
+                    </div>
+                  )}
+
+                  {canEdit && isLive && (
+                    <div className="mt-6">
+                      <MatchScoreStepper
+                        matchId={match.id}
+                        homeScore={match.home_score}
+                        awayScore={match.away_score}
+                        homeLabel={match.home_team?.name ?? 'Home'}
+                        awayLabel={match.away_team?.name ?? 'Away'}
+                      />
                     </div>
                   )}
                 </GlassCard>
@@ -385,8 +398,8 @@ export default function MatchDetailPage() {
                   {match.venue && (
                     <InfoRow icon={MapPin} label="Venue" value={match.venue.name} />
                   )}
-                  {refereeName && (
-                    <InfoRow icon={User} label="Referee" value={refereeName} />
+                  {officialsLabel && (
+                    <InfoRow icon={User} label="Officials" value={officialsLabel} />
                   )}
                 </GlassCard>
               </div>

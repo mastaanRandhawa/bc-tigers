@@ -10,11 +10,6 @@ datasource db {
 
 enum UserRole {
   ADMIN
-  TOURNAMENT_ADMIN
-  COACH
-  REFEREE
-  PLAYER
-  VIEWER
 }
 
 enum TournamentType {
@@ -81,53 +76,38 @@ model User {
   email         String   @unique
   password_hash String
   phone         String?
-  role          UserRole @default(VIEWER)
+  role          UserRole @default(ADMIN)
   active        Boolean  @default(true)
   profile_image String?
   created_at    DateTime @default(now())
   updated_at    DateTime @updatedAt
 
-  tournament_admins TournamentAdmin[]
-  notifications     Notification[]
-  audit_logs        AuditLog[]
+  notifications         Notification[]
+  audit_logs            AuditLog[]
   password_reset_tokens PasswordResetToken[]
-  player            Player?
-  coach             Coach?
-  referee           Referee?
-}
-
-model Organization {
-  id          String   @id @default(uuid())
-  name        String
-  slug        String   @unique
-  logo        String?
-  website     String?
-  created_at  DateTime @default(now())
-  updated_at  DateTime @updatedAt
 }
 
 model Tournament {
-  id               String           @id @default(uuid())
-  name             String
-  slug             String           @unique
-  description      String?
-  start_date       DateTime
-  end_date         DateTime
-  location         String
-  status           TournamentStatus @default(UPCOMING)
-  tournament_type  TournamentType   @default(ROUND_ROBIN)
-  logo             String?
-  rules            String?
-  created_by       String
-  created_at       DateTime         @default(now())
-  updated_at       DateTime         @updatedAt
+  id              String           @id @default(uuid())
+  name            String
+  slug            String           @unique
+  description     String?
+  start_date      DateTime
+  end_date        DateTime
+  location        String
+  status          TournamentStatus @default(UPCOMING)
+  tournament_type TournamentType   @default(ROUND_ROBIN)
+  logo            String?
+  rules           String?
+  created_by      String
+  created_at      DateTime         @default(now())
+  updated_at      DateTime         @updatedAt
 
-  divisions        Division[]
-  matches          Match[]
-  player_stats     PlayerStat[]
-  tournament_admins TournamentAdmin[]
-  media            Media[]
-  notifications    Notification[]
+  divisions     Division[]
+  matches       Match[]
+  player_stats  PlayerStat[]
+  media         Media[]
+  notifications Notification[]
 }
 
 model Division {
@@ -173,81 +153,41 @@ model Team {
   created_at      DateTime @default(now())
   updated_at      DateTime @updatedAt
 
-  division        Division      @relation(fields: [division_id], references: [id], onDelete: Cascade)
-  rosters         TeamRoster[]
-  team_coaches    TeamCoach[]
-  home_matches    Match[]       @relation("HomeTeam")
-  away_matches    Match[]       @relation("AwayTeam")
-  standings       Standing[]
-  match_events    MatchEvent[]
-  player_stats    PlayerStat[]
-  bracket_home    BracketNode[] @relation("BracketHomeTeam")
-  bracket_away    BracketNode[] @relation("BracketAwayTeam")
-  bracket_winner  BracketNode[] @relation("BracketWinner")
+  division       Division      @relation(fields: [division_id], references: [id], onDelete: Cascade)
+  players        Player[]
+  home_matches   Match[]       @relation("HomeTeam")
+  away_matches   Match[]       @relation("AwayTeam")
+  standings      Standing[]
+  match_events   MatchEvent[]
+  player_stats   PlayerStat[]
+  bracket_home   BracketNode[] @relation("BracketHomeTeam")
+  bracket_away   BracketNode[] @relation("BracketAwayTeam")
+  bracket_winner BracketNode[] @relation("BracketWinner")
 
   @@unique([division_id, slug])
 }
 
 model Player {
-  id                 String   @id @default(uuid())
+  id                 String    @id @default(uuid())
+  team_id            String
   first_name         String
   last_name          String
-  slug               String   @unique
+  slug               String
   dob                DateTime?
   nationality        String?
   jersey_number      Int?
   preferred_position String?
   profile_image      String?
-  created_at         DateTime @default(now())
-  updated_at         DateTime @updatedAt
+  active             Boolean   @default(true)
+  created_at         DateTime  @default(now())
+  updated_at         DateTime  @updatedAt
 
-  user_id          String?  @unique
-  rosters      TeamRoster[]
+  team         Team         @relation(fields: [team_id], references: [id], onDelete: Cascade)
   match_events MatchEvent[]
   player_stats PlayerStat[]
-  user         User?    @relation(fields: [user_id], references: [id], onDelete: SetNull)
-}
 
-model TeamRoster {
-  id         String   @id @default(uuid())
-  team_id    String
-  player_id  String
-  season     String?
-  active     Boolean  @default(true)
-  joined_at  DateTime @default(now())
-
-  team   Team   @relation(fields: [team_id], references: [id], onDelete: Cascade)
-  player Player @relation(fields: [player_id], references: [id], onDelete: Cascade)
-
-  @@unique([team_id, player_id, season])
-}
-
-model Coach {
-  id            String @id @default(uuid())
-  first_name    String
-  last_name     String
-  email         String? @unique
-  phone         String?
-  profile_image String?
-  user_id       String?  @unique
-  created_at    DateTime @default(now())
-  updated_at    DateTime @updatedAt
-
-  team_coaches TeamCoach[]
-  user         User?    @relation(fields: [user_id], references: [id], onDelete: SetNull)
-}
-
-model TeamCoach {
-  id         String   @id @default(uuid())
-  team_id    String
-  coach_id   String
-  role       String?
-  joined_at  DateTime @default(now())
-
-  team  Team  @relation(fields: [team_id], references: [id], onDelete: Cascade)
-  coach Coach @relation(fields: [coach_id], references: [id], onDelete: Cascade)
-
-  @@unique([team_id, coach_id])
+  @@unique([team_id, slug])
+  @@index([team_id, last_name])
 }
 
 model Venue {
@@ -278,21 +218,6 @@ model Field {
   matches Match[]
 }
 
-model Referee {
-  id            String   @id @default(uuid())
-  first_name    String
-  last_name     String
-  email         String?  @unique
-  phone         String?
-  certification String?
-  user_id       String?  @unique
-  created_at    DateTime @default(now())
-  updated_at    DateTime @updatedAt
-
-  match_referees MatchReferee[]
-  user           User?    @relation(fields: [user_id], references: [id], onDelete: SetNull)
-}
-
 model Match {
   id              String      @id @default(uuid())
   tournament_id   String
@@ -313,15 +238,15 @@ model Match {
   created_at      DateTime    @default(now())
   updated_at      DateTime    @updatedAt
 
-  tournament    Tournament     @relation(fields: [tournament_id], references: [id], onDelete: Cascade)
-  division      Division       @relation(fields: [division_id], references: [id], onDelete: Cascade)
-  home_team     Team           @relation("HomeTeam", fields: [home_team_id], references: [id])
-  away_team     Team           @relation("AwayTeam", fields: [away_team_id], references: [id])
-  venue         Venue?         @relation(fields: [venue_id], references: [id])
-  field         Field?         @relation(fields: [field_id], references: [id])
-  stage         Stage?         @relation(fields: [stage_id], references: [id])
+  tournament    Tournament      @relation(fields: [tournament_id], references: [id], onDelete: Cascade)
+  division      Division        @relation(fields: [division_id], references: [id], onDelete: Cascade)
+  home_team     Team            @relation("HomeTeam", fields: [home_team_id], references: [id])
+  away_team     Team            @relation("AwayTeam", fields: [away_team_id], references: [id])
+  venue         Venue?          @relation(fields: [venue_id], references: [id])
+  field         Field?          @relation(fields: [field_id], references: [id])
+  stage         Stage?          @relation(fields: [stage_id], references: [id])
   events        MatchEvent[]
-  referees      MatchReferee[]
+  officials     MatchOfficial[]
   bracket_nodes BracketNode[]
 
   @@index([status, scheduled_start])
@@ -344,16 +269,17 @@ model MatchEvent {
   team   Team    @relation(fields: [team_id], references: [id])
 }
 
-model MatchReferee {
-  id          String @id @default(uuid())
-  match_id    String
-  referee_id  String
-  role        String @default("MAIN")
+model MatchOfficial {
+  id       String @id @default(uuid())
+  match_id String
+  name     String
+  role     String @default("MAIN")
+  email    String?
+  phone    String?
 
-  match   Match   @relation(fields: [match_id], references: [id], onDelete: Cascade)
-  referee Referee @relation(fields: [referee_id], references: [id])
+  match Match @relation(fields: [match_id], references: [id], onDelete: Cascade)
 
-  @@unique([match_id, referee_id])
+  @@index([match_id])
 }
 
 model Stage {
@@ -387,20 +313,20 @@ model BracketNode {
 }
 
 model Standing {
-  id               String @id @default(uuid())
-  division_id      String
-  team_id          String
-  played           Int    @default(0)
-  wins             Int    @default(0)
-  draws            Int    @default(0)
-  losses           Int    @default(0)
-  goals_for        Int    @default(0)
-  goals_against    Int    @default(0)
-  goal_difference  Int    @default(0)
-  points           Int    @default(0)
-  fair_play        Int    @default(0)
-  rank             Int    @default(0)
-  updated_at       DateTime @updatedAt
+  id              String   @id @default(uuid())
+  division_id     String
+  team_id         String
+  played          Int      @default(0)
+  wins            Int      @default(0)
+  draws           Int      @default(0)
+  losses          Int      @default(0)
+  goals_for       Int      @default(0)
+  goals_against   Int      @default(0)
+  goal_difference Int      @default(0)
+  points          Int      @default(0)
+  fair_play       Int      @default(0)
+  rank            Int      @default(0)
+  updated_at      DateTime @updatedAt
 
   division Division @relation(fields: [division_id], references: [id], onDelete: Cascade)
   team     Team     @relation(fields: [team_id], references: [id], onDelete: Cascade)
@@ -410,37 +336,24 @@ model Standing {
 }
 
 model PlayerStat {
-  id            String @id @default(uuid())
-  player_id     String
-  tournament_id String
-  division_id   String?
-  team_id       String?
-  goals         Int    @default(0)
-  assists       Int    @default(0)
-  yellow_cards  Int    @default(0)
-  red_cards     Int    @default(0)
-  matches_played Int   @default(0)
-  updated_at    DateTime @updatedAt
+  id             String   @id @default(uuid())
+  player_id      String
+  tournament_id  String
+  division_id    String?
+  team_id        String?
+  goals          Int      @default(0)
+  assists        Int      @default(0)
+  yellow_cards   Int      @default(0)
+  red_cards      Int      @default(0)
+  matches_played Int      @default(0)
+  updated_at     DateTime @updatedAt
 
-  player     Player      @relation(fields: [player_id], references: [id], onDelete: Cascade)
-  tournament Tournament  @relation(fields: [tournament_id], references: [id], onDelete: Cascade)
-  division   Division?   @relation(fields: [division_id], references: [id])
-  team       Team?       @relation(fields: [team_id], references: [id])
+  player     Player     @relation(fields: [player_id], references: [id], onDelete: Cascade)
+  tournament Tournament @relation(fields: [tournament_id], references: [id], onDelete: Cascade)
+  division   Division?  @relation(fields: [division_id], references: [id])
+  team       Team?      @relation(fields: [team_id], references: [id])
 
   @@unique([player_id, tournament_id, division_id])
-}
-
-model TournamentAdmin {
-  id            String @id @default(uuid())
-  tournament_id String
-  user_id       String
-  role          String @default("ADMIN")
-  created_at    DateTime @default(now())
-
-  tournament Tournament @relation(fields: [tournament_id], references: [id], onDelete: Cascade)
-  user       User       @relation(fields: [user_id], references: [id], onDelete: Cascade)
-
-  @@unique([tournament_id, user_id])
 }
 
 model Notification {
@@ -455,6 +368,8 @@ model Notification {
 
   user       User?       @relation(fields: [user_id], references: [id])
   tournament Tournament? @relation(fields: [tournament_id], references: [id])
+
+  @@index([user_id, read, created_at])
 }
 
 model Media {
@@ -502,7 +417,7 @@ model SiteSettings {
   contact_phone          String?
   contact_address        String?
   timezone               String   @default("America/Vancouver")
-  registration_open      Boolean  @default(true)
+  registration_open      Boolean  @default(false)
   notifications_enabled  Boolean  @default(true)
   live_score_updates     Boolean  @default(true)
   max_teams_per_division Int      @default(10)

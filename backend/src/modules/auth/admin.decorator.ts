@@ -4,10 +4,7 @@ import { RolesGuard } from './roles.guard';
 import { Roles } from './roles.decorator';
 
 export function AdminOnly() {
-  return applyDecorators(
-    UseGuards(JwtAuthGuard, RolesGuard),
-    Roles('ADMIN', 'TOURNAMENT_ADMIN'),
-  );
+  return applyDecorators(UseGuards(JwtAuthGuard, RolesGuard), Roles('ADMIN'));
 }
 
 export function SuperAdminOnly() {

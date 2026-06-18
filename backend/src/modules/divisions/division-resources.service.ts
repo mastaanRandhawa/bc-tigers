@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import type { MatchStatus } from '@prisma/client';
 import { DivisionsService } from './divisions.service';
 import { TeamsService } from '../teams/teams.service';
-import { PlayersService } from '../players/players.service';
+import { TeamPlayersService } from '../teams/team-players.service';
 import { MatchesService } from '../matches/matches.service';
 import { StandingsService } from '../standings/standings.service';
 import { StatsService } from '../stats/stats.service';
@@ -14,7 +14,7 @@ export class DivisionResourcesService {
   constructor(
     private readonly divisionsService: DivisionsService,
     private readonly teamsService: TeamsService,
-    private readonly playersService: PlayersService,
+    private readonly teamPlayersService: TeamPlayersService,
     private readonly matchesService: MatchesService,
     private readonly standingsService: StandingsService,
     private readonly statsService: StatsService,
@@ -52,7 +52,7 @@ export class DivisionResourcesService {
   ) {
     const divisionId = await this.resolveDivisionId(tournamentSlug, divisionSlug);
     const team = await this.teamsService.findOneInDivision(divisionId, teamSlug);
-    return this.playersService.findOneOnTeam(team.id, playerId);
+    return this.teamPlayersService.findOneOnTeam(team.id, playerId);
   }
 
   async getSchedule(
@@ -70,7 +70,7 @@ export class DivisionResourcesService {
 
   async getPlayers(tournamentSlug: string, divisionSlug: string) {
     const divisionId = await this.resolveDivisionId(tournamentSlug, divisionSlug);
-    return this.playersService.findByDivision(divisionId);
+    return this.teamPlayersService.findByDivision(divisionId);
   }
 
   async getMatches(

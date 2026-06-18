@@ -40,7 +40,7 @@ export default function DivisionTeamDetailPage() {
   const [editTeamOpen, setEditTeamOpen] = useState(false);
 
   const roster = useMemo(
-    () => (team?.rosters?.map((r) => r.player).filter(Boolean) as Player[]) ?? [],
+    () => (team?.players?.filter((p) => p.active !== false) as Player[]) ?? [],
     [team],
   );
 

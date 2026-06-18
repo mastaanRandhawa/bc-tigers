@@ -22,9 +22,7 @@ export default function DivisionPlayerDetailPage() {
   const canEdit = useCanAdminEdit();
   const [editOpen, setEditOpen] = useState(false);
 
-  const player = team?.rosters
-    ?.map((r) => r.player)
-    .find((p) => p && matchesPlayerRef(p, playerId));
+  const player = team?.players?.find((p) => matchesPlayerRef(p, playerId));
 
   const stats = player?.player_stats?.[0];
   const teamPath = `${basePath}/teams/${teamSlug}`;
@@ -115,6 +113,7 @@ export default function DivisionPlayerDetailPage() {
               <PlayerFormDialog
                 open={editOpen}
                 onOpenChange={setEditOpen}
+                teamId={team.id}
                 player={player as Player}
               />
             )}

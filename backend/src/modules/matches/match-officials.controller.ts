@@ -2,25 +2,25 @@ import { Controller, Post, Delete, Param, Body } from '@nestjs/common';
 import { MatchesService } from './matches.service';
 import { AdminOnly } from '../auth/admin.decorator';
 
-@Controller('matches/:matchId/referees')
-export class MatchRefereesController {
+@Controller('matches/:matchId/officials')
+export class MatchOfficialsController {
   constructor(private service: MatchesService) {}
 
   @Post()
   @AdminOnly()
   assign(
     @Param('matchId') matchId: string,
-    @Body() body: { referee_id: string; role?: string },
+    @Body() body: { name: string; role?: string; email?: string; phone?: string },
   ) {
-    return this.service.assignReferee(matchId, body.referee_id, body.role);
+    return this.service.assignOfficial(matchId, body);
   }
 
-  @Delete(':matchRefereeId')
+  @Delete(':officialId')
   @AdminOnly()
   remove(
     @Param('matchId') matchId: string,
-    @Param('matchRefereeId') matchRefereeId: string,
+    @Param('officialId') officialId: string,
   ) {
-    return this.service.removeReferee(matchId, matchRefereeId);
+    return this.service.removeOfficial(matchId, officialId);
   }
 }

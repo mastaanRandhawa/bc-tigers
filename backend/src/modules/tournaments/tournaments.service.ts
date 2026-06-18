@@ -130,28 +130,4 @@ export class TournamentsService {
     await prisma.tournament.findUniqueOrThrow({ where: { id } });
     return prisma.tournament.delete({ where: { id } });
   }
-
-  getAdmins(tournamentId: string) {
-    return prisma.tournamentAdmin.findMany({
-      where: { tournament_id: tournamentId },
-      include: {
-        user: {
-          select: { id: true, first_name: true, last_name: true, email: true, role: true },
-        },
-      },
-    });
-  }
-
-  async assignAdmin(tournamentId: string, userId: string, role = 'ADMIN') {
-    await prisma.tournament.findUniqueOrThrow({ where: { id: tournamentId } });
-    return prisma.tournamentAdmin.upsert({
-      where: { tournament_id_user_id: { tournament_id: tournamentId, user_id: userId } },
-      create: { tournament_id: tournamentId, user_id: userId, role },
-      update: { role },
-    });
-  }
-
-  async revokeAdmin(tournamentId: string, tournamentAdminId: string) {
-    return prisma.tournamentAdmin.delete({ where: { id: tournamentAdminId } });
-  }
 }

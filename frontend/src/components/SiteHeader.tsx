@@ -12,10 +12,7 @@ import LiveScoreTicker from '@/components/LiveScoreTicker';
 import { useAuthStore } from '@/store/authStore';
 import {
   isAdminRole,
-  getRoleDashboardPath,
-  getRoleLabel,
 } from '@/lib/auth-utils';
-import type { UserRole } from '@/types';
 import BrandLogo from '@/components/shared/BrandLogo';
 import GlobalSearch from '@/components/shared/GlobalSearch';
 import NotificationBell from '@/components/shared/NotificationBell';
@@ -85,17 +82,6 @@ function UserMenu({ onDark = true }: { onDark?: boolean }) {
             role="menu"
             className="absolute right-0 top-full mt-1.5 w-52 bg-popover rounded-xl shadow-lg border border-border overflow-hidden z-50"
           >
-            {(['COACH', 'REFEREE', 'PLAYER'] as UserRole[]).includes(user.role) && (
-              <Link
-                role="menuitem"
-                to={getRoleDashboardPath(user.role)}
-                onClick={() => setUserMenuOpen(false)}
-                className="flex items-center gap-2 px-4 py-2.5 text-sm text-foreground hover:bg-muted transition-colors"
-              >
-                <LayoutDashboard className="w-4 h-4" />
-                {getRoleLabel(user.role)} Portal
-              </Link>
-            )}
             {isAdminRole(user.role) && (
               <Link
                 role="menuitem"

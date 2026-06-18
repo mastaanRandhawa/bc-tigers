@@ -58,14 +58,14 @@ export const matchSchema = z.object({
   away_team_id: z.string().min(1, 'Away team is required'),
   venue_id: z.string().optional(),
   scheduled_start: z.string().min(1, 'Start time is required'),
-  status: z.enum(['SCHEDULED', 'LIVE', 'COMPLETED', 'POSTPONED', 'CANCELLED']),
+  status: z.enum(['SCHEDULED', 'LIVE', 'HALFTIME', 'COMPLETED', 'DELAYED', 'POSTPONED', 'CANCELLED']),
   round: z.string().optional(),
 });
 
 export const matchScoreSchema = z.object({
   home_score: z.string().min(1),
   away_score: z.string().min(1),
-  status: z.enum(['SCHEDULED', 'LIVE', 'COMPLETED', 'POSTPONED', 'CANCELLED']).optional(),
+  status: z.enum(['SCHEDULED', 'LIVE', 'HALFTIME', 'COMPLETED', 'DELAYED', 'POSTPONED', 'CANCELLED']).optional(),
 });
 
 export const venueSchema = z.object({
@@ -93,7 +93,10 @@ export const mediaSchema = z.object({
 });
 
 export const userRoleSchema = z.object({
-  role: z.enum(['ADMIN', 'TOURNAMENT_ADMIN', 'COACH', 'REFEREE', 'PLAYER', 'VIEWER']),
+  first_name: z.string().min(1, 'First name is required'),
+  last_name: z.string().min(1, 'Last name is required'),
+  email: z.string().email(),
+  phone: z.string().optional(),
 });
 
 export type TournamentFormValues = z.infer<typeof tournamentSchema>;

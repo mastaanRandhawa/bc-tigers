@@ -8,7 +8,7 @@ import { useTeams } from '@/hooks/useTeams';
 import { useMatches } from '@/hooks/useMatches';
 import { getDivisionPublicPath } from '@/lib/division-routes';
 import { getDivisionTheme } from '@/lib/division-theme';
-import { ExternalLink, Shield, Calendar, Zap, ArrowRight } from 'lucide-react';
+import { ExternalLink, Shield, Calendar, Zap, ArrowRight, Layers, Users, Flag } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 export default function AdminDashboard() {
@@ -23,8 +23,8 @@ export default function AdminDashboard() {
       <AdminStatGrid
         className="mb-6"
         items={[
-          { value: divisions.length, label: 'Divisions' },
-          { value: teams.length, label: 'Teams' },
+          { value: divisions.length, label: 'Divisions', icon: Layers },
+          { value: teams.length, label: 'Teams', icon: Users },
           { value: liveMatches.length, label: 'Live matches', icon: Zap, accent: liveMatches.length > 0 },
         ]}
       />
@@ -48,9 +48,14 @@ export default function AdminDashboard() {
                   <div className="flex items-start justify-between gap-2 sm:gap-3">
                     <div className="flex min-w-0 items-start gap-3">
                       <div
-                        className="h-10 w-10 sm:h-11 sm:w-11 shrink-0 rounded-xl ring-1 ring-border shadow-sm"
-                        style={{ backgroundColor: theme.primary }}
-                      />
+                        className="flex h-10 w-10 sm:h-11 sm:w-11 shrink-0 items-center justify-center rounded-xl ring-1 ring-border shadow-sm"
+                        style={{
+                          backgroundColor: `color-mix(in srgb, ${theme.primary} 14%, white)`,
+                          color: theme.primary,
+                        }}
+                      >
+                        <Flag className="h-5 w-5" aria-hidden />
+                      </div>
                       <div className="min-w-0">
                         <h3 className="truncate text-sm sm:text-base font-semibold font-display text-foreground leading-snug">
                           {division.name}

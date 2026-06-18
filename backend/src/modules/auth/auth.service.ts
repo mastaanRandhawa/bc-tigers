@@ -21,43 +21,28 @@ export class AuthService {
     private mailService: MailService,
   ) {}
 
-  async register(data: {
+  async register(_data: {
     first_name: string;
     last_name: string;
     email: string;
     password: string;
     phone?: string;
   }) {
-    const settings = await this.settingsService.getAdmin();
-    if (!settings.registration_open) {
-      throw new ForbiddenException('Registration is currently closed');
-    }
-
-    const exists = await prisma.user.findUnique({
-      where: { email: data.email },
-    });
-    if (exists) throw new ConflictException('Email already registered');
-
-    const password_hash = await bcrypt.hash(data.password, 12);
-    const user = await prisma.user.create({
-      data: {
-        first_name: data.first_name,
-        last_name: data.last_name,
-        email: data.email,
-        password_hash,
-        phone: data.phone,
-      },
-    });
-
-    return this.signToken(user);
+    throw new ForbiddenException(
+      'Public registration is disabled. Contact an administrator for access.',
+    );
   }
 
   async login(email: string, password: string) {
     const user = await prisma.user.findUnique({ where: { email } });
-    if (!user) throw new UnauthorizedException('Invalid credentials');
+    if (!user || !user.active) throw new UnauthorizedException('Invalid credentials');
 
     const valid = await bcrypt.compare(password, user.password_hash);
     if (!valid) throw new UnauthorizedException('Invalid credentials');
+
+    if (user.role !== 'ADMIN') {
+      throw new UnauthorizedException('Invalid credentials');
+    }
 
     return this.signToken(user);
   }
@@ -74,37 +59,6 @@ export class AuthService {
         phone: true,
         profile_image: true,
         created_at: true,
-        player: {
-          include: {
-            rosters: {
-              where: { active: true },
-              include: { team: { include: { division: { include: { tournament: true } } } } },
-            },
-          },
-        },
-        coach: {
-          include: {
-            team_coaches: {
-              include: { team: { include: { division: { include: { tournament: true } } } } },
-            },
-          },
-        },
-        referee: {
-          include: {
-            match_referees: {
-              include: {
-                match: {
-                  include: {
-                    home_team: true,
-                    away_team: true,
-                    venue: true,
-                    division: true,
-                  },
-                },
-              },
-            },
-          },
-        },
       },
     });
     if (!user) throw new NotFoundException('User not found');

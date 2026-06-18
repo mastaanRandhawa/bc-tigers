@@ -3,7 +3,6 @@ import { Routes, Route, Navigate } from 'react-router-dom';
 import { tournamentRoutes } from '@/routes/tournament.routes';
 import { authRoutes } from '@/routes/auth.routes';
 import { adminRoutes } from '@/routes/admin.routes';
-import { portalRoutes } from '@/routes/portal.routes';
 import { redirectRoutes } from '@/routes/redirect.routes';
 import { HomePage, LiveMatchesPage, NotFoundPage } from '@/routes/lazy-pages';
 
@@ -22,8 +21,11 @@ export default function App() {
       {redirectRoutes()}
       {tournamentRoutes()}
       {authRoutes()}
-      {portalRoutes()}
       {adminRoutes()}
+      <Route path="/coach" element={<Navigate to="/login" replace />} />
+      <Route path="/referee" element={<Navigate to="/login" replace />} />
+      <Route path="/referee/*" element={<Navigate to="/login" replace />} />
+      <Route path="/player" element={<Navigate to="/login" replace />} />
       <Route path="*" element={<NotFoundPage />} />
     </Routes>
   );

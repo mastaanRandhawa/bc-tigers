@@ -14,7 +14,7 @@ import type { Division } from '@/types';
 import { getApiErrorMessage } from '@/lib/errors';
 import { getDivisionPublicPath } from '@/lib/division-routes';
 import { getDivisionTheme, themeChipStyle } from '@/lib/division-theme';
-import { ExternalLink, Pencil, Trash2, Calendar } from 'lucide-react';
+import { ExternalLink, Pencil, Trash2, Calendar, Flag } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 export default function AdminDivisions() {
@@ -86,9 +86,11 @@ export default function AdminDivisions() {
               <div key={division.id} className="admin-card p-4">
                 <div className="flex items-start gap-4">
                   <div
-                    className="theme-chip h-12 w-12 shrink-0 rounded-lg"
+                    className="theme-chip flex h-12 w-12 shrink-0 items-center justify-center rounded-lg"
                     style={themeChipStyle(theme)}
-                  />
+                  >
+                    <Flag className="h-6 w-6" style={{ color: theme.primary }} aria-hidden />
+                  </div>
                   <div className="min-w-0 flex-1">
                     <h3 className="font-semibold" style={{ color: theme.primary }}>
                       {division.name}
