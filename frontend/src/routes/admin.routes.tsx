@@ -10,9 +10,7 @@ import {
   AdminTeams,
   AdminMatches,
   AdminVenues,
-  AdminMedia,
   AdminUsers,
-  AdminSettings,
   AdminBrackets,
   AdminAnnouncements,
 } from '@/routes/lazy-pages';
@@ -39,10 +37,8 @@ export function adminRoutes() {
       <Route path="/admin/matches" element={<AdminRoute><L><AdminMatches /></L></AdminRoute>} />
       <Route path="/admin/brackets" element={<AdminRoute><L><AdminBrackets /></L></AdminRoute>} />
       <Route path="/admin/venues" element={<AdminRoute><L><AdminVenues /></L></AdminRoute>} />
-      <Route path="/admin/media" element={<AdminRoute><L><AdminMedia /></L></AdminRoute>} />
       <Route path="/admin/users" element={<AdminRoute><L><AdminUsers /></L></AdminRoute>} />
       <Route path="/admin/announcements" element={<AdminRoute><L><AdminAnnouncements /></L></AdminRoute>} />
-      <Route path="/admin/settings" element={<AdminRoute><L><AdminSettings /></L></AdminRoute>} />
     </>
   );
 }

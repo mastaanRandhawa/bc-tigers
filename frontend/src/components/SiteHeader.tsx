@@ -15,7 +15,6 @@ import {
 } from '@/lib/auth-utils';
 import BrandLogo from '@/components/shared/BrandLogo';
 import GlobalSearch from '@/components/shared/GlobalSearch';
-import NotificationBell from '@/components/shared/NotificationBell';
 import { AnimatedThemeToggler } from '@/components/ui/animated-theme-toggler';
 import { cn } from '@/lib/utils';
 import { useSmartHeader } from '@/hooks/useSmartHeader';
@@ -238,10 +237,7 @@ export default function SiteHeader({ variant = 'hero', showLiveTicker = true }: 
             <AnimatedThemeToggler onDark={onDark} />
             {isInitialized && (
               isAuthenticated && user ? (
-                <>
-                  {!isMinimal && <NotificationBell onDark={onDark} />}
-                  <UserMenu onDark={onDark} />
-                </>
+                <UserMenu onDark={onDark} />
               ) : (
                 <SignInButton isHero />
               )

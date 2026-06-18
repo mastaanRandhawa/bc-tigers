@@ -77,6 +77,25 @@ export class MatchesController {
     return this.service.addEvent(matchId, body);
   }
 
+  @Patch(':matchId/events/:eventId')
+  @AdminOnly()
+  updateEvent(
+    @Param('matchId') matchId: string,
+    @Param('eventId') eventId: string,
+    @Body() body: Record<string, unknown>,
+  ) {
+    return this.service.updateEvent(matchId, eventId, body);
+  }
+
+  @Delete(':matchId/events/:eventId')
+  @AdminOnly()
+  deleteEvent(
+    @Param('matchId') matchId: string,
+    @Param('eventId') eventId: string,
+  ) {
+    return this.service.deleteEvent(matchId, eventId);
+  }
+
   @Delete(':id')
   @AdminOnly()
   remove(@Param('id') id: string) {

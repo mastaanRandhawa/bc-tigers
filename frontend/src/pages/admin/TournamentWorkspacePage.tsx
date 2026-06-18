@@ -24,6 +24,7 @@ import { useFormDialog } from '@/hooks/useFormDialog';
 import { getDivisionTheme, themeChipStyle } from '@/lib/division-theme';
 import { formatDate, formatTime, getMatchStatusBadgeVariant } from '@/lib/utils';
 import { getApiErrorMessage } from '@/lib/errors';
+import { toast } from 'sonner';
 import { matchSearchText } from '@/lib/search-text';
 import {
   Sheet,
@@ -357,7 +358,7 @@ export default function TournamentWorkspacePage() {
         existingMatchCount={scheduleDiv ? matches.filter((m) => m.division_id === scheduleDiv.id).length : 0}
         open={!!scheduleDiv}
         onOpenChange={(open) => !open && setScheduleDiv(null)}
-        onSuccess={(created) => alert(`Created ${created} matches.`)}
+        onSuccess={(created) => toast.success(`Created ${created} matches.`)}
       />
       <Sheet open={!!rosterTeam} onOpenChange={(open) => !open && setRosterTeam(null)}>
         <SheetContent side="right" className="w-full max-w-md gap-0 p-0">

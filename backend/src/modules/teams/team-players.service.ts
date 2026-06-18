@@ -30,13 +30,7 @@ export class TeamPlayersService {
   findByDivision(divisionId: string) {
     return prisma.player.findMany({
       where: { team: { division_id: divisionId } },
-      include: {
-        team: true,
-        player_stats: {
-          where: { division_id: divisionId },
-          include: { tournament: true, team: true },
-        },
-      },
+      include: { team: true },
       orderBy: [{ last_name: 'asc' }, { first_name: 'asc' }],
     });
   }
@@ -49,7 +43,6 @@ export class TeamPlayersService {
       },
       include: {
         team: { include: { division: { include: { tournament: true } } } },
-        player_stats: { include: { tournament: true, division: true, team: true } },
         match_events: {
           where: { team_id: teamId },
           include: { match: true },

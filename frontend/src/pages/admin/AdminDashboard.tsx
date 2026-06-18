@@ -1,5 +1,6 @@
 import AdminLayout from '@/components/AdminLayout';
 import AdminStatGrid from '@/components/admin/AdminStatGrid';
+import { SiteInformationCard } from '@/components/admin/SiteInformationCard';
 import { Link } from 'react-router-dom';
 import QueryState from '@/components/shared/QueryState';
 import { StaggerList, StaggerItem } from '@/components/motion';
@@ -28,6 +29,10 @@ export default function AdminDashboard() {
           { value: liveMatches.length, label: 'Live matches', icon: Zap, accent: liveMatches.length > 0 },
         ]}
       />
+
+      <div className="mb-6">
+        <SiteInformationCard />
+      </div>
 
       <QueryState isLoading={isLoading} isError={isError} onRetry={() => refetch()}>
         <h2 className="text-subsection mb-4">Divisions</h2>

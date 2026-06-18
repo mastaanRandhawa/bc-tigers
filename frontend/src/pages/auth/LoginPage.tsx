@@ -88,13 +88,6 @@ export default function LoginPage() {
           {isLoading ? 'Signing in...' : 'Sign In'}
         </Button>
       </form>
-
-      <p className="text-center text-sm text-muted-foreground mt-6">
-        Don't have an account?{' '}
-        <Link to="/register" className="text-primary font-semibold hover:underline">
-          Sign Up
-        </Link>
-      </p>
     </AuthLayout>
   );
 }

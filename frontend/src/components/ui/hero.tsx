@@ -60,7 +60,11 @@ function GlassFilter() {
             seed="3"
             result="turbulence"
           />
-          <feGaussianBlur in="turbulence" stdDeviation="1.5" result="blurredNoise" />
+          <feGaussianBlur
+            in="turbulence"
+            stdDeviation="1.5"
+            result="blurredNoise"
+          />
           <feDisplacementMap
             in="SourceGraphic"
             in2="blurredNoise"
@@ -69,7 +73,11 @@ function GlassFilter() {
             yChannelSelector="B"
             result="displaced"
           />
-          <feGaussianBlur in="displaced" stdDeviation="3.5" result="finalBlur" />
+          <feGaussianBlur
+            in="displaced"
+            stdDeviation="3.5"
+            result="finalBlur"
+          />
           <feComposite in="finalBlur" in2="finalBlur" operator="over" />
         </filter>
       </defs>
@@ -163,7 +171,8 @@ function LiveMatchCard({
             compact ? "w-10 h-10" : "w-8 h-8 sm:w-11 sm:h-11 md:w-13 md:h-13",
           )}
           style={{
-            boxShadow: "inset 0 1px 2px rgba(255,255,255,0.4), 0 2px 4px rgba(0,0,0,0.18)",
+            boxShadow:
+              "inset 0 1px 2px rgba(255,255,255,0.4), 0 2px 4px rgba(0,0,0,0.18)",
           }}
         >
           <span
@@ -190,7 +199,9 @@ function LiveMatchCard({
           <p
             className={cn(
               "font-black text-white drop-shadow-lg leading-tight my-0.5",
-              compact ? "text-base" : "text-sm sm:text-lg md:text-xl lg:text-2xl",
+              compact
+                ? "text-base"
+                : "text-sm sm:text-lg md:text-xl lg:text-2xl",
             )}
           >
             {match.home_score} – {match.away_score}
@@ -279,7 +290,11 @@ export function TournamentHubHeader() {
             {featuredLive[0] && (
               <motion.div
                 animate={{ y: [0, -10, 0] }}
-                transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
+                transition={{
+                  duration: 5,
+                  repeat: Infinity,
+                  ease: "easeInOut",
+                }}
                 className="absolute bottom-[42%] left-[-3%] sm:bottom-[6%] sm:left-[-1%] md:bottom-[8%] md:left-[0%] z-30 pointer-events-auto"
               >
                 <LiveMatchCard
@@ -293,7 +308,12 @@ export function TournamentHubHeader() {
             {featuredLive[1] && (
               <motion.div
                 animate={{ y: [0, -12, 0] }}
-                transition={{ duration: 6, repeat: Infinity, ease: "easeInOut", delay: 1 }}
+                transition={{
+                  duration: 6,
+                  repeat: Infinity,
+                  ease: "easeInOut",
+                  delay: 1,
+                }}
                 className="absolute top-[4%] right-[-3%] sm:top-[10%] sm:right-[-1%] md:top-[12%] md:right-[0%] z-30 pointer-events-auto"
               >
                 <LiveMatchCard

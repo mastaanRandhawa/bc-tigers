@@ -31,6 +31,21 @@ export const matchesService = {
     },
   ) => apiClient.post<MatchEvent>(`/matches/${matchId}/events`, data),
 
+  updateEvent: (
+    matchId: string,
+    eventId: string,
+    data: {
+      player_id?: string | null;
+      team_id?: string;
+      type?: MatchEventType;
+      minute?: number;
+      extra_time?: number | null;
+    },
+  ) => apiClient.patch<MatchEvent>(`/matches/${matchId}/events/${eventId}`, data),
+
+  deleteEvent: (matchId: string, eventId: string) =>
+    apiClient.delete<{ id: string }>(`/matches/${matchId}/events/${eventId}`),
+
   delete: (id: string) => apiClient.delete<Match>(`/matches/${id}`),
 
   assignOfficial: (

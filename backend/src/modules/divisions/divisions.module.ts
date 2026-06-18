@@ -6,7 +6,6 @@ import { DivisionResourcesService } from './division-resources.service';
 import { TeamsModule } from '../teams/teams.module';
 import { MatchesModule } from '../matches/matches.module';
 import { StandingsModule } from '../standings/standings.module';
-import { StatsModule } from '../stats/stats.module';
 import { BracketsModule } from '../brackets/brackets.module';
 import { VenuesModule } from '../venues/venues.module';
 
@@ -15,7 +14,6 @@ import { VenuesModule } from '../venues/venues.module';
     TeamsModule,
     MatchesModule,
     StandingsModule,
-    StatsModule,
     BracketsModule,
     VenuesModule,
   ],

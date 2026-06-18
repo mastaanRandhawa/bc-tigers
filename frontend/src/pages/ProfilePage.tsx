@@ -8,6 +8,7 @@ import { useAuthStore } from '@/store/authStore';
 import { authService } from '@/services/auth.service';
 import { getRoleLabel } from '@/lib/auth-utils';
 import { Save, Lock } from 'lucide-react';
+import PageLoader from '@/components/shared/PageLoader';
 
 export default function ProfilePage() {
   const { user, refreshUser } = useAuthStore();
@@ -69,7 +70,7 @@ export default function ProfilePage() {
     }
   };
 
-  if (!user) return null;
+  if (!user) return <PageLoader />;
 
   return (
     <PageLayout>

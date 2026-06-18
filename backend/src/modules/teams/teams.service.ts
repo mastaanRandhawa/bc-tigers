@@ -16,19 +16,6 @@ export class TeamsService {
     });
   }
 
-  async findOne(slug: string) {
-    const team = await prisma.team.findFirst({
-      where: { slug },
-      include: {
-        division: { include: { tournament: true } },
-        players: { orderBy: { last_name: 'asc' } },
-        standings: true,
-      },
-    });
-    if (!team) throw new NotFoundException('Team not found');
-    return team;
-  }
-
   async findOneInDivision(divisionId: string, slug: string) {
     const team = await prisma.team.findUnique({
       where: {

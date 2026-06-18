@@ -31,8 +31,6 @@ export type Gender = 'MALE' | 'FEMALE' | 'MIXED';
 
 export type BracketStage = 'ROUND_OF_16' | 'QUARTER_FINAL' | 'SEMI_FINAL' | 'FINAL' | 'THIRD_PLACE';
 
-export type MediaType = 'PHOTO' | 'VIDEO' | 'DOCUMENT';
-
 export interface User {
   id: string;
   first_name: string;
@@ -76,6 +74,7 @@ export interface Division {
   points_loss: number;
   primary_color?: string;
   accent_color?: string;
+  bracket_locked?: boolean;
   teams?: Team[];
 }
 
@@ -106,7 +105,6 @@ export interface Player {
   profile_image?: string;
   active?: boolean;
   team?: Team;
-  player_stats?: PlayerStat[];
 }
 
 export interface MatchOfficial {
@@ -189,24 +187,10 @@ export interface Standing {
   goals_against: number;
   goal_difference: number;
   points: number;
+  fair_play?: number;
   rank: number;
   team?: Team;
   form?: ('W' | 'D' | 'L')[];
-}
-
-export interface PlayerStat {
-  id: string;
-  player_id: string;
-  tournament_id: string;
-  division_id?: string;
-  goals: number;
-  assists: number;
-  yellow_cards: number;
-  red_cards: number;
-  matches_played: number;
-  player?: Player;
-  team?: Team;
-  tournament?: Tournament;
 }
 
 export interface BracketNode {
@@ -224,14 +208,12 @@ export interface BracketNode {
   match?: Match;
 }
 
-export interface Notification {
+export interface Announcement {
   id: string;
-  user_id?: string;
-  tournament_id?: string;
   title: string;
   message: string;
   type: string;
-  read: boolean;
+  tournament_id?: string | null;
   created_at: string;
   tournament?: Pick<Tournament, 'id' | 'name' | 'slug'>;
 }
@@ -242,27 +224,12 @@ export interface SiteSettings {
   contact_email: string;
   contact_phone?: string;
   contact_address?: string;
-  timezone: string;
-  registration_open: boolean;
-  notifications_enabled: boolean;
-  live_score_updates: boolean;
-  max_teams_per_division: number;
-  points_win: number;
-  points_draw: number;
-  points_loss: number;
 }
 
-export interface Media {
-  id: string;
-  tournament_id?: string;
-  division_id?: string;
-  match_id?: string;
-  type: MediaType;
-  url: string;
-  title?: string;
-  description?: string;
-  created_at: string;
-}
+export type PublicSiteSettings = Pick<
+  SiteSettings,
+  'site_name' | 'contact_email' | 'contact_phone' | 'contact_address'
+>;
 
 export interface AuditLog {
   id: string;
@@ -280,37 +247,13 @@ export interface AuthResponse {
   user: User;
 }
 
-export interface RegisterRequest {
-  first_name: string;
-  last_name: string;
-  email: string;
-  password: string;
-  phone?: string;
-}
-
-export type PublicSiteSettings = Pick<
-  SiteSettings,
-  'site_name' | 'contact_email' | 'contact_phone' | 'contact_address' | 'registration_open'
->;
-
-export interface StatsSummary {
-  tournaments: number;
-  teams: number;
-  players: number;
-  matches: number;
-  venues: number;
-  admins: number;
-  live_matches: number;
-  top_scorer: { name: string; goals: number } | null;
-}
-
 export interface ApiError {
   statusCode: number;
   message: string;
 }
 
 export interface HomeHubData {
-  announcements: Notification[];
+  announcements: Announcement[];
   live_matches: Match[];
   upcoming_tournaments: Tournament[];
 }
@@ -320,7 +263,6 @@ export interface TournamentOverview {
   live_matches: Match[];
   recent_matches: Match[];
   upcoming_matches: Match[];
-  top_scorers: PlayerStat[];
   standings_preview: Standing[];
 }
 

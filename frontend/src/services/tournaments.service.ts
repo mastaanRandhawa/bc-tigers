@@ -1,12 +1,11 @@
 import apiClient from '@/lib/api-client';
-import type { Match, PlayerStat, Standing, Tournament } from '@/types';
+import type { Match, Standing, Tournament } from '@/types';
 
 export interface TournamentOverview {
   tournament: Tournament;
   liveMatches: Match[];
   recentMatches: Match[];
   upcomingMatches: Match[];
-  topScorers: PlayerStat[];
   standingsPreview: Standing[];
 }
 

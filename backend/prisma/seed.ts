@@ -5,12 +5,14 @@ import * as bcrypt from 'bcrypt';
 
 const connectionString = process.env.DATABASE_URL!;
 const isRemote =
-  !connectionString.includes('localhost') && !connectionString.includes('127.0.0.1');
-const adapter = new PrismaPg({
-  connectionString,
-  ...(isRemote && { ssl: { rejectUnauthorized: false } }),
+  !connectionString.includes('localhost') &&
+  !connectionString.includes('127.0.0.1');
+const prisma = new PrismaClient({
+  adapter: new PrismaPg({
+    connectionString,
+    ...(isRemote && { ssl: { rejectUnauthorized: false } }),
+  }),
 });
-const prisma = new PrismaClient({ adapter });
 
 function slugify(s: string) {
   return s
@@ -54,8 +56,8 @@ function cupDate(day: number, hour = 10, minute = 0) {
   return new Date(2026, 6, day, hour, minute, 0);
 }
 
-/** Dev seed limits — raise for full registration load */
-const SEED_MAX_TEAMS_PER_DIVISION = 8;
+/** Dev seed limits — raise via SEED_MAX_TEAMS_PER_DIVISION env for full load */
+const SEED_MAX_TEAMS_PER_DIVISION = Number(process.env.SEED_MAX_TEAMS_PER_DIVISION ?? 8);
 const PLAYERS_PER_TEAM = 5;
 
 function roundRobin(teamIds: string[]): [string, string][] {
@@ -522,9 +524,7 @@ async function main() {
   await prisma.passwordResetToken.deleteMany();
   await prisma.siteSettings.deleteMany();
   await prisma.auditLog.deleteMany();
-  await prisma.notification.deleteMany();
-  await prisma.media.deleteMany();
-  await prisma.playerStat.deleteMany();
+  await prisma.announcement.deleteMany();
   await prisma.bracketNode.deleteMany();
   await prisma.standing.deleteMany();
   await prisma.matchOfficial.deleteMany();
@@ -560,8 +560,6 @@ async function main() {
         'Ajinderpal Mangat (604) 240-9742 · Youth: Rakesh Kumar (778) 233-7338 · Adult: Vicky Virk (604) 760-3506',
       contact_address:
         'Newton Athletic Park, 7395 128 St, Surrey, BC V3W 2M7 · www.bctigers.com',
-      max_teams_per_division: 16,
-      registration_open: false,
     },
     update: {
       site_name: 'BC Tigers FC',
@@ -570,8 +568,6 @@ async function main() {
         'Ajinderpal Mangat (604) 240-9742 · Youth: Rakesh Kumar (778) 233-7338 · Adult: Vicky Virk (604) 760-3506',
       contact_address:
         'Newton Athletic Park, 7395 128 St, Surrey, BC V3W 2M7 · www.bctigers.com',
-      max_teams_per_division: 16,
-      registration_open: false,
     },
   });
 
@@ -682,10 +678,9 @@ async function main() {
   console.log(`  ${DIVISIONS.length} divisions, ${totalTeams} teams, ${totalPlayers} players.`);
   console.log(`  Sample schedules in ${matchDivisions} featured divisions.`);
 
-  await prisma.notification.createMany({
+  await prisma.announcement.createMany({
     data: [
       {
-        user_id: null,
         tournament_id: tournament.id,
         title: '14th Annual Miri Piri Soccer Tournament',
         message:
@@ -694,7 +689,6 @@ async function main() {
         type: 'INFO',
       },
       {
-        user_id: null,
         tournament_id: tournament.id,
         title: 'Weekend perks for all teams',
         message:
@@ -702,39 +696,12 @@ async function main() {
         type: 'INFO',
       },
       {
-        user_id: null,
         tournament_id: tournament.id,
         title: 'Division rules',
         message:
           'Maximum 16 teams per division. Youth U6–U19: minimum 3 games guaranteed. ' +
           'U13–U18: participation medals for all players. Recreational & masters divisions available.',
         type: 'INFO',
-      },
-      {
-        user_id: adminUser.id,
-        tournament_id: tournament.id,
-        title: 'Admin: registration tracking',
-        message: 'Early bird deadline May 15, 2026. Final registration June 15, 2026.',
-        type: 'INFO',
-      },
-    ],
-  });
-
-  await prisma.media.createMany({
-    data: [
-      {
-        tournament_id: tournament.id,
-        type: 'PHOTO',
-        url: 'https://images.unsplash.com/photo-1574629810360-7efbbe195018?w=800&q=80',
-        title: 'Miri Piri Canada Soccer Cup 2026',
-        description: 'Hosted by BC Tigers FC · Newton Athletic Park',
-      },
-      {
-        tournament_id: tournament.id,
-        type: 'PHOTO',
-        url: 'https://images.unsplash.com/photo-1522778119026-d949f05cc960?w=800&q=80',
-        title: 'Tournament weekend',
-        description: 'July 3–5, 2026 · Surrey, BC',
       },
     ],
   });

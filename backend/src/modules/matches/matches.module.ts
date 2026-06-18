@@ -3,14 +3,16 @@ import { MatchesController } from './matches.controller';
 import { MatchOfficialsController } from './match-officials.controller';
 import { MatchesService } from './matches.service';
 import { GatewaysModule } from '../../gateways/gateways.module';
-import { SettingsModule } from '../settings/settings.module';
-import { NotificationsModule } from '../notifications/notifications.module';
+import { BracketsModule } from '../brackets/brackets.module';
+import { MailModule } from '../mail/mail.module';
+import { AuditLogModule } from '../audit-log/audit-log.module';
 
 @Module({
   imports: [
     forwardRef(() => GatewaysModule),
-    SettingsModule,
-    NotificationsModule,
+    forwardRef(() => BracketsModule),
+    MailModule,
+    AuditLogModule,
   ],
   controllers: [MatchesController, MatchOfficialsController],
   providers: [MatchesService],

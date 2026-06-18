@@ -1,37 +1,23 @@
 import {
   Injectable,
   UnauthorizedException,
-  ConflictException,
   NotFoundException,
   BadRequestException,
-  ForbiddenException,
+  ServiceUnavailableException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { randomBytes } from 'crypto';
 import prisma from '../../prisma/prisma';
-import { SettingsService } from '../settings/settings.service';
 import { MailService } from '../mail/mail.service';
 
+/** Admin-only authentication — public registration is not supported. */
 @Injectable()
 export class AuthService {
   constructor(
     private jwt: JwtService,
-    private settingsService: SettingsService,
     private mailService: MailService,
   ) {}
-
-  async register(_data: {
-    first_name: string;
-    last_name: string;
-    email: string;
-    password: string;
-    phone?: string;
-  }) {
-    throw new ForbiddenException(
-      'Public registration is disabled. Contact an administrator for access.',
-    );
-  }
 
   async login(email: string, password: string) {
     const user = await prisma.user.findUnique({ where: { email } });
@@ -121,16 +107,23 @@ export class AuthService {
     });
 
     const resetUrl = this.mailService.appUrl(`/reset-password?token=${token}`);
-    await this.mailService.send({
+    const mailResult = await this.mailService.send({
       to: user.email,
       subject: 'Reset your BC Tigers password',
       text: `Use this link to reset your password (expires in 1 hour): ${resetUrl}`,
       html: `<p>Use this link to reset your password (expires in 1 hour):</p><p><a href="${resetUrl}">${resetUrl}</a></p>`,
     });
 
+    if (!mailResult.ok) {
+      throw new ServiceUnavailableException(
+        'Unable to send password reset email. Contact an administrator.',
+      );
+    }
+
     return {
       message: 'If the email exists, a reset link has been sent.',
-      reset_token: process.env.NODE_ENV !== 'production' ? token : undefined,
+      reset_token:
+        process.env.DEV_EXPOSE_RESET_TOKEN === 'true' ? token : undefined,
     };
   }
 

@@ -6,16 +6,15 @@ import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { useCreateNotification } from '@/hooks/useCreateNotification';
-import { useUpdateAnnouncement } from '@/hooks/useAnnouncements';
+import { useCreateAnnouncement, useUpdateAnnouncement } from '@/hooks/useAnnouncements';
 import { useTournaments } from '@/hooks/useTournaments';
 import { getApiErrorMessage } from '@/lib/errors';
-import type { Notification } from '@/types';
+import type { Announcement } from '@/types';
 
 interface AnnouncementFormDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  announcement?: Notification | null;
+  announcement?: Announcement | null;
 }
 
 interface FormValues {
@@ -32,7 +31,7 @@ export default function AnnouncementFormDialog({
   onOpenChange,
   announcement,
 }: AnnouncementFormDialogProps) {
-  const createMutation = useCreateNotification();
+  const createMutation = useCreateAnnouncement();
   const updateMutation = useUpdateAnnouncement();
   const { data: tournaments = [] } = useTournaments();
   const isEditing = !!announcement;

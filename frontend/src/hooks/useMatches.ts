@@ -60,12 +60,16 @@ export function useMatch(id?: string) {
     socket.on(SOCKET_EVENTS.MATCH_UPDATED, handleUpdate);
     socket.on(SOCKET_EVENTS.MATCH_COMPLETED, handleUpdate);
     socket.on(SOCKET_EVENTS.GOAL_SCORED, handleUpdate);
+    socket.on(SOCKET_EVENTS.CARD_ISSUED, handleUpdate);
+    socket.on(SOCKET_EVENTS.SUBSTITUTION, handleUpdate);
 
     return () => {
       socket.emit('leave:match', id);
       socket.off(SOCKET_EVENTS.MATCH_UPDATED, handleUpdate);
       socket.off(SOCKET_EVENTS.MATCH_COMPLETED, handleUpdate);
       socket.off(SOCKET_EVENTS.GOAL_SCORED, handleUpdate);
+      socket.off(SOCKET_EVENTS.CARD_ISSUED, handleUpdate);
+      socket.off(SOCKET_EVENTS.SUBSTITUTION, handleUpdate);
     };
   }, [id, qc]);
 
@@ -85,7 +89,10 @@ export function useUpdateMatch() {
   return useMutation({
     mutationFn: ({ id, data }: { id: string; data: Partial<Match> }) =>
       matchesService.update(id, data),
-    onSuccess: () => invalidateMatchLists(qc),
+    onSuccess: (_, { id }) => {
+      qc.invalidateQueries({ queryKey: queryKeys.matches.detail(id) });
+      invalidateMatchLists(qc);
+    },
   });
 }
 
@@ -148,6 +155,44 @@ export function useAddMatchEvent() {
     }) => matchesService.addEvent(matchId, data),
     onSuccess: (_, { matchId }) => {
       qc.invalidateQueries({ queryKey: queryKeys.matches.detail(matchId) });
+      invalidateMatchLists(qc);
+    },
+  });
+}
+
+export function useUpdateMatchEvent() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      matchId,
+      eventId,
+      data,
+    }: {
+      matchId: string;
+      eventId: string;
+      data: {
+        player_id?: string | null;
+        team_id?: string;
+        type?: MatchEventType;
+        minute?: number;
+        extra_time?: number | null;
+      };
+    }) => matchesService.updateEvent(matchId, eventId, data),
+    onSuccess: (_, { matchId }) => {
+      qc.invalidateQueries({ queryKey: queryKeys.matches.detail(matchId) });
+      invalidateMatchLists(qc);
+    },
+  });
+}
+
+export function useDeleteMatchEvent() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ matchId, eventId }: { matchId: string; eventId: string }) =>
+      matchesService.deleteEvent(matchId, eventId),
+    onSuccess: (_, { matchId }) => {
+      qc.invalidateQueries({ queryKey: queryKeys.matches.detail(matchId) });
+      invalidateMatchLists(qc);
     },
   });
 }
@@ -193,7 +238,7 @@ export function useRemoveMatchOfficial() {
   });
 }
 
-/** Invalidate caches when standings, brackets, or notifications change. */
+/** Invalidate caches when standings or brackets change. */
 export function useRealtimeInvalidation() {
   const qc = useQueryClient();
 
@@ -205,16 +250,13 @@ export function useRealtimeInvalidation() {
       qc.invalidateQueries({ queryKey: ['divisions'] });
     };
     const onBracket = () => qc.invalidateQueries({ queryKey: ['brackets'] });
-    const onNotification = () => qc.invalidateQueries({ queryKey: ['notifications'] });
 
     socket.on(SOCKET_EVENTS.STANDINGS_UPDATED, onStandings);
     socket.on(SOCKET_EVENTS.BRACKET_UPDATED, onBracket);
-    socket.on(SOCKET_EVENTS.NOTIFICATION, onNotification);
 
     return () => {
       socket.off(SOCKET_EVENTS.STANDINGS_UPDATED, onStandings);
       socket.off(SOCKET_EVENTS.BRACKET_UPDATED, onBracket);
-      socket.off(SOCKET_EVENTS.NOTIFICATION, onNotification);
     };
   }, [qc]);
 }

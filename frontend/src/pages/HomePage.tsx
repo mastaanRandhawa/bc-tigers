@@ -22,18 +22,20 @@ import { useCanAdminEdit } from '@/hooks/useCanAdminEdit';
 import { AdminActionButton } from '@/components/admin/inline/AdminActionButton';
 import { AnnouncementDialog } from '@/components/admin/inline/AnnouncementDialog';
 import { useDeleteAnnouncement } from '@/hooks/useAnnouncements';
-import type { HubAnnouncement } from '@/services/hub.service';
+import type { Announcement } from '@/types';
 
 export default function HomePage() {
   const { data, isLoading, isError, refetch } = useHomeHub();
   const canEdit = useCanAdminEdit();
   const [announcementOpen, setAnnouncementOpen] = useState(false);
-  const [editingAnnouncement, setEditingAnnouncement] = useState<HubAnnouncement | null>(null);
+  const [editingAnnouncement, setEditingAnnouncement] = useState<Announcement | null>(null);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const deleteMutation = useDeleteAnnouncement();
 
   const tournaments = data?.tournaments ?? [];
   const liveMatches = data?.liveMatches ?? [];
+  const recentMatches = data?.recentMatches ?? [];
+  const upcomingMatches = data?.upcomingMatches ?? [];
   const announcements = data?.announcements ?? [];
 
   const featuredTournament = useMemo(
@@ -219,9 +221,17 @@ export default function HomePage() {
                         className="group ds-card-hover overflow-hidden"
                       >
                         <div className="relative flex h-20 items-center justify-center border-b border-border bg-surface-muted">
-                          <div className="rounded-xl border border-border bg-card p-2 shadow-sm">
-                            <Trophy className="h-6 w-6 text-primary" aria-hidden />
-                          </div>
+                          {t.logo ? (
+                            <img
+                              src={t.logo}
+                              alt=""
+                              className="h-14 w-14 rounded-xl border border-border bg-card object-contain p-1.5 shadow-sm"
+                            />
+                          ) : (
+                            <div className="rounded-xl border border-border bg-card p-2 shadow-sm">
+                              <Trophy className="h-6 w-6 text-primary" aria-hidden />
+                            </div>
+                          )}
                           <Badge
                             variant={
                               t.status === 'ACTIVE'
@@ -258,6 +268,32 @@ export default function HomePage() {
                 <SectionHeader title="Live now" linkLabel="View tournaments" href="/tournaments" />
                 <div className="overflow-hidden rounded-md border border-border/60 bg-card">
                   {liveMatches.slice(0, 6).map((match, index) => (
+                    <MatchCard key={match.id} match={match} flat divider={index > 0} />
+                  ))}
+                </div>
+              </Section>
+            </RevealOnScroll>
+          )}
+
+          {recentMatches.length > 0 && (
+            <RevealOnScroll>
+              <Section className="mt-6">
+                <SectionHeader title="Recent results" linkLabel="View tournaments" href="/tournaments" />
+                <div className="overflow-hidden rounded-md border border-border/60 bg-card">
+                  {recentMatches.slice(0, 6).map((match, index) => (
+                    <MatchCard key={match.id} match={match} flat divider={index > 0} />
+                  ))}
+                </div>
+              </Section>
+            </RevealOnScroll>
+          )}
+
+          {upcomingMatches.length > 0 && (
+            <RevealOnScroll>
+              <Section className="mt-6">
+                <SectionHeader title="Upcoming matches" linkLabel="View tournaments" href="/tournaments" />
+                <div className="overflow-hidden rounded-md border border-border/60 bg-card">
+                  {upcomingMatches.slice(0, 6).map((match, index) => (
                     <MatchCard key={match.id} match={match} flat divider={index > 0} />
                   ))}
                 </div>

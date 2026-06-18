@@ -29,28 +29,28 @@ function ScoreControl({
   pending?: boolean;
 }) {
   return (
-    <div className="flex flex-col items-center gap-2">
-      <span className="text-xs font-medium text-muted-foreground truncate max-w-[8rem]">{label}</span>
+    <div className="flex flex-col items-center gap-2.5">
+      <span className="max-w-[9rem] truncate text-xs font-medium text-muted-foreground">{label}</span>
       <div className="flex items-center gap-2">
         <Button
           type="button"
           variant="outline"
           size="icon"
-          className="h-11 w-11 shrink-0"
+          className="h-10 w-10 shrink-0 rounded-lg border-border/60 bg-background"
           onClick={onDecrement}
           disabled={disabled || pending || score <= 0}
           aria-label={`Decrease ${label} score`}
         >
           <Minus className="h-4 w-4" />
         </Button>
-        <span className="min-w-[2.5rem] text-center font-display text-2xl font-black tabular-nums">
+        <span className="min-w-[2.5rem] text-center font-display text-2xl font-bold tabular-nums">
           {score}
         </span>
         <Button
           type="button"
           variant="outline"
           size="icon"
-          className="h-11 w-11 shrink-0"
+          className="h-10 w-10 shrink-0 rounded-lg border-border/60 bg-background"
           onClick={onIncrement}
           disabled={disabled || pending}
           aria-label={`Increase ${label} score`}
@@ -80,14 +80,14 @@ export default function MatchScoreStepper({
   return (
     <div
       className={cn(
-        'rounded-xl border border-primary/20 bg-primary/5 p-4',
+        'rounded-xl border border-border/40 bg-muted/30 p-4 sm:p-5',
         className,
       )}
     >
-      <p className="mb-3 text-center text-xs font-semibold uppercase tracking-wide text-primary">
+      <p className="mb-4 text-center text-[11px] font-semibold uppercase tracking-widest text-muted-foreground">
         Quick score update
       </p>
-      <div className="flex items-center justify-center gap-6 sm:gap-10">
+      <div className="flex items-center justify-center gap-6 sm:gap-12">
         <ScoreControl
           label={homeLabel}
           score={homeScore}
@@ -96,7 +96,7 @@ export default function MatchScoreStepper({
           disabled={disabled}
           pending={mutation.isPending}
         />
-        <span className="font-display text-xl font-light text-muted-foreground/40">—</span>
+        <span className="font-display text-lg font-light text-muted-foreground/30">—</span>
         <ScoreControl
           label={awayLabel}
           score={awayScore}

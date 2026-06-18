@@ -6,16 +6,9 @@ const DEFAULT_SETTINGS = {
   id: 'default',
   site_name: 'BC Tigers Soccer',
   contact_email: 'info@bctigers.ca',
-  contact_phone: '+1 (604) 555-0100',
-  contact_address: '3883 Imperial St, Burnaby, BC V5S 3V5',
+  contact_phone: null as string | null,
+  contact_address: null as string | null,
   timezone: 'America/Vancouver',
-  registration_open: true,
-  notifications_enabled: true,
-  live_score_updates: true,
-  max_teams_per_division: 10,
-  points_win: 3,
-  points_draw: 1,
-  points_loss: 0,
 };
 
 @Injectable()
@@ -24,6 +17,9 @@ export class SettingsService {
     const settings = await this.getOrCreate();
     return {
       site_name: settings.site_name,
+      contact_email: settings.contact_email,
+      contact_phone: settings.contact_phone,
+      contact_address: settings.contact_address,
     };
   }
 

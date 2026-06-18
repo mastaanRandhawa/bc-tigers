@@ -142,4 +142,11 @@ export class MatchesGateway
   emitBroadcastNotification(notification: unknown) {
     this.server.emit(SOCKET_EVENTS.NOTIFICATION, notification);
   }
+
+  emitBracketUpdated(divisionId: string, data: unknown) {
+    this.server
+      .to(`division:${divisionId}`)
+      .emit(SOCKET_EVENTS.BRACKET_UPDATED, data);
+    this.server.emit(SOCKET_EVENTS.BRACKET_UPDATED, data);
+  }
 }

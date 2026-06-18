@@ -85,16 +85,21 @@ export function SelectField<T extends FieldValues>({
       render={({ field, fieldState }) => (
         <div className={cn('space-y-1.5', className)}>
           <Label>{label}</Label>
-          <Select value={field.value ?? ''} onValueChange={field.onChange}>
+          <Select
+            value={field.value && field.value !== '' ? field.value : undefined}
+            onValueChange={field.onChange}
+          >
             <SelectTrigger>
               <SelectValue placeholder={placeholder} />
             </SelectTrigger>
             <SelectContent>
-              {options.map((opt) => (
-                <SelectItem key={opt.value} value={opt.value}>
-                  {opt.label}
-                </SelectItem>
-              ))}
+              {options
+                .filter((opt) => opt.value !== '')
+                .map((opt) => (
+                  <SelectItem key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </SelectItem>
+                ))}
             </SelectContent>
           </Select>
           {fieldState.error && <p className="text-xs text-red-500">{fieldState.error.message}</p>}

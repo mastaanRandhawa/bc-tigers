@@ -79,7 +79,6 @@ export const DivisionSlugRedirect = lazyPage(
 
 // Auth
 export const LoginPage = lazyPage(() => import("@/pages/auth/LoginPage"));
-export const RegisterPage = lazyPage(() => import("@/pages/auth/RegisterPage"));
 export const ForgotPasswordPage = lazyPage(
   () => import("@/pages/auth/ForgotPasswordPage"),
 );
@@ -108,11 +107,7 @@ export const AdminMatches = lazyPage(
   () => import("@/pages/admin/AdminMatches"),
 );
 export const AdminVenues = lazyPage(() => import("@/pages/admin/AdminVenues"));
-export const AdminMedia = lazyPage(() => import("@/pages/admin/AdminMedia"));
 export const AdminUsers = lazyPage(() => import("@/pages/admin/AdminUsers"));
-export const AdminSettings = lazyPage(
-  () => import("@/pages/admin/AdminSettings"),
-);
 export const AdminBrackets = lazyPage(
   () => import("@/pages/admin/AdminBrackets"),
 );

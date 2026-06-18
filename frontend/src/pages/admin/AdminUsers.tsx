@@ -2,6 +2,7 @@ import AdminLayout from '@/components/AdminLayout';
 import AdminTable from '@/components/AdminTable';
 import QueryState from '@/components/shared/QueryState';
 import UserRoleFormDialog from '@/components/admin/forms/UserRoleFormDialog';
+import UserCreateFormDialog from '@/components/admin/forms/UserCreateFormDialog';
 import { AuditLogDrawer } from '@/components/admin/AuditLogDrawer';
 import { ConfirmDialog } from '@/components/admin/inline/ConfirmDialog';
 import { useState } from 'react';
@@ -13,11 +14,13 @@ import type { User } from '@/types';
 import { Badge } from '@/components/ui/badge';
 import { formatDate } from '@/lib/utils';
 import { getApiErrorMessage } from '@/lib/errors';
+import { toast } from 'sonner';
 
 export default function AdminUsers() {
   const { data: users = [], isLoading, isError, refetch } = useUsers();
   const deleteMutation = useDeleteUser();
   const formDialog = useFormDialog<User>();
+  const [createOpen, setCreateOpen] = useState(false);
   const [auditUser, setAuditUser] = useState<User | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<User | null>(null);
 
@@ -62,11 +65,14 @@ export default function AdminUsers() {
           title="All Users"
           data={users}
           columns={columns}
+          onAdd={() => setCreateOpen(true)}
           onEdit={formDialog.openEdit}
           onDelete={(u) => setDeleteTarget(u)}
           searchKeys={['first_name', 'last_name', 'email']}
         />
       </QueryState>
+
+      <UserCreateFormDialog open={createOpen} onOpenChange={setCreateOpen} />
 
       <UserRoleFormDialog
         open={formDialog.open}
@@ -91,9 +97,10 @@ export default function AdminUsers() {
           if (!deleteTarget) return;
           try {
             await deleteMutation.mutateAsync(deleteTarget.id);
+            toast.success('User deleted.');
             setDeleteTarget(null);
           } catch (err) {
-            alert(getApiErrorMessage(err, 'Failed to delete user'));
+            toast.error(getApiErrorMessage(err, 'Failed to delete user'));
           }
         }}
       />

@@ -5,6 +5,7 @@ import QueryState from '@/components/shared/QueryState';
 import MatchFormDialog from '@/components/admin/forms/MatchFormDialog';
 import MatchScoreFormDialog from '@/components/admin/forms/MatchScoreFormDialog';
 import MatchEventFormDialog from '@/components/admin/forms/MatchEventFormDialog';
+import { ConfirmDialog } from '@/components/admin/inline/ConfirmDialog';
 import { useFormDialog } from '@/hooks/useFormDialog';
 import { useMatches, useDeleteMatch } from '@/hooks/useMatches';
 import type { Match } from '@/types';
@@ -14,6 +15,7 @@ import { formatDate, formatTime, getMatchStatusBadgeVariant } from '@/lib/utils'
 import { getApiErrorMessage } from '@/lib/errors';
 import { matchSearchText } from '@/lib/search-text';
 import { Zap, PlusCircle } from 'lucide-react';
+import { toast } from 'sonner';
 
 const columns = (onScore: (m: Match) => void, onEvent: (m: Match) => void) => [
   {
@@ -81,15 +83,7 @@ export default function AdminMatches() {
   const formDialog = useFormDialog<Match>();
   const [scoreMatch, setScoreMatch] = useState<Match | null>(null);
   const [eventMatch, setEventMatch] = useState<Match | null>(null);
-
-  const handleDelete = async (m: Match) => {
-    if (!confirm('Delete this match?')) return;
-    try {
-      await deleteMutation.mutateAsync(m.id);
-    } catch (err) {
-      alert(getApiErrorMessage(err, 'Failed to delete match'));
-    }
-  };
+  const [deleteTarget, setDeleteTarget] = useState<Match | null>(null);
 
   return (
     <AdminLayout title="Matches">
@@ -100,9 +94,8 @@ export default function AdminMatches() {
           columns={columns(setScoreMatch, setEventMatch)}
           onAdd={formDialog.openCreate}
           onEdit={formDialog.openEdit}
-          onDelete={handleDelete}
+          onDelete={(m) => setDeleteTarget(m)}
           getSearchText={matchSearchText}
-          searchPlaceholder="Search teams, division, venue…"
         />
       </QueryState>
 
@@ -111,15 +104,25 @@ export default function AdminMatches() {
         onOpenChange={(open) => (open ? formDialog.setOpen(true) : formDialog.close())}
         match={formDialog.editing}
       />
-      <MatchScoreFormDialog
-        open={!!scoreMatch}
-        onOpenChange={(open) => !open && setScoreMatch(null)}
-        match={scoreMatch}
-      />
-      <MatchEventFormDialog
-        open={!!eventMatch}
-        onOpenChange={(open) => !open && setEventMatch(null)}
-        match={eventMatch}
+      <MatchScoreFormDialog open={!!scoreMatch} onOpenChange={(open) => !open && setScoreMatch(null)} match={scoreMatch} />
+      <MatchEventFormDialog open={!!eventMatch} onOpenChange={(open) => !open && setEventMatch(null)} match={eventMatch} />
+
+      <ConfirmDialog
+        open={!!deleteTarget}
+        onOpenChange={(open) => !open && setDeleteTarget(null)}
+        title="Delete match?"
+        description="This match will be permanently removed."
+        confirmLabel="Delete"
+        onConfirm={async () => {
+          if (!deleteTarget) return;
+          try {
+            await deleteMutation.mutateAsync(deleteTarget.id);
+            toast.success('Match deleted.');
+          } catch (err) {
+            toast.error(getApiErrorMessage(err, 'Failed to delete match'));
+          }
+          setDeleteTarget(null);
+        }}
       />
     </AdminLayout>
   );

@@ -178,7 +178,12 @@
     @apply bg-surface-muted;
   }
 
-  h1, h2, h3, h4, h5, h6 {
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
     font-family: var(--font-display);
     @apply text-foreground;
   }
@@ -217,7 +222,7 @@
     line-height: var(--leading-relaxed);
   }
 
-  p + p {
+  p+p {
     @apply mt-2;
   }
 
@@ -231,7 +236,9 @@
     min-height: 100vh;
   }
 
-  img, video, svg {
+  img,
+  video,
+  svg {
     max-width: 100%;
     height: auto;
   }
@@ -277,7 +284,7 @@
     box-shadow: var(--shadow-elevated, var(--shadow-md));
   }
 
-  .match-list-perf > * {
+  .match-list-perf>* {
     content-visibility: auto;
     contain-intrinsic-size: auto 120px;
   }
@@ -528,6 +535,7 @@
     from {
       opacity: 0;
     }
+
     to {
       opacity: 1;
     }
@@ -537,20 +545,24 @@
     0% {
       background-color: transparent;
     }
+
     35% {
       background-color: hsl(var(--primary) / 0.2);
     }
+
     100% {
       background-color: transparent;
     }
   }
 
   @keyframes live-breathe {
+
     0%,
     100% {
       opacity: 1;
       transform: scale(1);
     }
+
     50% {
       opacity: 0.88;
       transform: scale(0.97);
@@ -558,10 +570,12 @@
   }
 
   @keyframes skeleton-pulse {
+
     0%,
     100% {
       opacity: 0.35;
     }
+
     50% {
       opacity: 0.85;
     }
@@ -587,10 +601,12 @@
   }
 
   @keyframes division-mesh {
+
     0%,
     100% {
       opacity: 0.85;
     }
+
     50% {
       opacity: 1;
     }
@@ -601,11 +617,13 @@
   }
 
   @keyframes live-ping {
+
     0%,
     100% {
       opacity: 1;
       transform: scale(1);
     }
+
     50% {
       opacity: 0.45;
       transform: scale(1.15);
@@ -651,8 +669,13 @@
   }
 
   @keyframes live-ticker {
-    0% { transform: translateX(0); }
-    100% { transform: translateX(-50%); }
+    0% {
+      transform: translateX(0);
+    }
+
+    100% {
+      transform: translateX(-50%);
+    }
   }
 
   .animate-live-ticker {
@@ -758,6 +781,7 @@
     color: var(--division-primary);
     transition: color 0.15s;
   }
+
   .division-link:hover {
     color: var(--division-primary-hover);
   }
@@ -776,6 +800,7 @@
   .division-theme-root .section-link {
     color: var(--division-primary);
   }
+
   .division-theme-root .section-link:hover {
     color: var(--division-primary-hover);
   }

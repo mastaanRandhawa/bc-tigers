@@ -76,26 +76,18 @@ export const venueSchema = z.object({
   parking_info: z.string().optional(),
 });
 
-export const refereeSchema = z.object({
-  first_name: z.string().min(1, 'First name is required'),
-  last_name: z.string().min(1, 'Last name is required'),
-  email: z.string().email().optional().or(z.literal('')),
-  phone: z.string().optional(),
-  certification: z.string().optional(),
-});
-
-export const mediaSchema = z.object({
-  url: z.string().url('Valid URL is required'),
-  type: z.enum(['PHOTO', 'VIDEO', 'DOCUMENT']),
-  title: z.string().optional(),
-  description: z.string().optional(),
-  tournament_id: z.string().optional(),
-});
-
 export const userRoleSchema = z.object({
   first_name: z.string().min(1, 'First name is required'),
   last_name: z.string().min(1, 'Last name is required'),
   email: z.string().email(),
+  phone: z.string().optional(),
+});
+
+export const userCreateSchema = z.object({
+  first_name: z.string().min(1, 'First name is required'),
+  last_name: z.string().min(1, 'Last name is required'),
+  email: z.string().email('Valid email is required'),
+  password: z.string().min(8, 'Password must be at least 8 characters'),
   phone: z.string().optional(),
 });
 
@@ -106,6 +98,5 @@ export type PlayerFormValues = z.infer<typeof playerSchema>;
 export type MatchFormValues = z.infer<typeof matchSchema>;
 export type MatchScoreFormValues = z.infer<typeof matchScoreSchema>;
 export type VenueFormValues = z.infer<typeof venueSchema>;
-export type RefereeFormValues = z.infer<typeof refereeSchema>;
-export type MediaFormValues = z.infer<typeof mediaSchema>;
 export type UserRoleFormValues = z.infer<typeof userRoleSchema>;
+export type UserCreateFormValues = z.infer<typeof userCreateSchema>;

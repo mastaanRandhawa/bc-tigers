@@ -3,12 +3,12 @@ import {
   NotFoundException,
   Inject,
   forwardRef,
+  Logger,
 } from '@nestjs/common';
 import type { Prisma, MatchStatus, MatchEventType } from '@prisma/client';
 import prisma from '../../prisma/prisma';
 import { MatchesGateway } from '../../gateways/matches.gateway';
-import { SettingsService } from '../settings/settings.service';
-import { NotificationsService } from '../notifications/notifications.service';
+import { BracketsService } from '../brackets/brackets.service';
 import { MailService } from '../mail/mail.service';
 
 const MATCH_LIST_INCLUDE = {
@@ -50,11 +50,13 @@ const MATCH_DETAIL_INCLUDE = {
 
 @Injectable()
 export class MatchesService {
+  private readonly logger = new Logger(MatchesService.name);
+
   constructor(
     @Inject(forwardRef(() => MatchesGateway))
     private readonly gateway: MatchesGateway,
-    private readonly settingsService: SettingsService,
-    private readonly notificationsService: NotificationsService,
+    @Inject(forwardRef(() => BracketsService))
+    private readonly bracketsService: BracketsService,
     private readonly mailService: MailService,
   ) {}
 
@@ -112,7 +114,7 @@ export class MatchesService {
 
     if (updateData.status === 'LIVE' && existing.status !== 'LIVE') {
       await this.gateway.emitMatchStarted(id, match);
-      await this.notifyAdmins(
+      await this.emailAdmins(
         match.tournament_id,
         'Match started',
         `${match.home_team.name} vs ${match.away_team.name} is now live`,
@@ -121,11 +123,12 @@ export class MatchesService {
 
     if (updateData.status === 'COMPLETED' && existing.status !== 'COMPLETED') {
       await this.gateway.emitMatchCompleted(id, match.division_id, match);
-      await this.notifyAdmins(
+      await this.emailAdmins(
         match.tournament_id,
         'Match completed',
         `Final: ${match.home_team.name} ${match.home_score} – ${match.away_score} ${match.away_team.name}`,
       );
+      await this.advanceBracketFromMatch(match);
     }
 
     this.gateway.emitScoreUpdate(id, match.home_score, match.away_score);
@@ -133,19 +136,7 @@ export class MatchesService {
   }
 
   async updateScore(id: string, homeScore: number, awayScore: number) {
-    const match = await prisma.match.update({
-      where: { id },
-      data: { home_score: homeScore, away_score: awayScore },
-      include: MATCH_DETAIL_INCLUDE,
-    });
-
-    this.gateway.emitScoreUpdate(id, homeScore, awayScore);
-    await this.notifyAdmins(
-      match.tournament_id,
-      'Score updated',
-      `${match.home_team.name} ${homeScore} – ${awayScore} ${match.away_team.name}`,
-    );
-    return match;
+    return this.applyScore(id, homeScore, awayScore, { notify: true });
   }
 
   async addEvent(matchId: string, data: unknown) {
@@ -156,81 +147,157 @@ export class MatchesService {
     });
 
     const match = await this.findOne(matchId);
-
-    if (eventData.type === 'GOAL' || eventData.type === 'OWN_GOAL') {
-      const homeDelta =
-        eventData.type === 'GOAL'
-          ? eventData.team_id === match.home_team_id
-            ? 1
-            : 0
-          : eventData.team_id === match.home_team_id
-            ? 0
-            : 1;
-      const awayDelta =
-        eventData.type === 'GOAL'
-          ? eventData.team_id === match.away_team_id
-            ? 1
-            : 0
-          : eventData.team_id === match.away_team_id
-            ? 0
-            : 1;
-
-      if (homeDelta || awayDelta) {
-        await this.updateScore(
-          matchId,
-          match.home_score + homeDelta,
-          match.away_score + awayDelta,
-        );
-      }
-    }
+    await this.syncScoreFromEvents(matchId);
 
     await this.gateway.emitMatchEvent({
       matchId,
       divisionId: match.division_id,
       type: eventData.type as MatchEventType,
-      data: event,
+      data: { matchId, event },
     });
-
-    const label = eventData.type.replace(/_/g, ' ');
-    await this.notifyAdmins(
-      match.tournament_id,
-      `Match event: ${label}`,
-      `${label} at ${eventData.minute}'`,
-    );
 
     return event;
   }
 
-  private async notifyAdmins(
+  async updateEvent(matchId: string, eventId: string, data: unknown) {
+    const existing = await prisma.matchEvent.findFirst({
+      where: { id: eventId, match_id: matchId },
+    });
+    if (!existing) throw new NotFoundException('Match event not found');
+
+    const patch = data as Prisma.MatchEventUncheckedUpdateInput;
+    const event = await prisma.matchEvent.update({
+      where: { id: eventId },
+      data: patch,
+      include: { player: true, team: true },
+    });
+
+    const match = await this.findOne(matchId);
+    await this.syncScoreFromEvents(matchId);
+
+    await this.gateway.emitMatchEvent({
+      matchId,
+      divisionId: match.division_id,
+      type: event.type,
+      data: { matchId, event },
+    });
+
+    return event;
+  }
+
+  async deleteEvent(matchId: string, eventId: string) {
+    const existing = await prisma.matchEvent.findFirst({
+      where: { id: eventId, match_id: matchId },
+    });
+    if (!existing) throw new NotFoundException('Match event not found');
+
+    await prisma.matchEvent.delete({ where: { id: eventId } });
+
+    await this.syncScoreFromEvents(matchId);
+    const match = await this.findOne(matchId);
+    this.gateway.emitScoreUpdate(matchId, match.home_score, match.away_score);
+
+    return { id: eventId };
+  }
+
+  private async syncScoreFromEvents(matchId: string) {
+    const match = await prisma.match.findUnique({ where: { id: matchId } });
+    if (!match) return;
+
+    const events = await prisma.matchEvent.findMany({
+      where: { match_id: matchId, type: { in: ['GOAL', 'OWN_GOAL'] } },
+    });
+
+    let home = 0;
+    let away = 0;
+    for (const e of events) {
+      if (e.type === 'GOAL') {
+        if (e.team_id === match.home_team_id) home += 1;
+        else if (e.team_id === match.away_team_id) away += 1;
+      } else if (e.type === 'OWN_GOAL') {
+        if (e.team_id === match.home_team_id) away += 1;
+        else if (e.team_id === match.away_team_id) home += 1;
+      }
+    }
+
+    await this.applyScore(matchId, home, away, { notify: false });
+  }
+
+  private async applyScore(
+    id: string,
+    homeScore: number,
+    awayScore: number,
+    options: { notify?: boolean },
+  ) {
+    const match = await prisma.match.update({
+      where: { id },
+      data: { home_score: homeScore, away_score: awayScore },
+      include: MATCH_DETAIL_INCLUDE,
+    });
+
+    this.gateway.emitScoreUpdate(id, homeScore, awayScore);
+
+    if (options.notify) {
+      await this.emailAdmins(
+        match.tournament_id,
+        'Score updated',
+        `${match.home_team.name} ${homeScore} – ${awayScore} ${match.away_team.name}`,
+      );
+    }
+
+    return match;
+  }
+
+  private async advanceBracketFromMatch(match: {
+    id: string;
+    division_id: string;
+    home_team_id: string;
+    away_team_id: string;
+    home_score: number;
+    away_score: number;
+  }) {
+    const node = await prisma.bracketNode.findFirst({
+      where: { match_id: match.id },
+    });
+    if (!node) return;
+
+    if (match.home_score === match.away_score) {
+      this.logger.warn(`Match ${match.id} completed as draw — bracket not advanced`);
+      return;
+    }
+
+    const winnerId =
+      match.home_score > match.away_score ? match.home_team_id : match.away_team_id;
+
+    try {
+      await this.bracketsService.advance(node.id, winnerId);
+      this.gateway.emitBracketUpdated(match.division_id, {
+        divisionId: match.division_id,
+        nodeId: node.id,
+        winnerId,
+      });
+    } catch (err) {
+      this.logger.error(`Failed to advance bracket for match ${match.id}`, err);
+    }
+  }
+
+  private async emailAdmins(
     tournamentId: string,
     title: string,
     message: string,
   ) {
-    const settings = await this.settingsService.getAdmin();
-    if (!settings.live_score_updates && !settings.notifications_enabled) return;
-
     const admins = await prisma.user.findMany({
       where: { active: true, role: 'ADMIN' },
-      select: { id: true, email: true },
+      select: { email: true },
     });
 
     for (const admin of admins) {
-      const notification = await this.notificationsService.create({
-        user_id: admin.id,
-        tournament_id: tournamentId,
-        title,
-        message,
-        type: 'MATCH',
+      if (!admin.email) continue;
+      await this.mailService.send({
+        to: admin.email,
+        subject: title,
+        text: message,
       });
-      this.gateway.emitNotification(admin.id, notification);
-
-      if (settings.notifications_enabled && admin.email) {
-        await this.mailService.send({
-          to: admin.email,
-          subject: title,
-          text: message,
-        });
-      }
     }
   }
 

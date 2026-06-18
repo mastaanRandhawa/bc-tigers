@@ -11,7 +11,7 @@ export class HubService {
   ) {}
 
   async getHomeFeed() {
-    const [tournaments, liveMatches, recentMatches, upcomingMatches, announcements, featuredMedia] =
+    const [tournaments, liveMatches, recentMatches, upcomingMatches, announcements] =
       await Promise.all([
         prisma.tournament.findMany({
           take: 12,
@@ -33,8 +33,7 @@ export class HubService {
           limit: 4,
         }),
         this.matchesService.findAll({ status: 'SCHEDULED', limit: 4 }),
-        prisma.notification.findMany({
-          where: { user_id: null },
+        prisma.announcement.findMany({
           orderBy: { created_at: 'desc' },
           take: 6,
           select: {
@@ -46,18 +45,6 @@ export class HubService {
             tournament_id: true,
           },
         }),
-        prisma.media.findMany({
-          orderBy: { created_at: 'desc' },
-          take: 6,
-          select: {
-            id: true,
-            type: true,
-            url: true,
-            title: true,
-            description: true,
-            tournament_id: true,
-          },
-        }),
       ]);
 
     return {
@@ -66,7 +53,6 @@ export class HubService {
       recentMatches,
       upcomingMatches,
       announcements,
-      featuredMedia,
     };
   }
 

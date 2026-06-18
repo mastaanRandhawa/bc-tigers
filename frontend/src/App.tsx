@@ -1,5 +1,5 @@
 import { Suspense } from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route } from 'react-router-dom';
 import { tournamentRoutes } from '@/routes/tournament.routes';
 import { authRoutes } from '@/routes/auth.routes';
 import { adminRoutes } from '@/routes/admin.routes';
@@ -22,10 +22,6 @@ export default function App() {
       {tournamentRoutes()}
       {authRoutes()}
       {adminRoutes()}
-      <Route path="/coach" element={<Navigate to="/login" replace />} />
-      <Route path="/referee" element={<Navigate to="/login" replace />} />
-      <Route path="/referee/*" element={<Navigate to="/login" replace />} />
-      <Route path="/player" element={<Navigate to="/login" replace />} />
       <Route path="*" element={<NotFoundPage />} />
     </Routes>
   );

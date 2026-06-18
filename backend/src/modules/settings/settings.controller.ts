@@ -1,10 +1,14 @@
-import { Controller, Get, Patch, Body } from '@nestjs/common';
+import { Controller, Get, Patch, Body, Request } from '@nestjs/common';
 import { SettingsService } from './settings.service';
 import { AdminOnly } from '../auth/admin.decorator';
+import { AuditLogService } from '../audit-log/audit-log.service';
 
 @Controller('settings')
 export class SettingsController {
-  constructor(private service: SettingsService) {}
+  constructor(
+    private service: SettingsService,
+    private auditLog: AuditLogService,
+  ) {}
 
   @Get('public')
   getPublic() {
@@ -19,7 +23,17 @@ export class SettingsController {
 
   @Patch()
   @AdminOnly()
-  update(@Body() body: Record<string, unknown>) {
-    return this.service.update(body);
+  async update(
+    @Request() req: { user: { userId: string } },
+    @Body() body: Record<string, unknown>,
+  ) {
+    const settings = await this.service.update(body);
+    await this.auditLog.log({
+      userId: req.user.userId,
+      action: 'UPDATE',
+      entity: 'SiteSettings',
+      entityId: 'default',
+    });
+    return settings;
   }
 }

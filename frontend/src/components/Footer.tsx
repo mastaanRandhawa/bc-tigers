@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { Mail, MapPin, Phone } from 'lucide-react';
 import { usePublicSettings } from '@/hooks/useSettings';
 import BrandLogo from '@/components/shared/BrandLogo';
 import { cn } from '@/lib/utils';
@@ -28,6 +29,32 @@ export default function Footer({ className }: FooterProps) {
               {siteName} Tournament Hub — pick a tournament, then browse each division for
               schedules, scores, and standings.
             </p>
+            {(settings?.contact_email || settings?.contact_phone || settings?.contact_address) && (
+              <ul className="mt-4 space-y-2 text-sm text-muted-foreground">
+                {settings.contact_email && (
+                  <li className="flex items-center gap-2">
+                    <Mail className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                    <a href={`mailto:${settings.contact_email}`} className="hover:text-primary">
+                      {settings.contact_email}
+                    </a>
+                  </li>
+                )}
+                {settings.contact_phone && (
+                  <li className="flex items-center gap-2">
+                    <Phone className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                    <a href={`tel:${settings.contact_phone}`} className="hover:text-primary">
+                      {settings.contact_phone}
+                    </a>
+                  </li>
+                )}
+                {settings.contact_address && (
+                  <li className="flex items-start gap-2">
+                    <MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden />
+                    <span>{settings.contact_address}</span>
+                  </li>
+                )}
+              </ul>
+            )}
           </div>
 
           <div className="min-w-0 md:text-right">

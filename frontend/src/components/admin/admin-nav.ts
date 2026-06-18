@@ -6,8 +6,6 @@ import {
   Megaphone,
   MapPin,
   Users,
-  Image,
-  Settings,
   GitBranch,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
@@ -48,8 +46,6 @@ export const adminNavGroups: AdminNavGroup[] = [
     items: [
       { label: 'Users', href: '/admin/users', icon: Users },
       { label: 'Announcements', href: '/admin/announcements', icon: Megaphone },
-      { label: 'Media', href: '/admin/media', icon: Image },
-      { label: 'Settings', href: '/admin/settings', icon: Settings },
     ],
   },
 ];

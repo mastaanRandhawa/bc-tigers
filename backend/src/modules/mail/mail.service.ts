@@ -3,6 +3,13 @@ import { ConfigService } from '@nestjs/config';
 import nodemailer from 'nodemailer';
 import type Transporter from 'nodemailer/lib/mailer';
 
+export class MailDeliveryError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'MailDeliveryError';
+  }
+}
+
 @Injectable()
 export class MailService {
   private readonly logger = new Logger(MailService.name);
@@ -15,7 +22,7 @@ export class MailService {
 
     const host = this.config.get<string>('SMTP_HOST');
     if (!host) {
-      this.logger.warn('SMTP_HOST not set — emails will be skipped');
+      this.logger.warn('SMTP_HOST not set — emails will not be sent');
       return null;
     }
 
@@ -36,17 +43,33 @@ export class MailService {
     subject: string;
     text: string;
     html?: string;
-  }): Promise<boolean> {
+  }): Promise<{ ok: true } | { ok: false; error: string }> {
     const transport = this.getTransporter();
-    if (!transport) return false;
+    if (!transport) {
+      return { ok: false, error: 'SMTP is not configured' };
+    }
 
     const from = this.config.get<string>('SMTP_FROM', 'noreply@bctigers.ca');
     try {
       await transport.sendMail({ from, ...options });
-      return true;
+      return { ok: true };
     } catch (err) {
+      const message = err instanceof Error ? err.message : 'Failed to send email';
       this.logger.error('Failed to send email', err);
-      return false;
+      return { ok: false, error: message };
+    }
+  }
+
+  /** Sends email or throws MailDeliveryError when delivery fails. */
+  async sendOrThrow(options: {
+    to: string;
+    subject: string;
+    text: string;
+    html?: string;
+  }) {
+    const result = await this.send(options);
+    if (!result.ok) {
+      throw new MailDeliveryError(result.error);
     }
   }
 

@@ -1,4 +1,4 @@
-import type { Division, Match, Player, PlayerStat, Standing, Team, Tournament, Venue } from '@/types';
+import type { Division, Match, Player, Standing, Team, Tournament, Venue } from '@/types';
 
 export function normalizeSearch(query: string) {
   return query.trim().toLowerCase();
@@ -54,15 +54,4 @@ export function matchSearchText(m: Match) {
 
 export function standingSearchText(s: Standing) {
   return joinSearchParts([s.team?.name, s.team?.city]);
-}
-
-export function playerStatSearchText(s: PlayerStat) {
-  return joinSearchParts([
-    s.player?.first_name,
-    s.player?.last_name,
-    s.team?.name,
-    s.player?.team?.name,
-    String(s.goals ?? ''),
-    String(s.assists ?? ''),
-  ]);
 }

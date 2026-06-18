@@ -77,45 +77,6 @@ export class DivisionResourcesController {
     return this.service.getStandings(tournamentSlug, divisionSlug);
   }
 
-  @Get('stats/top-scorers')
-  getTopScorers(
-    @Param('tournamentSlug') tournamentSlug: string,
-    @Param('divisionSlug') divisionSlug: string,
-    @Query('limit') limit?: string,
-  ) {
-    return this.service.getTopScorers(
-      tournamentSlug,
-      divisionSlug,
-      limit ? Number(limit) : undefined,
-    );
-  }
-
-  @Get('stats/top-assists')
-  getTopAssists(
-    @Param('tournamentSlug') tournamentSlug: string,
-    @Param('divisionSlug') divisionSlug: string,
-    @Query('limit') limit?: string,
-  ) {
-    return this.service.getTopAssists(
-      tournamentSlug,
-      divisionSlug,
-      limit ? Number(limit) : undefined,
-    );
-  }
-
-  @Get('stats/discipline')
-  getDiscipline(
-    @Param('tournamentSlug') tournamentSlug: string,
-    @Param('divisionSlug') divisionSlug: string,
-    @Query('limit') limit?: string,
-  ) {
-    return this.service.getDiscipline(
-      tournamentSlug,
-      divisionSlug,
-      limit ? Number(limit) : undefined,
-    );
-  }
-
   @Get('bracket')
   getBracket(
     @Param('tournamentSlug') tournamentSlug: string,

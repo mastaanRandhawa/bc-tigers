@@ -23,8 +23,6 @@ export default function DivisionPlayerDetailPage() {
   const [editOpen, setEditOpen] = useState(false);
 
   const player = team?.players?.find((p) => matchesPlayerRef(p, playerId));
-
-  const stats = player?.player_stats?.[0];
   const teamPath = `${basePath}/teams/${teamSlug}`;
 
   return (
@@ -51,7 +49,6 @@ export default function DivisionPlayerDetailPage() {
                 className="relative px-6 py-8 text-center text-white"
                 style={{ backgroundColor: team.primary_color ?? 'var(--division-primary)' }}
               >
-                {/* Admin edit button */}
                 {canEdit && (
                   <div className="absolute right-3 top-3">
                     <AdminActionButton
@@ -82,32 +79,6 @@ export default function DivisionPlayerDetailPage() {
                 <p className="mt-2 text-sm text-white/75">{team.name}</p>
               </div>
             </div>
-
-            {stats && (
-              <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4 sm:gap-3">
-                {[
-                  { label: 'Goals', value: stats.goals },
-                  { label: 'Assists', value: stats.assists },
-                  { label: 'Yellow', value: stats.yellow_cards },
-                  { label: 'Red', value: stats.red_cards },
-                ].map((s) => (
-                  <div
-                    key={s.label}
-                    className="rounded-xl bg-card px-3 py-3 text-center shadow-sm border border-border"
-                  >
-                    <p
-                      className="text-2xl font-bold tabular-nums font-display"
-                      style={{ color: 'var(--division-primary)' }}
-                    >
-                      {s.value}
-                    </p>
-                    <p className="mt-1 text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                      {s.label}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            )}
 
             {canEdit && (
               <PlayerFormDialog

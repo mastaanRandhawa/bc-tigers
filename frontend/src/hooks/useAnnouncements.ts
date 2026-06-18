@@ -1,11 +1,27 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { queryKeys } from '@/lib/query-keys';
-import { notificationsService } from '@/services/notifications.service';
+import { announcementsService } from '@/services/announcements.service';
 
 export function useAnnouncements() {
   return useQuery({
     queryKey: queryKeys.announcements.all(),
-    queryFn: async () => (await notificationsService.getAnnouncements()).data,
+    queryFn: async () => (await announcementsService.getAll()).data,
+  });
+}
+
+export function useCreateAnnouncement() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (data: {
+      title: string;
+      message: string;
+      type?: string;
+      tournament_id?: string | null;
+    }) => announcementsService.create(data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: queryKeys.announcements.all() });
+      qc.invalidateQueries({ queryKey: queryKeys.hub.home });
+    },
   });
 }
 
@@ -17,8 +33,13 @@ export function useUpdateAnnouncement() {
       data,
     }: {
       id: string;
-      data: { title?: string; message?: string; tournament_id?: string | null; type?: string };
-    }) => notificationsService.update(id, data),
+      data: {
+        title?: string;
+        message?: string;
+        tournament_id?: string | null;
+        type?: string;
+      };
+    }) => announcementsService.update(id, data),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: queryKeys.announcements.all() });
       qc.invalidateQueries({ queryKey: queryKeys.hub.home });
@@ -29,7 +50,7 @@ export function useUpdateAnnouncement() {
 export function useDeleteAnnouncement() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (id: string) => notificationsService.remove(id),
+    mutationFn: (id: string) => announcementsService.remove(id),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: queryKeys.announcements.all() });
       qc.invalidateQueries({ queryKey: queryKeys.hub.home });

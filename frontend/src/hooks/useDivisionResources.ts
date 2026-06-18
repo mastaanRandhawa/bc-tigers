@@ -80,45 +80,6 @@ export function useDivisionStandingsResource(tournamentSlug?: string, divisionSl
   });
 }
 
-export function useDivisionTopScorers(
-  tournamentSlug?: string,
-  divisionSlug?: string,
-  limit = 20,
-) {
-  return useQuery({
-    queryKey: queryKeys.divisions.resources.topScorers(tournamentSlug ?? '', divisionSlug ?? '', limit),
-    queryFn: async () =>
-      (await divisionResourcesService.getTopScorers(tournamentSlug!, divisionSlug!, limit)).data,
-    enabled: enabled(tournamentSlug, divisionSlug),
-  });
-}
-
-export function useDivisionTopAssists(
-  tournamentSlug?: string,
-  divisionSlug?: string,
-  limit = 20,
-) {
-  return useQuery({
-    queryKey: queryKeys.divisions.resources.topAssists(tournamentSlug ?? '', divisionSlug ?? '', limit),
-    queryFn: async () =>
-      (await divisionResourcesService.getTopAssists(tournamentSlug!, divisionSlug!, limit)).data,
-    enabled: enabled(tournamentSlug, divisionSlug),
-  });
-}
-
-export function useDivisionDiscipline(
-  tournamentSlug?: string,
-  divisionSlug?: string,
-  limit = 20,
-) {
-  return useQuery({
-    queryKey: queryKeys.divisions.resources.discipline(tournamentSlug ?? '', divisionSlug ?? '', limit),
-    queryFn: async () =>
-      (await divisionResourcesService.getDiscipline(tournamentSlug!, divisionSlug!, limit)).data,
-    enabled: enabled(tournamentSlug, divisionSlug),
-  });
-}
-
 export function useDivisionBracketResource(tournamentSlug?: string, divisionSlug?: string) {
   return useQuery({
     queryKey: queryKeys.divisions.resources.bracket(tournamentSlug ?? '', divisionSlug ?? ''),

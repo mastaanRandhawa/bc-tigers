@@ -170,7 +170,7 @@ export default function DivisionMatchesAndSchedulePage() {
                   : 'text-muted-foreground hover:text-foreground',
               )}
             >
-              Calendar
+              Schedule
             </button>
           </div>
           <div className="flex flex-wrap gap-2">

@@ -1,4 +1,4 @@
-import { Route, Navigate } from 'react-router-dom';
+import { Route } from 'react-router-dom';
 import ProtectedRoute from '@/components/auth/ProtectedRoute';
 import { LazyPage } from '@/routes/LazyPage';
 import {
@@ -17,7 +17,6 @@ export function authRoutes() {
   return (
     <>
       <Route path="/login" element={<L><LoginPage /></L>} />
-      <Route path="/register" element={<Navigate to="/login" replace />} />
       <Route path="/forgot-password" element={<L><ForgotPasswordPage /></L>} />
       <Route path="/reset-password" element={<L><ResetPasswordPage /></L>} />
       <Route

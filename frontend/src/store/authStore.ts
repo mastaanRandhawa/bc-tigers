@@ -12,7 +12,6 @@ interface AuthState {
   error: string | null;
   initialize: () => Promise<void>;
   login: (email: string, password: string) => Promise<User>;
-  register: (data: object) => Promise<User>;
   logout: () => void;
   clearError: () => void;
   refreshUser: () => Promise<void>;
@@ -69,25 +68,6 @@ export const useAuthStore = create<AuthState>()(
           const message =
             (err as { response?: { data?: { message?: string } } })?.response?.data?.message ??
             'Login failed';
-          set({ error: message, isLoading: false });
-          throw err;
-        }
-      },
-
-      register: async (data) => {
-        set({ isLoading: true, error: null });
-        try {
-          const res = await authService.register(data as Parameters<typeof authService.register>[0]);
-          const { access_token } = res.data;
-          localStorage.setItem('bc_token', access_token);
-          set({ token: access_token });
-          const user = await fetchCurrentUser();
-          set({ user, isAuthenticated: true, isInitialized: true, isLoading: false });
-          return user;
-        } catch (err: unknown) {
-          const message =
-            (err as { response?: { data?: { message?: string } } })?.response?.data?.message ??
-            'Registration failed';
           set({ error: message, isLoading: false });
           throw err;
         }

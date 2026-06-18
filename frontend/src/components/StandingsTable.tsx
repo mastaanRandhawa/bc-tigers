@@ -24,6 +24,7 @@ interface StandingsTableProps {
   compact?: boolean;
   division?: Division;
   searchable?: boolean;
+  showFairPlay?: boolean;
 }
 
 export default function StandingsTable({
@@ -31,6 +32,7 @@ export default function StandingsTable({
   compact = false,
   division,
   searchable = true,
+  showFairPlay = false,
 }: StandingsTableProps) {
   const getText = useCallback((s: Standing) => standingSearchText(s), []);
   const { search, setSearch, filtered, debouncedSearch, hasQuery } = useListSearch(
@@ -71,12 +73,20 @@ export default function StandingsTable({
               )}
               <TableHead className="text-center">GD</TableHead>
               <TableHead className="text-center">Pts</TableHead>
+              {showFairPlay && <TableHead className="text-center">FP</TableHead>}
               {!compact && <TableHead className="text-center">Form</TableHead>}
             </TableRow>
           </TableHeader>
           <TableBody>
             {rows.map((s, idx) => (
-              <StandingRow key={s.id} standing={s} idx={idx} compact={compact} division={division} />
+              <StandingRow
+                key={s.id}
+                standing={s}
+                idx={idx}
+                compact={compact}
+                division={division}
+                showFairPlay={showFairPlay}
+              />
             ))}
           </TableBody>
         </Table>
@@ -92,11 +102,13 @@ function StandingRow({
   idx,
   compact,
   division,
+  showFairPlay,
 }: {
   standing: Standing;
   idx: number;
   compact: boolean;
   division?: Division;
+  showFairPlay?: boolean;
 }) {
   const pointsFlash = useValueFlash(s.points);
 
@@ -156,6 +168,11 @@ function StandingRow({
                   {s.goal_difference}
                 </TableCell>
                 <TableCell className="text-center text-base font-bold text-foreground tabular-nums">{s.points}</TableCell>
+                {showFairPlay && (
+                  <TableCell className="text-center tabular-nums text-muted-foreground">
+                    {s.fair_play ?? 0}
+                  </TableCell>
+                )}
                 {!compact && (
                   <TableCell className="text-center">
                     <div className="flex items-center justify-center gap-1">

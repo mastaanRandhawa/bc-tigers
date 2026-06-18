@@ -10,6 +10,20 @@ export function useUsers(params?: { page?: number; limit?: number }) {
   });
 }
 
+export function useCreateUser() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (data: {
+      first_name: string;
+      last_name: string;
+      email: string;
+      password: string;
+      phone?: string;
+    }) => usersService.create(data),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['users'] }),
+  });
+}
+
 export function useUpdateUser() {
   const qc = useQueryClient();
   return useMutation({
@@ -23,20 +37,6 @@ export function useDeleteUser() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => usersService.delete(id),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['users'] }),
-  });
-}
-
-export function useLinkUserEntity() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: ({
-      id,
-      data,
-    }: {
-      id: string;
-      data: { entity_type: 'player' | 'coach' | 'referee'; entity_id: string };
-    }) => usersService.linkEntity(id, data),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['users'] }),
   });
 }

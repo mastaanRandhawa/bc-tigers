@@ -1,5 +1,5 @@
 import apiClient from '@/lib/api-client';
-import type { BracketNode, Match, Player, PlayerStat, Standing, Team, Venue } from '@/types';
+import type { BracketNode, Match, Player, Standing, Team, Venue } from '@/types';
 
 function base(tournamentSlug: string, divisionSlug: string) {
   return `/tournaments/${tournamentSlug}/divisions/${divisionSlug}`;
@@ -40,21 +40,6 @@ export const divisionResourcesService = {
 
   getStandings: (tournamentSlug: string, divisionSlug: string) =>
     apiClient.get<Standing[]>(`${base(tournamentSlug, divisionSlug)}/standings`),
-
-  getTopScorers: (tournamentSlug: string, divisionSlug: string, limit?: number) =>
-    apiClient.get<PlayerStat[]>(`${base(tournamentSlug, divisionSlug)}/stats/top-scorers`, {
-      params: { limit },
-    }),
-
-  getTopAssists: (tournamentSlug: string, divisionSlug: string, limit?: number) =>
-    apiClient.get<PlayerStat[]>(`${base(tournamentSlug, divisionSlug)}/stats/top-assists`, {
-      params: { limit },
-    }),
-
-  getDiscipline: (tournamentSlug: string, divisionSlug: string, limit?: number) =>
-    apiClient.get<PlayerStat[]>(`${base(tournamentSlug, divisionSlug)}/stats/discipline`, {
-      params: { limit },
-    }),
 
   getBracket: (tournamentSlug: string, divisionSlug: string) =>
     apiClient.get<BracketNode[]>(`${base(tournamentSlug, divisionSlug)}/bracket`),

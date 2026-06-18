@@ -44,7 +44,7 @@ export class TournamentsService {
     const tournament = await this.findOne(slug);
     const divisionIds = tournament.divisions.map((d) => d.id);
 
-    const [matches, topScorers, standingsPreview] = await Promise.all([
+    const [matches, standingsPreview] = await Promise.all([
       prisma.match.findMany({
         where: { tournament_id: tournament.id },
         include: {
@@ -55,12 +55,6 @@ export class TournamentsService {
         },
         orderBy: { scheduled_start: 'asc' },
         take: 40,
-      }),
-      prisma.playerStat.findMany({
-        where: { tournament_id: tournament.id },
-        include: { player: true, team: true, division: true },
-        orderBy: { goals: 'desc' },
-        take: 5,
       }),
       divisionIds.length
         ? prisma.standing.findMany({
@@ -89,7 +83,6 @@ export class TournamentsService {
       liveMatches,
       recentMatches,
       upcomingMatches,
-      topScorers,
       standingsPreview,
     };
   }
