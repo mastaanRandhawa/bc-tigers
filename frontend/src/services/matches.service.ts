@@ -1,5 +1,5 @@
 import apiClient from '@/lib/api-client';
-import type { Match, MatchEvent, MatchEventType } from '@/types';
+import type { Match, MatchEvent, MatchEventType, MatchOfficial } from '@/types';
 
 export const matchesService = {
   getAll: (params?: {
@@ -28,14 +28,31 @@ export const matchesService = {
       type: MatchEventType;
       minute: number;
       extra_time?: number;
-    }
+    },
   ) => apiClient.post<MatchEvent>(`/matches/${matchId}/events`, data),
+
+  updateEvent: (
+    matchId: string,
+    eventId: string,
+    data: {
+      player_id?: string | null;
+      team_id?: string;
+      type?: MatchEventType;
+      minute?: number;
+      extra_time?: number | null;
+    },
+  ) => apiClient.patch<MatchEvent>(`/matches/${matchId}/events/${eventId}`, data),
+
+  deleteEvent: (matchId: string, eventId: string) =>
+    apiClient.delete<{ id: string }>(`/matches/${matchId}/events/${eventId}`),
 
   delete: (id: string) => apiClient.delete<Match>(`/matches/${id}`),
 
-  assignReferee: (matchId: string, data: { referee_id: string; role?: string }) =>
-    apiClient.post(`/matches/${matchId}/referees`, data),
+  assignOfficial: (
+    matchId: string,
+    data: { name: string; role?: string; email?: string; phone?: string },
+  ) => apiClient.post<MatchOfficial>(`/matches/${matchId}/officials`, data),
 
-  removeReferee: (matchId: string, matchRefereeId: string) =>
-    apiClient.delete(`/matches/${matchId}/referees/${matchRefereeId}`),
+  removeOfficial: (matchId: string, officialId: string) =>
+    apiClient.delete(`/matches/${matchId}/officials/${officialId}`),
 };

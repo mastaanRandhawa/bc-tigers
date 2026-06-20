@@ -1,20 +1,20 @@
 import { Module, forwardRef } from '@nestjs/common';
 import { MatchesController } from './matches.controller';
-import { MatchRefereesController } from './match-referees.controller';
+import { MatchOfficialsController } from './match-officials.controller';
 import { MatchesService } from './matches.service';
 import { GatewaysModule } from '../../gateways/gateways.module';
-import { MeModule } from '../me/me.module';
-import { SettingsModule } from '../settings/settings.module';
-import { NotificationsModule } from '../notifications/notifications.module';
+import { BracketsModule } from '../brackets/brackets.module';
+import { MailModule } from '../mail/mail.module';
+import { AuditLogModule } from '../audit-log/audit-log.module';
 
 @Module({
   imports: [
     forwardRef(() => GatewaysModule),
-    MeModule,
-    SettingsModule,
-    NotificationsModule,
+    forwardRef(() => BracketsModule),
+    MailModule,
+    AuditLogModule,
   ],
-  controllers: [MatchesController, MatchRefereesController],
+  controllers: [MatchesController, MatchOfficialsController],
   providers: [MatchesService],
   exports: [MatchesService],
 })

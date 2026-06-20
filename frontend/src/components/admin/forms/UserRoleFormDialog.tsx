@@ -2,20 +2,11 @@ import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import FormDialog from '@/components/admin/FormDialog';
-import { SelectField, FormError } from '@/components/admin/form-fields';
+import { TextInputField, FormError } from '@/components/admin/form-fields';
 import { userRoleSchema, type UserRoleFormValues } from '@/lib/schemas/admin';
 import { useUpdateUser } from '@/hooks/useUsers';
 import { getApiErrorMessage } from '@/lib/errors';
 import type { User } from '@/types';
-
-const ROLE_OPTIONS = [
-  { value: 'ADMIN', label: 'Admin' },
-  { value: 'TOURNAMENT_ADMIN', label: 'Tournament Admin' },
-  { value: 'COACH', label: 'Coach' },
-  { value: 'REFEREE', label: 'Referee' },
-  { value: 'PLAYER', label: 'Player' },
-  { value: 'VIEWER', label: 'Viewer' },
-];
 
 interface UserRoleFormDialogProps {
   open: boolean;
@@ -28,17 +19,31 @@ export default function UserRoleFormDialog({ open, onOpenChange, user }: UserRol
 
   const form = useForm<UserRoleFormValues>({
     resolver: zodResolver(userRoleSchema),
-    defaultValues: { role: 'VIEWER' },
+    defaultValues: { first_name: '', last_name: '', email: '', phone: '' },
   });
 
   useEffect(() => {
-    if (open && user) form.reset({ role: user.role });
+    if (open && user) {
+      form.reset({
+        first_name: user.first_name,
+        last_name: user.last_name,
+        email: user.email,
+        phone: user.phone ?? '',
+      });
+    }
   }, [open, user, form]);
 
   const onSubmit = form.handleSubmit(async (values) => {
     if (!user) return;
     try {
-      await updateMutation.mutateAsync({ id: user.id, data: { role: values.role } });
+      await updateMutation.mutateAsync({
+        id: user.id,
+        data: {
+          first_name: values.first_name,
+          last_name: values.last_name,
+          phone: values.phone || undefined,
+        },
+      });
       onOpenChange(false);
     } catch (err) {
       form.setError('root', { message: getApiErrorMessage(err) });
@@ -51,14 +56,19 @@ export default function UserRoleFormDialog({ open, onOpenChange, user }: UserRol
     <FormDialog
       open={open}
       onOpenChange={onOpenChange}
-      title="Edit User Role"
-      description={`${user.first_name} ${user.last_name} (${user.email})`}
+      title="Edit User"
+      description={`${user.email} · Administrator`}
       onSubmit={onSubmit}
       isSubmitting={updateMutation.isPending}
-      submitLabel="Update Role"
+      submitLabel="Save changes"
     >
       <FormError message={form.formState.errors.root?.message} />
-      <SelectField control={form.control} name="role" label="Role" options={ROLE_OPTIONS} />
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <TextInputField control={form.control} name="first_name" label="First name" />
+        <TextInputField control={form.control} name="last_name" label="Last name" />
+      </div>
+      <TextInputField control={form.control} name="email" label="Email" disabled />
+      <TextInputField control={form.control} name="phone" label="Phone" />
     </FormDialog>
   );
 }

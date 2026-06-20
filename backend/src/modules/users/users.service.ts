@@ -1,7 +1,18 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
-import type { Prisma, UserRole } from '@prisma/client';
+import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
+import type { Prisma } from '@prisma/client';
+import * as bcrypt from 'bcrypt';
 import prisma from '../../prisma/prisma';
-import { ensureRoleProfile } from '../../common/ensure-role-profile';
+import { pickAllowed } from '../../common/pick';
+
+/** Fields an admin may set via PATCH /users/:id. Excludes role, password_hash, id. */
+const USER_UPDATE_FIELDS = [
+  'first_name',
+  'last_name',
+  'email',
+  'phone',
+  'profile_image',
+  'active',
+] as const;
 
 const SELECT = {
   id: true,
@@ -11,6 +22,7 @@ const SELECT = {
   role: true,
   phone: true,
   profile_image: true,
+  active: true,
   created_at: true,
   updated_at: true,
 } satisfies Prisma.UserSelect;
@@ -23,67 +35,47 @@ export class UsersService {
       select: SELECT,
       skip: (page - 1) * limit,
       take: limit,
+      orderBy: { created_at: 'desc' },
     });
   }
 
-  findOne(id: string) {
-    return prisma.user.findUniqueOrThrow({ where: { id }, select: SELECT });
+  async create(data: {
+    first_name: string;
+    last_name: string;
+    email: string;
+    password: string;
+    phone?: string;
+  }) {
+    const existing = await prisma.user.findUnique({ where: { email: data.email } });
+    if (existing) throw new ConflictException('Email already in use');
+
+    const password_hash = await bcrypt.hash(data.password, 12);
+    return prisma.user.create({
+      data: {
+        first_name: data.first_name,
+        last_name: data.last_name,
+        email: data.email,
+        password_hash,
+        phone: data.phone,
+        role: 'ADMIN',
+      },
+      select: SELECT,
+    });
   }
 
   async update(id: string, data: unknown) {
-    const input = data as Prisma.UserUpdateInput & { role?: UserRole };
     const existing = await prisma.user.findUnique({ where: { id } });
     if (!existing) throw new NotFoundException('User not found');
 
-    const user = await prisma.user.update({
+    const input = pickAllowed<Prisma.UserUpdateInput>(data, USER_UPDATE_FIELDS);
+    return prisma.user.update({
       where: { id },
       data: input,
       select: SELECT,
     });
-
-    const newRole = input.role ?? existing.role;
-    if (newRole !== existing.role || ['COACH', 'PLAYER', 'REFEREE'].includes(newRole)) {
-      if (newRole === 'COACH' || newRole === 'PLAYER' || newRole === 'REFEREE') {
-        await ensureRoleProfile(id, newRole, {
-          first_name: user.first_name,
-          last_name: user.last_name,
-          email: user.email,
-          phone: user.phone,
-        });
-      }
-    }
-
-    return user;
   }
 
   remove(id: string) {
     return prisma.user.delete({ where: { id } });
-  }
-
-  async linkEntity(
-    id: string,
-    data: { entity_type: 'player' | 'coach' | 'referee'; entity_id: string },
-  ) {
-    const user = await prisma.user.findUnique({ where: { id } });
-    if (!user) throw new NotFoundException('User not found');
-
-    if (data.entity_type === 'player') {
-      await prisma.player.update({
-        where: { id: data.entity_id },
-        data: { user_id: id },
-      });
-    } else if (data.entity_type === 'coach') {
-      await prisma.coach.update({
-        where: { id: data.entity_id },
-        data: { user_id: id },
-      });
-    } else {
-      await prisma.referee.update({
-        where: { id: data.entity_id },
-        data: { user_id: id },
-      });
-    }
-
-    return this.findOne(id);
   }
 }

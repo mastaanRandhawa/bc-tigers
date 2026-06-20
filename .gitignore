@@ -6,6 +6,11 @@ dist/
 dist-ssr/
 build/
 
+docs/
+.agents/
+.claude/
+emails/
+
 # Environment & secrets
 .env
 .env.local

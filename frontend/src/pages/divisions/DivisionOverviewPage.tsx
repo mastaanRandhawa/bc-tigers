@@ -7,6 +7,7 @@ import SectionHeader from '@/components/shared/SectionHeader';
 import Section from '@/components/shared/Section';
 import StandingsTable from '@/components/StandingsTable';
 import DivisionPageHeader from '@/components/divisions/DivisionPageHeader';
+import QueryState from '@/components/shared/QueryState';
 import { useDivisionRoute } from '@/context/DivisionContext';
 import {
   useDivisionMatches,
@@ -28,9 +29,16 @@ function getCountdownDays(dateStr?: string): number | null {
 
 export default function DivisionOverviewPage() {
   const { division, basePath, tournamentSlug, divisionSlug, theme } = useDivisionRoute();
-  const { data: teams = [] } = useDivisionTeams(tournamentSlug, divisionSlug);
-  const { data: matches = [] } = useDivisionMatches(tournamentSlug, divisionSlug);
-  const { data: standings = [] } = useDivisionStandingsResource(tournamentSlug, divisionSlug);
+  const teamsQuery = useDivisionTeams(tournamentSlug, divisionSlug);
+  const matchesQuery = useDivisionMatches(tournamentSlug, divisionSlug);
+  const standingsQuery = useDivisionStandingsResource(tournamentSlug, divisionSlug);
+  const { data: teams = [] } = teamsQuery;
+  const { data: matches = [] } = matchesQuery;
+  const { data: standings = [] } = standingsQuery;
+  const isLoading =
+    teamsQuery.isLoading || matchesQuery.isLoading || standingsQuery.isLoading;
+  const isError =
+    teamsQuery.isError || matchesQuery.isError || standingsQuery.isError;
   const canEdit = useCanAdminEdit();
   const [addMatchOpen, setAddMatchOpen] = useState(false);
 
@@ -64,6 +72,7 @@ export default function DivisionOverviewPage() {
         subtitle="Division snapshot, live action, and standings"
       />
 
+      <QueryState isLoading={isLoading} isError={isError} variant="skeleton-detail">
       {/* Metric cards — uniform style across all 4 */}
       <DivisionQuickStats
         stats={[
@@ -180,6 +189,7 @@ export default function DivisionOverviewPage() {
           </p>
         )}
       </Section>
+      </QueryState>
       {canEdit && (
         <MatchFormDialog
           open={addMatchOpen}

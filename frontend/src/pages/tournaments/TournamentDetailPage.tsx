@@ -69,8 +69,12 @@ export default function TournamentDetailPage() {
             <div className="pointer-events-none absolute inset-0 bg-brand-grid opacity-40" />
             <div className="relative z-10 page-container">
               <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center">
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-border bg-card shadow-sm">
-                  <Trophy className="h-6 w-6 text-primary" aria-hidden />
+                <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-border bg-card shadow-sm">
+                  {tournament.logo ? (
+                    <img src={tournament.logo} alt="" className="h-full w-full object-contain p-1" />
+                  ) : (
+                    <Trophy className="h-6 w-6 text-primary" aria-hidden />
+                  )}
                 </div>
                 <div className="min-w-0 flex-1">
                   <Badge

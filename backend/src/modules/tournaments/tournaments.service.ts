@@ -1,6 +1,23 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import type { MatchStatus, Prisma } from '@prisma/client';
 import prisma from '../../prisma/prisma';
+import { pickAllowed } from '../../common/pick';
+
+const TOURNAMENT_FIELDS = [
+  'name',
+  'slug',
+  'description',
+  'location',
+  'start_date',
+  'end_date',
+  'status',
+  'tournament_type',
+  'logo',
+  'rules',
+] as const;
+
+/** `created_by` may be set only at creation time, never via update. */
+const TOURNAMENT_CREATE_FIELDS = [...TOURNAMENT_FIELDS, 'created_by'] as const;
 
 @Injectable()
 export class TournamentsService {
@@ -44,7 +61,7 @@ export class TournamentsService {
     const tournament = await this.findOne(slug);
     const divisionIds = tournament.divisions.map((d) => d.id);
 
-    const [matches, topScorers, standingsPreview] = await Promise.all([
+    const [matches, standingsPreview] = await Promise.all([
       prisma.match.findMany({
         where: { tournament_id: tournament.id },
         include: {
@@ -55,12 +72,6 @@ export class TournamentsService {
         },
         orderBy: { scheduled_start: 'asc' },
         take: 40,
-      }),
-      prisma.playerStat.findMany({
-        where: { tournament_id: tournament.id },
-        include: { player: true, team: true, division: true },
-        orderBy: { goals: 'desc' },
-        take: 5,
       }),
       divisionIds.length
         ? prisma.standing.findMany({
@@ -89,7 +100,6 @@ export class TournamentsService {
       liveMatches,
       recentMatches,
       upcomingMatches,
-      topScorers,
       standingsPreview,
     };
   }
@@ -117,41 +127,28 @@ export class TournamentsService {
     return t;
   }
 
-  create(data: Prisma.TournamentCreateInput) {
-    return prisma.tournament.create({ data });
+  create(data: unknown) {
+    return prisma.tournament.create({
+      data: pickAllowed<Prisma.TournamentUncheckedCreateInput>(
+        data,
+        TOURNAMENT_CREATE_FIELDS,
+      ),
+    });
   }
 
-  async update(id: string, data: Prisma.TournamentUpdateInput) {
+  async update(id: string, data: unknown) {
     await prisma.tournament.findUniqueOrThrow({ where: { id } });
-    return prisma.tournament.update({ where: { id }, data });
+    return prisma.tournament.update({
+      where: { id },
+      data: pickAllowed<Prisma.TournamentUncheckedUpdateInput>(
+        data,
+        TOURNAMENT_FIELDS,
+      ),
+    });
   }
 
   async remove(id: string) {
     await prisma.tournament.findUniqueOrThrow({ where: { id } });
     return prisma.tournament.delete({ where: { id } });
-  }
-
-  getAdmins(tournamentId: string) {
-    return prisma.tournamentAdmin.findMany({
-      where: { tournament_id: tournamentId },
-      include: {
-        user: {
-          select: { id: true, first_name: true, last_name: true, email: true, role: true },
-        },
-      },
-    });
-  }
-
-  async assignAdmin(tournamentId: string, userId: string, role = 'ADMIN') {
-    await prisma.tournament.findUniqueOrThrow({ where: { id: tournamentId } });
-    return prisma.tournamentAdmin.upsert({
-      where: { tournament_id_user_id: { tournament_id: tournamentId, user_id: userId } },
-      create: { tournament_id: tournamentId, user_id: userId, role },
-      update: { role },
-    });
-  }
-
-  async revokeAdmin(tournamentId: string, tournamentAdminId: string) {
-    return prisma.tournamentAdmin.delete({ where: { id: tournamentAdminId } });
   }
 }

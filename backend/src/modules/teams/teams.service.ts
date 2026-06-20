@@ -1,6 +1,19 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import type { Prisma } from '@prisma/client';
 import prisma from '../../prisma/prisma';
+import { pickAllowed } from '../../common/pick';
+
+/** Client-settable scalar fields on a team. */
+const TEAM_FIELDS = [
+  'division_id',
+  'name',
+  'slug',
+  'logo',
+  'city',
+  'founded_year',
+  'primary_color',
+  'secondary_color',
+] as const;
 
 @Injectable()
 export class TeamsService {
@@ -11,23 +24,9 @@ export class TeamsService {
         : undefined,
       include: {
         division: { include: { tournament: true } },
-        rosters: { include: { player: true } },
+        players: { where: { active: true }, orderBy: { last_name: 'asc' } },
       },
     });
-  }
-
-  async findOne(slug: string) {
-    const team = await prisma.team.findFirst({
-      where: { slug },
-      include: {
-        division: { include: { tournament: true } },
-        rosters: { include: { player: true } },
-        team_coaches: { include: { coach: true } },
-        standings: true,
-      },
-    });
-    if (!team) throw new NotFoundException('Team not found');
-    return team;
   }
 
   async findOneInDivision(divisionId: string, slug: string) {
@@ -37,8 +36,7 @@ export class TeamsService {
       },
       include: {
         division: { include: { tournament: true } },
-        rosters: { include: { player: true } },
-        team_coaches: { include: { coach: true } },
+        players: { orderBy: { last_name: 'asc' } },
         standings: true,
       },
     });
@@ -47,13 +45,15 @@ export class TeamsService {
   }
 
   create(data: unknown) {
-    return prisma.team.create({ data: data as Prisma.TeamCreateInput });
+    return prisma.team.create({
+      data: pickAllowed<Prisma.TeamUncheckedCreateInput>(data, TEAM_FIELDS),
+    });
   }
 
   update(id: string, data: unknown) {
     return prisma.team.update({
       where: { id },
-      data: data as Prisma.TeamUpdateInput,
+      data: pickAllowed<Prisma.TeamUncheckedUpdateInput>(data, TEAM_FIELDS),
     });
   }
 

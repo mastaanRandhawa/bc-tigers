@@ -3,6 +3,7 @@ import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import compression from 'compression';
 import { AppModule } from './app.module';
+import { getCorsOrigins } from './common/cors-origins';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
@@ -18,17 +19,8 @@ async function bootstrap() {
     }),
   );
 
-  const defaultOrigins = [
-    'http://localhost:5173',
-    'http://localhost:3001',
-    'https://mastaanrandhawa.github.io',
-  ];
-  const corsOrigins = process.env.CORS_ORIGIN
-    ? process.env.CORS_ORIGIN.split(',').map((o) => o.trim()).filter(Boolean)
-    : defaultOrigins;
-
   app.enableCors({
-    origin: corsOrigins,
+    origin: getCorsOrigins(),
     credentials: true,
   });
 

@@ -33,5 +33,4 @@ export const SOCKET_EVENTS = {
   SUBSTITUTION: 'match:substitution',
   STANDINGS_UPDATED: 'standings:updated',
   BRACKET_UPDATED: 'bracket:updated',
-  NOTIFICATION: 'notification',
 } as const;

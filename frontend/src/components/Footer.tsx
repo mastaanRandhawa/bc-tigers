@@ -1,58 +1,63 @@
-import { Link } from 'react-router-dom';
+import { FaFacebook, FaInstagram, FaLinkedin } from 'react-icons/fa';
 import { usePublicSettings } from '@/hooks/useSettings';
-import BrandLogo from '@/components/shared/BrandLogo';
+import { Footer7 } from '@/components/ui/footer-7';
+import logoUrl from '@/assets/logo.png';
 import { cn } from '@/lib/utils';
-
-const tournamentLinks = [{ label: 'Tournaments', href: '/tournaments' }];
 
 interface FooterProps {
   className?: string;
 }
 
+const footerSections = [
+  {
+    title: 'Competitions',
+    links: [
+      { name: 'Tournaments', href: '/tournaments' },
+      { name: 'Live matches', href: '/live' },
+      { name: 'Home', href: '/' },
+    ],
+  },
+  {
+    title: 'Account',
+    links: [
+      { name: 'Sign in', href: '/login' },
+      { name: 'Profile', href: '/profile' },
+    ],
+  },
+  {
+    title: 'Club',
+    links: [{ name: 'BC Tigers FC', href: '/' }],
+  },
+];
+
+const socialLinks = [
+  { icon: <FaInstagram className="size-5" aria-hidden />, href: 'https://www.instagram.com/', label: 'Instagram' },
+  { icon: <FaFacebook className="size-5" aria-hidden />, href: 'https://www.facebook.com/', label: 'Facebook' },
+  { icon: <FaLinkedin className="size-5" aria-hidden />, href: 'https://www.linkedin.com/', label: 'LinkedIn' },
+];
+
 export default function Footer({ className }: FooterProps) {
   const { data: settings } = usePublicSettings();
-  const siteName = settings?.site_name ?? 'BC Tigers Soccer';
+  const siteName = settings?.site_name ?? 'BC Tigers FC';
+  const year = new Date().getFullYear();
 
   return (
-    <footer
-      className={cn(
-        'w-full shrink-0 border-t border-border bg-card',
-        className,
-      )}
-    >
-      <div className="page-container py-10 md:py-12">
-        <div className="grid w-full grid-cols-1 gap-8 md:grid-cols-2">
-          <div className="min-w-0">
-            <BrandLogo className="mb-4" imageClassName="h-10" />
-            <p className="max-w-md text-sm leading-relaxed text-muted-foreground">
-              {siteName} Tournament Hub — pick a tournament, then browse each division for
-              schedules, scores, and standings.
-            </p>
-          </div>
-
-          <div className="min-w-0 md:text-right">
-            <h3 className="text-label mb-3">Explore</h3>
-            <ul className="space-y-2">
-              {tournamentLinks.map((link) => (
-                <li key={link.href}>
-                  <Link
-                    to={link.href}
-                    className="text-sm text-muted-foreground transition-colors hover:text-primary"
-                  >
-                    {link.label}
-                  </Link>
-                </li>
-              ))}
-            </ul>
-          </div>
-        </div>
-
-        <div className="mt-8 border-t border-border pt-6">
-          <p className="text-center text-sm text-muted-foreground sm:text-left">
-            © {new Date().getFullYear()} {siteName}. All rights reserved.
-          </p>
-        </div>
-      </div>
-    </footer>
+    <Footer7
+      className={cn(className)}
+      logo={{
+        url: '/',
+        src: logoUrl,
+        alt: siteName,
+        title: siteName,
+      }}
+      description={`${siteName} tournament hub — browse schedules, live scores, standings, and knockout brackets for every competition.`}
+      sections={footerSections}
+      socialLinks={socialLinks}
+      copyright={`© ${year} ${siteName}. All rights reserved.`}
+      legalLinks={[
+        { name: 'Privacy Policy', href: '#' },
+        { name: 'Terms of Use', href: '#' },
+      ]}
+    />
   );
 }

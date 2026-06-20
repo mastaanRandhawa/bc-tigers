@@ -17,9 +17,6 @@ export class VenuesController {
   @Get() findAll() {
     return this.service.findAll();
   }
-  @Get(':slug') findOne(@Param('slug') slug: string) {
-    return this.service.findOne(slug);
-  }
 
   @Post()
   @AdminOnly()

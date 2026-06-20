@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, InternalServerErrorException } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { ConfigModule, ConfigService } from '@nestjs/config';
@@ -6,23 +6,26 @@ import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { JwtStrategy } from './jwt.strategy';
 import { RolesGuard } from './roles.guard';
-import { SettingsModule } from '../settings/settings.module';
+import { MailModule } from '../mail/mail.module';
 
 @Module({
   imports: [
     PassportModule.register({ defaultStrategy: 'jwt' }),
-    SettingsModule,
+    MailModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: (config: ConfigService) => {
-        const opts: Record<string, unknown> = {
-          secret: config.get<string>('JWT_SECRET', 'fallback-secret'),
+        const secret = config.get<string>('JWT_SECRET');
+        if (!secret) {
+          throw new InternalServerErrorException('JWT_SECRET is not configured');
+        }
+        return {
+          secret,
           signOptions: {
-            expiresIn: config.get<string>('JWT_EXPIRES_IN', '7d'),
+            expiresIn: config.get<string>('JWT_EXPIRES_IN', '7d') as `${number}d`,
           },
         };
-        return opts;
       },
     }),
   ],

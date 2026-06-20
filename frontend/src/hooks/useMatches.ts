@@ -3,7 +3,6 @@ import { useQuery, useMutation, useQueryClient, type QueryClient } from '@tansta
 import { queryKeys } from '@/lib/query-keys';
 import { queryTiming } from '@/lib/query-options';
 import { matchesService } from '@/services/matches.service';
-import { meService } from '@/services/me.service';
 import { hubService } from '@/services/hub.service';
 import { getSocket, SOCKET_EVENTS } from '@/lib/socket';
 import type { Match, MatchEventType } from '@/types';
@@ -12,13 +11,6 @@ function invalidateMatchLists(qc: QueryClient) {
   qc.invalidateQueries({ queryKey: ['matches'] });
   qc.invalidateQueries({ queryKey: queryKeys.matches.live });
   qc.invalidateQueries({ queryKey: queryKeys.hub.home });
-}
-
-export function useMyMatches(params?: { status?: string; limit?: number }) {
-  return useQuery({
-    queryKey: ['me', 'matches', params],
-    queryFn: async () => (await meService.getMatches(params)).data,
-  });
 }
 
 export function useMatches(params?: {
@@ -58,7 +50,7 @@ export function useMatch(id?: string) {
     const socket = getSocket();
     socket.emit('join:match', id);
 
-    const handleUpdate = (data: { matchId?: string; home_score?: number; away_score?: number }) => {
+    const handleUpdate = (data: { matchId?: string }) => {
       if (data.matchId === id || !data.matchId) {
         qc.invalidateQueries({ queryKey: queryKeys.matches.detail(id) });
         invalidateMatchLists(qc);
@@ -68,12 +60,16 @@ export function useMatch(id?: string) {
     socket.on(SOCKET_EVENTS.MATCH_UPDATED, handleUpdate);
     socket.on(SOCKET_EVENTS.MATCH_COMPLETED, handleUpdate);
     socket.on(SOCKET_EVENTS.GOAL_SCORED, handleUpdate);
+    socket.on(SOCKET_EVENTS.CARD_ISSUED, handleUpdate);
+    socket.on(SOCKET_EVENTS.SUBSTITUTION, handleUpdate);
 
     return () => {
       socket.emit('leave:match', id);
       socket.off(SOCKET_EVENTS.MATCH_UPDATED, handleUpdate);
       socket.off(SOCKET_EVENTS.MATCH_COMPLETED, handleUpdate);
       socket.off(SOCKET_EVENTS.GOAL_SCORED, handleUpdate);
+      socket.off(SOCKET_EVENTS.CARD_ISSUED, handleUpdate);
+      socket.off(SOCKET_EVENTS.SUBSTITUTION, handleUpdate);
     };
   }, [id, qc]);
 
@@ -93,7 +89,10 @@ export function useUpdateMatch() {
   return useMutation({
     mutationFn: ({ id, data }: { id: string; data: Partial<Match> }) =>
       matchesService.update(id, data),
-    onSuccess: () => invalidateMatchLists(qc),
+    onSuccess: (_, { id }) => {
+      qc.invalidateQueries({ queryKey: queryKeys.matches.detail(id) });
+      invalidateMatchLists(qc);
+    },
   });
 }
 
@@ -103,6 +102,35 @@ export function useUpdateMatchScore() {
     mutationFn: ({ id, home, away }: { id: string; home: number; away: number }) =>
       matchesService.updateScore(id, home, away),
     onSuccess: (_, { id }) => {
+      qc.invalidateQueries({ queryKey: queryKeys.matches.detail(id) });
+      invalidateMatchLists(qc);
+    },
+  });
+}
+
+export function useUpdateMatchScoreOptimistic() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, home, away }: { id: string; home: number; away: number }) =>
+      matchesService.updateScore(id, home, away),
+    onMutate: async ({ id, home, away }) => {
+      await qc.cancelQueries({ queryKey: queryKeys.matches.detail(id) });
+      const previous = qc.getQueryData<Match>(queryKeys.matches.detail(id));
+      if (previous) {
+        qc.setQueryData<Match>(queryKeys.matches.detail(id), {
+          ...previous,
+          home_score: home,
+          away_score: away,
+        });
+      }
+      return { previous };
+    },
+    onError: (_err, { id }, context) => {
+      if (context?.previous) {
+        qc.setQueryData(queryKeys.matches.detail(id), context.previous);
+      }
+    },
+    onSettled: (_, __, { id }) => {
       qc.invalidateQueries({ queryKey: queryKeys.matches.detail(id) });
       invalidateMatchLists(qc);
     },
@@ -127,6 +155,44 @@ export function useAddMatchEvent() {
     }) => matchesService.addEvent(matchId, data),
     onSuccess: (_, { matchId }) => {
       qc.invalidateQueries({ queryKey: queryKeys.matches.detail(matchId) });
+      invalidateMatchLists(qc);
+    },
+  });
+}
+
+export function useUpdateMatchEvent() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      matchId,
+      eventId,
+      data,
+    }: {
+      matchId: string;
+      eventId: string;
+      data: {
+        player_id?: string | null;
+        team_id?: string;
+        type?: MatchEventType;
+        minute?: number;
+        extra_time?: number | null;
+      };
+    }) => matchesService.updateEvent(matchId, eventId, data),
+    onSuccess: (_, { matchId }) => {
+      qc.invalidateQueries({ queryKey: queryKeys.matches.detail(matchId) });
+      invalidateMatchLists(qc);
+    },
+  });
+}
+
+export function useDeleteMatchEvent() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ matchId, eventId }: { matchId: string; eventId: string }) =>
+      matchesService.deleteEvent(matchId, eventId),
+    onSuccess: (_, { matchId }) => {
+      qc.invalidateQueries({ queryKey: queryKeys.matches.detail(matchId) });
+      invalidateMatchLists(qc);
     },
   });
 }
@@ -139,43 +205,40 @@ export function useDeleteMatch() {
   });
 }
 
-export function useAssignMatchReferee() {
+export function useAssignMatchOfficial() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: ({
       matchId,
-      referee_id,
+      name,
       role,
+      email,
+      phone,
     }: {
       matchId: string;
-      referee_id: string;
+      name: string;
       role?: string;
-    }) => matchesService.assignReferee(matchId, { referee_id, role }),
+      email?: string;
+      phone?: string;
+    }) => matchesService.assignOfficial(matchId, { name, role, email, phone }),
     onSuccess: (_, { matchId }) => {
       qc.invalidateQueries({ queryKey: queryKeys.matches.detail(matchId) });
-      invalidateMatchLists(qc);
     },
   });
 }
 
-export function useRemoveMatchReferee() {
+export function useRemoveMatchOfficial() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({
-      matchId,
-      matchRefereeId,
-    }: {
-      matchId: string;
-      matchRefereeId: string;
-    }) => matchesService.removeReferee(matchId, matchRefereeId),
+    mutationFn: ({ matchId, officialId }: { matchId: string; officialId: string }) =>
+      matchesService.removeOfficial(matchId, officialId),
     onSuccess: (_, { matchId }) => {
       qc.invalidateQueries({ queryKey: queryKeys.matches.detail(matchId) });
-      invalidateMatchLists(qc);
     },
   });
 }
 
-/** Invalidate caches when standings, brackets, or notifications change. */
+/** Invalidate caches when standings or brackets change. */
 export function useRealtimeInvalidation() {
   const qc = useQueryClient();
 
@@ -187,16 +250,13 @@ export function useRealtimeInvalidation() {
       qc.invalidateQueries({ queryKey: ['divisions'] });
     };
     const onBracket = () => qc.invalidateQueries({ queryKey: ['brackets'] });
-    const onNotification = () => qc.invalidateQueries({ queryKey: ['notifications'] });
 
     socket.on(SOCKET_EVENTS.STANDINGS_UPDATED, onStandings);
     socket.on(SOCKET_EVENTS.BRACKET_UPDATED, onBracket);
-    socket.on(SOCKET_EVENTS.NOTIFICATION, onNotification);
 
     return () => {
       socket.off(SOCKET_EVENTS.STANDINGS_UPDATED, onStandings);
       socket.off(SOCKET_EVENTS.BRACKET_UPDATED, onBracket);
-      socket.off(SOCKET_EVENTS.NOTIFICATION, onNotification);
     };
   }, [qc]);
 }

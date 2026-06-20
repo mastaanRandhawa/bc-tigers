@@ -27,7 +27,3 @@ export function useTournamentRoute() {
   }
   return ctx;
 }
-
-export function useTournamentRouteOptional() {
-  return useContext(TournamentContext);
-}

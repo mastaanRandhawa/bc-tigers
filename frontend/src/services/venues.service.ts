@@ -4,8 +4,6 @@ import type { Venue } from '@/types';
 export const venuesService = {
   getAll: () => apiClient.get<Venue[]>('/venues'),
 
-  getOne: (slug: string) => apiClient.get<Venue>(`/venues/${slug}`),
-
   create: (data: Partial<Venue>) => apiClient.post<Venue>('/venues', data),
 
   update: (id: string, data: Partial<Venue>) =>

@@ -11,6 +11,7 @@ import { Server, Socket } from 'socket.io';
 import { Logger } from '@nestjs/common';
 import { StandingsService } from '../modules/standings/standings.service';
 import { BracketsService } from '../modules/brackets/brackets.service';
+import { getCorsOrigins } from '../common/cors-origins';
 
 export const SOCKET_EVENTS = {
   MATCH_STARTED: 'match:started',
@@ -21,11 +22,10 @@ export const SOCKET_EVENTS = {
   SUBSTITUTION: 'match:substitution',
   STANDINGS_UPDATED: 'standings:updated',
   BRACKET_UPDATED: 'bracket:updated',
-  NOTIFICATION: 'notification',
 } as const;
 
 @WebSocketGateway({
-  cors: { origin: '*' },
+  cors: { origin: getCorsOrigins(), credentials: true },
   namespace: '/',
 })
 export class MatchesGateway
@@ -133,13 +133,10 @@ export class MatchesGateway
     });
   }
 
-  emitNotification(userId: string, notification: unknown) {
+  emitBracketUpdated(divisionId: string, data: unknown) {
     this.server
-      .to(`user:${userId}`)
-      .emit(SOCKET_EVENTS.NOTIFICATION, notification);
-  }
-
-  emitBroadcastNotification(notification: unknown) {
-    this.server.emit(SOCKET_EVENTS.NOTIFICATION, notification);
+      .to(`division:${divisionId}`)
+      .emit(SOCKET_EVENTS.BRACKET_UPDATED, data);
+    this.server.emit(SOCKET_EVENTS.BRACKET_UPDATED, data);
   }
 }

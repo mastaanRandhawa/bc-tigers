@@ -21,19 +21,24 @@ export function slugifyPlayerName(firstName: string, lastName: string): string {
 
 export async function ensureUniquePlayerSlug(
   prisma: PrismaClient,
+  teamId: string,
   base: string,
   excludeId?: string,
 ): Promise<string> {
   let slug = base;
   let attempt = 0;
   while (true) {
-    const existing = await prisma.player.findUnique({ where: { slug } });
+    const existing = await prisma.player.findUnique({
+      where: { team_id_slug: { team_id: teamId, slug } },
+    });
     if (!existing || existing.id === excludeId) return slug;
     attempt += 1;
     slug = `${base}-${attempt}`;
   }
 }
 
-export function playerLookupWhere(param: string) {
-  return isUuid(param) ? { id: param } : { slug: param };
+export function playerLookupWhere(param: string, teamId?: string) {
+  if (isUuid(param)) return { id: param };
+  if (teamId) return { slug: param };
+  return { slug: param };
 }

@@ -5,8 +5,6 @@ export const teamsService = {
   getAll: (params?: { divisionId?: string }) =>
     apiClient.get<Team[]>('/teams', { params }),
 
-  getOne: (slug: string) => apiClient.get<Team>(`/teams/${slug}`),
-
   create: (data: Partial<Team>) => apiClient.post<Team>('/teams', data),
 
   update: (id: string, data: Partial<Team>) =>

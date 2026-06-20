@@ -17,10 +17,7 @@ export function DivisionPlayerLegacyRedirect() {
   if (isLoading) return null;
 
   const player = players.find((p) => matchesPlayerRef(p, playerId));
-  const teamSlug =
-    player?.rosters?.find((r) => r.active)?.team?.slug ??
-    player?.rosters?.[0]?.team?.slug ??
-    player?.team?.slug;
+  const teamSlug = player?.team?.slug;
 
   if (teamSlug && player) {
     return (

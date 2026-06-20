@@ -23,6 +23,7 @@ import { getDivisionTheme } from '@/lib/division-theme';
 import { formatDate, formatTime } from '@/lib/utils';
 import { matchSearchText } from '@/lib/search-text';
 import { getApiErrorMessage } from '@/lib/errors';
+import { toast } from 'sonner';
 import {
   Sheet,
   SheetContent,
@@ -30,7 +31,7 @@ import {
   SheetTitle,
   SheetBody,
 } from '@/components/ui/sheet';
-import { Calendar, GitBranch, Pencil, Shield, Users, Zap, PlusCircle } from 'lucide-react';
+import { Calendar, GitBranch, Pencil, Shield, Users, Zap, PlusCircle, BarChart3 } from 'lucide-react';
 import type { Match, Team } from '@/types';
 
 const MATCH_STATUS_OPTIONS = [
@@ -66,7 +67,7 @@ export default function DivisionWorkspacePage() {
     try {
       await updateMatchMutation.mutateAsync({ id: match.id, data: { status: status as Match['status'] } });
     } catch (err) {
-      alert(getApiErrorMessage(err, 'Failed to update status'));
+      toast.error(getApiErrorMessage(err, 'Failed to update status'));
     }
   };
 
@@ -200,10 +201,10 @@ export default function DivisionWorkspacePage() {
             <AdminStatGrid
               className="mb-5"
               items={[
-                { value: teams.length, label: 'Teams' },
-                { value: matches.length, label: 'Matches' },
-                { value: liveMatches.length, label: 'Live', accent: liveMatches.length > 0 },
-                { value: `${division.points_win}/${division.points_draw}/${division.points_loss}`, label: 'W/D/L pts' },
+                { value: teams.length, label: 'Teams', icon: Users },
+                { value: matches.length, label: 'Matches', icon: Calendar },
+                { value: liveMatches.length, label: 'Live', icon: Zap, accent: liveMatches.length > 0 },
+                { value: `${division.points_win}/${division.points_draw}/${division.points_loss}`, label: 'W/D/L pts', icon: BarChart3 },
               ]}
             />
 
@@ -322,6 +323,7 @@ export default function DivisionWorkspacePage() {
                   divisionId={division.id}
                   divisionSlug={division.slug}
                   teams={teams}
+                  adminBracketLocked={division.bracket_locked ?? false}
                 />
               </TabsContent>
             </Tabs>
@@ -366,7 +368,7 @@ export default function DivisionWorkspacePage() {
         onOpenChange={setScheduleOpen}
         onSuccess={(created) => {
           setScheduleOpen(false);
-          alert(`Created ${created} matches.`);
+          toast.success(`Created ${created} matches.`);
         }}
       />
 

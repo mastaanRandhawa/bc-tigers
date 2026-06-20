@@ -1,17 +1,41 @@
 import {
   Injectable,
   NotFoundException,
-  ForbiddenException,
   Inject,
   forwardRef,
+  Logger,
 } from '@nestjs/common';
-import type { Prisma, MatchStatus, MatchEventType, UserRole } from '@prisma/client';
+import type { Prisma, MatchStatus, MatchEventType } from '@prisma/client';
 import prisma from '../../prisma/prisma';
 import { MatchesGateway } from '../../gateways/matches.gateway';
-import { MeService } from '../me/me.service';
-import { SettingsService } from '../settings/settings.service';
-import { NotificationsService } from '../notifications/notifications.service';
+import { BracketsService } from '../brackets/brackets.service';
 import { MailService } from '../mail/mail.service';
+import { pickAllowed } from '../../common/pick';
+
+/** Client-settable scalar fields on a match. Scores are set via the score/events endpoints. */
+const MATCH_FIELDS = [
+  'tournament_id',
+  'division_id',
+  'home_team_id',
+  'away_team_id',
+  'venue_id',
+  'field_id',
+  'scheduled_start',
+  'scheduled_end',
+  'status',
+  'round',
+  'match_type',
+  'stream_url',
+] as const;
+
+/** Client-settable scalar fields on a match event. `match_id` is set from the route param. */
+const MATCH_EVENT_FIELDS = [
+  'player_id',
+  'team_id',
+  'type',
+  'minute',
+  'extra_time',
+] as const;
 
 const MATCH_LIST_INCLUDE = {
   home_team: { select: { id: true, name: true, slug: true, logo: true } },
@@ -28,20 +52,20 @@ const MATCH_LIST_INCLUDE = {
   },
 } satisfies Prisma.MatchInclude;
 
-const TEAM_WITH_ROSTER = {
+const TEAM_WITH_PLAYERS = {
   include: {
-    rosters: {
+    players: {
       where: { active: true },
-      include: { player: true },
+      orderBy: { last_name: 'asc' as const },
     },
   },
 };
 
 const MATCH_DETAIL_INCLUDE = {
-  home_team: TEAM_WITH_ROSTER,
-  away_team: TEAM_WITH_ROSTER,
+  home_team: TEAM_WITH_PLAYERS,
+  away_team: TEAM_WITH_PLAYERS,
   venue: true,
-  referees: { include: { referee: true } },
+  officials: true,
   events: {
     include: { player: true, team: true },
     orderBy: { minute: 'asc' as const },
@@ -52,12 +76,13 @@ const MATCH_DETAIL_INCLUDE = {
 
 @Injectable()
 export class MatchesService {
+  private readonly logger = new Logger(MatchesService.name);
+
   constructor(
     @Inject(forwardRef(() => MatchesGateway))
     private readonly gateway: MatchesGateway,
-    private readonly meService: MeService,
-    private readonly settingsService: SettingsService,
-    private readonly notificationsService: NotificationsService,
+    @Inject(forwardRef(() => BracketsService))
+    private readonly bracketsService: BracketsService,
     private readonly mailService: MailService,
   ) {}
 
@@ -99,37 +124,17 @@ export class MatchesService {
 
   create(data: unknown) {
     return prisma.match.create({
-      data: data as Prisma.MatchCreateInput,
+      data: pickAllowed<Prisma.MatchUncheckedCreateInput>(data, MATCH_FIELDS),
       include: MATCH_DETAIL_INCLUDE,
     });
   }
 
-  async assertCanManageMatch(
-    userId: string,
-    role: UserRole,
-    matchId: string,
-  ) {
-    const match = await prisma.match.findUnique({
-      where: { id: matchId },
-      select: { id: true, home_team_id: true, away_team_id: true },
-    });
-    if (!match) throw new NotFoundException('Match not found');
-
-    const allowed = await this.meService.canAccessMatch(userId, role, match);
-    if (!allowed) {
-      throw new ForbiddenException('You are not assigned to manage this match');
-    }
-  }
-
-  async update(
-    id: string,
-    data: unknown,
-    actor?: { userId: string; role: UserRole },
-  ) {
-    if (actor) await this.assertCanManageMatch(actor.userId, actor.role, id);
-
+  async update(id: string, data: unknown) {
     const existing = await this.findOne(id);
-    const updateData = data as Prisma.MatchUpdateInput;
+    const updateData = pickAllowed<Prisma.MatchUncheckedUpdateInput>(
+      data,
+      MATCH_FIELDS,
+    );
     const match = await prisma.match.update({
       where: { id },
       data: updateData,
@@ -138,30 +143,127 @@ export class MatchesService {
 
     if (updateData.status === 'LIVE' && existing.status !== 'LIVE') {
       await this.gateway.emitMatchStarted(id, match);
-      await this.notifyMatchStakeholders(match, 'Match started', `${match.home_team.name} vs ${match.away_team.name} is now live`);
+      await this.emailAdmins(
+        match.tournament_id,
+        'Match started',
+        `${match.home_team.name} vs ${match.away_team.name} is now live`,
+      );
     }
 
     if (updateData.status === 'COMPLETED' && existing.status !== 'COMPLETED') {
       await this.gateway.emitMatchCompleted(id, match.division_id, match);
-      await this.notifyMatchStakeholders(
-        match,
+      await this.emailAdmins(
+        match.tournament_id,
         'Match completed',
         `Final: ${match.home_team.name} ${match.home_score} – ${match.away_score} ${match.away_team.name}`,
       );
+      await this.advanceBracketFromMatch(match);
     }
 
     this.gateway.emitScoreUpdate(id, match.home_score, match.away_score);
     return match;
   }
 
-  async updateScore(
+  async updateScore(id: string, homeScore: number, awayScore: number) {
+    return this.applyScore(id, homeScore, awayScore, { notify: true });
+  }
+
+  async addEvent(matchId: string, data: unknown) {
+    const eventData = pickAllowed<Prisma.MatchEventUncheckedCreateInput>(
+      data,
+      MATCH_EVENT_FIELDS,
+    );
+    const event = await prisma.matchEvent.create({
+      data: { ...eventData, match_id: matchId },
+      include: { player: true, team: true },
+    });
+
+    const match = await this.findOne(matchId);
+    await this.syncScoreFromEvents(matchId);
+
+    await this.gateway.emitMatchEvent({
+      matchId,
+      divisionId: match.division_id,
+      type: eventData.type as MatchEventType,
+      data: { matchId, event },
+    });
+
+    return event;
+  }
+
+  async updateEvent(matchId: string, eventId: string, data: unknown) {
+    const existing = await prisma.matchEvent.findFirst({
+      where: { id: eventId, match_id: matchId },
+    });
+    if (!existing) throw new NotFoundException('Match event not found');
+
+    const patch = pickAllowed<Prisma.MatchEventUncheckedUpdateInput>(
+      data,
+      MATCH_EVENT_FIELDS,
+    );
+    const event = await prisma.matchEvent.update({
+      where: { id: eventId },
+      data: patch,
+      include: { player: true, team: true },
+    });
+
+    const match = await this.findOne(matchId);
+    await this.syncScoreFromEvents(matchId);
+
+    await this.gateway.emitMatchEvent({
+      matchId,
+      divisionId: match.division_id,
+      type: event.type,
+      data: { matchId, event },
+    });
+
+    return event;
+  }
+
+  async deleteEvent(matchId: string, eventId: string) {
+    const existing = await prisma.matchEvent.findFirst({
+      where: { id: eventId, match_id: matchId },
+    });
+    if (!existing) throw new NotFoundException('Match event not found');
+
+    await prisma.matchEvent.delete({ where: { id: eventId } });
+
+    await this.syncScoreFromEvents(matchId);
+    const match = await this.findOne(matchId);
+    this.gateway.emitScoreUpdate(matchId, match.home_score, match.away_score);
+
+    return { id: eventId };
+  }
+
+  private async syncScoreFromEvents(matchId: string) {
+    const match = await prisma.match.findUnique({ where: { id: matchId } });
+    if (!match) return;
+
+    const events = await prisma.matchEvent.findMany({
+      where: { match_id: matchId, type: { in: ['GOAL', 'OWN_GOAL'] } },
+    });
+
+    let home = 0;
+    let away = 0;
+    for (const e of events) {
+      if (e.type === 'GOAL') {
+        if (e.team_id === match.home_team_id) home += 1;
+        else if (e.team_id === match.away_team_id) away += 1;
+      } else if (e.type === 'OWN_GOAL') {
+        if (e.team_id === match.home_team_id) away += 1;
+        else if (e.team_id === match.away_team_id) home += 1;
+      }
+    }
+
+    await this.applyScore(matchId, home, away, { notify: false });
+  }
+
+  private async applyScore(
     id: string,
     homeScore: number,
     awayScore: number,
-    actor?: { userId: string; role: UserRole },
+    options: { notify?: boolean },
   ) {
-    if (actor) await this.assertCanManageMatch(actor.userId, actor.role, id);
-
     const match = await prisma.match.update({
       where: { id },
       data: { home_score: homeScore, away_score: awayScore },
@@ -169,129 +271,68 @@ export class MatchesService {
     });
 
     this.gateway.emitScoreUpdate(id, homeScore, awayScore);
-    await this.notifyMatchStakeholders(
-      match,
-      'Score updated',
-      `${match.home_team.name} ${homeScore} – ${awayScore} ${match.away_team.name}`,
-    );
+
+    if (options.notify) {
+      await this.emailAdmins(
+        match.tournament_id,
+        'Score updated',
+        `${match.home_team.name} ${homeScore} – ${awayScore} ${match.away_team.name}`,
+      );
+    }
+
     return match;
   }
 
-  async addEvent(
-    matchId: string,
-    data: unknown,
-    actor?: { userId: string; role: UserRole },
-  ) {
-    if (actor) await this.assertCanManageMatch(actor.userId, actor.role, matchId);
-
-    const eventData = data as Prisma.MatchEventUncheckedCreateInput;
-    const event = await prisma.matchEvent.create({
-      data: { ...eventData, match_id: matchId },
-      include: { player: true, team: true },
+  private async advanceBracketFromMatch(match: {
+    id: string;
+    division_id: string;
+    home_team_id: string;
+    away_team_id: string;
+    home_score: number;
+    away_score: number;
+  }) {
+    const node = await prisma.bracketNode.findFirst({
+      where: { match_id: match.id },
     });
+    if (!node) return;
 
-    const match = await this.findOne(matchId);
-
-    if (eventData.type === 'GOAL' || eventData.type === 'OWN_GOAL') {
-      const homeDelta =
-        eventData.type === 'GOAL'
-          ? eventData.team_id === match.home_team_id
-            ? 1
-            : 0
-          : eventData.team_id === match.home_team_id
-            ? 0
-            : 1;
-      const awayDelta =
-        eventData.type === 'GOAL'
-          ? eventData.team_id === match.away_team_id
-            ? 1
-            : 0
-          : eventData.team_id === match.away_team_id
-            ? 0
-            : 1;
-
-      if (homeDelta || awayDelta) {
-        await this.updateScore(
-          matchId,
-          match.home_score + homeDelta,
-          match.away_score + awayDelta,
-        );
-      }
+    if (match.home_score === match.away_score) {
+      this.logger.warn(`Match ${match.id} completed as draw — bracket not advanced`);
+      return;
     }
 
-    await this.gateway.emitMatchEvent({
-      matchId,
-      divisionId: match.division_id,
-      type: eventData.type as MatchEventType,
-      data: event,
-    });
+    const winnerId =
+      match.home_score > match.away_score ? match.home_team_id : match.away_team_id;
 
-    const label = eventData.type.replace(/_/g, ' ');
-    await this.notifyMatchStakeholders(match, `Match event: ${label}`, `${label} at ${eventData.minute}'`);
-
-    return event;
+    try {
+      await this.bracketsService.advance(node.id, winnerId);
+      this.gateway.emitBracketUpdated(match.division_id, {
+        divisionId: match.division_id,
+        nodeId: node.id,
+        winnerId,
+      });
+    } catch (err) {
+      this.logger.error(`Failed to advance bracket for match ${match.id}`, err);
+    }
   }
 
-  private async notifyMatchStakeholders(
-    match: {
-      id: string;
-      tournament_id: string;
-      division_id: string;
-      home_team_id: string;
-      away_team_id: string;
-      home_team: { name: string };
-      away_team: { name: string };
-    },
+  private async emailAdmins(
+    tournamentId: string,
     title: string,
     message: string,
   ) {
-    const settings = await this.settingsService.getAdmin();
-    if (!settings.live_score_updates && !settings.notifications_enabled) return;
-
-    const userIds = new Set<string>();
-
-    const teamCoaches = await prisma.teamCoach.findMany({
-      where: {
-        team_id: { in: [match.home_team_id, match.away_team_id] },
-        coach: { user_id: { not: null } },
-      },
-      include: { coach: { select: { user_id: true } } },
+    const admins = await prisma.user.findMany({
+      where: { active: true, role: 'ADMIN' },
+      select: { email: true },
     });
-    for (const tc of teamCoaches) {
-      if (tc.coach.user_id) userIds.add(tc.coach.user_id);
-    }
 
-    const matchReferees = await prisma.matchReferee.findMany({
-      where: { match_id: match.id },
-      include: { referee: { select: { user_id: true } } },
-    });
-    for (const mr of matchReferees) {
-      if (mr.referee.user_id) userIds.add(mr.referee.user_id);
-    }
-
-    for (const userId of userIds) {
-      const notification = await this.notificationsService.create({
-        user_id: userId,
-        tournament_id: match.tournament_id,
-        title,
-        message,
-        type: 'MATCH',
+    for (const admin of admins) {
+      if (!admin.email) continue;
+      await this.mailService.send({
+        to: admin.email,
+        subject: title,
+        text: message,
       });
-      this.gateway.emitNotification(userId, notification);
-
-      if (settings.notifications_enabled) {
-        const user = await prisma.user.findUnique({
-          where: { id: userId },
-          select: { email: true },
-        });
-        if (user?.email) {
-          await this.mailService.send({
-            to: user.email,
-            subject: title,
-            text: message,
-          });
-        }
-      }
     }
   }
 
@@ -299,22 +340,27 @@ export class MatchesService {
     return prisma.match.delete({ where: { id } });
   }
 
-  async assignReferee(matchId: string, refereeId: string, role = 'MAIN') {
+  async assignOfficial(
+    matchId: string,
+    data: { name: string; role?: string; email?: string; phone?: string },
+  ) {
     await this.findOne(matchId);
-    const referee = await prisma.referee.findUnique({ where: { id: refereeId } });
-    if (!referee) throw new NotFoundException('Referee not found');
-
-    return prisma.matchReferee.create({
-      data: { match_id: matchId, referee_id: refereeId, role },
-      include: { referee: true, match: { include: MATCH_DETAIL_INCLUDE } },
+    return prisma.matchOfficial.create({
+      data: {
+        match_id: matchId,
+        name: data.name,
+        role: data.role ?? 'MAIN',
+        email: data.email,
+        phone: data.phone,
+      },
     });
   }
 
-  async removeReferee(matchId: string, matchRefereeId: string) {
-    const record = await prisma.matchReferee.findFirst({
-      where: { id: matchRefereeId, match_id: matchId },
+  async removeOfficial(matchId: string, officialId: string) {
+    const record = await prisma.matchOfficial.findFirst({
+      where: { id: officialId, match_id: matchId },
     });
-    if (!record) throw new NotFoundException('Referee assignment not found');
-    return prisma.matchReferee.delete({ where: { id: matchRefereeId } });
+    if (!record) throw new NotFoundException('Official assignment not found');
+    return prisma.matchOfficial.delete({ where: { id: officialId } });
   }
 }

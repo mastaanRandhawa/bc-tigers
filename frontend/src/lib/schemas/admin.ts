@@ -58,14 +58,14 @@ export const matchSchema = z.object({
   away_team_id: z.string().min(1, 'Away team is required'),
   venue_id: z.string().optional(),
   scheduled_start: z.string().min(1, 'Start time is required'),
-  status: z.enum(['SCHEDULED', 'LIVE', 'COMPLETED', 'POSTPONED', 'CANCELLED']),
+  status: z.enum(['SCHEDULED', 'LIVE', 'HALFTIME', 'COMPLETED', 'DELAYED', 'POSTPONED', 'CANCELLED']),
   round: z.string().optional(),
 });
 
 export const matchScoreSchema = z.object({
   home_score: z.string().min(1),
   away_score: z.string().min(1),
-  status: z.enum(['SCHEDULED', 'LIVE', 'COMPLETED', 'POSTPONED', 'CANCELLED']).optional(),
+  status: z.enum(['SCHEDULED', 'LIVE', 'HALFTIME', 'COMPLETED', 'DELAYED', 'POSTPONED', 'CANCELLED']).optional(),
 });
 
 export const venueSchema = z.object({
@@ -76,24 +76,19 @@ export const venueSchema = z.object({
   parking_info: z.string().optional(),
 });
 
-export const refereeSchema = z.object({
+export const userRoleSchema = z.object({
   first_name: z.string().min(1, 'First name is required'),
   last_name: z.string().min(1, 'Last name is required'),
-  email: z.string().email().optional().or(z.literal('')),
+  email: z.string().email(),
   phone: z.string().optional(),
-  certification: z.string().optional(),
 });
 
-export const mediaSchema = z.object({
-  url: z.string().url('Valid URL is required'),
-  type: z.enum(['PHOTO', 'VIDEO', 'DOCUMENT']),
-  title: z.string().optional(),
-  description: z.string().optional(),
-  tournament_id: z.string().optional(),
-});
-
-export const userRoleSchema = z.object({
-  role: z.enum(['ADMIN', 'TOURNAMENT_ADMIN', 'COACH', 'REFEREE', 'PLAYER', 'VIEWER']),
+export const userCreateSchema = z.object({
+  first_name: z.string().min(1, 'First name is required'),
+  last_name: z.string().min(1, 'Last name is required'),
+  email: z.string().email('Valid email is required'),
+  password: z.string().min(8, 'Password must be at least 8 characters'),
+  phone: z.string().optional(),
 });
 
 export type TournamentFormValues = z.infer<typeof tournamentSchema>;
@@ -103,6 +98,5 @@ export type PlayerFormValues = z.infer<typeof playerSchema>;
 export type MatchFormValues = z.infer<typeof matchSchema>;
 export type MatchScoreFormValues = z.infer<typeof matchScoreSchema>;
 export type VenueFormValues = z.infer<typeof venueSchema>;
-export type RefereeFormValues = z.infer<typeof refereeSchema>;
-export type MediaFormValues = z.infer<typeof mediaSchema>;
 export type UserRoleFormValues = z.infer<typeof userRoleSchema>;
+export type UserCreateFormValues = z.infer<typeof userCreateSchema>;

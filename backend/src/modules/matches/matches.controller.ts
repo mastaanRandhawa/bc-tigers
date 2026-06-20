@@ -7,14 +7,10 @@ import {
   Param,
   Body,
   Query,
-  Request,
 } from '@nestjs/common';
 import { MatchesService } from './matches.service';
 import { AdminOnly } from '../auth/admin.decorator';
-import { RefereeOrAdmin } from '../auth/referee-or-admin.decorator';
-import type { MatchStatus, UserRole } from '@prisma/client';
-
-type AuthUser = { userId: string; role: UserRole };
+import type { MatchStatus } from '@prisma/client';
 
 @Controller('matches')
 export class MatchesController {
@@ -58,33 +54,46 @@ export class MatchesController {
   }
 
   @Patch(':id')
-  @RefereeOrAdmin()
-  update(
-    @Request() req: { user: AuthUser },
-    @Param('id') id: string,
-    @Body() body: Record<string, unknown>,
-  ) {
-    return this.service.update(id, body, req.user);
+  @AdminOnly()
+  update(@Param('id') id: string, @Body() body: Record<string, unknown>) {
+    return this.service.update(id, body);
   }
 
   @Patch(':id/score')
-  @RefereeOrAdmin()
+  @AdminOnly()
   updateScore(
-    @Request() req: { user: AuthUser },
     @Param('id') id: string,
     @Body() body: { home_score: number; away_score: number },
   ) {
-    return this.service.updateScore(id, body.home_score, body.away_score, req.user);
+    return this.service.updateScore(id, body.home_score, body.away_score);
   }
 
   @Post(':matchId/events')
-  @RefereeOrAdmin()
+  @AdminOnly()
   addEvent(
-    @Request() req: { user: AuthUser },
     @Param('matchId') matchId: string,
     @Body() body: Record<string, unknown>,
   ) {
-    return this.service.addEvent(matchId, body, req.user);
+    return this.service.addEvent(matchId, body);
+  }
+
+  @Patch(':matchId/events/:eventId')
+  @AdminOnly()
+  updateEvent(
+    @Param('matchId') matchId: string,
+    @Param('eventId') eventId: string,
+    @Body() body: Record<string, unknown>,
+  ) {
+    return this.service.updateEvent(matchId, eventId, body);
+  }
+
+  @Delete(':matchId/events/:eventId')
+  @AdminOnly()
+  deleteEvent(
+    @Param('matchId') matchId: string,
+    @Param('eventId') eventId: string,
+  ) {
+    return this.service.deleteEvent(matchId, eventId);
   }
 
   @Delete(':id')

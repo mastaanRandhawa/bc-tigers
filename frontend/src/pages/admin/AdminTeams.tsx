@@ -4,12 +4,14 @@ import AdminTable from '@/components/AdminTable';
 import QueryState from '@/components/shared/QueryState';
 import TeamFormDialog from '@/components/admin/forms/TeamFormDialog';
 import TeamRosterPanel from '@/components/admin/TeamRosterPanel';
+import { ConfirmDialog } from '@/components/admin/inline/ConfirmDialog';
 import { useFormDialog } from '@/hooks/useFormDialog';
 import { useTeams, useDeleteTeam } from '@/hooks/useTeams';
 import type { Team } from '@/types';
 import { getApiErrorMessage } from '@/lib/errors';
 import { Button } from '@/components/ui/button';
 import { Users } from 'lucide-react';
+import { toast } from 'sonner';
 
 const columns = (
   onRoster: (t: Team) => void,
@@ -61,15 +63,7 @@ export default function AdminTeams() {
   const deleteMutation = useDeleteTeam();
   const formDialog = useFormDialog<Team>();
   const [rosterTeam, setRosterTeam] = useState<Team | null>(null);
-
-  const handleDelete = async (t: Team) => {
-    if (!confirm(`Delete "${t.name}"?`)) return;
-    try {
-      await deleteMutation.mutateAsync(t.id);
-    } catch (err) {
-      alert(getApiErrorMessage(err, 'Failed to delete team'));
-    }
-  };
+  const [deleteTarget, setDeleteTarget] = useState<Team | null>(null);
 
   return (
     <AdminLayout title="Teams">
@@ -80,10 +74,16 @@ export default function AdminTeams() {
           columns={columns(setRosterTeam)}
           onAdd={formDialog.openCreate}
           onEdit={formDialog.openEdit}
-          onDelete={handleDelete}
+          onDelete={(t) => setDeleteTarget(t)}
           searchKeys={['name', 'city']}
         />
       </QueryState>
+
+      <TeamFormDialog
+        open={formDialog.open}
+        onOpenChange={(open) => (open ? formDialog.setOpen(true) : formDialog.close())}
+        team={formDialog.editing}
+      />
 
       {rosterTeam && (
         <div className="mt-6">
@@ -94,10 +94,22 @@ export default function AdminTeams() {
         </div>
       )}
 
-      <TeamFormDialog
-        open={formDialog.open}
-        onOpenChange={(open) => (open ? formDialog.setOpen(true) : formDialog.close())}
-        team={formDialog.editing}
+      <ConfirmDialog
+        open={!!deleteTarget}
+        onOpenChange={(open) => !open && setDeleteTarget(null)}
+        title={`Delete "${deleteTarget?.name}"?`}
+        description="This team and its roster will be permanently removed."
+        confirmLabel="Delete"
+        onConfirm={async () => {
+          if (!deleteTarget) return;
+          try {
+            await deleteMutation.mutateAsync(deleteTarget.id);
+            toast.success('Team deleted.');
+          } catch (err) {
+            toast.error(getApiErrorMessage(err, 'Failed to delete team'));
+          }
+          setDeleteTarget(null);
+        }}
       />
     </AdminLayout>
   );

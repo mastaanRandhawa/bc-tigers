@@ -1,31 +1,12 @@
 import apiClient from '@/lib/api-client';
-import type { Division, Match, Tournament } from '@/types';
-
-export interface HubAnnouncement {
-  id: string;
-  title: string;
-  message: string;
-  type: string;
-  created_at: string;
-  tournament_id?: string | null;
-}
-
-export interface HubMediaItem {
-  id: string;
-  type: string;
-  url: string;
-  title?: string | null;
-  description?: string | null;
-  tournament_id?: string | null;
-}
+import type { Announcement, Division, Match, Tournament } from '@/types';
 
 export interface HomeHubResponse {
   tournaments: Tournament[];
   liveMatches: Match[];
   recentMatches: Match[];
   upcomingMatches: Match[];
-  announcements?: HubAnnouncement[];
-  featuredMedia?: HubMediaItem[];
+  announcements?: Announcement[];
 }
 
 export const hubService = {

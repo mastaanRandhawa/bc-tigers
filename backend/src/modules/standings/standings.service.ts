@@ -17,27 +17,34 @@ export class StandingsService {
   }
 
   async recalculate(divisionId: string) {
-    const [matches, division] = await Promise.all([
+    const [matches, division, teams, cardEvents] = await Promise.all([
       prisma.match.findMany({
         where: { division_id: divisionId, status: 'COMPLETED' },
       }),
       prisma.division.findUniqueOrThrow({ where: { id: divisionId } }),
+      prisma.team.findMany({ where: { division_id: divisionId }, select: { id: true } }),
+      prisma.matchEvent.findMany({
+        where: {
+          type: { in: ['YELLOW_CARD', 'RED_CARD'] },
+          match: { division_id: divisionId, status: 'COMPLETED' },
+        },
+        select: { team_id: true, type: true },
+      }),
     ]);
 
-    const statsMap = new Map<
-      string,
-      {
-        played: number;
-        wins: number;
-        draws: number;
-        losses: number;
-        goals_for: number;
-        goals_against: number;
-        points: number;
-        fair_play: number;
-      }
-    >();
-    const init = () => ({
+    type TeamStats = {
+      played: number;
+      wins: number;
+      draws: number;
+      losses: number;
+      goals_for: number;
+      goals_against: number;
+      points: number;
+      fair_play: number;
+    };
+
+    const statsMap = new Map<string, TeamStats>();
+    const init = (): TeamStats => ({
       played: 0,
       wins: 0,
       draws: 0,
@@ -48,11 +55,20 @@ export class StandingsService {
       fair_play: 0,
     });
 
+    for (const team of teams) {
+      statsMap.set(team.id, init());
+    }
+
+    for (const event of cardEvents) {
+      const stats = statsMap.get(event.team_id);
+      if (!stats) continue;
+      if (event.type === 'YELLOW_CARD') stats.fair_play -= 1;
+      if (event.type === 'RED_CARD') stats.fair_play -= 3;
+    }
+
     for (const match of matches) {
-      if (!statsMap.has(match.home_team_id))
-        statsMap.set(match.home_team_id, init());
-      if (!statsMap.has(match.away_team_id))
-        statsMap.set(match.away_team_id, init());
+      if (!statsMap.has(match.home_team_id)) statsMap.set(match.home_team_id, init());
+      if (!statsMap.has(match.away_team_id)) statsMap.set(match.away_team_id, init());
 
       const home = statsMap.get(match.home_team_id)!;
       const away = statsMap.get(match.away_team_id)!;

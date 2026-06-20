@@ -7,8 +7,8 @@ import { Button } from '@/components/ui/button';
 import { useAuthStore } from '@/store/authStore';
 import { authService } from '@/services/auth.service';
 import { getRoleLabel } from '@/lib/auth-utils';
-import { getTeamPath } from '@/lib/division-routes';
 import { Save, Lock } from 'lucide-react';
+import PageLoader from '@/components/shared/PageLoader';
 
 export default function ProfilePage() {
   const { user, refreshUser } = useAuthStore();
@@ -70,7 +70,7 @@ export default function ProfilePage() {
     }
   };
 
-  if (!user) return null;
+  if (!user) return <PageLoader />;
 
   return (
     <PageLayout>
@@ -123,23 +123,6 @@ export default function ProfilePage() {
               <Lock className="w-4 h-4" /> Update Password
             </Button>
           </form>
-
-          {user.role === 'COACH' && user.coach?.team_coaches?.[0]?.team && (() => {
-            const team = user.coach!.team_coaches![0].team!;
-            const teamPath = getTeamPath(team);
-            return (
-              <div className="rounded-lg border border-border bg-card shadow-sm p-6">
-                <h2 className="font-semibold text-foreground mb-2">Your Team</h2>
-                {teamPath ? (
-                  <Link to={teamPath} className="text-primary font-semibold hover:underline">
-                    {team.name}
-                  </Link>
-                ) : (
-                  <span className="font-semibold text-foreground">{team.name}</span>
-                )}
-              </div>
-            );
-          })()}
         </div>
       </section>
     </PageLayout>

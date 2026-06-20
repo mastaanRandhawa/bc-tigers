@@ -21,12 +21,6 @@ export class TeamsController {
     return this.service.findAll({ divisionId });
   }
 
-  @Get(':slug')
-  @AdminOnly()
-  findOne(@Param('slug') slug: string) {
-    return this.service.findOne(slug);
-  }
-
   @Post()
   @AdminOnly()
   create(@Body() body: Record<string, unknown>) {

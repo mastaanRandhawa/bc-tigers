@@ -11,8 +11,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { useCreateNotification } from '@/hooks/useCreateNotification';
-import { useUpdateAnnouncement } from '@/hooks/useAnnouncements';
+import { useCreateAnnouncement, useUpdateAnnouncement } from '@/hooks/useAnnouncements';
 import { useTournaments } from '@/hooks/useTournaments';
 import {
   Select,
@@ -22,25 +21,17 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { getApiErrorMessage } from '@/lib/errors';
-import type { Notification } from '@/types';
-
-type AnnouncementLike = {
-  id: string;
-  title: string;
-  message: string;
-  tournament_id?: string | null;
-};
+import type { Announcement } from '@/types';
 
 interface AnnouncementDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  /** Pass an existing announcement to enter edit mode */
-  announcement?: AnnouncementLike | null;
+  announcement?: Announcement | null;
 }
 
 export function AnnouncementDialog({ open, onOpenChange, announcement }: AnnouncementDialogProps) {
   const isEditing = !!announcement;
-  const createMutation = useCreateNotification();
+  const createMutation = useCreateAnnouncement();
   const updateMutation = useUpdateAnnouncement();
   const { data: tournaments = [] } = useTournaments();
 
@@ -49,7 +40,6 @@ export function AnnouncementDialog({ open, onOpenChange, announcement }: Announc
   const [tournamentId, setTournamentId] = useState('');
   const [error, setError] = useState('');
 
-  // Populate fields when switching to edit mode
   useEffect(() => {
     if (open) {
       setTitle(announcement?.title ?? '');

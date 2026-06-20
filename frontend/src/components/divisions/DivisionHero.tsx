@@ -1,12 +1,11 @@
 import { useState } from 'react';
-import { Pencil, CalendarClock } from 'lucide-react';
+import { Pencil } from 'lucide-react';
 import type { Division } from '@/types';
 import type { DivisionTheme } from '@/lib/division-theme';
 import { themeChipStyle } from '@/lib/division-theme';
 import { useCanAdminEdit } from '@/hooks/useCanAdminEdit';
 import { AdminActionButton } from '@/components/admin/inline/AdminActionButton';
 import DivisionFormDialog from '@/components/admin/forms/DivisionFormDialog';
-import { useGenerateSchedule } from '@/hooks/useDivisions';
 
 interface DivisionHeroProps {
   division: Division;
@@ -16,20 +15,6 @@ interface DivisionHeroProps {
 export default function DivisionHero({ division, theme }: DivisionHeroProps) {
   const canEdit = useCanAdminEdit();
   const [editOpen, setEditOpen] = useState(false);
-  const generateSchedule = useGenerateSchedule();
-  const [genPending, setGenPending] = useState(false);
-
-  const handleGenerateSchedule = async () => {
-    if (!confirm('Generate schedule for this division? Existing scheduled matches will not be overwritten unless you choose "force".')) return;
-    setGenPending(true);
-    try {
-      await generateSchedule.mutateAsync({ id: division.id });
-    } catch {
-      alert('Failed to generate schedule.');
-    } finally {
-      setGenPending(false);
-    }
-  };
 
   return (
     <div className="page-container relative z-10 pt-3 pb-4">
@@ -75,16 +60,6 @@ export default function DivisionHero({ division, theme }: DivisionHeroProps) {
             <AdminActionButton size="xs" onClick={() => setEditOpen(true)}>
               <Pencil className="h-3 w-3" />
               Edit
-            </AdminActionButton>
-            <AdminActionButton
-              size="xs"
-              variant="ghost"
-              onClick={handleGenerateSchedule}
-              disabled={genPending}
-              title="Generate match schedule"
-            >
-              <CalendarClock className="h-3 w-3" />
-              {genPending ? 'Generating…' : 'Schedule'}
             </AdminActionButton>
           </div>
         )}

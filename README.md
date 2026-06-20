@@ -1,8 +1,11 @@
 # BC Tigers — Tournament Platform
 
-Full-stack web app for **BC Tigers FC** tournament operations and public fan experience. Manage tournaments, divisions, teams, schedules, live scores, standings, stats, and brackets — with role-based portals for coaches, referees, and players.
+Full-stack web app for **BC Tigers FC** tournament operations and the public fan
+experience. Manage tournaments, divisions, teams, schedules, live scores,
+standings, and knockout brackets. A single **ADMIN** role runs the back office;
+everything else is a public, read-only fan site.
 
-**Stack:** React (Vite) + TypeScript + Tailwind · NestJS + Prisma + PostgreSQL
+**Stack:** React (Vite) + TypeScript + Tailwind · NestJS + Prisma + PostgreSQL · Socket.IO
 
 ---
 
@@ -12,218 +15,196 @@ Full-stack web app for **BC Tigers FC** tournament operations and public fan exp
 
 - Node.js 20+
 - PostgreSQL database
-- `DATABASE_URL` in `backend/.env`
 
 ### Backend
 
 ```bash
 cd backend
-cp .env.example .env   # set DATABASE_URL
+cp .env.example .env   # set DATABASE_URL, JWT_SECRET
 npm install
 npx prisma migrate dev
-npm run seed          # demo data (~90s)
-npm run start:dev     # http://localhost:3000
+npm run seed          # demo data
+npm run start:dev     # http://localhost:3000/api
 ```
 
-Prisma schema lives in `backend/prisma/` (also mirrored at repo root `prisma/` for reference).
+Prisma schema lives in `backend/prisma/schema.prisma`.
 
 ### Frontend
 
 ```bash
 cd frontend
-cp .env.example .env
+cp .env.example .env   # optional; dev defaults work out of the box
 npm install
 npm run dev           # http://localhost:5173
 ```
 
-### Architecture (enforced hierarchy)
+---
+
+## Architecture (enforced hierarchy)
 
 This is a **competition hierarchy**, not a flat directory:
 
 `Home → Tournaments → Division → Team → Player → Match`
 
-- No global `/teams`, `/divisions`, or `/players` routes (redirect to `/tournaments`)
-- Canonical match URL: `/matches/:matchId`
-- Home shows tournaments, live/upcoming matches, announcements, and media only
-- Admin flat CRUD under `/admin/*` manages data; public UI stays hierarchical
+- No global `/teams`, `/divisions`, or `/players` routes — they redirect to `/tournaments`.
+- Public UI stays hierarchical; admin CRUD under `/admin/*` is flat.
+- Pattern: Page → React Query hook → Axios service → REST `/api`. Realtime via Socket.IO.
 
 ---
 
-## User roles
+## Authentication & roles
 
-| Role | Access |
-|------|--------|
-| **VIEWER** | Public site only |
-| **PLAYER** | Public + `/player` portal |
-| **COACH** | Public + `/coach` portal |
-| **REFEREE** | Public + `/referee` portal |
-| **TOURNAMENT_ADMIN** | Portals + admin (where allowed) |
-| **ADMIN** | Full admin panel |
+The schema defines a single role: **`ADMIN`**. There is **no public registration** —
+login is rejected for any non-admin account. Admin mutations are guarded by
+`@AdminOnly()` (JWT + role check). Public read endpoints need no auth.
 
 ---
 
-## Site map — all pages
+## Site map
 
 ### Public (no login)
 
-| URL | Page | What you can do |
-|-----|------|-----------------|
-| `/` | **Home** | Featured tournaments, live/recent/upcoming matches, announcements, media — **no** division or team directories |
-| `/matches/:matchId` | **Match detail** | Canonical match page (score, events, venue, referees) |
-| `/tournaments` | **Tournaments list** | Browse all competitions; search by name, location, status |
-| `/tournaments/:slug` | **Tournament detail** | Info, rules, dates, location; division directory; featured live/recent/upcoming matches; standings snapshot; top scorers; search divisions |
+| URL | Page |
+|-----|------|
+| `/` | Home — featured tournaments, live/recent/upcoming matches, announcements |
+| `/live` | Live matches |
+| `/tournaments` | Tournaments list (search) |
+| `/tournaments/:tournamentSlug` | Tournament detail + division directory |
+| `/matches/:matchId` | Match resolver → division-scoped match page |
 
 **Division hub** — `/tournaments/:tournamentSlug/divisions/:divisionSlug`
 
-Each division has its own theme (colors) and pill navigation:
+| URL (under division) | Page |
+|----------------------|------|
+| `/` (index) | Overview |
+| `/teams`, `/teams/:teamSlug` | Teams + team detail (roster) |
+| `/teams/:teamSlug/players/:playerId` | Player profile |
+| `/matches`, `/matches/:matchId` | Matches list + detail |
+| `/standings` | Standings table |
+| `/stats` | Stats hub — **placeholder ("coming soon"); no backend stats module yet** |
+| `/brackets` | Knockout bracket view |
+| `/venues`, `/venues/:venueSlug` | Venues + venue detail |
 
-| URL (under division) | Page | Features |
-|----------------------|------|----------|
-| `/` (index) | **Overview** | Stats (teams, matches, live, leader); live/upcoming/recent match previews; standings snapshot |
-| `/teams` | **Teams** | Team cards; search |
-| `/teams/:teamSlug` | **Team detail** | Roster with player search; team matches with search |
-| `/teams/:teamSlug/players/:playerId` | **Player profile** | Bio, position, stats |
-| `/schedule` | **Schedule** | Matches grouped by day; search |
-| `/matches` | **Matches** | Filter by status (all / live / scheduled / completed); search |
-| `.../matches/:matchId` | *(redirect)* | Redirects to `/matches/:matchId` |
-| `/standings` | **Standings** | Full table with form indicators; search |
-| `/stats` | **Stats hub** | Links to leaderboards |
-| `/stats/top-scorers` | **Top scorers** | Leaderboard + search |
-| `/stats/top-assists` | **Top assists** | Leaderboard + search |
-| `/stats/discipline` | **Discipline** | Cards leaderboard + search |
-| `/brackets` | **Brackets** | Knockout bracket view |
-| `/venues` | **Venues** | Venue list; search |
-| `/venues/:venueSlug` | **Venue detail** | Address, parking; matches at venue; search |
-
-**Legacy redirects** (old URLs → current division routes):
-
-- `/schedule/:divisionSlug`
-- `/standings/:divisionSlug`
-- `/brackets/:divisionSlug`
+**Legacy redirects:** `/schedule/:divisionSlug`, `/standings/:divisionSlug`,
+`/brackets/:divisionSlug`, and various in-division aliases redirect to the
+canonical routes above.
 
 ### Authentication
 
 | URL | Page |
 |-----|------|
 | `/login` | Sign in |
-| `/register` | Create account |
-| `/forgot-password` | Request reset |
-| `/reset-password` | Set new password |
+| `/forgot-password` | Request password reset |
+| `/reset-password` | Set new password (token from email) |
 | `/profile` | Edit profile & change password (logged in) |
 
-### Role portals (login required)
-
-| URL | Portal | Features |
-|-----|--------|----------|
-| `/coach` | **Coach dashboard** | Stats; upcoming matches (search); assigned teams (search); links to schedule & tournaments |
-| `/referee` | **Referee dashboard** | Today’s matches (search); live matches (search); assignment overview |
-| `/player` | **Player dashboard** | Upcoming team matches (search); top scorers (search); quick links to schedule & stats |
+> There is no `/register` page — accounts are created by an admin under `/admin/users`.
 
 ### Admin panel (`ADMIN` only)
 
-| URL | Section | Features |
-|-----|---------|----------|
-| `/admin/dashboard` | Dashboard | Division/team/live counts; links to public division pages |
-| `/admin/tournaments` | Tournaments | CRUD; table search |
-| `/admin/divisions` | Divisions | CRUD; colors, points rules; search |
-| `/admin/venues` | Venues | CRUD; fields; search |
-| `/admin/teams` | Teams | CRUD; division assignment; search |
-| `/admin/players` | Players | CRUD; auto-generated slugs; roster ties; search |
-| `/admin/matches` | Matches | CRUD; scores, status, referees; search |
-| `/admin/schedules` | Schedules | Calendar-style match management; search |
-| `/admin/standings` | Standings | Per-division tables; recalculate; search |
-| `/admin/brackets` | Brackets | Pick division (search when 5+); generate bracket; visual tree |
-| `/admin/referees` | Referees | CRUD; certifications; search |
-| `/admin/users` | Users | User accounts & roles; search |
-| `/admin/media` | Media | Add photos/videos/docs by URL; grid; search |
-| `/admin/settings` | Settings | Site name, contact, registration toggles, notifications |
+| URL | Section |
+|-----|---------|
+| `/admin/dashboard` | Dashboard |
+| `/admin/tournaments` | Tournaments CRUD (+ `/admin/tournaments/:id` workspace) |
+| `/admin/divisions` | Divisions CRUD |
+| `/admin/teams` | Teams CRUD |
+| `/admin/matches` | Matches CRUD, scores, events, officials |
+| `/admin/brackets` | Bracket generation + visual editor |
+| `/admin/venues` | Venues & fields CRUD |
+| `/admin/users` | User accounts |
+| `/admin/announcements` | Announcements CRUD |
 
 ---
 
-## Features by area
+## Features
 
-### Live scores & matches
-
-- **Live score ticker** on division pages
-- Match statuses: `SCHEDULED`, `LIVE`, `COMPLETED`, `POSTPONED`, `CANCELLED`
-- **Match events:** goals, own goals, penalties, yellow/red cards, substitutions, assists
-- Home hub API aggregates live, recent, and upcoming matches for fast home page load
-
-### Standings & stats
-
-- Points (configurable win/draw/loss per division)
-- Rank, played, W-D-L, goals, form streak
-- Player stats: goals, assists, cards, matches played
-- Tournament- and division-scoped leaderboards
-
-### Search (sitewide)
-
-Debounced client-side search on long lists:
-
-- Tournaments, divisions, teams, venues, players, matches, standings, stats, media
-- Admin tables and portal dashboards (when lists are large enough)
-
-Shared components: `SearchField`, `useListSearch`, `lib/search-text.ts`
-
-### Players & URLs
-
-- Player profiles use **UUID** in URLs (slug auto-generated on create, not edited in forms)
-- Legacy `/players/:id` routes redirect to team-scoped player URLs
-
-### Design & UX
-
-- Division-specific **primary/accent** colors
-- Shared design system: `page-container`, cards, `PillNav`, `StatCard`, `MatchCard`, `StandingsTable`
-- Lazy-loaded routes with loading states
-- React Query caching and prefetch on tournament links
-
----
-
-## Seed data summary
-
-The default seed builds **Miri Piri 2026**:
-
-- **1 tournament** — `miri-piri-2026`, status `UPCOMING`, $70k prize pool copy, full rules text
-- **21 divisions** — Premier, Gold, Silver, Bronze, Men's/Women's Recreational, Co-Ed, U19, U13–U18, U6–U12, Over 35/40/50, etc.
-- **80 teams** (4 per division), **960 players** (12 per team)
-- **Newton Athletic Park** — 4 grass fields, 6 referees
-- **Sample matches** in 4 featured divisions with standings recalculated
-- Portal users linked to coach team, referee record, and first player
-
-Reseed (clears and rebuilds):
-
-```bash
-cd backend && npm run seed
-```
+- **Live scores:** Socket.IO pushes match/standings/bracket updates; standings
+  auto-recalculate when a match completes.
+- **Match events:** goals, own goals, yellow/red cards, substitutions.
+- **Standings:** configurable win/draw/loss points per division; materialized in a
+  `Standing` table and recalculated on demand.
+- **Brackets:** seeded knockout generation with a drag-and-drop admin editor.
+- **Search:** debounced client-side search across long lists.
 
 ---
 
 ## Backend API modules
 
-NestJS modules under `backend/src/modules/`:
+NestJS modules under `backend/src/modules/` (plus `gateways/` for WebSocket and
+`prisma/` for the client):
 
 | Module | Purpose |
 |--------|---------|
-| `auth` | Login, register, JWT, password reset |
-| `users` | User management |
+| `auth` | Login, JWT, password reset |
+| `users` | Admin user management |
 | `tournaments` | Tournaments CRUD |
 | `divisions` | Divisions + public division resources |
-| `teams` | Teams & rosters |
-| `players` | Players (slug generation, lookup by id/slug) |
-| `matches` | Matches & events |
+| `teams` | Teams & rosters (team-players) |
+| `matches` | Matches, events, officials |
 | `standings` | Standings & recalculation |
-| `stats` | Leaderboards |
 | `brackets` | Bracket nodes & generation |
 | `venues` | Venues & fields |
-| `referees` | Referees |
-| `coaches` | Coaches & team assignments |
-| `media` | Division media assets |
-| `hub` | Aggregated home hub payload |
-| `settings` | Site settings |
-| `notifications` | User notifications |
+| `settings` | Site settings (singleton) |
+| `announcements` | Announcements |
+| `hub` | Aggregated home-page payload + global search |
+| `audit-log` | Admin action log |
+| `health` | DB health check (ops) |
+| `mail` | Password-reset email (Nodemailer) |
 
-Database schema: `backend/prisma/schema.prisma`  
-Performance indexes on matches/standings where applicable.
+Base prefix: `/api`. Database schema: `backend/prisma/schema.prisma`.
+
+---
+
+## Seed data
+
+`npm run seed` (in `backend/`) clears and rebuilds the **Miri Piri 2026** demo
+tournament:
+
+- **1 tournament** — `miri-piri-2026`
+- **7 divisions** — Premier, Div 1 Gold, Div 2 Silver, Div 3 Bronze, Recreational, Over 40, Over 45
+- **Up to 8 teams per division** (`SEED_MAX_TEAMS_PER_DIVISION`, default 8) × **5 players per team**
+- **Newton Athletic Park** with fields, plus sample matches and standings
+- One admin user (`admin@bctigers.ca`) — see `backend/prisma/seed.ts` for the default password
+
+---
+
+## Environment
+
+**Backend** (`backend/.env`, see `backend/.env.example`):
+
+| Variable | Purpose |
+|----------|---------|
+| `DATABASE_URL` | PostgreSQL connection string |
+| `JWT_SECRET` | Required — app won't start without it |
+| `JWT_EXPIRES_IN` | Token lifetime (default `7d`) |
+| `CORS_ORIGIN` | Comma-separated allowed browser origins (REST + WebSocket) |
+| `APP_URL` | Frontend base URL for password-reset links |
+| `SMTP_HOST` / `SMTP_PORT` / `SMTP_SECURE` / `SMTP_USER` / `SMTP_PASS` / `SMTP_FROM` | Password-reset email delivery |
+| `DEV_EXPOSE_RESET_TOKEN` | Dev only — never enable in production |
+
+**Frontend** (`frontend/.env`, see `frontend/.env.example`):
+
+| Variable | Purpose |
+|----------|---------|
+| `VITE_API_URL` | Backend REST URL incl. `/api` (dev proxies to `localhost:3000`) |
+| `VITE_SOCKET_URL` | Socket.IO origin |
+
+---
+
+## Deployment
+
+| | URL |
+|--|-----|
+| **Frontend** | https://mastaanrandhawa.github.io/bc-tigers/ |
+| **API** | https://bc-tigers.onrender.com/api |
+
+- **Render:** backend API + PostgreSQL via `render.yaml`. Set `CORS_ORIGIN` and
+  SMTP secrets in the dashboard. Migrations run on deploy (`start:render`).
+- **GitHub Pages:** Settings → Pages → Source: **GitHub Actions**. Push to
+  `main`/`master`; `.github/workflows/deploy-frontend.yml` builds with
+  `GITHUB_PAGES=true` (base `/bc-tigers/`).
+- **CI:** `.github/workflows/ci.yml` builds the frontend and runs backend tests
+  on every PR.
 
 ---
 
@@ -232,65 +213,10 @@ Performance indexes on matches/standings where applicable.
 ```
 bc-tigers/
 ├── frontend/          # React + Vite app
-│   └── src/
-│       ├── pages/     # Route pages (public, admin, portals)
-│       ├── components/
-│       ├── hooks/
-│       ├── services/  # API clients
-│       └── lib/       # routes, dates, search, themes
+│   └── src/{pages,components,hooks,services,lib,routes}
 ├── backend/           # NestJS API
 │   ├── prisma/        # schema, migrations, seed.ts
-│   └── src/modules/
-└── README.md          # this file
+│   └── src/{modules,gateways,common,prisma}
+├── docs/audits/       # engineering audit reports
+└── README.md
 ```
-
----
-
-## Scripts
-
-| Location | Command | Description |
-|----------|---------|-------------|
-| `frontend` | `npm run dev` | Dev server |
-| `frontend` | `npm run build` | Production build |
-| `backend` | `npm run start:dev` | API with watch |
-| `backend` | `npm run seed` | Load demo database |
-| `backend` | `npx prisma migrate dev` | Apply migrations |
-
----
-
-## Environment
-
-**Backend** (`backend/.env`):
-
-- `DATABASE_URL` — PostgreSQL connection string
-- JWT and other secrets as required by `auth` module
-
-**Frontend** (`frontend/.env.production`):
-
-- `VITE_API_URL` — e.g. `https://bc-tigers.onrender.com/api`
-- `VITE_SOCKET_URL` — e.g. `https://bc-tigers.onrender.com`
-
-Dev uses Vite proxy (`/api` → `localhost:3000`); production build targets Render.
-
-### GitHub Pages + Render
-
-| | URL |
-|--|-----|
-| **Frontend** | https://mastaanrandhawa.github.io/bc-tigers/ |
-| **API** | https://bc-tigers.onrender.com/api |
-
-1. **Render:** set `CORS_ORIGIN` to `https://mastaanrandhawa.github.io,https://mastaanrandhawa.github.io/bc-tigers` (Origin header is usually without path; include both to be safe).
-2. **GitHub:** Settings → Pages → Source: **GitHub Actions**.
-3. Push to `main` or `master`; workflow `.github/workflows/deploy-frontend.yml` builds with `GITHUB_PAGES=true` (base `/bc-tigers/`).
-
----
-
-## Contact (from seed / site settings)
-
-- **Email:** bctigersfc@gmail.com  
-- **Site:** www.bctigers.com  
-- **Venue:** Newton Athletic Park, 7395 128 St, Surrey, BC V3W 2M7
-
----
-
-*For component integration notes, see `21dev.md` in the repo root.*

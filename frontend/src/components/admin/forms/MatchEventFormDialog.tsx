@@ -4,9 +4,9 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import FormDialog from '@/components/admin/FormDialog';
 import { TextInputField, SelectField, FormError } from '@/components/admin/form-fields';
-import { useAddMatchEvent } from '@/hooks/useMatches';
+import { useAddMatchEvent, useUpdateMatchEvent } from '@/hooks/useMatches';
 import { getApiErrorMessage } from '@/lib/errors';
-import type { Match, MatchEventType } from '@/types';
+import type { Match, MatchEvent, MatchEventType } from '@/types';
 
 const eventSchema = z.object({
   type: z.enum(['GOAL', 'OWN_GOAL', 'YELLOW_CARD', 'RED_CARD', 'SUBSTITUTION', 'PENALTY', 'ASSIST']),
@@ -31,48 +31,82 @@ interface MatchEventFormDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   match: Match | null;
+  event?: MatchEvent | null;
 }
 
-export default function MatchEventFormDialog({ open, onOpenChange, match }: MatchEventFormDialogProps) {
+export default function MatchEventFormDialog({
+  open,
+  onOpenChange,
+  match,
+  event,
+}: MatchEventFormDialogProps) {
+  const isEdit = !!event;
   const addMutation = useAddMatchEvent();
+  const updateMutation = useUpdateMatchEvent();
+  const isSubmitting = addMutation.isPending || updateMutation.isPending;
 
   const form = useForm<EventFormValues>({
     resolver: zodResolver(eventSchema),
-    defaultValues: { type: 'GOAL', minute: '0', team_id: '', player_id: '' },
+    defaultValues: { type: 'GOAL', minute: '0', team_id: '', player_id: '__none__' },
   });
 
   const teamId = form.watch('team_id');
-  const homeRoster = match?.home_team?.rosters?.map((r) => r.player).filter(Boolean) ?? [];
-  const awayRoster = match?.away_team?.rosters?.map((r) => r.player).filter(Boolean) ?? [];
+  const homePlayers = match?.home_team?.players?.filter((p) => p.active !== false) ?? [];
+  const awayPlayers = match?.away_team?.players?.filter((p) => p.active !== false) ?? [];
   const players =
     teamId === match?.home_team_id
-      ? homeRoster
+      ? homePlayers
       : teamId === match?.away_team_id
-        ? awayRoster
+        ? awayPlayers
         : [];
 
   useEffect(() => {
     if (!open || !match) return;
-    form.reset({
-      type: 'GOAL',
-      minute: '0',
-      team_id: match.home_team_id,
-      player_id: '',
-    });
-  }, [open, match, form]);
+    if (event) {
+      form.reset({
+        type: event.type,
+        minute: String(event.minute),
+        team_id: event.team_id,
+        player_id: event.player_id ?? '__none__',
+      });
+    } else {
+      form.reset({
+        type: 'GOAL',
+        minute: '0',
+        team_id: match.home_team_id,
+        player_id: '__none__',
+      });
+    }
+  }, [open, match, event, form]);
 
   const onSubmit = form.handleSubmit(async (values) => {
     if (!match) return;
+    const playerId =
+      values.player_id && values.player_id !== '__none__' ? values.player_id : undefined;
+
     try {
-      await addMutation.mutateAsync({
-        matchId: match.id,
-        data: {
-          type: values.type,
-          minute: Number(values.minute),
-          team_id: values.team_id,
-          player_id: values.player_id || undefined,
-        },
-      });
+      if (isEdit && event) {
+        await updateMutation.mutateAsync({
+          matchId: match.id,
+          eventId: event.id,
+          data: {
+            type: values.type,
+            minute: Number(values.minute),
+            team_id: values.team_id,
+            player_id: playerId ?? null,
+          },
+        });
+      } else {
+        await addMutation.mutateAsync({
+          matchId: match.id,
+          data: {
+            type: values.type,
+            minute: Number(values.minute),
+            team_id: values.team_id,
+            player_id: playerId,
+          },
+        });
+      }
       onOpenChange(false);
     } catch (err) {
       form.setError('root', { message: getApiErrorMessage(err) });
@@ -90,11 +124,11 @@ export default function MatchEventFormDialog({ open, onOpenChange, match }: Matc
     <FormDialog
       open={open}
       onOpenChange={onOpenChange}
-      title="Record Match Event"
+      title={isEdit ? 'Edit Match Event' : 'Record Match Event'}
       description={`${match.home_team?.name} vs ${match.away_team?.name}`}
       onSubmit={onSubmit}
-      isSubmitting={addMutation.isPending}
-      submitLabel="Add Event"
+      isSubmitting={isSubmitting}
+      submitLabel={isEdit ? 'Save Changes' : 'Add Event'}
     >
       <FormError message={form.formState.errors.root?.message} />
       <SelectField control={form.control} name="type" label="Event Type" options={EVENT_TYPES} />
@@ -105,7 +139,7 @@ export default function MatchEventFormDialog({ open, onOpenChange, match }: Matc
         name="player_id"
         label="Player (optional)"
         options={[
-          { value: '', label: '—' },
+          { value: '__none__', label: '—' },
           ...players.map((p) => ({
             value: p!.id,
             label: `${p!.first_name} ${p!.last_name}`,

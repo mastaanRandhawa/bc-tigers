@@ -84,9 +84,17 @@ export default function TournamentsPage() {
                   >
                     {/* Image / icon area — no badges here so admin buttons have clear space */}
                     <div className="relative flex h-20 items-center justify-center border-b border-border bg-surface-muted">
-                      <div className="rounded-xl border border-border bg-card p-2.5 shadow-sm transition-transform duration-200 group-hover:scale-105">
-                        <Trophy className="h-7 w-7 text-primary" aria-hidden />
-                      </div>
+                      {t.logo ? (
+                        <img
+                          src={t.logo}
+                          alt=""
+                          className="h-14 w-14 rounded-xl border border-border bg-card object-contain p-1.5 shadow-sm transition-transform duration-200 group-hover:scale-105"
+                        />
+                      ) : (
+                        <div className="rounded-xl border border-border bg-card p-2.5 shadow-sm transition-transform duration-200 group-hover:scale-105">
+                          <Trophy className="h-7 w-7 text-primary" aria-hidden />
+                        </div>
+                      )}
                     </div>
 
                     {/* Text area */}
