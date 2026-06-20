@@ -22,13 +22,6 @@ export const divisionResourcesService = {
       `${base(tournamentSlug, divisionSlug)}/teams/${teamSlug}/players/${playerId}`,
     ),
 
-  getSchedule: (
-    tournamentSlug: string,
-    divisionSlug: string,
-    params?: { status?: string },
-  ) =>
-    apiClient.get<Match[]>(`${base(tournamentSlug, divisionSlug)}/schedule`, { params }),
-
   getPlayers: (tournamentSlug: string, divisionSlug: string) =>
     apiClient.get<Player[]>(`${base(tournamentSlug, divisionSlug)}/players`),
 

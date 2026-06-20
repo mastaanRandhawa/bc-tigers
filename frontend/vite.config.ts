@@ -25,13 +25,6 @@ export default defineConfig({
         manualChunks(id) {
           if (!id.includes('node_modules')) {
             if (id.includes('/src/pages/admin/')) return 'pages-admin';
-            if (
-              id.includes('/src/pages/coach/') ||
-              id.includes('/src/pages/referee/') ||
-              id.includes('/src/pages/player/')
-            ) {
-              return 'pages-portals';
-            }
             if (id.includes('/src/pages/auth/')) return 'pages-auth';
             return;
           }

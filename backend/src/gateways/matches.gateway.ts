@@ -22,7 +22,6 @@ export const SOCKET_EVENTS = {
   SUBSTITUTION: 'match:substitution',
   STANDINGS_UPDATED: 'standings:updated',
   BRACKET_UPDATED: 'bracket:updated',
-  NOTIFICATION: 'notification',
 } as const;
 
 @WebSocketGateway({
@@ -132,16 +131,6 @@ export class MatchesGateway
       home_score: homeScore,
       away_score: awayScore,
     });
-  }
-
-  emitNotification(userId: string, notification: unknown) {
-    this.server
-      .to(`user:${userId}`)
-      .emit(SOCKET_EVENTS.NOTIFICATION, notification);
-  }
-
-  emitBroadcastNotification(notification: unknown) {
-    this.server.emit(SOCKET_EVENTS.NOTIFICATION, notification);
   }
 
   emitBracketUpdated(divisionId: string, data: unknown) {

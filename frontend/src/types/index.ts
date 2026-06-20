@@ -252,12 +252,6 @@ export interface ApiError {
   message: string;
 }
 
-export interface HomeHubData {
-  announcements: Announcement[];
-  live_matches: Match[];
-  upcoming_tournaments: Tournament[];
-}
-
 export interface TournamentOverview {
   tournament: Tournament;
   live_matches: Match[];
@@ -266,10 +260,3 @@ export interface TournamentOverview {
   standings_preview: Standing[];
 }
 
-export interface GlobalSearchResult {
-  type: 'tournament' | 'division' | 'team' | 'match' | 'player';
-  id: string;
-  label: string;
-  href: string;
-  meta?: string;
-}

@@ -5,8 +5,6 @@ export const announcementsService = {
   getAll: (params?: { tournamentId?: string; limit?: number }) =>
     apiClient.get<Announcement[]>('/announcements', { params }),
 
-  getOne: (id: string) => apiClient.get<Announcement>(`/announcements/${id}`),
-
   create: (data: {
     title: string;
     message: string;
