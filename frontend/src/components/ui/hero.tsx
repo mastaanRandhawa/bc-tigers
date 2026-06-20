@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { type ReactNode } from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight, Calendar, MapPin, Trophy } from "lucide-react";
 import { m } from "motion/react";
@@ -13,6 +13,7 @@ import { fadeUp, transitionFade } from "@/lib/motion/variants";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import logoUrl from "@/assets/logo.png";
+import { FlowingWavesShader } from "@/components/ui/flowing-waves-shader";
 
 function MotionBlock({
   children,
@@ -47,19 +48,28 @@ export function TournamentHubHeader() {
   const featuredTournament = pickFeaturedTournament(tournaments);
   const schedulePath = tournamentOverviewPath(featuredTournament);
 
+  const hasLiveTournament = tournaments.some((t) => t.status === "ACTIVE");
+  const hasUpcomingTournament = tournaments.some((t) => t.status === "UPCOMING");
+
   const headline = featuredTournament
-    ? featuredTournament.name
-    : "BC Tigers FC tournament hub";
+    ? featuredTournament.name.toUpperCase()
+    : "BC TIGERS FC TOURNAMENT HUB";
 
   return (
     <section
       aria-labelledby="hub-hero-heading"
-      className="hub-hero relative flex min-h-[min(88dvh,920px)] flex-col bg-primary pt-[5.5rem] text-white md:pt-[7rem]"
+      className="hub-hero relative flex flex-col overflow-hidden bg-primary text-white"
     >
-      <div className="pointer-events-none absolute inset-0 z-0 bg-tiger-stripes" />
+      <FlowingWavesShader
+        className="absolute inset-0 z-0 h-full w-full"
+        disableCenterDimming
+        speed={0.18}
+        hasActiveReminders={hasLiveTournament}
+        hasUpcomingReminders={hasUpcomingTournament && !hasLiveTournament}
+      />
       <div className="hub-hero-glow" aria-hidden />
 
-      <div className="relative z-10 flex flex-1 flex-col justify-center py-12 md:py-16 lg:py-20">
+      <div className="relative z-10 py-6 pb-8 md:py-8 md:pb-10">
         <div className="page-container">
           <div className="grid grid-cols-1 items-center gap-10 md:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)] md:gap-8 lg:gap-12">
             <MotionBlock className="flex justify-center md:justify-start" delay={0.05}>
@@ -128,12 +138,18 @@ export function TournamentHubHeader() {
                       <ArrowRight className="h-4 w-4" aria-hidden />
                     </Link>
                   </Button>
-                  <Link
-                    to="/tournaments"
-                    className="inline-flex items-center gap-1.5 px-1 py-2 text-sm font-semibold text-white/90 underline-offset-4 transition-colors hover:text-white hover:underline"
+                  <Button
+                    asChild
+                    size="lg"
+                    variant="outline"
+                    className={cn(
+                      "h-12 rounded-lg border-white/35 bg-white/10 px-6 text-base font-bold text-white",
+                      "hover:border-white/50 hover:bg-white/20 hover:text-white",
+                      "focus-visible:ring-white focus-visible:ring-offset-primary",
+                    )}
                   >
-                    Browse all tournaments
-                  </Link>
+                    <Link to="/tournaments">Browse all tournaments</Link>
+                  </Button>
                 </div>
               </MotionBlock>
             </div>

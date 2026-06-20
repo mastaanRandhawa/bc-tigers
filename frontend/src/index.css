@@ -155,11 +155,13 @@
 
   html {
     scroll-padding-top: 3.5rem;
+    --site-header-offset: 3.5rem;
   }
 
   @media (max-width: 1023px) {
     html {
       scroll-padding-top: 6.75rem;
+      --site-header-offset: 6.75rem;
     }
   }
 
@@ -460,13 +462,14 @@
   /* Home hub hero — depth + glass panel on brand field */
   .hub-hero {
     isolation: isolate;
+    padding-top: var(--site-header-offset);
   }
 
   .hub-hero-glow {
     pointer-events: none;
     position: absolute;
     inset: 0;
-    z-index: 0;
+    z-index: 2;
     background:
       radial-gradient(ellipse 72% 58% at 24% 42%, rgba(255, 255, 255, 0.13), transparent 68%),
       radial-gradient(ellipse 48% 38% at 88% 18%, rgba(0, 0, 0, 0.1), transparent 58%);

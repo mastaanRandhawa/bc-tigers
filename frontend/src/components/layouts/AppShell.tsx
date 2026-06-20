@@ -30,8 +30,7 @@ export default function AppShell({
   return (
     <div
       className={cn(
-        'min-h-dvh min-h-screen flex flex-col w-full overflow-x-hidden',
-        heroTheme ? 'bg-primary' : 'bg-surface-muted',
+        'min-h-dvh min-h-screen flex flex-col w-full overflow-x-hidden bg-surface-muted',
       )}
     >
       <a
@@ -45,7 +44,8 @@ export default function AppShell({
       <main
         id="main-content"
         className={cn(
-          'flex-1 w-full min-w-0',
+          'w-full min-w-0',
+          heroTheme ? '' : 'flex-1',
           !heroTheme && 'pt-14',
           !heroTheme && tickerVisible && headerVariant !== 'admin' && 'max-md:pt-[6.75rem]',
           className,

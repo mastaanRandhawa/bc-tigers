@@ -13,6 +13,7 @@ import SectionHeader from '@/components/shared/SectionHeader';
 import Section from '@/components/shared/Section';
 import QueryState from '@/components/shared/QueryState';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import { useHomeHub } from '@/hooks/useHomeHub';
 import { formatDate } from '@/lib/date';
 import { pickFeaturedTournament } from '@/lib/featured-tournament';
@@ -75,17 +76,16 @@ export default function HomePage() {
               <h2 className="text-section m-0">Active Competitions</h2>
               <p className="text-body-sm mt-1 text-muted-foreground">
                 {featuredTournament
-                  ? `Featured: ${featuredTournament.name}`
+                  ? `Featured: ${featuredTournament.name.toUpperCase()}`
                   : 'Browse active and upcoming tournaments'}
               </p>
             </div>
-            <Link
-              to="/tournaments"
-              className="inline-flex items-center gap-1 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-primary-hover"
-            >
-              All tournaments
-              <ChevronRight className="h-4 w-4" aria-hidden />
-            </Link>
+            <Button asChild>
+              <Link to="/tournaments">
+                All tournaments
+                <ChevronRight className="h-4 w-4" aria-hidden />
+              </Link>
+            </Button>
           </div>
 
           <QueryState
