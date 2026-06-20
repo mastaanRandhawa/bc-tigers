@@ -29,12 +29,6 @@ export class UsersController {
     });
   }
 
-  @Get(':id')
-  @AdminOnly()
-  findOne(@Param('id') id: string) {
-    return this.service.findOne(id);
-  }
-
   @Post()
   @AdminOnly()
   async create(

@@ -34,12 +34,6 @@ export class DivisionsController {
     return this.service.findAll();
   }
 
-  @Get('divisions/by-slug/:divisionSlug')
-  @AdminOnly()
-  findBySlugGlobal(@Param('divisionSlug') divisionSlug: string) {
-    return this.service.findBySlugGlobal(divisionSlug);
-  }
-
   @Post('divisions')
   @AdminOnly()
   create(@Body() body: Record<string, unknown>) {

@@ -14,13 +14,6 @@ export class AnnouncementsService {
     });
   }
 
-  findOne(id: string) {
-    return prisma.announcement.findUniqueOrThrow({
-      where: { id },
-      include: { tournament: { select: { id: true, name: true, slug: true } } },
-    });
-  }
-
   create(data: {
     title: string;
     message: string;

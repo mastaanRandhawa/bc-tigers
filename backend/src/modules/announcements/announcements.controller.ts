@@ -28,11 +28,6 @@ export class AnnouncementsController {
     });
   }
 
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.service.findOne(id);
-  }
-
   @Post()
   @AdminOnly()
   async create(

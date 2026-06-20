@@ -12,16 +12,6 @@ export const divisionResourcesService = {
   getTeam: (tournamentSlug: string, divisionSlug: string, teamSlug: string) =>
     apiClient.get<Team>(`${base(tournamentSlug, divisionSlug)}/teams/${teamSlug}`),
 
-  getPlayer: (
-    tournamentSlug: string,
-    divisionSlug: string,
-    teamSlug: string,
-    playerId: string,
-  ) =>
-    apiClient.get<Player>(
-      `${base(tournamentSlug, divisionSlug)}/teams/${teamSlug}/players/${playerId}`,
-    ),
-
   getPlayers: (tournamentSlug: string, divisionSlug: string) =>
     apiClient.get<Player[]>(`${base(tournamentSlug, divisionSlug)}/players`),
 

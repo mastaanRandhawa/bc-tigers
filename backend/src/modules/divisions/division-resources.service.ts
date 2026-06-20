@@ -42,30 +42,6 @@ export class DivisionResourcesService {
     return this.teamsService.findOneInDivision(divisionId, teamSlug);
   }
 
-  async getPlayer(
-    tournamentSlug: string,
-    divisionSlug: string,
-    teamSlug: string,
-    playerId: string,
-  ) {
-    const divisionId = await this.resolveDivisionId(tournamentSlug, divisionSlug);
-    const team = await this.teamsService.findOneInDivision(divisionId, teamSlug);
-    return this.teamPlayersService.findOneOnTeam(team.id, playerId);
-  }
-
-  async getSchedule(
-    tournamentSlug: string,
-    divisionSlug: string,
-    params?: { status?: string },
-  ) {
-    const divisionId = await this.resolveDivisionId(tournamentSlug, divisionSlug);
-    return this.matchesService.findAll({
-      divisionId,
-      status: params?.status as MatchStatus | undefined,
-      limit: 200,
-    });
-  }
-
   async getPlayers(tournamentSlug: string, divisionSlug: string) {
     const divisionId = await this.resolveDivisionId(tournamentSlug, divisionSlug);
     return this.teamPlayersService.findByDivision(divisionId);

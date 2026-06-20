@@ -39,10 +39,6 @@ export class UsersService {
     });
   }
 
-  findOne(id: string) {
-    return prisma.user.findUniqueOrThrow({ where: { id }, select: SELECT });
-  }
-
   async create(data: {
     first_name: string;
     last_name: string;
