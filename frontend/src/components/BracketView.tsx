@@ -33,18 +33,18 @@ function BracketTeamRow({
     <div
       className={cn(
         'bracket-match-row',
-        isWinner && 'bg-zinc-50',
+        isWinner && 'bg-primary/10',
       )}
     >
       {logo ? (
         <img src={logo} alt="" className="h-5 w-5 shrink-0 rounded-full object-cover ring-1 ring-border" />
       ) : (
-        <div className="h-5 w-5 shrink-0 rounded-full bg-zinc-100 ring-1 ring-border" />
+        <div className="h-5 w-5 shrink-0 rounded-full bg-muted ring-1 ring-border" />
       )}
       <span
         className={cn(
           'min-w-0 flex-1 truncate text-sm',
-          isWinner ? 'font-semibold text-foreground' : 'font-medium text-zinc-600',
+          isWinner ? 'font-semibold text-foreground' : 'font-medium text-muted-foreground',
         )}
       >
         {name}
@@ -65,8 +65,8 @@ function BracketTeamRow({
 
 function BracketMatch({ node }: BracketMatchProps) {
   const isFinal = node.stage === 'FINAL';
-  const homeWins = node.winner_id === node.home_team_id;
-  const awayWins = node.winner_id === node.away_team_id;
+  const homeWins = !!node.winner_id && node.winner_id === node.home_team_id;
+  const awayWins = !!node.winner_id && node.winner_id === node.away_team_id;
   const matchPath = node.match ? getMatchPath(node.match) : null;
 
   const inner = (
@@ -84,7 +84,7 @@ function BracketMatch({ node }: BracketMatchProps) {
         isWinner={awayWins}
       />
       {isFinal && (
-        <div className="flex items-center justify-center gap-1 border-t border-border bg-primary-muted/40 px-2 py-1">
+        <div className="flex items-center justify-center gap-1 border-t border-border bg-primary/10 px-2 py-1">
           <Trophy className="h-3 w-3 text-primary" aria-hidden />
           <span className="text-[10px] font-semibold uppercase tracking-wider text-primary">Final</span>
         </div>
@@ -129,7 +129,7 @@ export default function BracketView({ nodes }: BracketViewProps) {
   if (nodes.length === 0) {
     return (
       <div className="py-10 text-center">
-        <Trophy className="mx-auto mb-3 h-9 w-9 text-zinc-300" aria-hidden />
+        <Trophy className="mx-auto mb-3 h-9 w-9 text-muted-foreground/40" aria-hidden />
         <p className="font-medium text-foreground">Bracket not yet generated</p>
         <p className="mt-1 text-sm text-muted-foreground">Check back once knockout rounds are set.</p>
       </div>

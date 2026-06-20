@@ -634,7 +634,7 @@ function BracketNodeCard({
         isOver={dragOver?.nodeId === node.id && dragOver.slot === 'home'}
         isDragging={!!dragState}
         isClickTarget={!!selectedTeamId && !node.winner_id && !isByeSlot(node, 'home')}
-        isWinner={node.winner_id === node.home_team_id}
+        isWinner={!!node.winner_id && node.winner_id === node.home_team_id}
         onDragStartFromSlot={onDragStartFromSlot}
         onDragOver={(e) => {
           e.preventDefault();
@@ -663,7 +663,7 @@ function BracketNodeCard({
         isOver={dragOver?.nodeId === node.id && dragOver.slot === 'away'}
         isDragging={!!dragState}
         isClickTarget={!!selectedTeamId && !node.winner_id && !isByeSlot(node, 'away')}
-        isWinner={node.winner_id === node.away_team_id}
+        isWinner={!!node.winner_id && node.winner_id === node.away_team_id}
         onDragStartFromSlot={onDragStartFromSlot}
         onDragOver={(e) => {
           e.preventDefault();
