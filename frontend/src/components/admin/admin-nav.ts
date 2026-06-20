@@ -2,6 +2,7 @@ import {
   Trophy,
   LayoutDashboard,
   Shield,
+  Layers,
   Calendar,
   Megaphone,
   MapPin,
@@ -30,6 +31,7 @@ export const adminNavGroups: AdminNavGroup[] = [
     label: 'Tournament Setup',
     items: [
       { label: 'Tournaments', href: '/admin/tournaments', icon: Trophy },
+      { label: 'Divisions', href: '/admin/divisions', icon: Layers },
       { label: 'Venues', href: '/admin/venues', icon: MapPin },
     ],
   },
