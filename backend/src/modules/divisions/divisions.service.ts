@@ -2,6 +2,23 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import type { Prisma } from '@prisma/client';
 import prisma from '../../prisma/prisma';
 import { roundRobinPairs } from '../../common/round-robin';
+import { pickAllowed } from '../../common/pick';
+
+/** Client-settable scalar fields on a division. `bracket_locked` is managed by the brackets module. */
+const DIVISION_FIELDS = [
+  'tournament_id',
+  'name',
+  'slug',
+  'age_group',
+  'gender',
+  'max_teams',
+  'format',
+  'points_win',
+  'points_draw',
+  'points_loss',
+  'primary_color',
+  'accent_color',
+] as const;
 
 @Injectable()
 export class DivisionsService {
@@ -63,12 +80,17 @@ export class DivisionsService {
     return divisions[0];
   }
 
-  create(data: Prisma.DivisionCreateInput) {
-    return prisma.division.create({ data });
+  create(data: unknown) {
+    return prisma.division.create({
+      data: pickAllowed<Prisma.DivisionUncheckedCreateInput>(data, DIVISION_FIELDS),
+    });
   }
 
-  update(id: string, data: Prisma.DivisionUpdateInput) {
-    return prisma.division.update({ where: { id }, data });
+  update(id: string, data: unknown) {
+    return prisma.division.update({
+      where: { id },
+      data: pickAllowed<Prisma.DivisionUncheckedUpdateInput>(data, DIVISION_FIELDS),
+    });
   }
 
   remove(id: string) {

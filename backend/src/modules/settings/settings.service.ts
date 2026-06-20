@@ -1,6 +1,15 @@
 import { Injectable } from '@nestjs/common';
 import type { Prisma } from '@prisma/client';
 import prisma from '../../prisma/prisma';
+import { pickAllowed } from '../../common/pick';
+
+const SETTINGS_FIELDS = [
+  'site_name',
+  'contact_email',
+  'contact_phone',
+  'contact_address',
+  'timezone',
+] as const;
 
 const DEFAULT_SETTINGS = {
   id: 'default',
@@ -31,7 +40,7 @@ export class SettingsService {
     await this.getOrCreate();
     return prisma.siteSettings.update({
       where: { id: 'default' },
-      data: data as Prisma.SiteSettingsUpdateInput,
+      data: pickAllowed<Prisma.SiteSettingsUpdateInput>(data, SETTINGS_FIELDS),
     });
   }
 

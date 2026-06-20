@@ -11,6 +11,7 @@ import { Server, Socket } from 'socket.io';
 import { Logger } from '@nestjs/common';
 import { StandingsService } from '../modules/standings/standings.service';
 import { BracketsService } from '../modules/brackets/brackets.service';
+import { getCorsOrigins } from '../common/cors-origins';
 
 export const SOCKET_EVENTS = {
   MATCH_STARTED: 'match:started',
@@ -25,7 +26,7 @@ export const SOCKET_EVENTS = {
 } as const;
 
 @WebSocketGateway({
-  cors: { origin: '*' },
+  cors: { origin: getCorsOrigins(), credentials: true },
   namespace: '/',
 })
 export class MatchesGateway

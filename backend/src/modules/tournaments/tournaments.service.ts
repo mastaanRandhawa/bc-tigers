@@ -1,6 +1,23 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import type { MatchStatus, Prisma } from '@prisma/client';
 import prisma from '../../prisma/prisma';
+import { pickAllowed } from '../../common/pick';
+
+const TOURNAMENT_FIELDS = [
+  'name',
+  'slug',
+  'description',
+  'location',
+  'start_date',
+  'end_date',
+  'status',
+  'tournament_type',
+  'logo',
+  'rules',
+] as const;
+
+/** `created_by` may be set only at creation time, never via update. */
+const TOURNAMENT_CREATE_FIELDS = [...TOURNAMENT_FIELDS, 'created_by'] as const;
 
 @Injectable()
 export class TournamentsService {
@@ -110,13 +127,24 @@ export class TournamentsService {
     return t;
   }
 
-  create(data: Prisma.TournamentCreateInput) {
-    return prisma.tournament.create({ data });
+  create(data: unknown) {
+    return prisma.tournament.create({
+      data: pickAllowed<Prisma.TournamentUncheckedCreateInput>(
+        data,
+        TOURNAMENT_CREATE_FIELDS,
+      ),
+    });
   }
 
-  async update(id: string, data: Prisma.TournamentUpdateInput) {
+  async update(id: string, data: unknown) {
     await prisma.tournament.findUniqueOrThrow({ where: { id } });
-    return prisma.tournament.update({ where: { id }, data });
+    return prisma.tournament.update({
+      where: { id },
+      data: pickAllowed<Prisma.TournamentUncheckedUpdateInput>(
+        data,
+        TOURNAMENT_FIELDS,
+      ),
+    });
   }
 
   async remove(id: string) {

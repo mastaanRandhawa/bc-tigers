@@ -10,6 +10,32 @@ import prisma from '../../prisma/prisma';
 import { MatchesGateway } from '../../gateways/matches.gateway';
 import { BracketsService } from '../brackets/brackets.service';
 import { MailService } from '../mail/mail.service';
+import { pickAllowed } from '../../common/pick';
+
+/** Client-settable scalar fields on a match. Scores are set via the score/events endpoints. */
+const MATCH_FIELDS = [
+  'tournament_id',
+  'division_id',
+  'home_team_id',
+  'away_team_id',
+  'venue_id',
+  'field_id',
+  'scheduled_start',
+  'scheduled_end',
+  'status',
+  'round',
+  'match_type',
+  'stream_url',
+] as const;
+
+/** Client-settable scalar fields on a match event. `match_id` is set from the route param. */
+const MATCH_EVENT_FIELDS = [
+  'player_id',
+  'team_id',
+  'type',
+  'minute',
+  'extra_time',
+] as const;
 
 const MATCH_LIST_INCLUDE = {
   home_team: { select: { id: true, name: true, slug: true, logo: true } },
@@ -98,14 +124,17 @@ export class MatchesService {
 
   create(data: unknown) {
     return prisma.match.create({
-      data: data as Prisma.MatchCreateInput,
+      data: pickAllowed<Prisma.MatchUncheckedCreateInput>(data, MATCH_FIELDS),
       include: MATCH_DETAIL_INCLUDE,
     });
   }
 
   async update(id: string, data: unknown) {
     const existing = await this.findOne(id);
-    const updateData = data as Prisma.MatchUpdateInput;
+    const updateData = pickAllowed<Prisma.MatchUncheckedUpdateInput>(
+      data,
+      MATCH_FIELDS,
+    );
     const match = await prisma.match.update({
       where: { id },
       data: updateData,
@@ -140,7 +169,10 @@ export class MatchesService {
   }
 
   async addEvent(matchId: string, data: unknown) {
-    const eventData = data as Prisma.MatchEventUncheckedCreateInput;
+    const eventData = pickAllowed<Prisma.MatchEventUncheckedCreateInput>(
+      data,
+      MATCH_EVENT_FIELDS,
+    );
     const event = await prisma.matchEvent.create({
       data: { ...eventData, match_id: matchId },
       include: { player: true, team: true },
@@ -165,7 +197,10 @@ export class MatchesService {
     });
     if (!existing) throw new NotFoundException('Match event not found');
 
-    const patch = data as Prisma.MatchEventUncheckedUpdateInput;
+    const patch = pickAllowed<Prisma.MatchEventUncheckedUpdateInput>(
+      data,
+      MATCH_EVENT_FIELDS,
+    );
     const event = await prisma.matchEvent.update({
       where: { id: eventId },
       data: patch,

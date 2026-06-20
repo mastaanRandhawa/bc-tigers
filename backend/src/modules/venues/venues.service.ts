@@ -1,6 +1,18 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import type { Prisma } from '@prisma/client';
 import prisma from '../../prisma/prisma';
+import { pickAllowed } from '../../common/pick';
+
+const VENUE_FIELDS = [
+  'name',
+  'slug',
+  'address',
+  'city',
+  'latitude',
+  'longitude',
+  'parking_info',
+  'photos',
+] as const;
 
 @Injectable()
 export class VenuesService {
@@ -54,13 +66,15 @@ export class VenuesService {
   }
 
   create(data: unknown) {
-    return prisma.venue.create({ data: data as Prisma.VenueCreateInput });
+    return prisma.venue.create({
+      data: pickAllowed<Prisma.VenueUncheckedCreateInput>(data, VENUE_FIELDS),
+    });
   }
 
   update(id: string, data: unknown) {
     return prisma.venue.update({
       where: { id },
-      data: data as Prisma.VenueUpdateInput,
+      data: pickAllowed<Prisma.VenueUncheckedUpdateInput>(data, VENUE_FIELDS),
     });
   }
 

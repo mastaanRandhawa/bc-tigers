@@ -2,6 +2,17 @@ import { Injectable, NotFoundException, ConflictException } from '@nestjs/common
 import type { Prisma } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 import prisma from '../../prisma/prisma';
+import { pickAllowed } from '../../common/pick';
+
+/** Fields an admin may set via PATCH /users/:id. Excludes role, password_hash, id. */
+const USER_UPDATE_FIELDS = [
+  'first_name',
+  'last_name',
+  'email',
+  'phone',
+  'profile_image',
+  'active',
+] as const;
 
 const SELECT = {
   id: true,
@@ -60,7 +71,7 @@ export class UsersService {
     const existing = await prisma.user.findUnique({ where: { id } });
     if (!existing) throw new NotFoundException('User not found');
 
-    const input = data as Prisma.UserUpdateInput;
+    const input = pickAllowed<Prisma.UserUpdateInput>(data, USER_UPDATE_FIELDS);
     return prisma.user.update({
       where: { id },
       data: input,
