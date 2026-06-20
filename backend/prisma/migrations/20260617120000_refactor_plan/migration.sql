@@ -129,8 +129,13 @@ BEGIN
 END $$;
 
 DROP TABLE IF EXISTS "TeamRoster";
+-- Legacy registration tables (not in current schema; may exist on older databases)
+DROP TABLE IF EXISTS "RosterSubmissionPlayer";
+DROP TABLE IF EXISTS "TeamSubmissionPlayer";
+DROP TABLE IF EXISTS "RosterSubmission" CASCADE;
+DROP TABLE IF EXISTS "TeamSubmission" CASCADE;
 DROP TABLE IF EXISTS "TeamCoach";
-DROP TABLE IF EXISTS "Coach";
+DROP TABLE IF EXISTS "Coach" CASCADE;
 DROP TABLE IF EXISTS "MatchReferee";
 DROP TABLE IF EXISTS "Referee";
 DROP TABLE IF EXISTS "TournamentAdmin";
