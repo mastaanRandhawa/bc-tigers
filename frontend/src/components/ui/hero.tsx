@@ -1,133 +1,145 @@
+import type { ReactNode } from "react";
 import { Link } from "react-router-dom";
-import { Calendar, MapPin, Trophy } from "lucide-react";
+import { ArrowRight, Calendar, MapPin, Trophy } from "lucide-react";
+import { m } from "motion/react";
 import { useTournaments } from "@/hooks/useTournaments";
 import { formatDate } from "@/lib/date";
 import {
   pickFeaturedTournament,
   tournamentOverviewPath,
 } from "@/lib/featured-tournament";
+import { usePrefersReducedMotion } from "@/hooks/usePrefersReducedMotion";
+import { fadeUp, transitionFade } from "@/lib/motion/variants";
 import { cn } from "@/lib/utils";
-import { MinimalistHero } from "@/components/ui/minimalist-hero";
+import { Button } from "@/components/ui/button";
 import logoUrl from "@/assets/logo.png";
 
-function CircularBadge({
-  schedulePath,
+function MotionBlock({
+  children,
   className,
+  delay = 0,
 }: {
-  schedulePath: string;
+  children: ReactNode;
   className?: string;
+  delay?: number;
 }) {
+  const reduced = usePrefersReducedMotion();
+
+  if (reduced) {
+    return <div className={className}>{children}</div>;
+  }
+
   return (
-    <Link
-      to={schedulePath}
-      className={cn(
-        "relative bg-primary-muted rounded-full flex items-center justify-center shadow-xl rotate-12 hover:scale-105 transition-transform border-[3px] border-white/20",
-        "w-24 h-24 sm:w-28 sm:h-28 md:w-36 md:h-36",
-        className,
-      )}
+    <m.div
+      className={className}
+      initial="hidden"
+      animate="visible"
+      variants={fadeUp}
+      transition={{ ...transitionFade, delay }}
     >
-      <div className="absolute inset-1 animate-[spin_10s_linear_infinite]">
-        <svg viewBox="0 0 100 100" className="w-full h-full">
-          <path
-            id="heroCirclePath"
-            d="M 50, 50 m -36, 0 a 36,36 0 1,1 72,0 a 36,36 0 1,1 -72,0"
-            fill="none"
-          />
-          <text
-            className="text-[11px] font-black tracking-[0.18em] uppercase"
-            fill="#D66E1F"
-          >
-            <textPath href="#heroCirclePath" startOffset="0%">
-              VIEW SCHEDULE • VIEW SCHEDULE •
-            </textPath>
-          </text>
-        </svg>
-      </div>
-      <div className="absolute inset-0 flex items-center justify-center">
-        <Calendar className="w-12 h-12 text-primary" strokeWidth={2.5} />
-      </div>
-    </Link>
+      {children}
+    </m.div>
   );
 }
 
 export function TournamentHubHeader() {
   const { data: tournaments = [] } = useTournaments();
-
   const featuredTournament = pickFeaturedTournament(tournaments);
   const schedulePath = tournamentOverviewPath(featuredTournament);
 
+  const headline = featuredTournament
+    ? featuredTournament.name
+    : "BC Tigers FC tournament hub";
+
   return (
-    <MinimalistHero
-      // Keep the brand color scheme: orange field, white ink.
-      className="bg-primary pt-[5.5rem] text-white md:pt-[7rem]"
-      imageSrc={logoUrl}
-      imageAlt="BC Tigers FC"
-      // Crest sits directly on the orange field — no disc, no drop shadow.
-      imageClassName="w-48 object-contain sm:w-56 md:w-64 lg:w-80 xl:w-[26rem]"
-      circleClassName="hidden"
-      gridClassName="md:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)_minmax(0,1.35fr)]"
-      overlayText={{
-        part1: (
-          <>
-            BC
-            <br />
-            TIGERS
-          </>
-        ),
-        part2: "FC",
-      }}
-      overlayClassName="font-display text-center leading-[0.82] tracking-tighter text-6xl sm:text-7xl md:text-left md:text-[6.5rem] lg:text-8xl xl:text-[9rem]"
-      mainTextClassName="w-full text-base md:max-w-sm md:text-lg"
-      mainText={
-        <div className="space-y-5">
-          <p className="font-medium">
-            Live scores, schedules, standings, and knockout brackets — the home
-            of BC&nbsp;Tigers&nbsp;FC tournament football.
-          </p>
-          {featuredTournament && (
-            <div className="space-y-1.5 text-sm">
-              <Link
-                to={schedulePath}
-                className="inline-flex items-center gap-1.5 font-bold no-underline transition-opacity hover:opacity-80"
-              >
-                <Trophy className="h-4 w-4 shrink-0 text-primary-muted" />
-                {featuredTournament.name}
-              </Link>
-              <div className="flex flex-col gap-1">
-                <span className="inline-flex items-center gap-1.5">
-                  <Calendar className="h-4 w-4 shrink-0 text-primary-muted" />
-                  {formatDate(featuredTournament.start_date)} –{" "}
-                  {formatDate(featuredTournament.end_date)}
-                </span>
-                {featuredTournament.location && (
-                  <span className="inline-flex items-center gap-1.5">
-                    <MapPin className="h-4 w-4 shrink-0 text-primary-muted" />
-                    {featuredTournament.location}
-                  </span>
-                )}
-              </div>
+    <section
+      aria-labelledby="hub-hero-heading"
+      className="hub-hero relative flex min-h-[min(88dvh,920px)] flex-col bg-primary pt-[5.5rem] text-white md:pt-[7rem]"
+    >
+      <div className="pointer-events-none absolute inset-0 z-0 bg-tiger-stripes" />
+      <div className="hub-hero-glow" aria-hidden />
+
+      <div className="relative z-10 flex flex-1 flex-col justify-center py-12 md:py-16 lg:py-20">
+        <div className="page-container">
+          <div className="grid grid-cols-1 items-center gap-10 md:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)] md:gap-8 lg:gap-12">
+            <MotionBlock className="flex justify-center md:justify-start" delay={0.05}>
+              <img
+                src={logoUrl}
+                alt=""
+                className="hub-hero-logo w-52 object-contain sm:w-60 md:w-[19rem] lg:w-[25rem] xl:w-[28rem]"
+              />
+            </MotionBlock>
+
+            <div className="flex flex-col gap-6 text-center md:gap-7 md:text-left">
+              <MotionBlock delay={0.12}>
+                <p className="hub-hero-eyebrow mb-3">Live tournament hub</p>
+                <h1
+                  id="hub-hero-heading"
+                  className="font-display text-[clamp(1.75rem,4.5vw,3.25rem)] font-bold leading-[1.05] tracking-tight text-balance"
+                >
+                  {headline}
+                </h1>
+              </MotionBlock>
+
+              <MotionBlock delay={0.2}>
+                <p className="max-w-xl text-base font-medium leading-relaxed text-white/90 sm:text-lg md:text-xl">
+                  Fixtures, standings, and knockout brackets for BC Tigers FC
+                  competitions — updated as matches are played.
+                </p>
+              </MotionBlock>
+
+              {featuredTournament && (
+                <MotionBlock delay={0.28}>
+                  <div className="hub-hero-panel rounded-xl p-4 sm:p-5">
+                    <div className="flex flex-col gap-3 text-left text-sm sm:text-base">
+                      <span className="inline-flex items-center gap-2 font-semibold text-white">
+                        <Trophy className="h-4 w-4 shrink-0 text-white/85" aria-hidden />
+                        Featured tournament
+                      </span>
+                      <span className="inline-flex items-center gap-2 text-white/90">
+                        <Calendar className="h-4 w-4 shrink-0 text-white/75" aria-hidden />
+                        {formatDate(featuredTournament.start_date)} –{" "}
+                        {formatDate(featuredTournament.end_date)}
+                      </span>
+                      {featuredTournament.location && (
+                        <span className="inline-flex items-center gap-2 text-white/90">
+                          <MapPin className="h-4 w-4 shrink-0 text-white/75" aria-hidden />
+                          {featuredTournament.location}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </MotionBlock>
+              )}
+
+              <MotionBlock delay={0.36}>
+                <div className="flex flex-col items-center gap-3 sm:flex-row sm:flex-wrap md:items-start">
+                  <Button
+                    asChild
+                    size="lg"
+                    className={cn(
+                      "h-12 rounded-lg bg-white px-6 text-base font-bold text-primary shadow-[0_10px_28px_rgba(72,28,0,0.28)]",
+                      "hover:bg-white/95 hover:shadow-[0_14px_32px_rgba(72,28,0,0.32)]",
+                      "focus-visible:ring-white focus-visible:ring-offset-primary",
+                    )}
+                  >
+                    <Link to={schedulePath}>
+                      View schedule
+                      <ArrowRight className="h-4 w-4" aria-hidden />
+                    </Link>
+                  </Button>
+                  <Link
+                    to="/tournaments"
+                    className="inline-flex items-center gap-1.5 px-1 py-2 text-sm font-semibold text-white/90 underline-offset-4 transition-colors hover:text-white hover:underline"
+                  >
+                    Browse all tournaments
+                  </Link>
+                </div>
+              </MotionBlock>
             </div>
-          )}
-
-          <Link
-            to={schedulePath}
-            className="inline-block font-semibold text-white underline decoration-from-font underline-offset-4 transition-opacity hover:opacity-80"
-          >
-            View schedule
-          </Link>
-
-          {/* Spinning schedule badge sits below the body text on the left. */}
-          <div className="flex justify-center pt-2 md:justify-start">
-            <CircularBadge
-              schedulePath={schedulePath}
-              className="h-32 w-32 sm:h-36 sm:w-36 md:h-44 md:w-44"
-            />
           </div>
         </div>
-      }
-      locationText={featuredTournament?.location ?? "British Columbia, Canada"}
-    >
-      <div className="pointer-events-none absolute inset-0 z-0 bg-brand-grid" />
-    </MinimalistHero>
+      </div>
+    </section>
   );
 }

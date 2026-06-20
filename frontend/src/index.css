@@ -297,6 +297,16 @@
     border: none !important;
   }
 
+  /* Navbar — flat solid brand orange */
+  .site-header-orange {
+    background: var(--color-primary);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+  }
+
+  .site-header-orange.site-header-scrolled {
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  }
+
   .site-header-smart {
     --header-transition-duration: 420ms;
     --header-transition-ease: cubic-bezier(0.22, 1, 0.36, 1);
@@ -307,8 +317,6 @@
       transform var(--header-transition-duration) var(--header-transition-ease),
       opacity calc(var(--header-transition-duration) * 0.85) var(--header-transition-ease),
       box-shadow 0.35s var(--ease-out),
-      background-color 0.35s var(--ease-out),
-      backdrop-filter 0.35s var(--ease-out),
       visibility 0s linear 0s;
   }
 
@@ -321,8 +329,6 @@
       transform var(--header-transition-duration) var(--header-transition-ease),
       opacity calc(var(--header-transition-duration) * 0.9) cubic-bezier(0.4, 0, 0.2, 1),
       box-shadow 0.35s var(--ease-out),
-      background-color 0.35s var(--ease-out),
-      backdrop-filter 0.35s var(--ease-out),
       visibility 0s linear var(--header-transition-duration);
   }
 
@@ -442,12 +448,42 @@
     background-color: rgba(255, 255, 255, 0.03);
   }
 
-  .bg-brand-gradient {
-    @apply bg-card;
+  /* Tiger-stripe texture for brand orange surfaces (25% opacity) */
+  .bg-tiger-stripes {
+    background-image: url('./assets/Tiger-Stripes-Pattern.svg');
+    background-size: 960px 960px;
+    background-repeat: repeat;
+    background-attachment: fixed;
+    opacity: 0.075;
   }
 
-  .bg-hero-gradient {
-    @apply bg-card;
+  /* Home hub hero — depth + glass panel on brand field */
+  .hub-hero {
+    isolation: isolate;
+  }
+
+  .hub-hero-glow {
+    pointer-events: none;
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    background:
+      radial-gradient(ellipse 72% 58% at 24% 42%, rgba(255, 255, 255, 0.13), transparent 68%),
+      radial-gradient(ellipse 48% 38% at 88% 18%, rgba(0, 0, 0, 0.1), transparent 58%);
+  }
+
+  .hub-hero-logo {
+    filter: drop-shadow(0 22px 44px rgba(72, 28, 0, 0.3));
+  }
+
+  .hub-hero-panel {
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: rgba(255, 255, 255, 0.09);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, 0.16),
+      0 20px 48px rgba(96, 36, 0, 0.22);
   }
 
   /* Division / tournament color chips — filled in light, outline in dark */
@@ -636,36 +672,6 @@
 
   .match-card-broadcast {
     @apply rounded-md border border-border bg-card shadow-sm transition-all duration-200 hover:shadow-md hover:border-primary/25;
-  }
-
-  .hero-headline {
-    font-family: "Arial Black", Impact, var(--font-display), sans-serif;
-    @apply font-black leading-[0.85] tracking-tighter uppercase;
-  }
-
-  .hero-headline-shadow {
-    --hero-shadow: #9a3d0a;
-    text-shadow:
-      1px 1px 0 var(--hero-shadow),
-      2px 2px 0 var(--hero-shadow),
-      3px 3px 0 var(--hero-shadow),
-      4px 4px 0 var(--hero-shadow),
-      5px 5px 0 var(--hero-shadow),
-      6px 6px 0 var(--hero-shadow),
-      7px 7px 0 var(--hero-shadow),
-      8px 8px 0 var(--hero-shadow),
-      9px 9px 0 var(--hero-shadow),
-      10px 10px 0 var(--hero-shadow),
-      11px 11px 0 var(--hero-shadow),
-      12px 12px 0 var(--hero-shadow),
-      13px 13px 0 var(--hero-shadow),
-      14px 14px 0 var(--hero-shadow);
-  }
-
-  .hero-headline-stack {
-    gap: 1rem;
-    padding-top: 0;
-    padding-bottom: 0;
   }
 
   @keyframes live-ticker {

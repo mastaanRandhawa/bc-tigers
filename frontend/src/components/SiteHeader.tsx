@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Link, NavLink, useNavigate } from 'react-router-dom';
+import { useState } from "react";
+import { Link, NavLink, useNavigate } from "react-router-dom";
 import {
   ChevronDown,
   User,
@@ -7,20 +7,18 @@ import {
   Settings,
   LayoutDashboard,
   ExternalLink,
-} from 'lucide-react';
-import LiveScoreTicker from '@/components/LiveScoreTicker';
-import { useAuthStore } from '@/store/authStore';
-import {
-  isAdminRole,
-} from '@/lib/auth-utils';
-import BrandLogo from '@/components/shared/BrandLogo';
-import GlobalSearch from '@/components/shared/GlobalSearch';
-import { AnimatedThemeToggler } from '@/components/ui/animated-theme-toggler';
-import { cn } from '@/lib/utils';
-import { useSmartHeader } from '@/hooks/useSmartHeader';
+} from "lucide-react";
+import LiveScoreTicker from "@/components/LiveScoreTicker";
+import { useAuthStore } from "@/store/authStore";
+import { isAdminRole } from "@/lib/auth-utils";
+import BrandLogo from "@/components/shared/BrandLogo";
+import GlobalSearch from "@/components/shared/GlobalSearch";
+import { AnimatedThemeToggler } from "@/components/ui/animated-theme-toggler";
+import { cn } from "@/lib/utils";
+import { useSmartHeader } from "@/hooks/useSmartHeader";
 
 interface SiteHeaderProps {
-  variant?: 'site' | 'hero' | 'minimal' | 'admin';
+  variant?: "site" | "hero" | "minimal" | "admin";
   /** Hide embedded live ticker (e.g. when a page renders its own full-width ticker). */
   showLiveTicker?: boolean;
 }
@@ -34,12 +32,12 @@ function UserMenu({ onDark = true }: { onDark?: boolean }) {
 
   const handleLogout = () => {
     logout();
-    navigate('/');
+    navigate("/");
     setUserMenuOpen(false);
   };
 
   const displayName =
-    [user.first_name, user.last_name].filter(Boolean).join(' ') || 'Account';
+    [user.first_name, user.last_name].filter(Boolean).join(" ") || "Account";
 
   return (
     <div className="relative">
@@ -49,30 +47,38 @@ function UserMenu({ onDark = true }: { onDark?: boolean }) {
         aria-haspopup="menu"
         onClick={() => setUserMenuOpen(!userMenuOpen)}
         className={cn(
-          'flex items-center gap-1.5 px-2.5 py-1.5 rounded-full transition-colors',
+          "flex items-center gap-1.5 px-2.5 py-1.5 rounded-full transition-colors",
           onDark
-            ? 'border border-white/30 text-white hover:bg-white/10'
-            : 'border border-border bg-card hover:bg-muted',
+            ? "border border-white/30 text-white hover:bg-white/10"
+            : "border border-border bg-card hover:bg-muted",
         )}
       >
         <div
           className={cn(
-            'w-7 h-7 rounded-full flex items-center justify-center',
-            onDark ? 'bg-white/20' : 'bg-primary-muted',
+            "w-7 h-7 rounded-full flex items-center justify-center",
+            onDark ? "bg-white/20" : "bg-primary-muted",
           )}
         >
-          <User className={cn('w-3.5 h-3.5', onDark ? 'text-white' : 'text-primary')} />
+          <User
+            className={cn(
+              "w-3.5 h-3.5",
+              onDark ? "text-white" : "text-primary",
+            )}
+          />
         </div>
         <span
           className={cn(
-            'text-sm font-medium hidden sm:block max-w-[8rem] truncate',
-            onDark ? 'text-white' : 'text-foreground',
+            "text-sm font-medium hidden sm:block max-w-[8rem] truncate",
+            onDark ? "text-white" : "text-foreground",
           )}
         >
           {displayName}
         </span>
         <ChevronDown
-          className={cn('w-3 h-3 hidden sm:block', onDark ? 'text-white/70' : 'text-muted-foreground')}
+          className={cn(
+            "w-3 h-3 hidden sm:block",
+            onDark ? "text-white/70" : "text-muted-foreground",
+          )}
         />
       </button>
       {userMenuOpen && (
@@ -108,7 +114,11 @@ function UserMenu({ onDark = true }: { onDark?: boolean }) {
               <LogOut className="w-4 h-4" /> Sign Out
             </button>
           </div>
-          <div className="fixed inset-0 z-40" onClick={() => setUserMenuOpen(false)} aria-hidden />
+          <div
+            className="fixed inset-0 z-40"
+            onClick={() => setUserMenuOpen(false)}
+            aria-hidden
+          />
         </>
       )}
     </div>
@@ -120,10 +130,10 @@ function SignInButton({ isHero }: { isHero: boolean }) {
     <Link
       to="/login"
       className={cn(
-        'inline-flex items-center rounded-lg px-3 py-1.5 text-xs font-semibold transition-all duration-200 sm:px-4 sm:text-sm',
+        "inline-flex items-center rounded-lg px-3 py-1.5 text-xs font-semibold transition-all duration-200 sm:px-4 sm:text-sm",
         isHero
-          ? 'border border-white/30 text-white hover:bg-white hover:text-primary'
-          : 'bg-primary text-white hover:bg-primary-hover shadow-sm',
+          ? "border border-white/30 text-white hover:bg-white hover:text-primary"
+          : "bg-primary text-white hover:bg-primary-hover shadow-sm",
       )}
     >
       Sign In
@@ -137,14 +147,14 @@ function TournamentsLink({ onDark }: { onDark: boolean }) {
       to="/tournaments"
       className={({ isActive }) =>
         cn(
-          'nav-pill text-xs sm:text-sm',
+          "nav-pill text-xs sm:text-sm",
           onDark
             ? isActive
-              ? 'nav-pill-light-active'
-              : 'nav-pill-light'
+              ? "nav-pill-light-active"
+              : "nav-pill-light"
             : isActive
-              ? 'nav-pill-dark-active'
-              : 'nav-pill-dark',
+              ? "nav-pill-dark-active"
+              : "nav-pill-dark",
         )
       }
     >
@@ -153,33 +163,32 @@ function TournamentsLink({ onDark }: { onDark: boolean }) {
   );
 }
 
-export default function SiteHeader({ variant = 'hero', showLiveTicker = true }: SiteHeaderProps) {
-  const isAdmin = variant === 'admin';
-  const isMinimal = variant === 'minimal';
-  const { isVisible, isAtTop, isScrolled } = useSmartHeader();
+export default function SiteHeader({
+  variant = "hero",
+  showLiveTicker = true,
+}: SiteHeaderProps) {
+  const isAdmin = variant === "admin";
+  const isMinimal = variant === "minimal";
+  const { isVisible, isScrolled } = useSmartHeader();
   const { isAuthenticated, isInitialized, user } = useAuthStore();
   const showTicker = showLiveTicker && !isMinimal;
   const onDark = true;
 
   const orangeBar = cn(
-    'site-header-orange site-header-smart fixed top-0 left-0 right-0 z-50 w-full text-white will-change-transform',
-    !isVisible && 'site-header-hidden',
-    isAtTop ? 'bg-primary' : 'bg-primary/95 shadow-md backdrop-blur-md supports-[backdrop-filter]:bg-primary/90',
-    isScrolled && isVisible && !isAtTop && 'shadow-lg',
+    "site-header-orange site-header-smart fixed top-0 left-0 right-0 z-50 w-full text-white will-change-transform",
+    !isVisible && "site-header-hidden",
+    isScrolled && isVisible && "site-header-scrolled",
   );
 
   const barInner = (
-    <>
-      <div className="absolute inset-0 bg-brand-grid pointer-events-none opacity-60" />
-      <div className="absolute inset-x-0 bottom-0 h-px bg-white/10 pointer-events-none" />
-    </>
+    <div className="absolute inset-x-0 bottom-0 h-px bg-white/10 pointer-events-none" />
   );
 
   if (isAdmin) {
     return (
       <header className={orangeBar} aria-hidden={!isVisible}>
         {barInner}
-        <div className="page-container relative">
+        <div className="page-container relative z-10">
           <div className="flex h-14 items-center justify-between gap-4">
             <div className="flex min-w-0 items-center gap-2.5">
               <BrandLogo compact />
@@ -196,13 +205,12 @@ export default function SiteHeader({ variant = 'hero', showLiveTicker = true }: 
                 <ExternalLink className="w-3.5 h-3.5" aria-hidden />
                 View Site
               </Link>
-              {isInitialized && (
-                isAuthenticated && user ? (
+              {isInitialized &&
+                (isAuthenticated && user ? (
                   <UserMenu onDark />
                 ) : (
                   <SignInButton isHero />
-                )
-              )}
+                ))}
             </div>
           </div>
         </div>
@@ -214,13 +222,16 @@ export default function SiteHeader({ variant = 'hero', showLiveTicker = true }: 
     <header className={orangeBar} aria-hidden={!isVisible}>
       {barInner}
 
-      <div className="page-container relative">
+      <div className="page-container relative z-10">
         <div className="flex h-14 items-center gap-2 sm:gap-3">
           <BrandLogo compact />
 
           {showTicker && (
             <>
-              <span className="hidden h-5 w-px shrink-0 bg-white/20 md:block" aria-hidden />
+              <span
+                className="hidden h-5 w-px shrink-0 bg-white/20 md:block"
+                aria-hidden
+              />
               <div className="hidden min-w-0 flex-1 overflow-hidden md:block">
                 <LiveScoreTicker embedded alwaysShow variant="dark" />
               </div>
@@ -235,13 +246,12 @@ export default function SiteHeader({ variant = 'hero', showLiveTicker = true }: 
             )}
             <TournamentsLink onDark={onDark} />
             <AnimatedThemeToggler onDark={onDark} />
-            {isInitialized && (
-              isAuthenticated && user ? (
+            {isInitialized &&
+              (isAuthenticated && user ? (
                 <UserMenu onDark={onDark} />
               ) : (
                 <SignInButton isHero />
-              )
-            )}
+              ))}
           </div>
         </div>
 
