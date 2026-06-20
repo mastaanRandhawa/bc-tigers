@@ -17,6 +17,25 @@ services:
         generateValue: true
       - key: JWT_EXPIRES_IN
         value: 7d
+      # Allowed browser origin(s) for REST + WebSocket CORS (comma-separated).
+      - key: CORS_ORIGIN
+        value: https://mastaanrandhawa.github.io
+      # Base URL of the deployed frontend — used to build password-reset links.
+      - key: APP_URL
+        value: https://mastaanrandhawa.github.io/bc-tigers
+      # SMTP credentials for password-reset email delivery — set in the Render dashboard.
+      - key: SMTP_HOST
+        sync: false
+      - key: SMTP_PORT
+        value: "587"
+      - key: SMTP_SECURE
+        value: "false"
+      - key: SMTP_USER
+        sync: false
+      - key: SMTP_PASS
+        sync: false
+      - key: SMTP_FROM
+        value: noreply@bctigers.ca
 
 databases:
   - name: bc-tigers-db

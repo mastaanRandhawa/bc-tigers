@@ -708,7 +708,7 @@ async function main() {
 
   console.log('\nSeed complete.');
   console.log('  Tournament: /tournaments/miri-piri-2026');
-  console.log('  Admin: admin@bctigers.ca / Admin1234!');
+  console.log('  Admin user seeded (admin@bctigers.ca). See seed source for the default password.');
 }
 
 main()

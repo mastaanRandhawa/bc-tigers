@@ -4,7 +4,7 @@ import type { BracketNode } from '@/types';
 
 export const bracketsService = {
   getByDivisionId: (divisionId: string) =>
-    apiClient.get<BracketNode[]>(`/brackets/${divisionId}`),
+    apiClient.get<BracketNode[]>(`/brackets/division/${divisionId}`),
 
   generate: (divisionId: string, seeding: BracketSeeding = 'standard') =>
     apiClient.post<BracketNode[]>(`/brackets/${divisionId}/generate`, { seeding }),
