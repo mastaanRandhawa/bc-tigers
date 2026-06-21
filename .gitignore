@@ -10,7 +10,8 @@ docs/
 .agents/
 .claude/
 emails/
-
+.playwright-mcp/
+QA-REPORT.md
 # Environment & secrets
 .env
 .env.local

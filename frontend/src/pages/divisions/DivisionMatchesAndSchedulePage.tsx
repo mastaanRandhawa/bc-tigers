@@ -53,6 +53,8 @@ export default function DivisionMatchesAndSchedulePage() {
     return allMatches.filter((m) => m.status === filter);
   }, [allMatches, filter]);
 
+  const activeFilterLabel = filters.find((f) => f.value === filter)?.label ?? '';
+
   const getText = useCallback((m: (typeof matches)[0]) => matchSearchText(m), []);
   const { search, setSearch, filtered, debouncedSearch, hasQuery } = useListSearch(
     matches,
@@ -210,6 +212,10 @@ export default function DivisionMatchesAndSchedulePage() {
       >
         {hasQuery && filtered.length === 0 ? (
           <SearchEmpty query={debouncedSearch} entityLabel="matches" />
+        ) : filtered.length === 0 ? (
+          <p className="py-8 text-center text-sm text-muted-foreground">
+            No {filter === 'ALL' ? '' : `${activeFilterLabel.toLowerCase()} `}matches in this division.
+          </p>
         ) : view === 'calendar' ? (
           <div className="space-y-6">
             {sortedDates.map((date) => (

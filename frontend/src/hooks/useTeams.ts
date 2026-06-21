@@ -1,12 +1,15 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { queryKeys } from '@/lib/query-keys';
 import { teamsService } from '@/services/teams.service';
+import { useCanAdminEdit } from '@/hooks/useCanAdminEdit';
 import type { Team } from '@/types';
 
 export function useTeams(params?: { divisionId?: string }) {
+  const canAdmin = useCanAdminEdit();
   return useQuery({
     queryKey: queryKeys.teams.all(params),
     queryFn: async () => (await teamsService.getAll(params)).data,
+    enabled: canAdmin,
   });
 }
 
