@@ -86,7 +86,7 @@ export function SelectField<T extends FieldValues>({
         <div className={cn('space-y-1.5', className)}>
           <Label>{label}</Label>
           <Select
-            value={field.value && field.value !== '' ? field.value : undefined}
+            value={field.value ?? ''}
             onValueChange={field.onChange}
           >
             <SelectTrigger>

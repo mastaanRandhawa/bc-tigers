@@ -71,7 +71,9 @@ const MATCH_DETAIL_INCLUDE = {
     orderBy: { minute: 'asc' as const },
   },
   tournament: true,
-  division: true,
+  division: {
+    include: { tournament: { select: { id: true, name: true, slug: true } } },
+  },
 } satisfies Prisma.MatchInclude;
 
 @Injectable()

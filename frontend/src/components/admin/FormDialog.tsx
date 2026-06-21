@@ -32,7 +32,7 @@ export default function FormDialog({
 }: FormDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent {...(description ? {} : { 'aria-describedby': undefined })}>
         <form
           onSubmit={(e) => {
             e.preventDefault();

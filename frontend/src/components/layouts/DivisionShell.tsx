@@ -132,13 +132,13 @@ export default function DivisionShell({
         </div>
       </div>
 
-      <main className="min-w-0 w-full flex-1">
+      <div className="min-w-0 w-full flex-1">
         <PageContent className="-mt-2 md:-mt-3">
           <PageTransition>
             <Outlet />
           </PageTransition>
         </PageContent>
-      </main>
+      </div>
     </div>
   );
 }

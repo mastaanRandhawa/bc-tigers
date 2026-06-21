@@ -11,6 +11,11 @@ function invalidateMatchLists(qc: QueryClient) {
   qc.invalidateQueries({ queryKey: ['matches'] });
   qc.invalidateQueries({ queryKey: queryKeys.matches.live });
   qc.invalidateQueries({ queryKey: queryKeys.hub.home });
+  // Division-scoped lists (matches, standings, overview) are cached under the
+  // ['divisions', ...] tree, not ['matches']. Without this, an admin editing a
+  // match inline on a division page (or deleting one) sees a stale list until a
+  // manual reload.
+  qc.invalidateQueries({ queryKey: ['divisions'] });
 }
 
 export function useMatches(params?: {
