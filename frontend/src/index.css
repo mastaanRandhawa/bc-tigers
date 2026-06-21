@@ -465,6 +465,10 @@
     padding-top: var(--site-header-offset);
   }
 
+  .hub-hero h1 {
+    color: #fff;
+  }
+
   .hub-hero-glow {
     pointer-events: none;
     position: absolute;

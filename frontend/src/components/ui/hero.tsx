@@ -85,7 +85,7 @@ export function TournamentHubHeader() {
                 <p className="hub-hero-eyebrow mb-3">Live tournament hub</p>
                 <h1
                   id="hub-hero-heading"
-                  className="font-display text-[clamp(1.75rem,4.5vw,3.25rem)] font-bold leading-[1.05] tracking-tight text-balance"
+                  className="font-display text-[clamp(1.75rem,4.5vw,3.25rem)] font-bold leading-[1.05] tracking-tight text-balance text-white"
                 >
                   {headline}
                 </h1>
