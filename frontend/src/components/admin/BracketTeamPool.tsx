@@ -7,7 +7,6 @@ import { shuffleTeamIds, configureTeamDrag } from '@/lib/bracket-utils';
 
 interface BracketTeamPoolProps {
   teams: Team[];
-  seedByTeamId?: Map<string, number>;
   assignedTeamIds: Set<string>;
   selectedTeamId: string | null;
   selectedTeamIds: Set<string>;
@@ -24,7 +23,6 @@ interface BracketTeamPoolProps {
 
 export function BracketTeamPool({
   teams,
-  seedByTeamId,
   assignedTeamIds,
   selectedTeamId,
   selectedTeamIds,
@@ -138,7 +136,6 @@ export function BracketTeamPool({
           const isSingleSelected = selectedTeamId === team.id;
           const isMultiSelected = selectedTeamIds.has(team.id);
           const isDragging = dragTeamId === team.id;
-          const seed = seedByTeamId?.get(team.id) ?? teams.findIndex((t) => t.id === team.id) + 1;
 
           return (
             <div
@@ -172,9 +169,6 @@ export function BracketTeamPool({
               }`}
               style={{ borderLeftColor: team.primary_color ?? undefined, borderLeftWidth: 3 }}
             >
-              <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded bg-secondary text-[10px] font-bold text-muted-foreground">
-                {seed}
-              </span>
               {team.logo ? (
                 <img src={team.logo} alt="" className="h-5 w-5 rounded object-cover shrink-0" />
               ) : null}

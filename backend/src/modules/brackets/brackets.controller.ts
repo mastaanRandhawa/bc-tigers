@@ -8,7 +8,6 @@ import {
 } from '@nestjs/common';
 import { BracketsService } from './brackets.service';
 import { AdminOnly } from '../auth/admin.decorator';
-import type { BracketSeeding } from './bracket-seeding';
 
 @Controller('brackets')
 export class BracketsController {
@@ -27,11 +26,8 @@ export class BracketsController {
 
   @Post(':divisionId/generate')
   @AdminOnly()
-  generate(
-    @Param('divisionId') divisionId: string,
-    @Body() body: { seeding?: BracketSeeding },
-  ) {
-    return this.service.generate(divisionId, body);
+  generate(@Param('divisionId') divisionId: string) {
+    return this.service.generate(divisionId);
   }
 
   @Post(':divisionId/randomize')

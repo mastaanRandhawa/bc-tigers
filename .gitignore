@@ -12,6 +12,7 @@ docs/
 emails/
 .playwright-mcp/
 QA-REPORT.md
+
 # Environment & secrets
 .env
 .env.local

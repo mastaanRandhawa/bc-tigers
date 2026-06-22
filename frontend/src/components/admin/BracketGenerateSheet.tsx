@@ -7,8 +7,8 @@ import {
   SheetBody,
 } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
-import { bracketFormatLabel, bracketSizeForTeamCount, type BracketSeeding } from '@/lib/bracket-utils';
-import { GitBranch, Shuffle, Hand, Trophy } from 'lucide-react';
+import { bracketFormatLabel, bracketSizeForTeamCount } from '@/lib/bracket-utils';
+import { GitBranch } from 'lucide-react';
 
 interface BracketGenerateSheetProps {
   open: boolean;
@@ -23,34 +23,8 @@ interface BracketGenerateSheetProps {
   };
   isRegenerate?: boolean;
   pending?: boolean;
-  onGenerate: (seeding: BracketSeeding) => void;
+  onGenerate: () => void;
 }
-
-const SEEDING_OPTIONS: Array<{
-  id: BracketSeeding;
-  label: string;
-  description: string;
-  icon: typeof Trophy;
-}> = [
-  {
-    id: 'standard',
-    label: 'Standard seeding',
-    description: '1 vs 8, 2 vs 7, 3 vs 6… Top seeds spread across the bracket. BYEs auto-advance.',
-    icon: Trophy,
-  },
-  {
-    id: 'random',
-    label: 'Random draw',
-    description: 'Shuffle teams into bracket slots. Each team appears once.',
-    icon: Shuffle,
-  },
-  {
-    id: 'manual',
-    label: 'Manual (empty bracket)',
-    description: 'Create the bracket structure only. Drag every team into place yourself.',
-    icon: Hand,
-  },
-];
 
 export function BracketGenerateSheet({
   open,
@@ -71,8 +45,8 @@ export function BracketGenerateSheet({
         <SheetHeader>
           <SheetTitle>{isRegenerate ? 'Regenerate bracket' : 'Create bracket'}</SheetTitle>
           <SheetDescription>
-            {teamCount} team{teamCount !== 1 ? 's' : ''} will be seeded · {bracketFormatLabel(teamCount)}
-            {byeCount > 0 && ` · ${byeCount} BYE${byeCount > 1 ? 's' : ''}`}
+            {teamCount} team{teamCount !== 1 ? 's' : ''} · {bracketFormatLabel(teamCount)}
+            {byeCount > 0 && ` · up to ${byeCount} BYE${byeCount > 1 ? 's' : ''} after placement`}
           </SheetDescription>
         </SheetHeader>
 
@@ -100,38 +74,24 @@ export function BracketGenerateSheet({
             </div>
           )}
 
-          {SEEDING_OPTIONS.map((opt) => {
-            const Icon = opt.icon;
-            return (
-              <button
-                key={opt.id}
-                type="button"
-                disabled={pending || !canGenerate}
-                onClick={() => onGenerate(opt.id)}
-                className="w-full rounded-xl border border-border bg-card p-4 text-left transition-colors hover:border-primary/40 hover:bg-primary/5 disabled:opacity-50"
-              >
-                <div className="flex items-start gap-3">
-                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-secondary text-muted-foreground">
-                    <Icon className="h-4 w-4" aria-hidden />
-                  </div>
-                  <div>
-                    <p className="text-sm font-semibold text-foreground">{opt.label}</p>
-                    <p className="mt-1 text-xs text-muted-foreground leading-relaxed">{opt.description}</p>
-                  </div>
-                </div>
-              </button>
-            );
-          })}
+          <p className="text-sm text-muted-foreground leading-relaxed">
+            {isRegenerate
+              ? 'This replaces the entire bracket with a fresh empty knockout tree. All current placements and results will be cleared.'
+              : 'An empty knockout tree will be created. Drag teams into slots yourself, or use Random draw to shuffle teams into the first round.'}
+          </p>
 
           {teamCount < 2 && (
             <p className="text-xs text-destructive">Need at least 2 teams in this division.</p>
           )}
 
-          {isRegenerate && (
-            <p className="text-xs text-muted-foreground">
-              Regenerating replaces the entire bracket. All {teamCount} teams are re-seeded from scratch.
-            </p>
-          )}
+          <Button
+            className="w-full"
+            disabled={pending || !canGenerate}
+            onClick={onGenerate}
+          >
+            <GitBranch className="mr-1.5 h-4 w-4" />
+            {isRegenerate ? 'Regenerate bracket' : 'Create bracket'}
+          </Button>
 
           <Button variant="outline" className="w-full" onClick={() => onOpenChange(false)}>
             Cancel
@@ -155,7 +115,7 @@ export function BracketEmptyState({
       <div>
         <p className="text-sm font-medium text-foreground">No bracket yet</p>
         <p className="text-xs text-muted-foreground mt-1 max-w-sm">
-          Choose a seeding method and the full knockout tree is created instantly. Then drag or click teams to adjust.
+          Create an empty knockout tree, then drag teams into slots or use Random draw to shuffle the first round.
         </p>
       </div>
       <Button onClick={onCreate} disabled={teamCount < 2}>

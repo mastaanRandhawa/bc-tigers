@@ -1,4 +1,4 @@
-import type { BracketSeeding, EligibleTeam, TeamExclusion, ValidationReport } from './types';
+import type { EligibleTeam, TeamExclusion, ValidationReport } from './types';
 import { MAX_SUPPORTED_TEAMS, bracketSizeForTeamCount, byeCountForTeamCount } from './bye-calculator';
 
 export interface EligibilityInput {
@@ -10,7 +10,6 @@ export interface EligibilityInput {
     division_id: string;
     players?: Array<{ active?: boolean }>;
   }>;
-  seeding: BracketSeeding;
   minPlayersPerTeam?: number;
   locked?: boolean;
 }
@@ -75,12 +74,12 @@ export function validateBracketGeneration(input: EligibilityInput): ValidationRe
   const byes = byeCountForTeamCount(eligible.length);
   if (byes > 0) {
     warnings.push(
-      `${byes} BYE${byes > 1 ? 's' : ''} required (${eligible.length} teams → ${bracketSize}-team bracket). Top seeds receive byes first.`,
+      `${byes} BYE${byes > 1 ? 's' : ''} may apply (${eligible.length} teams → ${bracketSize}-team bracket). Place teams manually or use Random draw.`,
     );
   }
 
-  if (input.seeding === 'manual' && eligible.length > 0) {
-    warnings.push('Manual seeding: bracket structure only — assign all teams via drag-and-drop.');
+  if (eligible.length > 0) {
+    warnings.push('Bracket is created empty — drag teams into slots or use Random draw to shuffle.');
   }
 
   return {

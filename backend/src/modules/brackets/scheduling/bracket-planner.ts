@@ -1,8 +1,6 @@
 import type { BracketStage } from '@prisma/client';
-import type { BracketNodeDraft, BracketPlan, BracketSeeding, EligibleTeam } from './types';
+import type { BracketNodeDraft, BracketPlan, EligibleTeam } from './types';
 import { bracketSizeForTeamCount, byeCountForTeamCount } from './bye-calculator';
-import { buildFirstRoundSlots } from './seed-order';
-import { orderTeamsBySeeding } from './seeding-strategy';
 import { validateBracketGeneration, type EligibilityInput } from './team-eligibility';
 
 const STAGE_ORDER: BracketStage[] = [
@@ -23,7 +21,6 @@ export function firstStageForSize(size: number): BracketStage {
 export function stagesForSize(size: number): BracketStage[] {
   const first = firstStageForSize(size);
   const main = STAGE_ORDER.slice(STAGE_ORDER.indexOf(first), STAGE_ORDER.indexOf('FINAL') + 1);
-  // Third-place match when bracket has semi-finals (4+ bracket size)
   if (size >= 4) {
     return [...main, 'THIRD_PLACE'];
   }
@@ -43,9 +40,6 @@ export function matchesInStage(bracketSize: number, stage: BracketStage): number
 export interface PlanBracketInput {
   divisionId: string;
   teams: EligibleTeam[];
-  seeding: BracketSeeding;
-  rankedTeamIds?: string[];
-  randomSeed?: number;
   locked?: boolean;
 }
 
@@ -56,7 +50,6 @@ export function planBracket(input: PlanBracketInput): BracketPlan {
       ...t,
       players: Array.from({ length: t.playerCount }, () => ({ active: true })),
     })),
-    seeding: input.seeding,
     locked: input.locked,
   };
 
@@ -67,7 +60,6 @@ export function planBracket(input: PlanBracketInput): BracketPlan {
       teamCount: input.teams.length,
       bracketSize: 0,
       byeCount: 0,
-      seeding: input.seeding,
       firstStage: 'FINAL',
       stages: [],
       firstRound: [],
@@ -80,23 +72,12 @@ export function planBracket(input: PlanBracketInput): BracketPlan {
   const firstStage = firstStageForSize(bracketSize);
   const stages = stagesForSize(bracketSize);
 
-  const orderedTeamIds =
-    input.seeding === 'manual'
-      ? []
-      : orderTeamsBySeeding(input.teams, input.seeding, {
-          rankedTeamIds: input.rankedTeamIds,
-          randomSeed: input.randomSeed,
-        });
-
-  const slotData =
-    input.seeding === 'manual'
-      ? Array.from({ length: bracketSize / 2 }, (_, position) => ({
-          homeTeamId: null as string | null,
-          awayTeamId: null as string | null,
-          homeSeed: position * 2 + 1,
-          awaySeed: position * 2 + 2,
-        }))
-      : buildFirstRoundSlots(orderedTeamIds, bracketSize);
+  const slotData = Array.from({ length: bracketSize / 2 }, (_, position) => ({
+    homeTeamId: null as string | null,
+    awayTeamId: null as string | null,
+    homeSeed: position * 2 + 1,
+    awaySeed: position * 2 + 2,
+  }));
 
   const firstRound = slotData.map((slot, position) => ({
     position,
@@ -104,7 +85,7 @@ export function planBracket(input: PlanBracketInput): BracketPlan {
     awayTeamId: slot.awayTeamId,
     homeSeed: slot.homeSeed,
     awaySeed: slot.awaySeed,
-    isBye: !!(slot.homeTeamId && !slot.awayTeamId) || !!(!slot.homeTeamId && slot.awayTeamId),
+    isBye: false,
   }));
 
   return {
@@ -112,7 +93,6 @@ export function planBracket(input: PlanBracketInput): BracketPlan {
     teamCount: input.teams.length,
     bracketSize,
     byeCount,
-    seeding: input.seeding,
     firstStage,
     stages,
     firstRound,
@@ -163,7 +143,6 @@ export function planToNodeDrafts(plan: BracketPlan): BracketNodeDraft[] {
     }
   }
 
-  // Wire winner and loser progression links
   for (const node of nodes) {
     const next = nextBracketSlot(node.stage, node.position);
     if (next) {

@@ -7,6 +7,7 @@ import {
 } from './bracket-engine/validation';
 import type { EngineNode } from './bracket-engine/types';
 import { planBracket, planToNodeDrafts } from './scheduling/bracket-planner';
+import { buildFirstRoundSlots } from './scheduling/seed-order';
 import type { EligibleTeam } from './scheduling/types';
 
 function mockTeam(id: string): EligibleTeam {
@@ -18,8 +19,6 @@ function buildNodes(teamCount: number): EngineNode[] {
   const plan = planBracket({
     divisionId: 'div-1',
     teams,
-    seeding: 'standard',
-    rankedTeamIds: teams.map((t) => t.id),
   });
   const drafts = planToNodeDrafts(plan);
   const nodes: EngineNode[] = drafts.map((d) => ({
@@ -40,6 +39,17 @@ function buildNodes(teamCount: number): EngineNode[] {
     completed_at: null,
     match: null,
   }));
+  const slots = buildFirstRoundSlots(
+    teams.map((t) => t.id),
+    plan.bracketSize,
+  );
+  const firstRound = nodes
+    .filter((n) => n.stage === plan.firstStage)
+    .sort((a, b) => a.position - b.position);
+  for (let i = 0; i < firstRound.length; i++) {
+    firstRound[i].home_team_id = slots[i].homeTeamId;
+    firstRound[i].away_team_id = slots[i].awayTeamId;
+  }
   propagateByes(nodes);
   return nodes;
 }
