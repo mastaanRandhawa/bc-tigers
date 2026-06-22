@@ -867,4 +867,30 @@
   .bracket-connector-bracket {
     @apply absolute right-0 top-1/4 bottom-1/4 w-3 border-r border-t border-b border-border rounded-r-sm;
   }
+
+  .admin-bracket-match {
+    transform: translateZ(0);
+  }
+
+  .admin-bracket-match:hover {
+    @apply shadow-[var(--shadow-hover)];
+  }
+
+  .bracket-scroll-x {
+    overflow-x: auto;
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--muted-foreground) / 0.35) hsl(var(--muted) / 0.5);
+  }
+
+  .bracket-scroll-x::-webkit-scrollbar {
+    height: 10px;
+  }
+
+  .bracket-scroll-x::-webkit-scrollbar-track {
+    @apply rounded-full bg-muted/50 mx-1;
+  }
+
+  .bracket-scroll-x::-webkit-scrollbar-thumb {
+    @apply rounded-full bg-muted-foreground/35 hover:bg-muted-foreground/50;
+  }
 }

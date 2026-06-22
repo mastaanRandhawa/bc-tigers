@@ -335,6 +335,8 @@ export default function DivisionWorkspacePage() {
                 <BracketCanvas
                   divisionId={division.id}
                   divisionSlug={division.slug}
+                  divisionName={division.name}
+                  tournamentName={division.tournament?.name}
                   teams={teams}
                   adminBracketLocked={division.bracket_locked ?? false}
                   adminBracketFinalized={division.bracket_finalized ?? false}

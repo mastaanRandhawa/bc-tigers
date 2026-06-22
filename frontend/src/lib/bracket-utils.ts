@@ -1,5 +1,3 @@
-export type BracketSeeding = 'standard' | 'random' | 'manual';
-
 export function bracketSizeForTeamCount(count: number): number {
   if (count <= 2) return 2;
   let size = 2;
@@ -84,15 +82,36 @@ export function isResultsFrozen(adminBracketFinalized = false): boolean {
   return adminBracketFinalized;
 }
 
+/** False once a winner has been recorded on this match. */
+export function canEditNodeStructure(node: { winner_id?: string | null }): boolean {
+  return !node.winner_id;
+}
+
+/** True only for the empty slot in a confirmed auto-advanced BYE match. */
 export function isByeSlot(
-  node: { home_team_id?: string | null; away_team_id?: string | null },
+  node: {
+    home_team_id?: string | null;
+    away_team_id?: string | null;
+    auto_advanced?: boolean;
+    status?: string | null;
+  },
   slot: 'home' | 'away',
 ): boolean {
   const hasHome = !!node.home_team_id;
   const hasAway = !!node.away_team_id;
   if (hasHome && hasAway) return false;
+  const isByeMatch = !!(node.auto_advanced || node.status === 'AUTO_ADVANCED');
+  if (!isByeMatch) return false;
   if (slot === 'home') return !hasHome && hasAway;
   return !hasAway && hasHome;
+}
+
+export function canManuallyPlaceInNode(
+  node: { stage: string; winner_id?: string | null },
+  firstStage: string | null,
+): boolean {
+  if (!firstStage || node.stage !== firstStage) return false;
+  return canEditNodeStructure(node);
 }
 
 export function earliestStage(
@@ -135,30 +154,4 @@ export function readTeamDragId(e: DragEvent): string | null {
 
 export function readMatchDragId(e: DragEvent): string | null {
   return e.dataTransfer?.getData(BRACKET_MATCH_DRAG_TYPE) || null;
-}
-
-/** Match backend standard seed ordering for team pool display. */
-export function computeStandardSeedByTeamId(
-  teams: Array<{ id: string; name: string }>,
-  standings: Array<{
-    team_id: string;
-    rank?: number;
-    points?: number;
-    goal_difference?: number;
-  }> = [],
-): Map<string, number> {
-  const standingByTeam = new Map(standings.map((s) => [s.team_id, s]));
-  const sorted = [...teams].sort((a, b) => {
-    const sa = standingByTeam.get(a.id);
-    const sb = standingByTeam.get(b.id);
-    const rankA = sa?.rank && sa.rank > 0 ? sa.rank : Number.MAX_SAFE_INTEGER;
-    const rankB = sb?.rank && sb.rank > 0 ? sb.rank : Number.MAX_SAFE_INTEGER;
-    if (rankA !== rankB) return rankA - rankB;
-    const pointsDiff = (sb?.points ?? 0) - (sa?.points ?? 0);
-    if (pointsDiff !== 0) return pointsDiff;
-    const gdDiff = (sb?.goal_difference ?? 0) - (sa?.goal_difference ?? 0);
-    if (gdDiff !== 0) return gdDiff;
-    return a.name.localeCompare(b.name);
-  });
-  return new Map(sorted.map((t, i) => [t.id, i + 1]));
 }

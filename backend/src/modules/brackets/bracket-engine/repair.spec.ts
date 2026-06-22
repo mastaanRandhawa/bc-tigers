@@ -6,6 +6,7 @@ import {
 } from './repair';
 import type { EngineNode } from './types';
 import { planBracket, planToNodeDrafts } from '../scheduling/bracket-planner';
+import { buildFirstRoundSlots } from '../scheduling/seed-order';
 import type { EligibleTeam } from '../scheduling/types';
 
 function team(id: string): EligibleTeam {
@@ -39,10 +40,19 @@ describe('bracket repair', () => {
     const plan = planBracket({
       divisionId: 'div-1',
       teams,
-      seeding: 'standard',
-      rankedTeamIds: teams.map((t) => t.id),
     });
     const nodes = draftsToEngine(planToNodeDrafts(plan));
+    const slots = buildFirstRoundSlots(
+      teams.map((t) => t.id),
+      plan.bracketSize,
+    );
+    const firstRound = nodes
+      .filter((n) => n.stage === plan.firstStage)
+      .sort((a, b) => a.position - b.position);
+    for (let i = 0; i < firstRound.length; i++) {
+      firstRound[i].home_team_id = slots[i].homeTeamId;
+      firstRound[i].away_team_id = slots[i].awayTeamId;
+    }
 
     for (const node of nodes) {
       node.next_node_id = null;

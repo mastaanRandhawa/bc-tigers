@@ -31,7 +31,7 @@ const footerSections = [
 ];
 
 const socialLinks = [
-  { icon: <FaInstagram className="size-5" aria-hidden />, href: 'https://www.instagram.com/', label: 'Instagram' },
+  { icon: <FaInstagram className="size-5" aria-hidden />, href: 'https://www.instagram.com/bctigers.fc/', label: 'Instagram' },
   { icon: <FaFacebook className="size-5" aria-hidden />, href: 'https://www.facebook.com/', label: 'Facebook' },
   { icon: <FaLinkedin className="size-5" aria-hidden />, href: 'https://www.linkedin.com/', label: 'LinkedIn' },
 ];

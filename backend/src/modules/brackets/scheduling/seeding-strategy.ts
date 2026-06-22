@@ -1,4 +1,4 @@
-import type { BracketSeeding, EligibleTeam } from './types';
+import type { EligibleTeam } from './types';
 
 export function shuffleWithSeed<T>(items: T[], seed: number): T[] {
   const copy = [...items];
@@ -14,36 +14,11 @@ export function shuffleWithSeed<T>(items: T[], seed: number): T[] {
   return copy;
 }
 
-export function orderTeamsBySeeding(
+/** Random team order for bracket shuffle (first-round placement). */
+export function shuffleTeamIds(
   teams: EligibleTeam[],
-  seeding: BracketSeeding,
-  options?: { randomSeed?: number; rankedTeamIds?: string[] },
+  randomSeed: number = Date.now(),
 ): string[] {
-  switch (seeding) {
-    case 'manual':
-      return teams.map((t) => t.id);
-
-    case 'alphabetical':
-      return [...teams].sort((a, b) => a.name.localeCompare(b.name)).map((t) => t.id);
-
-    case 'random': {
-      const seed = options?.randomSeed ?? Date.now();
-      const ids = teams.map((t) => t.id);
-      return shuffleWithSeed(ids, seed);
-    }
-
-    case 'standard':
-    default: {
-      const ranked = options?.rankedTeamIds ?? [];
-      const rankIndex = new Map(ranked.map((id, i) => [id, i]));
-      return [...teams]
-        .sort((a, b) => {
-          const ra = rankIndex.get(a.id) ?? Number.MAX_SAFE_INTEGER;
-          const rb = rankIndex.get(b.id) ?? Number.MAX_SAFE_INTEGER;
-          if (ra !== rb) return ra - rb;
-          return a.name.localeCompare(b.name);
-        })
-        .map((t) => t.id);
-    }
-  }
+  const ids = teams.map((t) => t.id);
+  return shuffleWithSeed(ids, randomSeed);
 }

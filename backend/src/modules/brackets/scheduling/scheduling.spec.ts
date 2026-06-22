@@ -5,7 +5,7 @@ import {
 } from './bye-calculator';
 import { standardSeedOrder, standardSeedPairs, buildFirstRoundSlots } from './seed-order';
 import { planBracket } from './bracket-planner';
-import { orderTeamsBySeeding } from './seeding-strategy';
+import { shuffleTeamIds } from './seeding-strategy';
 import type { EligibleTeam } from './types';
 
 describe('bye-calculator', () => {
@@ -93,35 +93,33 @@ describe('planBracket', () => {
     }));
   }
 
-  it('plans 14-team bracket with 8 R16 matches', () => {
+  it('plans 14-team empty bracket with 8 R16 matches', () => {
     const plan = planBracket({
       divisionId: 'div-1',
       teams: mockTeams(14),
-      seeding: 'standard',
-      rankedTeamIds: mockTeams(14).map((t) => t.id),
     });
     expect(plan.validation.valid).toBe(true);
     expect(plan.bracketSize).toBe(16);
     expect(plan.byeCount).toBe(2);
     expect(plan.firstRound).toHaveLength(8);
     expect(plan.firstStage).toBe('ROUND_OF_16');
+    expect(plan.firstRound.every((s) => !s.homeTeamId && !s.awayTeamId)).toBe(true);
   });
 
   it('fails validation with fewer than 2 teams', () => {
     const plan = planBracket({
       divisionId: 'div-1',
       teams: mockTeams(1),
-      seeding: 'standard',
     });
     expect(plan.validation.valid).toBe(false);
   });
 
-  it('random seeding is reproducible with same seed', () => {
+  it('shuffle is reproducible with same seed', () => {
     const teams = mockTeams(8);
-    const a = orderTeamsBySeeding(teams, 'random', { randomSeed: 42 });
-    const b = orderTeamsBySeeding(teams, 'random', { randomSeed: 42 });
+    const a = shuffleTeamIds(teams, 42);
+    const b = shuffleTeamIds(teams, 42);
     expect(a).toEqual(b);
-    const c = orderTeamsBySeeding(teams, 'random', { randomSeed: 99 });
+    const c = shuffleTeamIds(teams, 99);
     expect(a).not.toEqual(c);
   });
 
@@ -129,8 +127,6 @@ describe('planBracket', () => {
     const plan = planBracket({
       divisionId: 'div-1',
       teams: mockTeams(8),
-      seeding: 'standard',
-      rankedTeamIds: mockTeams(8).map((t) => t.id),
     });
     expect(plan.stages).toContain('THIRD_PLACE');
     expect(plan.stages.indexOf('FINAL')).toBeLessThan(plan.stages.indexOf('THIRD_PLACE'));

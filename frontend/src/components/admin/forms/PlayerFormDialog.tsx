@@ -33,7 +33,6 @@ export default function PlayerFormDialog({
     defaultValues: {
       first_name: '',
       last_name: '',
-      nationality: '',
       jersey_number: '',
       preferred_position: '',
       profile_image: '',
@@ -49,7 +48,6 @@ export default function PlayerFormDialog({
       form.reset({
         first_name: player.first_name,
         last_name: player.last_name,
-        nationality: player.nationality ?? '',
         jersey_number: player.jersey_number != null ? String(player.jersey_number) : '',
         preferred_position: player.preferred_position ?? '',
         profile_image: player.profile_image ?? '',
@@ -58,7 +56,6 @@ export default function PlayerFormDialog({
       form.reset({
         first_name: '',
         last_name: '',
-        nationality: '',
         jersey_number: '',
         preferred_position: '',
         profile_image: '',
@@ -73,7 +70,6 @@ export default function PlayerFormDialog({
         ...values,
         profile_image: values.profile_image || undefined,
         jersey_number: values.jersey_number ? Number(values.jersey_number) : undefined,
-        nationality: values.nationality || undefined,
         preferred_position: values.preferred_position || undefined,
       };
       if (isEditing && player) {
@@ -127,7 +123,6 @@ export default function PlayerFormDialog({
         <TextInputField control={form.control} name="preferred_position" label="Position" placeholder="e.g. Forward" />
       </div>
 
-      <TextInputField control={form.control} name="nationality" label="Nationality" placeholder="e.g. Canadian" />
       <TextInputField control={form.control} name="profile_image" label="Photo URL" placeholder="https://…" />
     </FormDialog>
   );

@@ -1,7 +1,5 @@
 import type { BracketStage } from '@prisma/client';
 
-export type BracketSeeding = 'standard' | 'random' | 'manual' | 'alphabetical';
-
 export interface EligibleTeam {
   id: string;
   name: string;
@@ -38,7 +36,6 @@ export interface BracketPlan {
   teamCount: number;
   bracketSize: number;
   byeCount: number;
-  seeding: BracketSeeding;
   firstStage: BracketStage;
   stages: BracketStage[];
   firstRound: FirstRoundSlot[];

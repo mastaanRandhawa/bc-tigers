@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { queryKeys } from '@/lib/query-keys';
-import type { BracketSnapshot, BracketSeeding } from '@/lib/bracket-utils';
+import type { BracketSnapshot } from '@/lib/bracket-utils';
 import { bracketsService } from '@/services/brackets.service';
 
 export function useBracket(divisionId?: string) {
@@ -18,8 +18,7 @@ function invalidateBrackets(qc: ReturnType<typeof useQueryClient>) {
 export function useGenerateBracket() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ divisionId, seeding }: { divisionId: string; seeding: BracketSeeding }) =>
-      bracketsService.generate(divisionId, seeding),
+    mutationFn: (divisionId: string) => bracketsService.generate(divisionId),
     onSuccess: () => invalidateBrackets(qc),
   });
 }

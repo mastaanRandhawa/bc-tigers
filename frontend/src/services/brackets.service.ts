@@ -1,13 +1,13 @@
 import apiClient from '@/lib/api-client';
-import type { BracketSnapshot, BracketSeeding } from '@/lib/bracket-utils';
+import type { BracketSnapshot } from '@/lib/bracket-utils';
 import type { BracketNode } from '@/types';
 
 export const bracketsService = {
   getByDivisionId: (divisionId: string) =>
     apiClient.get<BracketNode[]>(`/brackets/division/${divisionId}`),
 
-  generate: (divisionId: string, seeding: BracketSeeding = 'standard') =>
-    apiClient.post<BracketNode[]>(`/brackets/${divisionId}/generate`, { seeding }),
+  generate: (divisionId: string) =>
+    apiClient.post<BracketNode[]>(`/brackets/${divisionId}/generate`),
 
   randomize: (divisionId: string) =>
     apiClient.post<BracketNode[]>(`/brackets/${divisionId}/randomize`),

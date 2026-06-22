@@ -3,14 +3,13 @@ import { MatchesGateway } from '../../gateways/matches.gateway';
 import { AuditLogService } from '../audit-log/audit-log.service';
 import type { BracketStage } from '@prisma/client';
 import prisma from '../../prisma/prisma';
-import type { BracketSeeding } from './bracket-seeding';
 import { BracketEngine } from './bracket-engine';
 import {
   planBracket,
   planToNodeDrafts,
   selectEligibleTeams,
   buildFirstRoundSlots,
-  orderTeamsBySeeding,
+  shuffleTeamIds,
   firstStageForSize,
   type EligibleTeam,
 } from './scheduling';
@@ -32,45 +31,23 @@ export class BracketsService {
     return this.engine.getFullBracket(divisionId);
   }
 
-  private async loadEligibleTeams(divisionId: string): Promise<{
-    eligible: EligibleTeam[];
-    rankedTeamIds: string[];
-  }> {
+  private async loadEligibleTeams(divisionId: string): Promise<EligibleTeam[]> {
     const teams = await prisma.team.findMany({
       where: { division_id: divisionId },
       include: { players: { select: { id: true, active: true } } },
       orderBy: { name: 'asc' },
     });
 
-    const standings = await prisma.standing.findMany({
-      where: { division_id: divisionId },
-    });
-    const standingByTeam = new Map(standings.map((s) => [s.team_id, s]));
-
-    const rankedTeamIds = [...teams]
-      .sort((a, b) => {
-        const sa = standingByTeam.get(a.id);
-        const sb = standingByTeam.get(b.id);
-        const rankA = sa?.rank && sa.rank > 0 ? sa.rank : Number.MAX_SAFE_INTEGER;
-        const rankB = sb?.rank && sb.rank > 0 ? sb.rank : Number.MAX_SAFE_INTEGER;
-        if (rankA !== rankB) return rankA - rankB;
-        const pointsDiff = (sb?.points ?? 0) - (sa?.points ?? 0);
-        if (pointsDiff !== 0) return pointsDiff;
-        return a.name.localeCompare(b.name);
-      })
-      .map((t) => t.id);
-
     const { eligible } = selectEligibleTeams({
       divisionId,
       teams,
-      seeding: 'standard',
       minPlayersPerTeam: 0,
     });
 
-    return { eligible, rankedTeamIds };
+    return eligible;
   }
 
-  async validateGeneration(divisionId: string, seeding: BracketSeeding = 'standard') {
+  async validateGeneration(divisionId: string) {
     const division = await prisma.division.findUnique({ where: { id: divisionId } });
     if (!division) throw new BadRequestException('Division not found');
 
@@ -84,7 +61,6 @@ export class BracketsService {
     const { eligible, validation } = selectEligibleTeams({
       divisionId,
       teams,
-      seeding,
       locked: structureLocked,
       minPlayersPerTeam: 0,
     });
@@ -146,24 +122,17 @@ export class BracketsService {
     return division;
   }
 
-  async generate(
-    divisionId: string,
-    options?: { seeding?: BracketSeeding; randomSeed?: number },
-  ) {
+  async generate(divisionId: string) {
     const division = await prisma.division.findUnique({ where: { id: divisionId } });
     if (!division) throw new BadRequestException('Division not found');
 
     await this.engine.assertStructureEditable(divisionId);
 
-    const { eligible, rankedTeamIds } = await this.loadEligibleTeams(divisionId);
-    const seeding = options?.seeding ?? 'standard';
+    const eligible = await this.loadEligibleTeams(divisionId);
 
     const plan = planBracket({
       divisionId,
       teams: eligible,
-      seeding,
-      rankedTeamIds,
-      randomSeed: options?.randomSeed,
     });
 
     if (!plan.validation.valid) {
@@ -178,16 +147,12 @@ export class BracketsService {
     await prisma.bracketNode.deleteMany({ where: { division_id: divisionId } });
     await this.engine.createNodes(nodeDrafts);
 
-    if (seeding !== 'manual') {
-      await this.engine.runPropagateByes(divisionId, plan.firstStage);
-    }
-
     const result = await this.getByDivisionId(divisionId);
     await this.audit.log({
       action: 'BRACKET_GENERATION',
       entity: 'Division',
       entityId: divisionId,
-      metadata: { seeding: seeding ?? 'standard', nodes: result.length },
+      metadata: { nodes: result.length },
     });
     this.emitBracketUpdated(divisionId);
     return result;
@@ -198,10 +163,11 @@ export class BracketsService {
 
     const nodes = await this.getByDivisionId(divisionId);
     if (nodes.length === 0) {
-      return this.generate(divisionId, { seeding: 'random' });
+      await this.generate(divisionId);
+      return this.randomize(divisionId);
     }
 
-    const { eligible } = await this.loadEligibleTeams(divisionId);
+    const eligible = await this.loadEligibleTeams(divisionId);
     const firstStage = this.earliestStage(nodes);
     if (!firstStage) throw new BadRequestException('Invalid bracket');
 
@@ -210,9 +176,7 @@ export class BracketsService {
       .sort((a, b) => a.position - b.position);
 
     const size = firstRound.length * 2;
-    const teamIds = orderTeamsBySeeding(eligible, 'random', {
-      randomSeed: Date.now(),
-    });
+    const teamIds = shuffleTeamIds(eligible, Date.now());
     const slots = buildFirstRoundSlots(teamIds, size);
 
     await prisma.$transaction(async (tx) => {
@@ -269,6 +233,24 @@ export class BracketsService {
       : null;
     const targetNode = nodes.find((n) => n.id === nodeId)!;
     const targetTeamId = slot === 'home' ? targetNode.home_team_id : targetNode.away_team_id;
+
+    if (targetNode.winner_id) {
+      throw new BadRequestException('Cannot modify a match that already has a winner');
+    }
+    if (source?.winner_id) {
+      throw new BadRequestException('Cannot move a team from a decided match');
+    }
+
+    const firstStage = this.earliestStageFromEngine(nodes);
+    if (!firstStage) {
+      throw new BadRequestException('Invalid bracket');
+    }
+    if (targetNode.stage !== firstStage) {
+      throw new BadRequestException('Teams can only be placed in the first knockout round');
+    }
+    if (source && source.stage !== firstStage) {
+      throw new BadRequestException('Teams in later rounds cannot be moved manually');
+    }
 
     if (source?.id === target.id && sourceSlot && sourceSlot !== slot) {
       const otherId = slot === 'home' ? targetNode.away_team_id : targetNode.home_team_id;
@@ -456,7 +438,7 @@ export class BracketsService {
       if (!node.away_team_id) slots.push({ nodeId: node.id, slot: 'away' });
     }
 
-    const shuffled = orderTeamsBySeeding(
+    const shuffled = shuffleTeamIds(
       uniqueTeams.map((id) => ({
         id,
         name: id,
@@ -464,8 +446,7 @@ export class BracketsService {
         division_id: divisionId,
         playerCount: 1,
       })),
-      'random',
-      { randomSeed: Date.now() },
+      Date.now(),
     ).slice(0, slots.length);
 
     await prisma.$transaction(async (tx) => {
