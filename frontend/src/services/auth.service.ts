@@ -18,4 +18,12 @@ export const authService = {
 
   resetPassword: (token: string, password: string) =>
     apiClient.post<{ message: string }>('/auth/reset-password', { token, password }),
+
+  registerCoach: (data: {
+    first_name: string;
+    last_name: string;
+    email: string;
+    password: string;
+    phone?: string;
+  }) => apiClient.post<{ message: string }>('/auth/register-coach', data),
 };

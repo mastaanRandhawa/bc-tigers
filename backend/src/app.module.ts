@@ -17,6 +17,7 @@ import { HubModule } from './modules/hub/hub.module';
 import { MailModule } from './modules/mail/mail.module';
 import { AuditLogModule } from './modules/audit-log/audit-log.module';
 import { HealthModule } from './modules/health/health.module';
+import { CoachModule } from './modules/coach/coach.module';
 
 @Module({
   imports: [
@@ -37,6 +38,7 @@ import { HealthModule } from './modules/health/health.module';
     GatewaysModule,
     HubModule,
     AuditLogModule,
+    CoachModule,
   ],
 })
 export class AppModule implements NestModule {

@@ -694,6 +694,8 @@ async function main() {
       email: 'admin@bctigers.ca',
       password_hash: await bcrypt.hash('Admin1234!', 12),
       role: 'ADMIN',
+      approved: true,
+      active: true,
     },
   });
 

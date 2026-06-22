@@ -7,10 +7,11 @@ import {
   Settings,
   LayoutDashboard,
   ExternalLink,
+  Users,
 } from "lucide-react";
 import LiveScoreTicker from "@/components/LiveScoreTicker";
 import { useAuthStore } from "@/store/authStore";
-import { isAdminRole } from "@/lib/auth-utils";
+import { isAdminRole, isCoachRole } from "@/lib/auth-utils";
 import BrandLogo from "@/components/shared/BrandLogo";
 import GlobalSearch from "@/components/shared/GlobalSearch";
 import { AnimatedThemeToggler } from "@/components/ui/animated-theme-toggler";
@@ -97,6 +98,16 @@ function UserMenu({ onDark = true }: { onDark?: boolean }) {
                 <LayoutDashboard className="w-4 h-4" /> Admin Dashboard
               </Link>
             )}
+            {isCoachRole(user.role) && (
+              <Link
+                role="menuitem"
+                to="/coach"
+                onClick={() => setUserMenuOpen(false)}
+                className="flex items-center gap-2 px-4 py-2.5 text-sm text-foreground hover:bg-muted transition-colors"
+              >
+                <Users className="w-4 h-4" /> Coach Portal
+              </Link>
+            )}
             <Link
               role="menuitem"
               to="/profile"
@@ -138,6 +149,28 @@ function SignInButton({ isHero }: { isHero: boolean }) {
     >
       Sign In
     </Link>
+  );
+}
+
+function CoachPortalLink({ onDark }: { onDark: boolean }) {
+  return (
+    <NavLink
+      to="/coach"
+      className={({ isActive }) =>
+        cn(
+          "nav-pill text-xs sm:text-sm",
+          onDark
+            ? isActive
+              ? "nav-pill-light-active"
+              : "nav-pill-light"
+            : isActive
+              ? "nav-pill-dark-active"
+              : "nav-pill-dark",
+        )
+      }
+    >
+      Coach Portal
+    </NavLink>
   );
 }
 
@@ -205,6 +238,15 @@ export default function SiteHeader({
                 <ExternalLink className="w-3.5 h-3.5" aria-hidden />
                 View Site
               </Link>
+              {isCoachRole(user?.role) && (
+                <Link
+                  to="/coach"
+                  className="nav-pill nav-pill-light hidden items-center gap-1.5 sm:inline-flex"
+                >
+                  <Users className="w-3.5 h-3.5" aria-hidden />
+                  Coach Portal
+                </Link>
+              )}
               {isInitialized &&
                 (isAuthenticated && user ? (
                   <UserMenu onDark />
@@ -245,6 +287,9 @@ export default function SiteHeader({
               </div>
             )}
             <TournamentsLink onDark={onDark} />
+            {isAuthenticated && isCoachRole(user?.role) && (
+              <CoachPortalLink onDark={onDark} />
+            )}
             <AnimatedThemeToggler onDark={onDark} />
             {isInitialized &&
               (isAuthenticated && user ? (

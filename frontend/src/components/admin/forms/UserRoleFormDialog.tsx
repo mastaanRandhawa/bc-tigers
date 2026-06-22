@@ -57,7 +57,7 @@ export default function UserRoleFormDialog({ open, onOpenChange, user }: UserRol
       open={open}
       onOpenChange={onOpenChange}
       title="Edit User"
-      description={`${user.email} · Administrator`}
+      description={`${user.email} · ${user.role === 'COACH' ? 'Coach' : 'Administrator'}`}
       onSubmit={onSubmit}
       isSubmitting={updateMutation.isPending}
       submitLabel="Save changes"

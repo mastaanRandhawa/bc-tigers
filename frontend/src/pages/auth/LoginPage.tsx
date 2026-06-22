@@ -5,7 +5,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { useAuthStore } from '@/store/authStore';
-import { isAdminRole } from '@/lib/auth-utils';
+import { isAdminRole, isCoachRole, getRoleDashboardPath } from '@/lib/auth-utils';
 import { Eye, EyeOff, LogIn } from 'lucide-react';
 
 export default function LoginPage() {
@@ -22,9 +22,10 @@ export default function LoginPage() {
     clearError();
     try {
       const user = await login(email, password);
-      // Admins always go to their dashboard, restoring any pre-login admin page they tried to visit
       if (isAdminRole(user.role)) {
         navigate(from?.startsWith('/admin') ? from : '/admin/dashboard', { replace: true });
+      } else if (isCoachRole(user.role)) {
+        navigate(from?.startsWith('/coach') ? from : '/coach', { replace: true });
       } else {
         navigate(from ?? '/', { replace: true });
       }
@@ -88,6 +89,13 @@ export default function LoginPage() {
           {isLoading ? 'Signing in...' : 'Sign In'}
         </Button>
       </form>
+
+      <p className="text-center text-sm text-muted-foreground mt-6">
+        Coach?{' '}
+        <Link to="/coach/register" className="text-primary font-semibold hover:underline">
+          Register for team management
+        </Link>
+      </p>
     </AuthLayout>
   );
 }

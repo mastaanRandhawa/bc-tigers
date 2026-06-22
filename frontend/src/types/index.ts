@@ -1,4 +1,4 @@
-export type UserRole = 'ADMIN';
+export type UserRole = 'ADMIN' | 'COACH';
 
 export type TournamentType =
   | 'ROUND_ROBIN'
@@ -39,6 +39,10 @@ export interface User {
   phone?: string;
   role: UserRole;
   profile_image?: string;
+  approved?: boolean;
+  active?: boolean;
+  team_id?: string | null;
+  coached_team?: { id: string; name: string } | null;
   created_at: string;
   updated_at?: string;
 }
@@ -98,6 +102,13 @@ export interface Team {
   founded_year?: number;
   primary_color?: string;
   secondary_color?: string;
+  coach_user_id?: string | null;
+  management_locked?: boolean;
+  contact_email?: string;
+  contact_phone?: string;
+  coach?: Pick<User, 'id' | 'first_name' | 'last_name' | 'email'> | null;
+  coach_management_locked?: boolean;
+  can_edit?: boolean;
   players?: Player[];
   // Soft-delete / lifecycle (admin)
   is_deleted?: boolean;
@@ -252,6 +263,8 @@ export interface SiteSettings {
   contact_email: string;
   contact_phone?: string;
   contact_address?: string;
+  timezone?: string;
+  coach_management_locked?: boolean;
 }
 
 export type PublicSiteSettings = Pick<

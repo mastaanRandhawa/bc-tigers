@@ -12,15 +12,11 @@ import { runWithRequestContext } from './request-context';
 @Injectable()
 export class RequestContextMiddleware implements NestMiddleware {
   use(req: Request, res: Response, next: NextFunction): void {
-    const incomingId = req.headers['x-request-id'];
-    const requestId =
-      (Array.isArray(incomingId) ? incomingId[0] : incomingId) || randomUUID();
-
-    const sourceHeader = req.headers['x-client-source'];
-    const source =
-      (Array.isArray(sourceHeader) ? sourceHeader[0] : sourceHeader) || 'Web';
-
-    const userAgent = req.headers['user-agent'];
+    // Express's `get()` returns a well-typed `string | undefined` (avoids the
+    // raw header-index union/any).
+    const requestId = req.get('x-request-id') || randomUUID();
+    const source = req.get('x-client-source') || 'Web';
+    const userAgent = req.get('user-agent');
 
     res.setHeader('x-request-id', requestId);
 
@@ -28,11 +24,11 @@ export class RequestContextMiddleware implements NestMiddleware {
       {
         requestId,
         ip: req.ip,
-        userAgent: Array.isArray(userAgent) ? userAgent[0] : userAgent,
+        userAgent,
         source,
         scope: 'active',
         // `req` is mutated by the JWT guard later; we read req.user lazily.
-        req: req as unknown as { user?: { userId?: string } },
+        req,
       },
       () => next(),
     );

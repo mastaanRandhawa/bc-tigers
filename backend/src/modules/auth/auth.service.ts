@@ -4,6 +4,8 @@ import {
   NotFoundException,
   BadRequestException,
   ServiceUnavailableException,
+  ForbiddenException,
+  ConflictException,
 } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
@@ -11,8 +13,11 @@ import { randomBytes } from 'crypto';
 import prisma from '../../prisma/prisma';
 import { MailService } from '../mail/mail.service';
 import { AuditLogService } from '../audit-log/audit-log.service';
+import { getCoachTeamId } from './coach-permissions';
+import type { RegisterCoachDto } from './dto/register-coach.dto';
 
-/** Admin-only authentication — public registration is not supported. */
+const COACH_PASSWORD_MESSAGE =
+  'Coach password resets are managed by an administrator. Please contact your tournament administrator.';
 @Injectable()
 export class AuthService {
   constructor(
@@ -23,12 +28,21 @@ export class AuthService {
 
   async login(email: string, password: string) {
     const user = await prisma.user.findUnique({ where: { email } });
-    if (!user || !user.active) throw new UnauthorizedException('Invalid credentials');
+    if (!user) throw new UnauthorizedException('Invalid credentials');
 
     const valid = await bcrypt.compare(password, user.password_hash);
     if (!valid) throw new UnauthorizedException('Invalid credentials');
 
-    if (user.role !== 'ADMIN') {
+    if (user.role === 'COACH') {
+      if (!user.approved) {
+        throw new UnauthorizedException(
+          'Your account is pending administrator approval.',
+        );
+      }
+      if (!user.active) {
+        throw new UnauthorizedException('Your coach account is inactive.');
+      }
+    } else if (user.role !== 'ADMIN' || !user.active) {
       throw new UnauthorizedException('Invalid credentials');
     }
 
@@ -39,6 +53,30 @@ export class AuthService {
       userId: user.id,
     });
     return this.signToken(user);
+  }
+
+  async registerCoach(data: RegisterCoachDto) {
+    const existing = await prisma.user.findUnique({ where: { email: data.email } });
+    if (existing) throw new ConflictException('Email already in use');
+
+    const password_hash = await bcrypt.hash(data.password, 12);
+    await prisma.user.create({
+      data: {
+        first_name: data.first_name,
+        last_name: data.last_name,
+        email: data.email,
+        password_hash,
+        phone: data.phone,
+        role: 'COACH',
+        approved: false,
+        active: false,
+      },
+    });
+
+    return {
+      message:
+        'Registration received. An administrator will review your account before you can sign in.',
+    };
   }
 
   async logout(userId: string) {
@@ -62,11 +100,18 @@ export class AuthService {
         role: true,
         phone: true,
         profile_image: true,
+        approved: true,
+        active: true,
         created_at: true,
+        coached_team: { select: { id: true } },
       },
     });
     if (!user) throw new NotFoundException('User not found');
-    return user;
+
+    const team_id =
+      user.role === 'COACH' ? (user.coached_team?.id ?? null) : null;
+    const { coached_team: _team, ...rest } = user;
+    return { ...rest, team_id };
   }
 
   async updateProfile(
@@ -97,6 +142,9 @@ export class AuthService {
   async changePassword(userId: string, currentPassword: string, newPassword: string) {
     const user = await prisma.user.findUnique({ where: { id: userId } });
     if (!user) throw new NotFoundException('User not found');
+    if (user.role === 'COACH') {
+      throw new ForbiddenException(COACH_PASSWORD_MESSAGE);
+    }
 
     const valid = await bcrypt.compare(currentPassword, user.password_hash);
     if (!valid) throw new UnauthorizedException('Current password is incorrect');
@@ -110,6 +158,9 @@ export class AuthService {
     const user = await prisma.user.findUnique({ where: { email } });
     if (!user) {
       return { message: 'If the email exists, a reset link has been sent.' };
+    }
+    if (user.role === 'COACH') {
+      return { message: COACH_PASSWORD_MESSAGE };
     }
 
     await prisma.passwordResetToken.updateMany({
@@ -154,6 +205,9 @@ export class AuthService {
     if (!record || record.used_at || record.expires_at < new Date()) {
       throw new BadRequestException('Invalid or expired reset token');
     }
+    if (record.user.role === 'COACH') {
+      throw new ForbiddenException(COACH_PASSWORD_MESSAGE);
+    }
 
     const password_hash = await bcrypt.hash(password, 12);
     await prisma.$transaction([
@@ -176,14 +230,21 @@ export class AuthService {
     return { message: 'Password reset successfully.' };
   }
 
-  private signToken(user: {
+  private async signToken(user: {
     id: string;
     email: string;
     role: string;
     first_name: string;
     last_name: string;
   }) {
-    const payload = { sub: user.id, email: user.email, role: user.role };
+    const teamId =
+      user.role === 'COACH' ? await getCoachTeamId(user.id) : null;
+    const payload = {
+      sub: user.id,
+      email: user.email,
+      role: user.role,
+      ...(teamId ? { teamId } : {}),
+    };
     const access_token = this.jwt.sign(payload);
     return {
       access_token,
@@ -193,6 +254,7 @@ export class AuthService {
         role: user.role,
         first_name: user.first_name,
         last_name: user.last_name,
+        ...(teamId ? { team_id: teamId } : {}),
       },
     };
   }

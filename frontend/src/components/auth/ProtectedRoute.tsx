@@ -1,16 +1,18 @@
 import { Navigate } from 'react-router-dom';
 import { useAuthStore } from '@/store/authStore';
-import { isAdminRole } from '@/lib/auth-utils';
+import { isAdminRole, isCoachRole } from '@/lib/auth-utils';
 import PageLoader from '@/components/shared/PageLoader';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
   adminOnly?: boolean;
+  coachOnly?: boolean;
 }
 
 export default function ProtectedRoute({
   children,
   adminOnly = false,
+  coachOnly = false,
 }: ProtectedRouteProps) {
   const { isAuthenticated, user, isInitialized } = useAuthStore();
 
@@ -21,6 +23,10 @@ export default function ProtectedRoute({
   }
 
   if (adminOnly && !isAdminRole(user?.role)) {
+    return <Navigate to="/login" replace />;
+  }
+
+  if (coachOnly && !isCoachRole(user?.role)) {
     return <Navigate to="/login" replace />;
   }
 

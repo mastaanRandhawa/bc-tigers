@@ -1,0 +1,33 @@
+import apiClient from '@/lib/api-client';
+import type { Player, Team, User } from '@/types';
+
+export type CoachTeamResponse =
+  | (Team & {
+      assigned: true;
+      coach_management_locked?: boolean;
+      can_edit?: boolean;
+    })
+  | {
+      assigned: false;
+      coach_management_locked?: boolean;
+      can_edit: false;
+    };
+
+export const coachService = {
+  me: () => apiClient.get<User & { coach_management_locked?: boolean }>('/coach/me'),
+
+  getTeam: () => apiClient.get<CoachTeamResponse>('/coach/team'),
+
+  updateTeam: (data: Partial<Team>) => apiClient.patch<Team>('/coach/team', data),
+
+  getPlayers: () => apiClient.get<Player[]>('/coach/team/players'),
+
+  createPlayer: (data: Partial<Player>) =>
+    apiClient.post<Player>('/coach/team/players', data),
+
+  updatePlayer: (playerId: string, data: Partial<Player>) =>
+    apiClient.patch<Player>(`/coach/team/players/${playerId}`, data),
+
+  deletePlayer: (playerId: string) =>
+    apiClient.delete<Player>(`/coach/team/players/${playerId}`),
+};

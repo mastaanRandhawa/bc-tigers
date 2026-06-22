@@ -18,7 +18,8 @@ export interface RequestContextStore {
   userAgent?: string;
   source: string; // Web | Mobile | API | BackgroundJob
   scope: RecordScope;
-  req?: { user?: { userId?: string } };
+  /** Raw request reference (the JWT guard attaches `user` after middleware runs). */
+  req?: unknown;
 }
 
 const storage = new AsyncLocalStorage<RequestContextStore>();
@@ -36,7 +37,10 @@ export function getRequestContext(): RequestContextStore | undefined {
 
 /** The acting user's id, resolved lazily from the request (set by the JWT guard). */
 export function getActorUserId(): string | undefined {
-  return storage.getStore()?.req?.user?.userId;
+  const req = storage.getStore()?.req as
+    | { user?: { userId?: string } }
+    | undefined;
+  return req?.user?.userId;
 }
 
 export function getScope(): RecordScope {

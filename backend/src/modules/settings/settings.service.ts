@@ -9,6 +9,7 @@ const SETTINGS_FIELDS = [
   'contact_phone',
   'contact_address',
   'timezone',
+  'coach_management_locked',
 ] as const;
 
 const DEFAULT_SETTINGS = {

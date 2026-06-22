@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { useAuthStore } from '@/store/authStore';
 import { authService } from '@/services/auth.service';
-import { getRoleLabel } from '@/lib/auth-utils';
+import { getRoleLabel, isCoachRole, COACH_PASSWORD_MESSAGE } from '@/lib/auth-utils';
 import { Save, Lock } from 'lucide-react';
 import PageLoader from '@/components/shared/PageLoader';
 
@@ -111,17 +111,23 @@ export default function ProfilePage() {
 
           <form onSubmit={handlePasswordSave} className="rounded-lg border border-border bg-card shadow-sm p-6 space-y-4">
             <h2 className="font-semibold text-foreground">Change Password</h2>
-            <div className="space-y-1.5">
-              <Label>Current Password</Label>
-              <Input type="password" value={passwords.current} onChange={(e) => setPasswords({ ...passwords, current: e.target.value })} required />
-            </div>
-            <div className="space-y-1.5">
-              <Label>New Password</Label>
-              <Input type="password" value={passwords.next} onChange={(e) => setPasswords({ ...passwords, next: e.target.value })} required minLength={8} />
-            </div>
-            <Button type="submit" disabled={saving}>
-              <Lock className="w-4 h-4" /> Update Password
-            </Button>
+            {isCoachRole(user.role) ? (
+              <p className="text-sm text-muted-foreground">{COACH_PASSWORD_MESSAGE}</p>
+            ) : (
+              <>
+                <div className="space-y-1.5">
+                  <Label>Current Password</Label>
+                  <Input type="password" value={passwords.current} onChange={(e) => setPasswords({ ...passwords, current: e.target.value })} required />
+                </div>
+                <div className="space-y-1.5">
+                  <Label>New Password</Label>
+                  <Input type="password" value={passwords.next} onChange={(e) => setPasswords({ ...passwords, next: e.target.value })} required minLength={8} />
+                </div>
+                <Button type="submit" disabled={saving}>
+                  <Lock className="w-4 h-4" /> Update Password
+                </Button>
+              </>
+            )}
           </form>
         </div>
       </section>

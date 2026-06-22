@@ -43,6 +43,8 @@ function isPublicPage(): boolean {
     path === '/tournaments' ||
     path.startsWith('/tournaments/') ||
     path.startsWith('/login') ||
+    path.startsWith('/coach') ||
+    path.startsWith('/coach/register') ||
     path.startsWith('/forgot-password') ||
     path.startsWith('/reset-password')
   );

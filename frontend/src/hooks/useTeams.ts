@@ -17,6 +17,7 @@ export function useTeams(params?: { divisionId?: string; scope?: RecordScope }) 
 function invalidateTeams(qc: ReturnType<typeof useQueryClient>) {
   qc.invalidateQueries({ queryKey: ['teams'] });
   qc.invalidateQueries({ queryKey: ['divisions'] });
+  qc.invalidateQueries({ queryKey: ['users'] });
 }
 
 export function useCreateTeam() {

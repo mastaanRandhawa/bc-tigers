@@ -30,7 +30,13 @@ export class TournamentsController {
   @Get('manage')
   @AdminOnly()
   findAllManaged(
-    @Query() query: { scope?: RecordScope; status?: string; page?: string; limit?: string },
+    @Query()
+    query: {
+      scope?: RecordScope;
+      status?: string;
+      page?: string;
+      limit?: string;
+    },
   ) {
     setScope(query.scope ?? 'active');
     return this.service.findAll({

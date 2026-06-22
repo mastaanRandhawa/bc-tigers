@@ -3,6 +3,10 @@ import prisma from '../../prisma/prisma';
 import { pickAllowed } from '../../common/pick';
 import { AuditLogService } from '../audit-log/audit-log.service';
 import { AuditableService, asAuditable } from '../audit-log/auditable.service';
+import {
+  applyCoachTeamAssignment,
+  validateCoachCanBeAssigned,
+} from './coach-team-link';
 
 const ENTITY = 'Team';
 
@@ -16,6 +20,10 @@ const TEAM_FIELDS = [
   'founded_year',
   'primary_color',
   'secondary_color',
+  'coach_user_id',
+  'management_locked',
+  'contact_email',
+  'contact_phone',
 ] as const;
 
 @Injectable()
@@ -33,6 +41,14 @@ export class TeamsService {
         : undefined,
       include: {
         division: { include: { tournament: true } },
+        coach: {
+          select: {
+            id: true,
+            first_name: true,
+            last_name: true,
+            email: true,
+          },
+        },
         players: { where: { active: true }, orderBy: { last_name: 'asc' } },
       },
     });
@@ -52,35 +68,79 @@ export class TeamsService {
     return team;
   }
 
-  create(data: unknown) {
-    return this.auditable.createAudited(
-      asAuditable(prisma.team),
+  async create(data: unknown) {
+    const payload = pickAllowed(data, TEAM_FIELDS);
+    const coachUserId = payload.coach_user_id as string | null | undefined;
+    if (coachUserId) {
+      await validateCoachCanBeAssigned(coachUserId, null);
+    }
+
+    const team = await this.auditable.createAudited(
+      (tx) => asAuditable(tx.team),
       ENTITY,
-      pickAllowed(data, TEAM_FIELDS) as Record<string, unknown>,
+      { ...payload, coach_user_id: coachUserId ? undefined : payload.coach_user_id },
     );
+
+    if (coachUserId) {
+      await applyCoachTeamAssignment(team.id, coachUserId);
+      return prisma.team.findUnique({
+        where: { id: team.id },
+        include: {
+          division: { include: { tournament: true } },
+          coach: {
+            select: { id: true, first_name: true, last_name: true, email: true },
+          },
+        },
+      });
+    }
+
+    return team;
   }
 
-  update(id: string, data: unknown) {
+  async update(id: string, data: unknown) {
+    const payload = pickAllowed(data, TEAM_FIELDS);
+    const coachUserId = payload.coach_user_id as string | null | undefined;
+
+    if (coachUserId !== undefined) {
+      const { coach_user_id: _removed, ...rest } = payload;
+      const updated = await this.auditable.updateAudited(
+        (tx) => asAuditable(tx.team),
+        ENTITY,
+        id,
+        rest,
+      );
+      await applyCoachTeamAssignment(id, coachUserId ?? null);
+      return prisma.team.findUnique({
+        where: { id: updated.id },
+        include: {
+          division: { include: { tournament: true } },
+          coach: {
+            select: { id: true, first_name: true, last_name: true, email: true },
+          },
+        },
+      });
+    }
+
     return this.auditable.updateAudited(
-      asAuditable(prisma.team),
+      (tx) => asAuditable(tx.team),
       ENTITY,
       id,
-      pickAllowed(data, TEAM_FIELDS) as Record<string, unknown>,
+      payload,
     );
   }
 
   /** Soft delete (decommission) — never removes the row. */
   remove(id: string) {
-    return this.auditable.softDelete(asAuditable(prisma.team), ENTITY, id);
+    return this.auditable.softDelete((tx) => asAuditable(tx.team), ENTITY, id);
   }
 
   restore(id: string) {
-    return this.auditable.restore(asAuditable(prisma.team), ENTITY, id);
+    return this.auditable.restore((tx) => asAuditable(tx.team), ENTITY, id);
   }
 
   /** Permanent hard delete — admin only. */
   purge(id: string) {
-    return this.auditable.purge(asAuditable(prisma.team), ENTITY, id);
+    return this.auditable.purge((tx) => asAuditable(tx.team), ENTITY, id);
   }
 
   history(id: string) {
@@ -89,15 +149,19 @@ export class TeamsService {
 
   async restoreVersion(id: string, versionId: string) {
     const version = await this.audit.getVersion(versionId);
-    if (!version || version.entity_type !== ENTITY || version.entity_id !== id) {
+    if (
+      !version ||
+      version.entity_type !== ENTITY ||
+      version.entity_id !== id
+    ) {
       throw new NotFoundException('Version not found for this team');
     }
     const snapshot = (version.new_values ?? {}) as Record<string, unknown>;
     return this.auditable.restoreVersion(
-      asAuditable(prisma.team),
+      (tx) => asAuditable(tx.team),
       ENTITY,
       id,
-      pickAllowed(snapshot, TEAM_FIELDS) as Record<string, unknown>,
+      pickAllowed(snapshot, TEAM_FIELDS),
       version.version,
     );
   }

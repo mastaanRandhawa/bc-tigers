@@ -69,6 +69,24 @@ export function SiteInformationCard() {
             />
           </div>
         </div>
+        <div className="rounded-lg border border-border p-4 space-y-3">
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <Label>Global coach lock</Label>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                When enabled, all coaches are prevented from editing team details and rosters.
+              </p>
+            </div>
+            <input
+              type="checkbox"
+              className="h-4 w-4"
+              checked={form.coach_management_locked ?? false}
+              onChange={(e) =>
+                setForm({ ...form, coach_management_locked: e.target.checked })
+              }
+            />
+          </div>
+        </div>
         <Button onClick={handleSave} disabled={updateSettings.isPending}>
           <Save className="h-4 w-4" aria-hidden />
           {updateSettings.isPending ? 'Saving…' : 'Save'}
