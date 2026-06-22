@@ -46,6 +46,10 @@ export default function AdminDashboard() {
                 : null;
             const teamCount = teams.filter((t) => t.division_id === division.id).length;
             const matchCount = matches.filter((m) => m.division_id === division.id).length;
+            const tournamentId = division.tournament?.id ?? division.tournament_id;
+            const workspacePath = tournamentId
+              ? `/admin/tournaments/${tournamentId}/divisions/${division.id}`
+              : null;
 
             return (
               <StaggerItem key={division.id}>
@@ -77,22 +81,20 @@ export default function AdminDashboard() {
                       </div>
                     </div>
                     {publicPath && (
-                      <a
-                        href={publicPath}
-                        target="_blank"
-                        rel="noopener noreferrer"
+                      <Link
+                        to={publicPath}
                         className="shrink-0 p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-secondary transition-colors touch-manipulation"
-                        aria-label="View on site"
+                        aria-label="View division"
                         style={{ color: theme.primary }}
                       >
                         <ExternalLink className="h-4 w-4" aria-hidden />
-                      </a>
+                      </Link>
                     )}
                   </div>
                   <div className="mt-3 sm:mt-4 flex flex-wrap gap-x-1 gap-y-1.5 border-t border-border pt-3">
-                    {division.tournament?.id && (
+                    {workspacePath && (
                       <Link
-                        to={`/admin/tournaments/${division.tournament.id}`}
+                        to={`/admin/tournaments/${tournamentId}`}
                         className={cn(
                           'inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1.5 rounded-lg bg-secondary text-muted-foreground transition-colors hover:text-foreground hover:bg-secondary/80 touch-manipulation',
                         )}
@@ -101,9 +103,9 @@ export default function AdminDashboard() {
                         <ArrowRight className="h-3 w-3" aria-hidden />
                       </Link>
                     )}
-                    {division.tournament?.id && (
+                    {workspacePath && (
                       <Link
-                        to={`/admin/tournaments/${division.tournament.id}/divisions/${division.id}`}
+                        to={workspacePath}
                         className={cn(
                           'inline-flex items-center gap-1 text-xs font-medium px-2.5 py-1.5 rounded-lg transition-colors touch-manipulation',
                         )}

@@ -13,6 +13,7 @@ import TeamRosterPanel from '@/components/admin/TeamRosterPanel';
 import TournamentFormDialog from '@/components/admin/forms/TournamentFormDialog';
 import { ScheduleGeneratorSheet } from '@/components/admin/ScheduleGeneratorSheet';
 import { ConfirmDialog } from '@/components/admin/inline/ConfirmDialog';
+import { AdminMatchMobileRow } from '@/components/admin/AdminMatchMobileRow';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -111,10 +112,13 @@ export default function TournamentWorkspacePage() {
     {
       key: 'teams',
       label: 'Match',
+      className: 'min-w-[12rem]',
       render: (m: Match) => (
-        <div>
-          <p className="font-semibold text-foreground text-sm">
-            {m.home_team?.name ?? 'TBD'} vs {m.away_team?.name ?? 'TBD'}
+        <div className="min-w-0">
+          <p className="font-semibold text-foreground text-sm leading-snug">
+            <span className="whitespace-nowrap">{m.home_team?.name ?? 'TBD'}</span>
+            <span className="mx-1 font-normal text-muted-foreground">vs</span>
+            <span className="whitespace-nowrap">{m.away_team?.name ?? 'TBD'}</span>
           </p>
           <p className="text-xs text-muted-foreground">
             {formatDate(m.scheduled_start)} · {formatTime(m.scheduled_start)}
@@ -311,6 +315,14 @@ export default function TournamentWorkspacePage() {
                   title=""
                   data={matches}
                   columns={matchColumns}
+                  mobileRender={(m) => (
+                    <AdminMatchMobileRow
+                      match={m}
+                      onScore={setScoreMatch}
+                      onEvent={setEventMatch}
+                      showDivision
+                    />
+                  )}
                   onEdit={matchDialog.openEdit}
                   onDelete={(m) => setDeleteId({ type: 'match', id: m.id, label: `${m.home_team?.name ?? 'TBD'} vs ${m.away_team?.name ?? 'TBD'}` })}
                   getSearchText={matchSearchText}
