@@ -22,14 +22,20 @@ export function firstStageForSize(size: number): BracketStage {
 
 export function stagesForSize(size: number): BracketStage[] {
   const first = firstStageForSize(size);
-  return STAGE_ORDER.slice(STAGE_ORDER.indexOf(first));
+  const main = STAGE_ORDER.slice(STAGE_ORDER.indexOf(first), STAGE_ORDER.indexOf('FINAL') + 1);
+  // Third-place match when bracket has semi-finals (4+ bracket size)
+  if (size >= 4) {
+    return [...main, 'THIRD_PLACE'];
+  }
+  return main;
 }
 
 export function matchesInStage(bracketSize: number, stage: BracketStage): number {
+  if (stage === 'THIRD_PLACE') return bracketSize >= 4 ? 1 : 0;
   const first = firstStageForSize(bracketSize);
   const firstIdx = STAGE_ORDER.indexOf(first);
   const stageIdx = STAGE_ORDER.indexOf(stage);
-  if (stageIdx < firstIdx) return 0;
+  if (stageIdx < firstIdx || stageIdx > STAGE_ORDER.indexOf('FINAL')) return 0;
   const roundsFromFirst = stageIdx - firstIdx;
   return bracketSize / Math.pow(2, roundsFromFirst + 1);
 }
@@ -114,13 +120,30 @@ export function planBracket(input: PlanBracketInput): BracketPlan {
   };
 }
 
+export function loserBracketSlot(
+  stage: BracketStage,
+  position: number,
+): { stage: BracketStage; position: number; slot: 'home' | 'away' } | null {
+  if (stage !== 'SEMI_FINAL') return null;
+  return { stage: 'THIRD_PLACE', position: 0, slot: position === 0 ? 'home' : 'away' };
+}
+
 export function planToNodeDrafts(plan: BracketPlan): BracketNodeDraft[] {
   if (!plan.validation.valid) return [];
 
   const nodes: BracketNodeDraft[] = [];
+  const key = (stage: BracketStage, position: number) => `${stage}:${position}`;
+  const idByKey = new Map<string, string>();
+
+  const addNode = (draft: Omit<BracketNodeDraft, 'id'>): string => {
+    const id = crypto.randomUUID();
+    idByKey.set(key(draft.stage, draft.position), id);
+    nodes.push({ ...draft, id });
+    return id;
+  };
 
   for (const slot of plan.firstRound) {
-    nodes.push({
+    addNode({
       division_id: plan.divisionId,
       stage: plan.firstStage,
       position: slot.position,
@@ -132,11 +155,31 @@ export function planToNodeDrafts(plan: BracketPlan): BracketNodeDraft[] {
   for (const stage of plan.stages.slice(1)) {
     const count = matchesInStage(plan.bracketSize, stage);
     for (let position = 0; position < count; position++) {
-      nodes.push({
+      addNode({
         division_id: plan.divisionId,
         stage,
         position,
       });
+    }
+  }
+
+  // Wire winner and loser progression links
+  for (const node of nodes) {
+    const next = nextBracketSlot(node.stage, node.position);
+    if (next) {
+      const nextId = idByKey.get(key(next.stage, next.position));
+      if (nextId) {
+        node.next_node_id = nextId;
+        node.next_slot = next.slot;
+      }
+    }
+    const loser = loserBracketSlot(node.stage, node.position);
+    if (loser) {
+      const loserId = idByKey.get(key(loser.stage, loser.position));
+      if (loserId) {
+        node.loser_next_node_id = loserId;
+        node.loser_next_slot = loser.slot;
+      }
     }
   }
 

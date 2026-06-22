@@ -83,6 +83,7 @@ export interface Division {
   primary_color?: string;
   accent_color?: string;
   bracket_locked?: boolean;
+  bracket_finalized?: boolean;
   teams?: Team[];
 }
 
@@ -206,6 +207,14 @@ export interface Standing {
   form?: ('W' | 'D' | 'L')[];
 }
 
+export type BracketNodeStatus =
+  | 'PENDING'
+  | 'READY'
+  | 'IN_PROGRESS'
+  | 'COMPLETED'
+  | 'AUTO_ADVANCED'
+  | 'INVALID';
+
 export interface BracketNode {
   id: string;
   division_id: string;
@@ -215,6 +224,13 @@ export interface BracketNode {
   away_team_id?: string;
   winner_id?: string;
   match_id?: string;
+  status?: BracketNodeStatus;
+  next_node_id?: string | null;
+  next_slot?: 'home' | 'away' | null;
+  loser_next_node_id?: string | null;
+  loser_next_slot?: 'home' | 'away' | null;
+  auto_advanced?: boolean;
+  completed_at?: string | null;
   home_team?: Team;
   away_team?: Team;
   winner?: Team;

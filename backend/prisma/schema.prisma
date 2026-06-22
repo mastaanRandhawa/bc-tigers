@@ -61,6 +61,15 @@ enum BracketStage {
   THIRD_PLACE
 }
 
+enum BracketNodeStatus {
+  PENDING
+  READY
+  IN_PROGRESS
+  COMPLETED
+  AUTO_ADVANCED
+  INVALID
+}
+
 /// Lifecycle state for soft-deletable records. ACTIVE = live, ARCHIVED = hidden
 /// but kept, DECOMMISSIONED = soft-deleted. Named `record_status` on models so it
 /// never collides with domain `status` columns (e.g. Tournament.status).
@@ -133,8 +142,9 @@ model Division {
   points_loss    Int      @default(0)
   primary_color  String?
   accent_color   String?
-  bracket_locked Boolean  @default(false)
-  created_at     DateTime @default(now())
+  bracket_locked    Boolean  @default(false)
+  bracket_finalized Boolean  @default(false)
+  created_at        DateTime @default(now())
   updated_at     DateTime @updatedAt
 
   tournament    Tournament     @relation(fields: [tournament_id], references: [id], onDelete: Cascade)
@@ -306,15 +316,22 @@ model Stage {
 }
 
 model BracketNode {
-  id           String       @id @default(uuid())
-  division_id  String
-  stage        BracketStage
-  position     Int
-  home_team_id String?
-  away_team_id String?
-  winner_id    String?
-  match_id     String?
-  created_at   DateTime     @default(now())
+  id                 String            @id @default(uuid())
+  division_id        String
+  stage              BracketStage
+  position           Int
+  home_team_id       String?
+  away_team_id       String?
+  winner_id          String?
+  match_id           String?
+  status             BracketNodeStatus @default(PENDING)
+  next_node_id       String?
+  next_slot          String?
+  loser_next_node_id String?
+  loser_next_slot    String?
+  auto_advanced      Boolean           @default(false)
+  completed_at       DateTime?
+  created_at         DateTime          @default(now())
 
   division  Division @relation(fields: [division_id], references: [id], onDelete: Cascade)
   home_team Team?    @relation("BracketHomeTeam", fields: [home_team_id], references: [id])

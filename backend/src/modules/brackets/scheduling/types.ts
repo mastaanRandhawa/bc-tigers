@@ -46,9 +46,14 @@ export interface BracketPlan {
 }
 
 export interface BracketNodeDraft {
+  id?: string;
   division_id: string;
   stage: BracketStage;
   position: number;
   home_team_id?: string;
   away_team_id?: string;
+  next_node_id?: string | null;
+  next_slot?: 'home' | 'away' | null;
+  loser_next_node_id?: string | null;
+  loser_next_slot?: 'home' | 'away' | null;
 }

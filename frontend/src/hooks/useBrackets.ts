@@ -83,6 +83,28 @@ export function useSetBracketLock() {
   });
 }
 
+export function useFinalizeBracket() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (divisionId: string) => bracketsService.finalize(divisionId),
+    onSuccess: () => {
+      invalidateBrackets(qc);
+      qc.invalidateQueries({ queryKey: ['divisions'] });
+    },
+  });
+}
+
+export function useUnfinalizeBracket() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (divisionId: string) => bracketsService.unfinalize(divisionId),
+    onSuccess: () => {
+      invalidateBrackets(qc);
+      qc.invalidateQueries({ queryKey: ['divisions'] });
+    },
+  });
+}
+
 export function useSwapBracketMatches() {
   const qc = useQueryClient();
   return useMutation({

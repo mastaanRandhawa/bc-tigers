@@ -254,7 +254,10 @@ export function useRealtimeInvalidation() {
       qc.invalidateQueries({ queryKey: ['standings'] });
       qc.invalidateQueries({ queryKey: ['divisions'] });
     };
-    const onBracket = () => qc.invalidateQueries({ queryKey: ['brackets'] });
+    const onBracket = () => {
+      qc.invalidateQueries({ queryKey: ['brackets'] });
+      qc.invalidateQueries({ queryKey: ['divisions'] });
+    };
 
     socket.on(SOCKET_EVENTS.STANDINGS_UPDATED, onStandings);
     socket.on(SOCKET_EVENTS.BRACKET_UPDATED, onBracket);

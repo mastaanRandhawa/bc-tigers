@@ -124,6 +124,17 @@ describe('planBracket', () => {
     const c = orderTeamsBySeeding(teams, 'random', { randomSeed: 99 });
     expect(a).not.toEqual(c);
   });
+
+  it('includes third place stage for brackets of 4 or more teams', () => {
+    const plan = planBracket({
+      divisionId: 'div-1',
+      teams: mockTeams(8),
+      seeding: 'standard',
+      rankedTeamIds: mockTeams(8).map((t) => t.id),
+    });
+    expect(plan.stages).toContain('THIRD_PLACE');
+    expect(plan.stages.indexOf('FINAL')).toBeLessThan(plan.stages.indexOf('THIRD_PLACE'));
+  });
 });
 
 describe('standardSeedPairs', () => {

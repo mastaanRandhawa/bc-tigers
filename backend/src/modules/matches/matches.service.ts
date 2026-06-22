@@ -307,7 +307,7 @@ export class MatchesService {
       match.home_score > match.away_score ? match.home_team_id : match.away_team_id;
 
     try {
-      await this.bracketsService.advance(node.id, winnerId);
+      await this.bracketsService.advance(node.id, winnerId, 'match');
       this.gateway.emitBracketUpdated(match.division_id, {
         divisionId: match.division_id,
         nodeId: node.id,

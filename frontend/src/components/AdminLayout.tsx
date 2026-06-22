@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import SiteHeader from '@/components/SiteHeader';
 import { AdminSidebar, AdminMobileNav } from '@/components/admin/AdminNav';
+import { useRealtimeInvalidation } from '@/hooks/useMatches';
 
 interface AdminLayoutProps {
   children: ReactNode;
@@ -10,6 +11,8 @@ interface AdminLayoutProps {
 }
 
 export default function AdminLayout({ children, title, description, action }: AdminLayoutProps) {
+  useRealtimeInvalidation();
+
   return (
     <div className="min-h-dvh min-h-screen flex flex-col w-full overflow-x-hidden admin-shell">
       <SiteHeader variant="admin" />
