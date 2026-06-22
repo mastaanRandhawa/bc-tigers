@@ -65,7 +65,13 @@ export class SettingsService {
     ) {
       const raw = source.coach_lock_scheduled_at;
       payload.coach_lock_scheduled_at =
-        raw === null || raw === '' ? null : new Date(String(raw));
+        raw === null || raw === ''
+          ? null
+          : raw instanceof Date
+            ? raw
+            : typeof raw === 'string' || typeof raw === 'number'
+              ? new Date(raw)
+              : null;
     }
 
     if (Object.prototype.hasOwnProperty.call(source, 'max_players_per_team')) {

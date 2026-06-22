@@ -1,4 +1,3 @@
-import type { BracketStage } from '@prisma/client';
 import { propagateByes, setWinner } from './progression';
 import { validateBracket } from './validation';
 import type { EngineNode } from './types';

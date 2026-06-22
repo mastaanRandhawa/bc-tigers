@@ -1,7 +1,11 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import type { BracketNodeStatus, BracketStage, Prisma } from '@prisma/client';
+import type { BracketStage } from '@prisma/client';
 import prisma from '../../../prisma/prisma';
 import type { BracketNodeDraft } from '../scheduling/types';
+import {
+  BRACKET_NODE_INCLUDE,
+  type BracketNodeDetail,
+} from './bracket-node.types';
 import {
   propagateByes,
   resetDownstreamTeams,
@@ -22,12 +26,7 @@ import {
   repairProgressionLinks,
 } from './repair';
 
-const NODE_INCLUDE = {
-  home_team: true,
-  away_team: true,
-  winner: true,
-  match: { include: { home_team: true, away_team: true } },
-} as const;
+export type { BracketNodeDetail } from './bracket-node.types';
 
 @Injectable()
 export class BracketEngine {
@@ -230,7 +229,7 @@ export class BracketEngine {
     return hasPlayedMatches(nodes);
   }
 
-  async getFullBracket(divisionId: string) {
+  async getFullBracket(divisionId: string): Promise<BracketNodeDetail[]> {
     const linkSample = await prisma.bracketNode.findMany({
       where: { division_id: divisionId },
       select: {
@@ -260,7 +259,7 @@ export class BracketEngine {
 
     return prisma.bracketNode.findMany({
       where: { division_id: divisionId },
-      include: NODE_INCLUDE,
+      include: BRACKET_NODE_INCLUDE,
       orderBy: [{ stage: 'asc' }, { position: 'asc' }],
     });
   }

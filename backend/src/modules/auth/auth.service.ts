@@ -129,8 +129,31 @@ export class AuthService {
 
     const team_id =
       user.role === 'COACH' ? (user.coached_team?.id ?? null) : null;
-    const { coached_team: _team, ...rest } = user;
-    return { ...rest, team_id };
+    const {
+      id,
+      first_name,
+      last_name,
+      email,
+      role,
+      phone,
+      profile_image,
+      approved,
+      active,
+      created_at,
+    } = user;
+    return {
+      id,
+      first_name,
+      last_name,
+      email,
+      role,
+      phone,
+      profile_image,
+      approved,
+      active,
+      created_at,
+      team_id,
+    };
   }
 
   async updateProfile(

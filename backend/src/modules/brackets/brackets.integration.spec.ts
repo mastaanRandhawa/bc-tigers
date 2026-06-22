@@ -1,9 +1,8 @@
-import { propagateByes, setWinner } from './bracket-engine/progression';
+import { propagateByes } from './bracket-engine/progression';
 import {
   canEditResults,
   canEditStructure,
   hasPlayedMatches,
-  validateBracket,
 } from './bracket-engine/validation';
 import type { EngineNode } from './bracket-engine/types';
 import { planBracket, planToNodeDrafts } from './scheduling/bracket-planner';
@@ -86,7 +85,7 @@ describe('BracketsService integration (lock & progression)', () => {
     expect(canEditResults({ bracket_finalized: true })).toBe(false);
   });
 
-  it('unfinalize unlocks structure when no matches have been played', async () => {
+  it('unfinalize unlocks structure when no matches have been played', () => {
     const nodes = buildNodes(8);
     const played = hasPlayedMatches(nodes);
     expect(played).toBe(false);

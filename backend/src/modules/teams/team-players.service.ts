@@ -21,6 +21,15 @@ type PlayerWriteInput = {
   [key: string]: unknown;
 };
 
+function parseDobInput(value: unknown): Date | undefined {
+  if (value == null || value === '') return undefined;
+  if (value instanceof Date) return value;
+  if (typeof value === 'string' || typeof value === 'number') {
+    return new Date(value);
+  }
+  return undefined;
+}
+
 @Injectable()
 export class TeamPlayersService {
   async assertRosterCapacity(teamId: string) {
@@ -103,7 +112,7 @@ export class TeamPlayersService {
         jersey_number: input.jersey_number as number | undefined,
         preferred_position: input.preferred_position as string | undefined,
         profile_image: input.profile_image as string | undefined,
-        dob: input.dob ? new Date(String(input.dob)) : undefined,
+        dob: parseDobInput(input.dob),
       },
     });
   }

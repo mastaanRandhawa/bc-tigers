@@ -6,7 +6,7 @@ import {
   forwardRef,
   Logger,
 } from '@nestjs/common';
-import type { Prisma, MatchStatus, MatchEventType } from '@prisma/client';
+import type { Prisma, MatchStatus } from '@prisma/client';
 import prisma from '../../prisma/prisma';
 import { MatchesGateway } from '../../gateways/matches.gateway';
 import { BracketsService } from '../brackets/brackets.service';
@@ -163,7 +163,7 @@ export class MatchesService {
     });
 
     if (updateData.status === 'LIVE' && existing.status !== 'LIVE') {
-      await this.gateway.emitMatchStarted(id, match);
+      this.gateway.emitMatchStarted(id, match);
       await this.emailAdmins(
         match.tournament_id,
         'Match started',
@@ -202,7 +202,7 @@ export class MatchesService {
     const match = await this.findOne(matchId);
     await this.syncScoreFromEvents(matchId);
 
-    await this.gateway.emitMatchEvent({
+    this.gateway.emitMatchEvent({
       matchId,
       divisionId: match.division_id,
       type: eventData.type,
@@ -231,7 +231,7 @@ export class MatchesService {
     const match = await this.findOne(matchId);
     await this.syncScoreFromEvents(matchId);
 
-    await this.gateway.emitMatchEvent({
+    this.gateway.emitMatchEvent({
       matchId,
       divisionId: match.division_id,
       type: event.type,

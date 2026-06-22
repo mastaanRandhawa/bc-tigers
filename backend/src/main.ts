@@ -38,4 +38,4 @@ async function bootstrap() {
   console.log(`WebSocket gateway active`);
 }
 
-bootstrap();
+void bootstrap();

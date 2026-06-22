@@ -110,7 +110,8 @@ export class TeamsService {
     const coachUserId = payload.coach_user_id as string | null | undefined;
 
     if (coachUserId !== undefined) {
-      const { coach_user_id: _removed, ...rest } = payload;
+      const rest = { ...payload } as Record<string, unknown>;
+      delete rest.coach_user_id;
       const updated = await this.auditable.updateAudited(
         (tx) => asAuditable(tx.team),
         ENTITY,

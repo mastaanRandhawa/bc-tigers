@@ -9,13 +9,13 @@ import { AuditLogService } from '../audit-log/audit-log.service';
 import type { BracketStage } from '@prisma/client';
 import prisma from '../../prisma/prisma';
 import { BracketEngine } from './bracket-engine';
+import type { BracketNodeDetail } from './bracket-engine/bracket-node.types';
 import {
   planBracket,
   planToNodeDrafts,
   selectEligibleTeams,
   buildFirstRoundSlots,
   shuffleTeamIds,
-  firstStageForSize,
   type EligibleTeam,
 } from './scheduling';
 
@@ -32,7 +32,7 @@ export class BracketsService {
     this.gateway.emitBracketUpdated(divisionId, payload ?? { divisionId });
   }
 
-  getByDivisionId(divisionId: string) {
+  getByDivisionId(divisionId: string): Promise<BracketNodeDetail[]> {
     return this.engine.getFullBracket(divisionId);
   }
 
@@ -132,7 +132,7 @@ export class BracketsService {
     return division;
   }
 
-  async generate(divisionId: string) {
+  async generate(divisionId: string): Promise<BracketNodeDetail[]> {
     const division = await prisma.division.findUnique({
       where: { id: divisionId },
     });
@@ -170,13 +170,13 @@ export class BracketsService {
     return result;
   }
 
-  async randomize(divisionId: string) {
+  async randomize(divisionId: string): Promise<BracketNodeDetail[]> {
     await this.engine.assertStructureEditable(divisionId);
 
     const nodes = await this.getByDivisionId(divisionId);
     if (nodes.length === 0) {
       await this.generate(divisionId);
-      return this.randomize(divisionId);
+      return await this.randomize(divisionId);
     }
 
     const eligible = await this.loadEligibleTeams(divisionId);
@@ -356,7 +356,7 @@ export class BracketsService {
       away_team_id?: string | null;
       winner_id?: string | null;
     }>,
-  ) {
+  ): Promise<BracketNodeDetail[]> {
     await this.engine.assertStructureEditable(divisionId);
 
     await prisma.$transaction(
@@ -386,7 +386,10 @@ export class BracketsService {
     return result;
   }
 
-  async swapMatches(nodeIdA: string, nodeIdB: string) {
+  async swapMatches(
+    nodeIdA: string,
+    nodeIdB: string,
+  ): Promise<BracketNodeDetail[]> {
     if (nodeIdA === nodeIdB) return this.getNode(nodeIdA);
 
     const [a, b] = await Promise.all([
@@ -440,7 +443,10 @@ export class BracketsService {
     return result;
   }
 
-  async assignTeamsToFirstRound(divisionId: string, teamIds: string[]) {
+  async assignTeamsToFirstRound(
+    divisionId: string,
+    teamIds: string[],
+  ): Promise<BracketNodeDetail[]> {
     await this.engine.assertStructureEditable(divisionId);
 
     const nodes = await this.getByDivisionId(divisionId);
