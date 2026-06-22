@@ -2,10 +2,16 @@ import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import FormDialog from '@/components/admin/FormDialog';
-import { TextInputField, SelectField, FormError } from '@/components/admin/form-fields';
+import {
+  TextInputField,
+  SelectField,
+  SearchableSelectField,
+  FormError,
+} from '@/components/admin/form-fields';
 import { divisionSchema, type DivisionFormValues } from '@/lib/schemas/admin';
 import { useCreateDivision, useUpdateDivision } from '@/hooks/useDivisions';
 import { useTournaments } from '@/hooks/useTournaments';
+import { usePointFormats } from '@/hooks/usePointFormats';
 import { slugify } from '@/lib/utils';
 import { getApiErrorMessage } from '@/lib/errors';
 import type { Division } from '@/types';
@@ -24,9 +30,15 @@ interface DivisionFormDialogProps {
 
 export default function DivisionFormDialog({ open, onOpenChange, division }: DivisionFormDialogProps) {
   const { data: tournaments = [] } = useTournaments();
+  const { data: pointFormats = [] } = usePointFormats();
   const createMutation = useCreateDivision();
   const updateMutation = useUpdateDivision();
   const isEditing = !!division;
+
+  const defaultFormatId =
+    pointFormats.find((pf) => pf.slug === 'standard-soccer-3-point')?.id ??
+    pointFormats[0]?.id ??
+    '';
 
   const form = useForm<DivisionFormValues>({
     resolver: zodResolver(divisionSchema),
@@ -38,11 +50,9 @@ export default function DivisionFormDialog({ open, onOpenChange, division }: Div
       gender: 'MALE',
       max_teams: '8',
       format: 'Round Robin',
+      point_format_id: defaultFormatId,
       primary_color: '#F48735',
       accent_color: '#FEF3EB',
-      points_win: '3',
-      points_draw: '1',
-      points_loss: '0',
     },
   });
 
@@ -57,11 +67,9 @@ export default function DivisionFormDialog({ open, onOpenChange, division }: Div
         gender: division.gender,
         max_teams: String(division.max_teams),
         format: division.format,
+        point_format_id: division.point_format_id,
         primary_color: division.primary_color ?? '#F48735',
         accent_color: division.accent_color ?? '#FEF3EB',
-        points_win: String(division.points_win ?? 3),
-        points_draw: String(division.points_draw ?? 1),
-        points_loss: String(division.points_loss ?? 0),
       });
     } else {
       form.reset({
@@ -72,28 +80,29 @@ export default function DivisionFormDialog({ open, onOpenChange, division }: Div
         gender: 'MALE',
         max_teams: '8',
         format: 'Round Robin',
+        point_format_id: defaultFormatId,
         primary_color: '#F48735',
         accent_color: '#FEF3EB',
-        points_win: '3',
-        points_draw: '1',
-        points_loss: '0',
       });
     }
-  }, [open, division, form, tournaments]);
+  }, [open, division, form, tournaments, defaultFormatId]);
 
   const name = form.watch('name');
   useEffect(() => {
     if (!isEditing && name) form.setValue('slug', slugify(name));
   }, [name, isEditing, form]);
 
+  const formatOptions = pointFormats.map((pf) => ({
+    value: pf.id,
+    label: pf.name,
+    description: pf.description ?? undefined,
+  }));
+
   const onSubmit = form.handleSubmit(async (values) => {
     try {
       const payload = {
         ...values,
         max_teams: Number(values.max_teams),
-        points_win: values.points_win ? Number(values.points_win) : undefined,
-        points_draw: values.points_draw ? Number(values.points_draw) : undefined,
-        points_loss: values.points_loss ? Number(values.points_loss) : undefined,
       };
       if (isEditing && division) {
         await updateMutation.mutateAsync({ id: division.id, data: payload });
@@ -127,14 +136,15 @@ export default function DivisionFormDialog({ open, onOpenChange, division }: Div
       <SelectField control={form.control} name="gender" label="Gender" options={GENDER_OPTIONS} />
       <TextInputField control={form.control} name="max_teams" label="Max Teams" type="number" />
       <TextInputField control={form.control} name="format" label="Format" />
+      <SearchableSelectField
+        control={form.control}
+        name="point_format_id"
+        label="Point format"
+        options={formatOptions}
+        placeholder="Search point formats..."
+      />
       <TextInputField control={form.control} name="primary_color" label="Primary Color" placeholder="#F48735" />
       <TextInputField control={form.control} name="accent_color" label="Accent Color" placeholder="#FEF3EB" />
-      <p className="text-xs font-medium text-muted-foreground pt-2">Standings points</p>
-      <div className="grid grid-cols-3 gap-3">
-        <TextInputField control={form.control} name="points_win" label="Win" type="number" />
-        <TextInputField control={form.control} name="points_draw" label="Draw" type="number" />
-        <TextInputField control={form.control} name="points_loss" label="Loss" type="number" />
-      </div>
     </FormDialog>
   );
 }

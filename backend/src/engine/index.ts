@@ -28,3 +28,9 @@ export { normalizeResult, forfeitResult, isAutomaticForfeit } from './forfeit';
 export { selectAdvancingTeams, resolveBracketSize } from './advancement';
 export { phasesForFormat, hasRoundRobin, hasKnockout } from './format';
 export { coinTossOrder, compareCoinToss, seededHash } from './random';
+export {
+  toTournamentConfig,
+  mapPrismaMatchToResult,
+  buildFairPlayMap,
+  parseTiebreakers,
+} from './point-format-mapper';

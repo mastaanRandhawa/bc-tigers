@@ -9,6 +9,7 @@ import {
   Users,
   GitBranch,
   ClipboardList,
+  BarChart3,
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 
@@ -33,6 +34,7 @@ export const adminNavGroups: AdminNavGroup[] = [
     items: [
       { label: 'Tournaments', href: '/admin/tournaments', icon: Trophy },
       { label: 'Divisions', href: '/admin/divisions', icon: Layers },
+      { label: 'Point Formats', href: '/admin/point-formats', icon: BarChart3 },
       { label: 'Venues', href: '/admin/venues', icon: MapPin },
     ],
   },

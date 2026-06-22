@@ -9,6 +9,7 @@ import { MatchesModule } from './modules/matches/matches.module';
 import { StandingsModule } from './modules/standings/standings.module';
 import { BracketsModule } from './modules/brackets/brackets.module';
 import { VenuesModule } from './modules/venues/venues.module';
+import { PointFormatsModule } from './modules/point-formats/point-formats.module';
 import { UsersModule } from './modules/users/users.module';
 import { GatewaysModule } from './gateways/gateways.module';
 import { SettingsModule } from './modules/settings/settings.module';
@@ -32,6 +33,7 @@ import { CoachModule } from './modules/coach/coach.module';
     StandingsModule,
     BracketsModule,
     VenuesModule,
+    PointFormatsModule,
     UsersModule,
     SettingsModule,
     AnnouncementsModule,

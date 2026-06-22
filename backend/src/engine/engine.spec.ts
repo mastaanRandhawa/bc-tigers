@@ -188,6 +188,27 @@ describe('computeStandings', () => {
     expect(table[0].teamId).toBe('a');
   });
 
+  it('breaks ties on fair play when configured', () => {
+    const cfg = resolveTournamentConfig({
+      tiebreakers: ['FAIR_PLAY', 'COIN_TOSS'],
+    });
+    const teams = ['a', 'b', 'c'];
+    const results = [
+      played('a', 'c', 1, 0),
+      played('b', 'c', 1, 0),
+      played('a', 'b', 0, 0),
+    ];
+    const fairPlay = new Map([
+      ['a', -2],
+      ['b', 0],
+      ['c', -1],
+    ]);
+    const table = computeStandings(teams, results, cfg, fairPlay);
+    const aRank = table.find((r) => r.teamId === 'a')!.rank;
+    const bRank = table.find((r) => r.teamId === 'b')!.rank;
+    expect(bRank).toBeLessThan(aRank);
+  });
+
   it('coin toss is deterministic for a given seed and total', () => {
     const teams = ['x', 'y'];
     const results = [played('x', 'y', 0, 0)]; // identical records, pure tie

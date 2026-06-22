@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import type { Control, FieldPath, FieldValues } from 'react-hook-form';
 import { Controller } from 'react-hook-form';
 import { Label } from '@/components/ui/label';
@@ -105,6 +106,78 @@ export function SelectField<T extends FieldValues>({
           {fieldState.error && <p className="text-xs text-red-500">{fieldState.error.message}</p>}
         </div>
       )}
+    />
+  );
+}
+
+interface SearchableSelectFieldProps<T extends FieldValues> extends FieldProps<T> {
+  options: { value: string; label: string; description?: string }[];
+  placeholder?: string;
+}
+
+export function SearchableSelectField<T extends FieldValues>({
+  control,
+  name,
+  label,
+  options,
+  placeholder = 'Search...',
+  className,
+}: SearchableSelectFieldProps<T>) {
+  const [query, setQuery] = useState('');
+  const [open, setOpen] = useState(false);
+
+  return (
+    <Controller
+      control={control}
+      name={name}
+      render={({ field, fieldState }) => {
+        const selected = options.find((opt) => opt.value === field.value);
+        const filtered = options.filter((opt) => {
+          const haystack = `${opt.label} ${opt.description ?? ''}`.toLowerCase();
+          return haystack.includes(query.toLowerCase());
+        });
+
+        return (
+          <div className={cn('space-y-1.5 relative', className)}>
+            <Label htmlFor={name}>{label}</Label>
+            <Input
+              id={name}
+              placeholder={selected ? selected.label : placeholder}
+              value={open ? query : (selected?.label ?? '')}
+              onChange={(e) => {
+                setQuery(e.target.value);
+                setOpen(true);
+              }}
+              onFocus={() => setOpen(true)}
+              onBlur={() => setTimeout(() => setOpen(false), 150)}
+            />
+            {open && filtered.length > 0 && (
+              <ul className="absolute z-50 mt-1 max-h-48 w-full overflow-auto rounded-md border border-border bg-popover shadow-md">
+                {filtered.map((opt) => (
+                  <li key={opt.value}>
+                    <button
+                      type="button"
+                      className="w-full px-3 py-2 text-left text-sm hover:bg-muted"
+                      onMouseDown={(e) => e.preventDefault()}
+                      onClick={() => {
+                        field.onChange(opt.value);
+                        setQuery('');
+                        setOpen(false);
+                      }}
+                    >
+                      <span className="font-medium">{opt.label}</span>
+                      {opt.description && (
+                        <span className="block text-xs text-muted-foreground">{opt.description}</span>
+                      )}
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+            {fieldState.error && <p className="text-xs text-red-500">{fieldState.error.message}</p>}
+          </div>
+        );
+      }}
     />
   );
 }

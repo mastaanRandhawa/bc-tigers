@@ -4,6 +4,7 @@ import prisma from '../../prisma/prisma';
 import { roundRobinPairs } from '../../common/round-robin';
 import { pickAllowed } from '../../common/pick';
 import { AuditLogService } from '../audit-log/audit-log.service';
+import { StandingsService } from '../standings/standings.service';
 
 /** Client-settable scalar fields on a division. `bracket_locked` is managed by the brackets module. */
 const DIVISION_FIELDS = [
@@ -14,16 +15,56 @@ const DIVISION_FIELDS = [
   'gender',
   'max_teams',
   'format',
-  'points_win',
-  'points_draw',
-  'points_loss',
+  'point_format_id',
   'primary_color',
   'accent_color',
 ] as const;
 
+const DIVISION_INCLUDE = {
+  tournament: true,
+  point_format: true,
+} as const;
+
+/** Prisma update accepts relation connects, not raw FK scalars on this model. */
+function buildDivisionUpdateData(
+  payload: Record<string, unknown>,
+): Prisma.DivisionUpdateInput {
+  const data: Prisma.DivisionUpdateInput = {};
+
+  if (payload.name !== undefined) data.name = payload.name as string;
+  if (payload.slug !== undefined) data.slug = payload.slug as string;
+  if (payload.age_group !== undefined) {
+    data.age_group = payload.age_group as string | null;
+  }
+  if (payload.gender !== undefined) {
+    data.gender = payload.gender as Prisma.DivisionUpdateInput['gender'];
+  }
+  if (payload.max_teams !== undefined && payload.max_teams !== null) {
+    data.max_teams = payload.max_teams as number;
+  }
+  if (payload.format !== undefined) data.format = payload.format as string;
+  if (payload.primary_color !== undefined) {
+    data.primary_color = payload.primary_color as string | null;
+  }
+  if (payload.accent_color !== undefined) {
+    data.accent_color = payload.accent_color as string | null;
+  }
+  if (payload.tournament_id) {
+    data.tournament = { connect: { id: payload.tournament_id as string } };
+  }
+  if (payload.point_format_id) {
+    data.point_format = { connect: { id: payload.point_format_id as string } };
+  }
+
+  return data;
+}
+
 @Injectable()
 export class DivisionsService {
-  constructor(private readonly audit: AuditLogService) {}
+  constructor(
+    private readonly audit: AuditLogService,
+    private readonly standings: StandingsService,
+  ) {}
 
   async findByTournament(tournamentSlug: string) {
     const tournament = await prisma.tournament.findUnique({
@@ -32,13 +73,14 @@ export class DivisionsService {
     if (!tournament) throw new NotFoundException('Tournament not found');
     return prisma.division.findMany({
       where: { tournament_id: tournament.id },
-      include: { teams: true },
+      include: { teams: true, point_format: true },
     });
   }
 
   async findOne(tournamentSlug: string, divisionSlug: string) {
     return this.resolveDivision(tournamentSlug, divisionSlug, {
       tournament: true,
+      point_format: true,
       teams: true,
       standings: { include: { team: true }, orderBy: { rank: 'asc' } },
       matches: { include: { home_team: true, away_team: true } },
@@ -61,20 +103,20 @@ export class DivisionsService {
           slug: divisionSlug,
         },
       },
-      include: include ?? { tournament: true },
+      include: include ?? DIVISION_INCLUDE,
     });
     if (!division) throw new NotFoundException('Division not found');
     return division;
   }
 
   findAll() {
-    return prisma.division.findMany({ include: { tournament: true } });
+    return prisma.division.findMany({ include: DIVISION_INCLUDE });
   }
 
   async findBySlugGlobal(divisionSlug: string) {
     const divisions = await prisma.division.findMany({
       where: { slug: divisionSlug },
-      include: { tournament: true },
+      include: DIVISION_INCLUDE,
     });
     if (divisions.length === 0) throw new NotFoundException('Division not found');
     if (divisions.length > 1) {
@@ -86,14 +128,29 @@ export class DivisionsService {
   create(data: unknown) {
     return prisma.division.create({
       data: pickAllowed<Prisma.DivisionUncheckedCreateInput>(data, DIVISION_FIELDS),
+      include: DIVISION_INCLUDE,
     });
   }
 
-  update(id: string, data: unknown) {
-    return prisma.division.update({
+  async update(id: string, data: unknown) {
+    const existing = await prisma.division.findUnique({ where: { id } });
+    if (!existing) throw new NotFoundException('Division not found');
+
+    const picked = pickAllowed<Record<string, unknown>>(data, DIVISION_FIELDS);
+    const nextPointFormatId =
+      typeof picked.point_format_id === 'string' ? picked.point_format_id : undefined;
+
+    const division = await prisma.division.update({
       where: { id },
-      data: pickAllowed<Prisma.DivisionUncheckedUpdateInput>(data, DIVISION_FIELDS),
+      data: buildDivisionUpdateData(picked),
+      include: DIVISION_INCLUDE,
     });
+
+    if (nextPointFormatId && nextPointFormatId !== existing.point_format_id) {
+      await this.standings.recalculate(id);
+    }
+
+    return division;
   }
 
   remove(id: string) {

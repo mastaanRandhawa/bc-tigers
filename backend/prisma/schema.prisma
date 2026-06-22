@@ -133,6 +133,30 @@ model Tournament {
   @@index([is_deleted])
 }
 
+model PointFormat {
+  id                    String   @id @default(uuid())
+  name                  String   @unique
+  slug                  String   @unique
+  description           String?
+  is_system             Boolean  @default(false)
+  win                   Int
+  draw                  Int
+  loss                  Int
+  bonuses_enabled       Boolean  @default(false)
+  shutout_bonus         Int      @default(0)
+  goal_bonus_per_goal   Int      @default(0)
+  goal_bonus_cap        Int      @default(0)
+  apply_bonuses_on_loss Boolean  @default(false)
+  forfeit_win_score     Int      @default(2)
+  forfeit_loss_score    Int      @default(0)
+  forfeit_award_bonuses Boolean  @default(true)
+  tiebreakers           Json
+  created_at            DateTime @default(now())
+  updated_at            DateTime @updatedAt
+
+  divisions Division[]
+}
+
 model Division {
   id             String   @id @default(uuid())
   tournament_id  String
@@ -142,9 +166,7 @@ model Division {
   gender         Gender   @default(MALE)
   max_teams      Int      @default(8)
   format         String   @default("Round Robin")
-  points_win     Int      @default(3)
-  points_draw    Int      @default(1)
-  points_loss    Int      @default(0)
+  point_format_id String
   primary_color  String?
   accent_color   String?
   bracket_locked    Boolean  @default(false)
@@ -153,6 +175,7 @@ model Division {
   updated_at     DateTime @updatedAt
 
   tournament    Tournament     @relation(fields: [tournament_id], references: [id], onDelete: Cascade)
+  point_format  PointFormat    @relation(fields: [point_format_id], references: [id])
   teams         Team[]
   matches       Match[]
   standings     Standing[]
