@@ -57,7 +57,15 @@ export interface Tournament {
   rules?: string;
   created_by: string;
   divisions?: Division[];
+  // Soft-delete / lifecycle (admin)
+  is_deleted?: boolean;
+  record_status?: RecordStatus;
+  deleted_at?: string;
+  deleted_by?: string;
 }
+
+export type RecordStatus = 'ACTIVE' | 'ARCHIVED' | 'DECOMMISSIONED';
+export type RecordScope = 'active' | 'deleted' | 'all';
 
 export interface Division {
   id: string;
@@ -90,6 +98,11 @@ export interface Team {
   primary_color?: string;
   secondary_color?: string;
   players?: Player[];
+  // Soft-delete / lifecycle (admin)
+  is_deleted?: boolean;
+  record_status?: RecordStatus;
+  deleted_at?: string;
+  deleted_by?: string;
 }
 
 export interface Player {
@@ -239,7 +252,30 @@ export interface AuditLog {
   entity_id?: string;
   metadata?: Record<string, unknown>;
   created_at: string;
+  previous_values?: Record<string, unknown> | null;
+  new_values?: Record<string, unknown> | null;
+  ip_address?: string;
+  user_agent?: string;
+  request_id?: string;
+  source?: string;
+  notes?: string;
   user?: Pick<User, 'id' | 'first_name' | 'last_name' | 'email'>;
+}
+
+/** Immutable per-record version (history entry). */
+export interface RecordVersion {
+  id: string;
+  entity_type: string;
+  entity_id: string;
+  version: number;
+  previous_version_id?: string | null;
+  action: string;
+  changed_fields: string[];
+  old_values?: Record<string, unknown> | null;
+  new_values?: Record<string, unknown> | null;
+  user_id?: string | null;
+  created_at: string;
+  user?: Pick<User, 'id' | 'first_name' | 'last_name' | 'email'> | null;
 }
 
 export interface AuthResponse {

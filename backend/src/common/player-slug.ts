@@ -1,5 +1,16 @@
 import { randomUUID } from 'crypto';
-import type { PrismaClient } from '@prisma/client';
+
+/**
+ * Minimal client shape needed for slug uniqueness checks. Structural so it
+ * accepts both the base PrismaClient and the extended (soft-delete) client.
+ */
+type PlayerSlugClient = {
+  player: {
+    findUnique(args: {
+      where: { team_id_slug: { team_id: string; slug: string } };
+    }): Promise<{ id: string } | null>;
+  };
+};
 
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -20,7 +31,7 @@ export function slugifyPlayerName(firstName: string, lastName: string): string {
 }
 
 export async function ensureUniquePlayerSlug(
-  prisma: PrismaClient,
+  prisma: PlayerSlugClient,
   teamId: string,
   base: string,
   excludeId?: string,

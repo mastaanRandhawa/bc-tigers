@@ -123,12 +123,13 @@ export function TournamentHubHeader() {
               )}
 
               <MotionBlock delay={0.36}>
-                <div className="flex flex-col items-center gap-3 sm:flex-row sm:flex-wrap md:items-start">
+                <div className="flex flex-row items-center justify-center gap-3 md:flex-wrap md:justify-start md:items-start">
                   <Button
                     asChild
                     size="lg"
                     className={cn(
-                      "h-12 rounded-lg bg-white px-6 text-base font-bold text-primary shadow-[0_10px_28px_rgba(72,28,0,0.28)]",
+                      "h-12 flex-1 basis-0 min-w-0 rounded-lg bg-white px-4 text-sm font-bold text-primary shadow-[0_10px_28px_rgba(72,28,0,0.28)]",
+                      "sm:px-6 sm:text-base md:flex-none md:basis-auto",
                       "hover:bg-white/95 hover:shadow-[0_14px_32px_rgba(72,28,0,0.32)]",
                       "focus-visible:ring-white focus-visible:ring-offset-primary",
                     )}
@@ -143,7 +144,8 @@ export function TournamentHubHeader() {
                     size="lg"
                     variant="outline"
                     className={cn(
-                      "h-12 rounded-lg border-white/35 bg-white/10 px-6 text-base font-bold text-white",
+                      "h-12 flex-1 basis-0 min-w-0 rounded-lg border-white/35 bg-white/10 px-4 text-sm font-bold text-white",
+                      "sm:px-6 sm:text-base md:flex-none md:basis-auto",
                       "hover:border-white/50 hover:bg-white/20 hover:text-white",
                       "focus-visible:ring-white focus-visible:ring-offset-primary",
                     )}

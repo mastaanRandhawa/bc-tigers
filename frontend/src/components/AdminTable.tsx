@@ -1,5 +1,15 @@
 import { useState } from 'react';
-import { Search, Plus, Edit2, Trash2, ChevronLeft, ChevronRight } from 'lucide-react';
+import {
+  Search,
+  Plus,
+  Edit2,
+  Trash2,
+  ChevronLeft,
+  ChevronRight,
+  History,
+  RotateCcw,
+} from 'lucide-react';
+import type { RecordScope } from '@/types';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
@@ -56,6 +66,18 @@ interface AdminTableProps<T extends { id: string }> {
   /** Search nested fields (e.g. team names on matches) */
   getSearchText?: (row: T) => string;
   searchPlaceholder?: string;
+  // ─── Audit / soft-delete extensions ───
+  /** Open the version/audit history drawer for a row. */
+  onHistory?: (row: T) => void;
+  /** Restore a soft-deleted row. */
+  onRestore?: (row: T) => void;
+  /** Permanently purge a soft-deleted row (admin only). */
+  onPurge?: (row: T) => void;
+  /** Whether a row is soft-deleted (drives Restore/Purge vs Edit/Delete). */
+  getIsDeleted?: (row: T) => boolean;
+  /** Active/Deleted/All scope toggle (rendered when onScopeChange provided). */
+  scope?: RecordScope;
+  onScopeChange?: (scope: RecordScope) => void;
 }
 
 export default function AdminTable<T extends { id: string }>({
@@ -69,7 +91,14 @@ export default function AdminTable<T extends { id: string }>({
   searchKeys = [],
   getSearchText,
   searchPlaceholder = 'Search…',
+  onHistory,
+  onRestore,
+  onPurge,
+  getIsDeleted,
+  scope,
+  onScopeChange,
 }: AdminTableProps<T>) {
+  const hasActions = !!(onEdit || onDelete || onHistory || onRestore || onPurge);
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const pageSize = 10;
@@ -92,7 +121,26 @@ export default function AdminTable<T extends { id: string }>({
     <Card className="overflow-hidden">
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 p-4 sm:p-5 border-b border-border">
         <h2 className="font-semibold text-foreground text-base sm:text-lg">{title}</h2>
-        <div className="flex items-center gap-2 w-full sm:w-auto">
+        <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+          {onScopeChange && (
+            <div className="inline-flex rounded-lg border border-border bg-card p-0.5">
+              {(['active', 'deleted', 'all'] as RecordScope[]).map((s) => (
+                <button
+                  key={s}
+                  type="button"
+                  onClick={() => onScopeChange(s)}
+                  className={cn(
+                    'rounded-md px-2.5 py-1 text-xs font-medium capitalize transition-colors',
+                    (scope ?? 'active') === s
+                      ? 'bg-primary text-primary-foreground'
+                      : 'text-muted-foreground hover:text-foreground',
+                  )}
+                >
+                  {s}
+                </button>
+              ))}
+            </div>
+          )}
           {searchable && (
             <div className="relative flex-1 sm:w-64">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -127,12 +175,14 @@ export default function AdminTable<T extends { id: string }>({
                     {col.label}
                   </TableHead>
                 ))}
-                {(onEdit || onDelete) && <TableHead className="text-right">Actions</TableHead>}
+                {hasActions && <TableHead className="text-right">Actions</TableHead>}
               </TableRow>
             </TableHeader>
             <TableBody>
-              {paginated.map((row) => (
-                <TableRow key={row.id}>
+              {paginated.map((row) => {
+                const deleted = getIsDeleted?.(row) ?? false;
+                return (
+                <TableRow key={row.id} className={cn(deleted && 'opacity-60')}>
                   {columns.map((col) => (
                     <TableCell key={col.key} className={col.className}>
                       {col.render
@@ -144,34 +194,75 @@ export default function AdminTable<T extends { id: string }>({
                         )}
                     </TableCell>
                   ))}
-                  {(onEdit || onDelete) && (
+                  {hasActions && (
                     <TableCell className="text-right">
                       <div className="flex items-center justify-end gap-0.5">
-                        {onEdit && (
+                        {onHistory && (
                           <button
                             type="button"
-                            onClick={() => onEdit(row)}
+                            onClick={() => onHistory(row)}
                             className="flex items-center justify-center w-9 h-9 sm:w-8 sm:h-8 text-muted-foreground hover:text-primary hover:bg-primary-muted rounded-lg transition-colors touch-manipulation"
-                            aria-label="Edit"
+                            aria-label="History"
+                            title="View history"
                           >
-                            <Edit2 className="w-4 h-4" />
+                            <History className="w-4 h-4" />
                           </button>
                         )}
-                        {onDelete && (
-                          <button
-                            type="button"
-                            onClick={() => onDelete(row)}
-                            className="flex items-center justify-center w-9 h-9 sm:w-8 sm:h-8 text-muted-foreground hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors touch-manipulation"
-                            aria-label="Delete"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </button>
+                        {deleted ? (
+                          <>
+                            {onRestore && (
+                              <button
+                                type="button"
+                                onClick={() => onRestore(row)}
+                                className="flex items-center justify-center w-9 h-9 sm:w-8 sm:h-8 text-muted-foreground hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors touch-manipulation"
+                                aria-label="Restore"
+                                title="Restore"
+                              >
+                                <RotateCcw className="w-4 h-4" />
+                              </button>
+                            )}
+                            {onPurge && (
+                              <button
+                                type="button"
+                                onClick={() => onPurge(row)}
+                                className="flex items-center justify-center w-9 h-9 sm:w-8 sm:h-8 text-muted-foreground hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors touch-manipulation"
+                                aria-label="Purge"
+                                title="Permanently delete"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            )}
+                          </>
+                        ) : (
+                          <>
+                            {onEdit && (
+                              <button
+                                type="button"
+                                onClick={() => onEdit(row)}
+                                className="flex items-center justify-center w-9 h-9 sm:w-8 sm:h-8 text-muted-foreground hover:text-primary hover:bg-primary-muted rounded-lg transition-colors touch-manipulation"
+                                aria-label="Edit"
+                              >
+                                <Edit2 className="w-4 h-4" />
+                              </button>
+                            )}
+                            {onDelete && (
+                              <button
+                                type="button"
+                                onClick={() => onDelete(row)}
+                                className="flex items-center justify-center w-9 h-9 sm:w-8 sm:h-8 text-muted-foreground hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors touch-manipulation"
+                                aria-label="Delete"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </button>
+                            )}
+                          </>
                         )}
                       </div>
                     </TableCell>
                   )}
                 </TableRow>
-              ))}
+                );
+              })}
             </TableBody>
           </Table>
         </div>

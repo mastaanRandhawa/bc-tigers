@@ -61,6 +61,15 @@ enum BracketStage {
   THIRD_PLACE
 }
 
+/// Lifecycle state for soft-deletable records. ACTIVE = live, ARCHIVED = hidden
+/// but kept, DECOMMISSIONED = soft-deleted. Named `record_status` on models so it
+/// never collides with domain `status` columns (e.g. Tournament.status).
+enum RecordStatus {
+  ACTIVE
+  ARCHIVED
+  DECOMMISSIONED
+}
+
 // ─── Models ───────────────────────────────────────────────────────────────────
 
 model User {
@@ -77,6 +86,7 @@ model User {
   updated_at    DateTime @updatedAt
 
   audit_logs            AuditLog[]
+  record_versions       RecordVersion[]
   password_reset_tokens PasswordResetToken[]
 }
 
@@ -96,9 +106,17 @@ model Tournament {
   created_at      DateTime         @default(now())
   updated_at      DateTime         @updatedAt
 
+  // ─── Soft-delete / lifecycle (shared pattern; copy to all auditable models) ───
+  deleted_at    DateTime?
+  deleted_by    String?
+  is_deleted    Boolean      @default(false)
+  record_status RecordStatus @default(ACTIVE)
+
   divisions     Division[]
   matches       Match[]
   announcements Announcement[]
+
+  @@index([is_deleted])
 }
 
 model Division {
@@ -143,6 +161,12 @@ model Team {
   created_at      DateTime @default(now())
   updated_at      DateTime @updatedAt
 
+  // ─── Soft-delete / lifecycle (shared pattern; copy to all auditable models) ───
+  deleted_at    DateTime?
+  deleted_by    String?
+  is_deleted    Boolean      @default(false)
+  record_status RecordStatus @default(ACTIVE)
+
   division       Division      @relation(fields: [division_id], references: [id], onDelete: Cascade)
   players        Player[]
   home_matches   Match[]       @relation("HomeTeam")
@@ -154,6 +178,7 @@ model Team {
   bracket_winner BracketNode[] @relation("BracketWinner")
 
   @@unique([division_id, slug])
+  @@index([is_deleted])
 }
 
 model Player {
@@ -346,7 +371,44 @@ model AuditLog {
   metadata   Json?
   created_at DateTime @default(now())
 
+  // ─── Enriched audit fields (centralized writer fills these from request context) ───
+  previous_values Json?
+  new_values      Json?
+  ip_address      String?
+  user_agent      String?
+  request_id      String?
+  source          String? // Web | Mobile | API | BackgroundJob
+  notes           String?
+
   user User? @relation(fields: [user_id], references: [id])
+
+  @@index([entity])
+  @@index([entity_id])
+  @@index([user_id])
+  @@index([created_at])
+  @@index([action])
+}
+
+/// Immutable, append-only per-record version history. One row per create/update/
+/// delete/restore. Restoring a version writes a NEW row — history is never mutated.
+model RecordVersion {
+  id                  String   @id @default(uuid())
+  entity_type         String
+  entity_id           String
+  version             Int
+  previous_version_id String?
+  action              String // CREATE | UPDATE | DELETE | RESTORE | RESTORE_VERSION
+  changed_fields      String[]
+  old_values          Json?
+  new_values          Json?
+  user_id             String?
+  created_at          DateTime @default(now())
+
+  user User? @relation(fields: [user_id], references: [id])
+
+  @@index([entity_type, entity_id, version])
+  @@index([user_id])
+  @@index([created_at])
 }
 
 model PasswordResetToken {

@@ -8,6 +8,7 @@ import { MatchesModule } from '../matches/matches.module';
 import { StandingsModule } from '../standings/standings.module';
 import { BracketsModule } from '../brackets/brackets.module';
 import { VenuesModule } from '../venues/venues.module';
+import { AuditLogModule } from '../audit-log/audit-log.module';
 
 @Module({
   imports: [
@@ -16,6 +17,7 @@ import { VenuesModule } from '../venues/venues.module';
     StandingsModule,
     BracketsModule,
     VenuesModule,
+    AuditLogModule,
   ],
   controllers: [DivisionsController, DivisionResourcesController],
   providers: [DivisionsService, DivisionResourcesService],

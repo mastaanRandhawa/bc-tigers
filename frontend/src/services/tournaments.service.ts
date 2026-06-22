@@ -1,5 +1,11 @@
 import apiClient from '@/lib/api-client';
-import type { Match, Standing, Tournament } from '@/types';
+import type {
+  Match,
+  RecordScope,
+  RecordVersion,
+  Standing,
+  Tournament,
+} from '@/types';
 
 export interface TournamentOverview {
   tournament: Tournament;
@@ -13,6 +19,10 @@ export const tournamentsService = {
   getAll: (params?: { status?: string; page?: number; limit?: number }) =>
     apiClient.get<Tournament[]>('/tournaments', { params }),
 
+  /** Admin list with active/deleted/all scope. */
+  getManaged: (scope: RecordScope = 'active') =>
+    apiClient.get<Tournament[]>('/tournaments/manage', { params: { scope } }),
+
   getOne: (slug: string) => apiClient.get<Tournament>(`/tournaments/${slug}`),
 
   getById: (id: string) => apiClient.get<Tournament>(`/tournaments/by-id/${id}`),
@@ -25,5 +35,17 @@ export const tournamentsService = {
   update: (id: string, data: Partial<Tournament>) =>
     apiClient.patch<Tournament>(`/tournaments/${id}`, data),
 
+  /** Soft delete (decommission). */
   delete: (id: string) => apiClient.delete<Tournament>(`/tournaments/${id}`),
+
+  restore: (id: string) => apiClient.post<Tournament>(`/tournaments/${id}/restore`),
+
+  /** Permanent hard delete (admin). */
+  purge: (id: string) => apiClient.delete<{ id: string }>(`/tournaments/${id}/purge`),
+
+  history: (id: string) =>
+    apiClient.get<RecordVersion[]>(`/tournaments/${id}/history`),
+
+  restoreVersion: (id: string, versionId: string) =>
+    apiClient.post<Tournament>(`/tournaments/${id}/restore-version/${versionId}`),
 };

@@ -1,5 +1,6 @@
 import { BadRequestException, Inject, Injectable, forwardRef } from '@nestjs/common';
 import { MatchesGateway } from '../../gateways/matches.gateway';
+import { AuditLogService } from '../audit-log/audit-log.service';
 import type { BracketStage } from '@prisma/client';
 import prisma from '../../prisma/prisma';
 import type { BracketSeeding } from './bracket-seeding';
@@ -18,6 +19,7 @@ export class BracketsService {
   constructor(
     @Inject(forwardRef(() => MatchesGateway))
     private readonly gateway: MatchesGateway,
+    private readonly audit: AuditLogService,
   ) {}
 
   private emitBracketUpdated(divisionId: string, payload?: unknown) {
@@ -245,6 +247,12 @@ export class BracketsService {
     }
 
     const result = await this.getByDivisionId(divisionId);
+    await this.audit.log({
+      action: 'BRACKET_GENERATION',
+      entity: 'Division',
+      entityId: divisionId,
+      metadata: { seeding: seeding ?? 'standard', nodes: result.length },
+    });
     this.emitBracketUpdated(divisionId);
     return result;
   }
