@@ -133,6 +133,27 @@ export class MatchesGateway
     });
   }
 
+  /**
+   * Recalculate standings for a division and broadcast the result. Used when a
+   * match that is *already* COMPLETED has its score/events edited — the
+   * completion event already fired, but the table still needs to be corrected.
+   */
+  async refreshStandings(divisionId: string) {
+    try {
+      const updatedStandings =
+        await this.standingsService.recalculate(divisionId);
+      this.server
+        .to(`division:${divisionId}`)
+        .emit(SOCKET_EVENTS.STANDINGS_UPDATED, updatedStandings);
+      this.server.emit(SOCKET_EVENTS.STANDINGS_UPDATED, {
+        divisionId,
+        standings: updatedStandings,
+      });
+    } catch (err) {
+      this.logger.error('Failed to refresh standings', err);
+    }
+  }
+
   emitBracketUpdated(divisionId: string, data: unknown) {
     this.server
       .to(`division:${divisionId}`)

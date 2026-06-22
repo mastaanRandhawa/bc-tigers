@@ -3,7 +3,12 @@ import {
   loserBracketSlot,
   nextBracketSlot,
 } from '../scheduling/bracket-planner';
-import { propagateByes, resetDownstreamTeams, setWinner, type WinnerSource } from './progression';
+import {
+  propagateByes,
+  resetDownstreamTeams,
+  setWinner,
+  type WinnerSource,
+} from './progression';
 import { computeNodeStatus } from './status';
 import type { EngineNode } from './types';
 import { findNode } from './types';
@@ -65,7 +70,9 @@ export function repairProgressionLinks(nodes: EngineNode[]): boolean {
 export function needsProgressionRepair(nodes: EngineNode[]): boolean {
   return nodes.some(
     (n) =>
-      (n.stage === 'SEMI_FINAL' || n.stage === 'QUARTER_FINAL' || n.stage === 'ROUND_OF_16') &&
+      (n.stage === 'SEMI_FINAL' ||
+        n.stage === 'QUARTER_FINAL' ||
+        n.stage === 'ROUND_OF_16') &&
       (!n.next_node_id || (n.stage === 'SEMI_FINAL' && !n.loser_next_node_id)),
   );
 }

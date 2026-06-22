@@ -20,12 +20,17 @@ import { AuditLogModule } from '../audit-log/audit-log.module';
       useFactory: (config: ConfigService) => {
         const secret = config.get<string>('JWT_SECRET');
         if (!secret) {
-          throw new InternalServerErrorException('JWT_SECRET is not configured');
+          throw new InternalServerErrorException(
+            'JWT_SECRET is not configured',
+          );
         }
         return {
           secret,
           signOptions: {
-            expiresIn: config.get<string>('JWT_EXPIRES_IN', '7d') as `${number}d`,
+            expiresIn: config.get<string>(
+              'JWT_EXPIRES_IN',
+              '7d',
+            ) as `${number}d`,
           },
         };
       },

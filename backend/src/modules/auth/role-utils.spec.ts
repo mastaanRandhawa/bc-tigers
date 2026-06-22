@@ -23,7 +23,9 @@ describe('role-utils', () => {
   describe('canActorResetTargetPassword', () => {
     it('allows superadmin to reset admin and superadmin passwords', () => {
       expect(canActorResetTargetPassword('SUPERADMIN', 'ADMIN')).toBe(true);
-      expect(canActorResetTargetPassword('SUPERADMIN', 'SUPERADMIN')).toBe(true);
+      expect(canActorResetTargetPassword('SUPERADMIN', 'SUPERADMIN')).toBe(
+        true,
+      );
     });
 
     it('denies admin resetting admin or superadmin passwords', () => {

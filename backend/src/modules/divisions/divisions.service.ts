@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import type { Prisma } from '@prisma/client';
 import prisma from '../../prisma/prisma';
 import { roundRobinPairs } from '../../common/round-robin';
@@ -34,20 +38,20 @@ function buildDivisionUpdateData(
   if (payload.name !== undefined) data.name = payload.name as string;
   if (payload.slug !== undefined) data.slug = payload.slug as string;
   if (payload.age_group !== undefined) {
-    data.age_group = payload.age_group as string | null;
+    data.age_group = payload.age_group;
   }
   if (payload.gender !== undefined) {
     data.gender = payload.gender as Prisma.DivisionUpdateInput['gender'];
   }
   if (payload.max_teams !== undefined && payload.max_teams !== null) {
-    data.max_teams = payload.max_teams as number;
+    data.max_teams = payload.max_teams;
   }
   if (payload.format !== undefined) data.format = payload.format as string;
   if (payload.primary_color !== undefined) {
-    data.primary_color = payload.primary_color as string | null;
+    data.primary_color = payload.primary_color;
   }
   if (payload.accent_color !== undefined) {
-    data.accent_color = payload.accent_color as string | null;
+    data.accent_color = payload.accent_color;
   }
   if (payload.tournament_id) {
     data.tournament = { connect: { id: payload.tournament_id as string } };
@@ -118,7 +122,8 @@ export class DivisionsService {
       where: { slug: divisionSlug },
       include: DIVISION_INCLUDE,
     });
-    if (divisions.length === 0) throw new NotFoundException('Division not found');
+    if (divisions.length === 0)
+      throw new NotFoundException('Division not found');
     if (divisions.length > 1) {
       return divisions;
     }
@@ -127,7 +132,10 @@ export class DivisionsService {
 
   create(data: unknown) {
     return prisma.division.create({
-      data: pickAllowed<Prisma.DivisionUncheckedCreateInput>(data, DIVISION_FIELDS),
+      data: pickAllowed<Prisma.DivisionUncheckedCreateInput>(
+        data,
+        DIVISION_FIELDS,
+      ),
       include: DIVISION_INCLUDE,
     });
   }
@@ -138,7 +146,9 @@ export class DivisionsService {
 
     const picked = pickAllowed<Record<string, unknown>>(data, DIVISION_FIELDS);
     const nextPointFormatId =
-      typeof picked.point_format_id === 'string' ? picked.point_format_id : undefined;
+      typeof picked.point_format_id === 'string'
+        ? picked.point_format_id
+        : undefined;
 
     const division = await prisma.division.update({
       where: { id },
@@ -188,7 +198,9 @@ export class DivisionsService {
 
     const teamIds = division.teams.map((t) => t.id);
     if (teamIds.length < 2) {
-      throw new BadRequestException('At least 2 teams required to generate a schedule');
+      throw new BadRequestException(
+        'At least 2 teams required to generate a schedule',
+      );
     }
 
     const pairs = roundRobinPairs(teamIds);

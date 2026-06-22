@@ -18,3 +18,18 @@ export function canActorResetTargetPassword(
   }
   return false;
 }
+
+/**
+ * Whether `actorRole` may create/modify/delete a user whose role is `targetRole`.
+ * Mirrors the password-reset hierarchy: any staff member can manage COACH
+ * accounts, but only a SUPERADMIN may manage ADMIN/SUPERADMIN accounts (which
+ * includes assigning those roles). Prevents an ADMIN from minting or removing a
+ * SUPERADMIN.
+ */
+export function canActorManageTarget(
+  actorRole: UserRole,
+  targetRole: UserRole,
+): boolean {
+  if (targetRole === 'COACH') return isStaffRole(actorRole);
+  return isSuperAdminRole(actorRole);
+}

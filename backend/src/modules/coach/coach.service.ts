@@ -1,7 +1,10 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import prisma from '../../prisma/prisma';
 import { pickAllowed } from '../../common/pick';
-import { isCoachManagementLocked, getCoachLockStatus } from '../auth/coach-permissions';
+import {
+  isCoachManagementLocked,
+  getCoachLockStatus,
+} from '../auth/coach-permissions';
 import { getCoachTeamId } from '../teams/coach-team-link';
 import { TeamPlayersService } from '../teams/team-players.service';
 import { getMaxPlayersPerTeam } from '../settings/settings.service';
@@ -26,7 +29,9 @@ const TEAM_INCLUDE = {
       phone: true,
     },
   },
-  players: { orderBy: [{ active: 'desc' as const }, { last_name: 'asc' as const }] },
+  players: {
+    orderBy: [{ active: 'desc' as const }, { last_name: 'asc' as const }],
+  },
 };
 
 @Injectable()

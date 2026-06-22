@@ -28,7 +28,7 @@ describe('TeamPlayersService roster cap', () => {
   beforeEach(() => jest.clearAllMocks());
 
   it('rejects create when roster is at capacity', async () => {
-    mockPrisma.team.findUnique.mockResolvedValue({ id: 'team-1' } as never);
+    mockPrisma.team.findUnique.mockResolvedValue({ id: 'team-1' });
     mockPrisma.player.count.mockResolvedValue(25);
 
     await expect(
@@ -37,9 +37,9 @@ describe('TeamPlayersService roster cap', () => {
   });
 
   it('allows create when below capacity', async () => {
-    mockPrisma.team.findUnique.mockResolvedValue({ id: 'team-1' } as never);
+    mockPrisma.team.findUnique.mockResolvedValue({ id: 'team-1' });
     mockPrisma.player.count.mockResolvedValue(24);
-    mockPrisma.player.create.mockResolvedValue({ id: 'p1' } as never);
+    mockPrisma.player.create.mockResolvedValue({ id: 'p1' });
 
     await expect(
       service.create('team-1', { first_name: 'John', last_name: 'Doe' }),

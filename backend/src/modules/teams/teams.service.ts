@@ -78,7 +78,10 @@ export class TeamsService {
     const team = await this.auditable.createAudited(
       (tx) => asAuditable(tx.team),
       ENTITY,
-      { ...payload, coach_user_id: coachUserId ? undefined : payload.coach_user_id },
+      {
+        ...payload,
+        coach_user_id: coachUserId ? undefined : payload.coach_user_id,
+      },
     );
 
     if (coachUserId) {
@@ -88,7 +91,12 @@ export class TeamsService {
         include: {
           division: { include: { tournament: true } },
           coach: {
-            select: { id: true, first_name: true, last_name: true, email: true },
+            select: {
+              id: true,
+              first_name: true,
+              last_name: true,
+              email: true,
+            },
           },
         },
       });
@@ -115,7 +123,12 @@ export class TeamsService {
         include: {
           division: { include: { tournament: true } },
           coach: {
-            select: { id: true, first_name: true, last_name: true, email: true },
+            select: {
+              id: true,
+              first_name: true,
+              last_name: true,
+              email: true,
+            },
           },
         },
       });

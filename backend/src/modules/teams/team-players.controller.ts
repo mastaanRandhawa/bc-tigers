@@ -21,7 +21,10 @@ export class TeamPlayersController {
 
   @Post()
   @AdminOnly()
-  create(@Param('teamId') teamId: string, @Body() body: Record<string, unknown>) {
+  create(
+    @Param('teamId') teamId: string,
+    @Body() body: Record<string, unknown>,
+  ) {
     return this.service.create(teamId, body);
   }
 

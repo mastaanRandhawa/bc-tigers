@@ -5,7 +5,10 @@ import { getCoachLockSettings, isCoachLockEffective } from './coach-lock';
 
 export { getCoachTeamId };
 
-export async function assertCoachCanEditTeam(userId: string, teamId: string): Promise<void> {
+export async function assertCoachCanEditTeam(
+  userId: string,
+  teamId: string,
+): Promise<void> {
   const team = await prisma.team.findUnique({
     where: { id: teamId },
     select: { coach_user_id: true, management_locked: true },
@@ -20,7 +23,9 @@ export async function assertCoachCanEditTeam(userId: string, teamId: string): Pr
     throw new ForbiddenException('Coach management is locked system-wide');
   }
   if (team.management_locked) {
-    throw new ForbiddenException('Team management is locked by an administrator');
+    throw new ForbiddenException(
+      'Team management is locked by an administrator',
+    );
   }
 }
 

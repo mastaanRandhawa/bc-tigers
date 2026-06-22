@@ -6,7 +6,9 @@ jest.mock('../../prisma/prisma', () => ({
     team: { findMany: jest.fn() },
     matchEvent: { findMany: jest.fn() },
     standing: { upsert: jest.fn() },
-    $transaction: jest.fn((ops: unknown[]) => Promise.all(ops as Promise<unknown>[])),
+    $transaction: jest.fn((ops: unknown[]) =>
+      Promise.all(ops as Promise<unknown>[]),
+    ),
   },
 }));
 
@@ -32,7 +34,13 @@ const standardFormat = {
   forfeit_win_score: 2,
   forfeit_loss_score: 0,
   forfeit_award_bonuses: false,
-  tiebreakers: ['GOAL_DIFFERENCE', 'GOALS_FOR', 'HEAD_TO_HEAD', 'FAIR_PLAY', 'COIN_TOSS'],
+  tiebreakers: [
+    'GOAL_DIFFERENCE',
+    'GOALS_FOR',
+    'HEAD_TO_HEAD',
+    'FAIR_PLAY',
+    'COIN_TOSS',
+  ],
   created_at: new Date(),
   updated_at: new Date(),
 };
@@ -51,7 +59,13 @@ const usfaFormat = {
   goal_bonus_cap: 3,
   apply_bonuses_on_loss: true,
   forfeit_award_bonuses: true,
-  tiebreakers: ['HEAD_TO_HEAD', 'GOALS_AGAINST', 'GOALS_FOR', 'FAIR_PLAY', 'COIN_TOSS'],
+  tiebreakers: [
+    'HEAD_TO_HEAD',
+    'GOALS_AGAINST',
+    'GOALS_FOR',
+    'FAIR_PLAY',
+    'COIN_TOSS',
+  ],
 };
 
 describe('StandingsService', () => {
@@ -72,7 +86,7 @@ describe('StandingsService', () => {
         away_score: 0,
       },
     ] as never);
-    mockPrisma.standing.upsert.mockResolvedValue({} as never);
+    mockPrisma.standing.upsert.mockResolvedValue({});
     mockPrisma.standing.findMany = jest.fn().mockResolvedValue([]);
   });
 
@@ -80,7 +94,7 @@ describe('StandingsService', () => {
     mockPrisma.division.findUniqueOrThrow.mockResolvedValue({
       id: 'div-1',
       point_format: standardFormat,
-    } as never);
+    });
 
     await service.recalculate('div-1');
 
@@ -94,7 +108,7 @@ describe('StandingsService', () => {
     mockPrisma.division.findUniqueOrThrow.mockResolvedValue({
       id: 'div-1',
       point_format: usfaFormat,
-    } as never);
+    });
 
     await service.recalculate('div-1');
 

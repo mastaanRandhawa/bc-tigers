@@ -2,7 +2,12 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import type { BracketNodeStatus, BracketStage, Prisma } from '@prisma/client';
 import prisma from '../../../prisma/prisma';
 import type { BracketNodeDraft } from '../scheduling/types';
-import { propagateByes, resetDownstreamTeams, setWinner, type WinnerSource } from './progression';
+import {
+  propagateByes,
+  resetDownstreamTeams,
+  setWinner,
+  type WinnerSource,
+} from './progression';
 import {
   canEditResults,
   canEditStructure,
@@ -69,7 +74,9 @@ export class BracketEngine {
   async assertResultsEditable(divisionId: string) {
     const flags = await this.loadDivisionFlags(divisionId);
     if (!canEditResults(flags)) {
-      throw new BadRequestException('Bracket is finalized — results cannot be changed');
+      throw new BadRequestException(
+        'Bracket is finalized — results cannot be changed',
+      );
     }
   }
 
@@ -128,7 +135,10 @@ export class BracketEngine {
     );
   }
 
-  async runPropagateByes(divisionId: string, firstStage: BracketStage): Promise<EngineNode[]> {
+  async runPropagateByes(
+    divisionId: string,
+    firstStage: BracketStage,
+  ): Promise<EngineNode[]> {
     const nodes = await this.loadNodes(divisionId);
     resetDownstreamTeams(nodes, firstStage);
     propagateByes(nodes);
@@ -241,7 +251,10 @@ export class BracketEngine {
         division_id: true,
       },
     });
-    if (linkSample.length > 0 && needsProgressionRepair(linkSample as EngineNode[])) {
+    if (
+      linkSample.length > 0 &&
+      needsProgressionRepair(linkSample as EngineNode[])
+    ) {
       await this.loadNodes(divisionId);
     }
 
@@ -254,5 +267,10 @@ export class BracketEngine {
 }
 
 export { propagateByes, setWinner } from './progression';
-export { validateBracket, canEditStructure, canEditResults, hasPlayedMatches } from './validation';
+export {
+  validateBracket,
+  canEditStructure,
+  canEditResults,
+  hasPlayedMatches,
+} from './validation';
 export type { EngineNode } from './types';

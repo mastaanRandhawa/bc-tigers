@@ -1,6 +1,7 @@
 import {
   Injectable,
   NotFoundException,
+  BadRequestException,
   Inject,
   forwardRef,
   Logger,
@@ -137,6 +138,24 @@ export class MatchesService {
       data,
       MATCH_FIELDS,
     );
+
+    // A knockout (bracket-linked) match cannot end level — advancement needs a
+    // decisive winner. Reject the completion up front so the admin enters a
+    // result instead of silently stalling the bracket.
+    if (updateData.status === 'COMPLETED' && existing.status !== 'COMPLETED') {
+      if (existing.home_score === existing.away_score) {
+        const node = await prisma.bracketNode.findFirst({
+          where: { match_id: id },
+          select: { id: true },
+        });
+        if (node) {
+          throw new BadRequestException(
+            'Knockout matches cannot end in a draw — enter a decisive score before completing this match.',
+          );
+        }
+      }
+    }
+
     const match = await prisma.match.update({
       where: { id },
       data: updateData,
@@ -167,7 +186,7 @@ export class MatchesService {
   }
 
   async updateScore(id: string, homeScore: number, awayScore: number) {
-    return this.applyScore(id, homeScore, awayScore, { notify: true });
+    return this.applyScore(id, homeScore, awayScore);
   }
 
   async addEvent(matchId: string, data: unknown) {
@@ -186,7 +205,7 @@ export class MatchesService {
     await this.gateway.emitMatchEvent({
       matchId,
       divisionId: match.division_id,
-      type: eventData.type as MatchEventType,
+      type: eventData.type,
       data: { matchId, event },
     });
 
@@ -257,15 +276,10 @@ export class MatchesService {
       }
     }
 
-    await this.applyScore(matchId, home, away, { notify: false });
+    await this.applyScore(matchId, home, away);
   }
 
-  private async applyScore(
-    id: string,
-    homeScore: number,
-    awayScore: number,
-    options: { notify?: boolean },
-  ) {
+  private async applyScore(id: string, homeScore: number, awayScore: number) {
     const match = await prisma.match.update({
       where: { id },
       data: { home_score: homeScore, away_score: awayScore },
@@ -274,14 +288,14 @@ export class MatchesService {
 
     this.gateway.emitScoreUpdate(id, homeScore, awayScore);
 
-    if (options.notify) {
-      await this.emailAdmins(
-        match.tournament_id,
-        'Score updated',
-        `${match.home_team.name} ${homeScore} – ${awayScore} ${match.away_team.name}`,
-      );
+    // Editing the score/events of an already-completed match must keep the
+    // standings table in sync — the completion event won't fire again.
+    if (match.status === 'COMPLETED') {
+      await this.gateway.refreshStandings(match.division_id);
     }
 
+    // Note: no per-score email — admins follow live scores over the socket.
+    // Mail is reserved for start/completion transitions (see update()).
     return match;
   }
 
@@ -299,12 +313,16 @@ export class MatchesService {
     if (!node) return;
 
     if (match.home_score === match.away_score) {
-      this.logger.warn(`Match ${match.id} completed as draw — bracket not advanced`);
+      this.logger.warn(
+        `Match ${match.id} completed as draw — bracket not advanced`,
+      );
       return;
     }
 
     const winnerId =
-      match.home_score > match.away_score ? match.home_team_id : match.away_team_id;
+      match.home_score > match.away_score
+        ? match.home_team_id
+        : match.away_team_id;
 
     try {
       await this.bracketsService.advance(node.id, winnerId, 'match');
@@ -328,14 +346,15 @@ export class MatchesService {
       select: { email: true },
     });
 
-    for (const admin of admins) {
-      if (!admin.email) continue;
-      await this.mailService.send({
-        to: admin.email,
-        subject: title,
-        text: message,
-      });
-    }
+    // Send in parallel and don't let a mail failure (or slow SMTP) block or
+    // fail the match mutation that triggered it.
+    await Promise.allSettled(
+      admins
+        .filter((a) => a.email)
+        .map((a) =>
+          this.mailService.send({ to: a.email, subject: title, text: message }),
+        ),
+    );
   }
 
   remove(id: string) {

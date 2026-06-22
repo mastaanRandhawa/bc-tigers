@@ -33,81 +33,83 @@ describe('coach-permissions', () => {
       mockPrisma.team.findUnique.mockResolvedValue({
         coach_user_id: 'coach-1',
         management_locked: false,
-      } as never);
+      });
       mockPrisma.siteSettings.findUnique.mockResolvedValue({
         coach_management_locked: false,
         coach_lock_scheduled_at: null,
-      } as never);
+      });
 
-      await expect(assertCoachCanEditTeam('coach-1', 'team-1')).resolves.toBeUndefined();
+      await expect(
+        assertCoachCanEditTeam('coach-1', 'team-1'),
+      ).resolves.toBeUndefined();
     });
 
     it('denies when team is not assigned to coach', async () => {
       mockPrisma.team.findUnique.mockResolvedValue({
         coach_user_id: 'other-coach',
         management_locked: false,
-      } as never);
+      });
 
-      await expect(assertCoachCanEditTeam('coach-1', 'team-1')).rejects.toBeInstanceOf(
-        ForbiddenException,
-      );
+      await expect(
+        assertCoachCanEditTeam('coach-1', 'team-1'),
+      ).rejects.toBeInstanceOf(ForbiddenException);
     });
 
     it('denies when global coach lock is enabled', async () => {
       mockPrisma.team.findUnique.mockResolvedValue({
         coach_user_id: 'coach-1',
         management_locked: false,
-      } as never);
+      });
       mockPrisma.siteSettings.findUnique.mockResolvedValue({
         coach_management_locked: true,
         coach_lock_scheduled_at: null,
-      } as never);
+      });
 
-      await expect(assertCoachCanEditTeam('coach-1', 'team-1')).rejects.toBeInstanceOf(
-        ForbiddenException,
-      );
+      await expect(
+        assertCoachCanEditTeam('coach-1', 'team-1'),
+      ).rejects.toBeInstanceOf(ForbiddenException);
     });
 
     it('denies when team management is locked', async () => {
       mockPrisma.team.findUnique.mockResolvedValue({
         coach_user_id: 'coach-1',
         management_locked: true,
-      } as never);
+      });
       mockPrisma.siteSettings.findUnique.mockResolvedValue({
         coach_management_locked: false,
         coach_lock_scheduled_at: null,
-      } as never);
+      });
 
-      await expect(assertCoachCanEditTeam('coach-1', 'team-1')).rejects.toBeInstanceOf(
-        ForbiddenException,
-      );
+      await expect(
+        assertCoachCanEditTeam('coach-1', 'team-1'),
+      ).rejects.toBeInstanceOf(ForbiddenException);
     });
 
     it('denies when scheduled global lock time has passed', async () => {
       mockPrisma.team.findUnique.mockResolvedValue({
         coach_user_id: 'coach-1',
         management_locked: false,
-      } as never);
+      });
       mockPrisma.siteSettings.findUnique.mockResolvedValue({
         coach_management_locked: false,
         coach_lock_scheduled_at: new Date('2020-01-01'),
-      } as never);
+      });
       mockPrisma.siteSettings.update.mockResolvedValue({
         coach_management_locked: true,
         coach_lock_scheduled_at: null,
-      } as never);
+      });
 
-      await expect(assertCoachCanEditTeam('coach-1', 'team-1')).rejects.toBeInstanceOf(
-        ForbiddenException,
-      );
+      await expect(
+        assertCoachCanEditTeam('coach-1', 'team-1'),
+      ).rejects.toBeInstanceOf(ForbiddenException);
       expect(mockPrisma.siteSettings.update).toHaveBeenCalled();
     });
 
     it('throws when team does not exist', async () => {
       mockPrisma.team.findUnique.mockResolvedValue(null);
-      await expect(assertCoachCanEditTeam('coach-1', 'team-1')).rejects.toBeInstanceOf(
-        NotFoundException,
-      );
+      await expect(
+        assertCoachCanEditTeam('coach-1', 'team-1'),
+      ).rejects.toBeInstanceOf(NotFoundException);
     });
   });
 
@@ -116,7 +118,7 @@ describe('coach-permissions', () => {
       mockPrisma.siteSettings.findUnique.mockResolvedValue({
         coach_management_locked: true,
         coach_lock_scheduled_at: null,
-      } as never);
+      });
       await expect(isCoachManagementLocked()).resolves.toBe(true);
     });
 
@@ -124,11 +126,11 @@ describe('coach-permissions', () => {
       mockPrisma.siteSettings.findUnique.mockResolvedValue({
         coach_management_locked: false,
         coach_lock_scheduled_at: new Date('2020-01-01'),
-      } as never);
+      });
       mockPrisma.siteSettings.update.mockResolvedValue({
         coach_management_locked: true,
         coach_lock_scheduled_at: null,
-      } as never);
+      });
       await expect(isCoachManagementLocked()).resolves.toBe(true);
     });
   });

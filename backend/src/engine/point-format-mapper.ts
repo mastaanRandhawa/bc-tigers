@@ -22,7 +22,9 @@ export function parseTiebreakers(value: unknown): TiebreakerRule[] {
     'PENALTY_KICKS',
     'COIN_TOSS',
   ]);
-  const parsed = value.filter((v): v is TiebreakerRule => typeof v === 'string' && allowed.has(v));
+  const parsed = value.filter(
+    (v): v is TiebreakerRule => typeof v === 'string' && allowed.has(v),
+  );
   return parsed.length > 0 ? parsed : DEFAULT_TIEBREAKERS;
 }
 

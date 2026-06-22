@@ -210,7 +210,10 @@ export function propagateByes(nodes: EngineNode[]): boolean {
 }
 
 /** Reset downstream from first stage before full bye re-propagation. */
-export function resetDownstreamTeams(nodes: EngineNode[], firstStage: string): void {
+export function resetDownstreamTeams(
+  nodes: EngineNode[],
+  firstStage: string,
+): void {
   for (const node of nodes) {
     if (node.stage === firstStage) {
       node.winner_id = null;

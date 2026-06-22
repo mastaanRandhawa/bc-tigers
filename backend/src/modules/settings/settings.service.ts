@@ -55,9 +55,14 @@ export class SettingsService {
   async update(data: unknown) {
     await this.getOrCreate();
     const source = data as Record<string, unknown>;
-    const payload = pickAllowed<Prisma.SiteSettingsUpdateInput>(data, SETTINGS_FIELDS);
+    const payload = pickAllowed<Prisma.SiteSettingsUpdateInput>(
+      data,
+      SETTINGS_FIELDS,
+    );
 
-    if (Object.prototype.hasOwnProperty.call(source, 'coach_lock_scheduled_at')) {
+    if (
+      Object.prototype.hasOwnProperty.call(source, 'coach_lock_scheduled_at')
+    ) {
       const raw = source.coach_lock_scheduled_at;
       payload.coach_lock_scheduled_at =
         raw === null || raw === '' ? null : new Date(String(raw));
@@ -65,9 +70,10 @@ export class SettingsService {
 
     if (Object.prototype.hasOwnProperty.call(source, 'max_players_per_team')) {
       const raw = Number(source.max_players_per_team);
-      payload.max_players_per_team = Number.isFinite(raw) && raw > 0
-        ? Math.floor(raw)
-        : DEFAULT_MAX_PLAYERS_PER_TEAM;
+      payload.max_players_per_team =
+        Number.isFinite(raw) && raw > 0
+          ? Math.floor(raw)
+          : DEFAULT_MAX_PLAYERS_PER_TEAM;
     }
 
     return prisma.siteSettings.update({

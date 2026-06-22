@@ -1,5 +1,9 @@
 import type { EligibleTeam, TeamExclusion, ValidationReport } from './types';
-import { MAX_SUPPORTED_TEAMS, bracketSizeForTeamCount, byeCountForTeamCount } from './bye-calculator';
+import {
+  MAX_SUPPORTED_TEAMS,
+  bracketSizeForTeamCount,
+  byeCountForTeamCount,
+} from './bye-calculator';
 
 export interface EligibilityInput {
   divisionId: string;
@@ -14,7 +18,9 @@ export interface EligibilityInput {
   locked?: boolean;
 }
 
-export function validateBracketGeneration(input: EligibilityInput): ValidationReport {
+export function validateBracketGeneration(
+  input: EligibilityInput,
+): ValidationReport {
   const errors: string[] = [];
   const warnings: string[] = [];
   const excluded: TeamExclusion[] = [];
@@ -79,7 +85,9 @@ export function validateBracketGeneration(input: EligibilityInput): ValidationRe
   }
 
   if (eligible.length > 0) {
-    warnings.push('Bracket is created empty — drag teams into slots or use Random draw to shuffle.');
+    warnings.push(
+      'Bracket is created empty — drag teams into slots or use Random draw to shuffle.',
+    );
   }
 
   return {
