@@ -11,18 +11,23 @@ import { Mail, CheckCircle } from 'lucide-react';
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('');
   const [sent, setSent] = useState(false);
-  const [error, setError] = useState('');
+  const [coachMessage, setCoachMessage] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
+    setCoachMessage('');
     setIsLoading(true);
     try {
-      await authService.forgotPassword(email);
+      const res = await authService.forgotPassword(email);
+      const message = res.data.message ?? '';
+      if (message.includes('administrator')) {
+        setCoachMessage(message);
+        return;
+      }
       setSent(true);
     } catch (err) {
-      setError(getApiErrorMessage(err, 'Failed to send reset link'));
+      setCoachMessage(getApiErrorMessage(err, 'Failed to send reset link'));
     } finally {
       setIsLoading(false);
     }
@@ -30,7 +35,14 @@ export default function ForgotPasswordPage() {
 
   return (
     <AuthLayout title="Reset Password" subtitle="Enter your email and we'll send a reset link">
-      {sent ? (
+      {coachMessage ? (
+        <div className="text-center py-8">
+          <p className="text-sm text-muted-foreground">{coachMessage}</p>
+          <Link to="/login" className="block mt-6 text-sm text-primary font-semibold hover:underline">
+            Back to Sign In
+          </Link>
+        </div>
+      ) : sent ? (
         <div className="text-center py-8">
           <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
           <h3 className="font-semibold text-foreground text-lg">Check Your Email</h3>
@@ -43,8 +55,8 @@ export default function ForgotPasswordPage() {
         </div>
       ) : (
         <>
-          {error && (
-            <div className="mb-4 p-3 rounded-xl bg-red-50 border border-red-200 text-red-700 text-sm">{error}</div>
+          {coachMessage && (
+            <div className="mb-4 p-3 rounded-xl bg-amber-50 border border-amber-200 text-amber-900 text-sm">{coachMessage}</div>
           )}
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-1.5">

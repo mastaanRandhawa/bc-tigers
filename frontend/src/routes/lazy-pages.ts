@@ -79,6 +79,12 @@ export const DivisionSlugRedirect = lazyPage(
 
 // Auth
 export const LoginPage = lazyPage(() => import("@/pages/auth/LoginPage"));
+export const CoachRegisterPage = lazyPage(
+  () => import("@/pages/auth/CoachRegisterPage"),
+);
+export const CoachDashboardPage = lazyPage(
+  () => import("@/pages/coach/CoachDashboardPage"),
+);
 export const ForgotPasswordPage = lazyPage(
   () => import("@/pages/auth/ForgotPasswordPage"),
 );

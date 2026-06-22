@@ -10,6 +10,7 @@ datasource db {
 
 enum UserRole {
   ADMIN
+  COACH
 }
 
 enum TournamentType {
@@ -90,10 +91,12 @@ model User {
   phone         String?
   role          UserRole @default(ADMIN)
   active        Boolean  @default(true)
+  approved      Boolean  @default(false)
   profile_image String?
   created_at    DateTime @default(now())
   updated_at    DateTime @updatedAt
 
+  coached_team          Team?                 @relation("TeamCoach")
   audit_logs            AuditLog[]
   record_versions       RecordVersion[]
   password_reset_tokens PasswordResetToken[]
@@ -158,18 +161,22 @@ model Division {
 }
 
 model Team {
-  id              String   @id @default(uuid())
-  division_id     String
-  name            String
-  slug            String
-  logo            String?
-  city            String?
-  founded_year    Int?
-  primary_color   String?
-  secondary_color String?
-  created_by      String?
-  created_at      DateTime @default(now())
-  updated_at      DateTime @updatedAt
+  id                 String   @id @default(uuid())
+  division_id        String
+  name               String
+  slug               String
+  logo               String?
+  city               String?
+  founded_year       Int?
+  primary_color      String?
+  secondary_color    String?
+  contact_email      String?
+  contact_phone      String?
+  coach_user_id      String?  @unique
+  management_locked  Boolean  @default(false)
+  created_by         String?
+  created_at         DateTime @default(now())
+  updated_at         DateTime @updatedAt
 
   // ─── Soft-delete / lifecycle (shared pattern; copy to all auditable models) ───
   deleted_at    DateTime?
@@ -178,6 +185,7 @@ model Team {
   record_status RecordStatus @default(ACTIVE)
 
   division       Division      @relation(fields: [division_id], references: [id], onDelete: Cascade)
+  coach          User?         @relation("TeamCoach", fields: [coach_user_id], references: [id], onDelete: SetNull)
   players        Player[]
   home_matches   Match[]       @relation("HomeTeam")
   away_matches   Match[]       @relation("AwayTeam")
@@ -439,11 +447,12 @@ model PasswordResetToken {
 }
 
 model SiteSettings {
-  id              String   @id @default("default")
-  site_name       String   @default("BC Tigers Soccer")
-  contact_email   String   @default("info@bctigers.ca")
-  contact_phone   String?
-  contact_address String?
-  timezone        String   @default("America/Vancouver")
-  updated_at      DateTime @updatedAt
+  id                      String   @id @default("default")
+  site_name               String   @default("BC Tigers Soccer")
+  contact_email           String   @default("info@bctigers.ca")
+  contact_phone           String?
+  contact_address         String?
+  timezone                String   @default("America/Vancouver")
+  coach_management_locked Boolean  @default(false)
+  updated_at              DateTime @updatedAt
 }

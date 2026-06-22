@@ -52,6 +52,18 @@ const columns = (onRoster: (t: Team) => void) => [
     ),
   },
   {
+    key: 'coach',
+    label: 'Coach',
+    render: (t: Team) =>
+      t.coach ? (
+        <span className="text-xs text-foreground">
+          {t.coach.first_name} {t.coach.last_name}
+        </span>
+      ) : (
+        <span className="text-xs text-muted-foreground">Unassigned</span>
+      ),
+  },
+  {
     key: 'status',
     label: 'Status',
     render: (t: Team) =>

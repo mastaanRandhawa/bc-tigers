@@ -12,6 +12,7 @@ import {
 import { UsersService } from './users.service';
 import { AdminOnly } from '../auth/admin.decorator';
 import { AuditLogService } from '../audit-log/audit-log.service';
+import type { UserRole } from '@prisma/client';
 
 @Controller('users')
 export class UsersController {
@@ -22,10 +23,21 @@ export class UsersController {
 
   @Get()
   @AdminOnly()
-  findAll(@Query() q: { page?: string; limit?: string }) {
+  findAll(
+    @Query()
+    q: {
+      page?: string;
+      limit?: string;
+      role?: UserRole;
+      approved?: string;
+    },
+  ) {
     return this.service.findAll({
       page: Number(q.page ?? 1),
       limit: Number(q.limit ?? 20),
+      role: q.role,
+      approved:
+        q.approved === undefined ? undefined : q.approved === 'true',
     });
   }
 
@@ -40,6 +52,7 @@ export class UsersController {
       email: string;
       password: string;
       phone?: string;
+      role?: UserRole;
     },
   ) {
     const user = await this.service.create(body);
@@ -63,6 +76,39 @@ export class UsersController {
     await this.auditLog.log({
       userId: req.user.userId,
       action: 'UPDATE',
+      entity: 'User',
+      entityId: id,
+    });
+    return user;
+  }
+
+  @Patch(':id/approve')
+  @AdminOnly()
+  async approve(
+    @Request() req: { user: { userId: string } },
+    @Param('id') id: string,
+  ) {
+    const user = await this.service.approve(id);
+    await this.auditLog.log({
+      userId: req.user.userId,
+      action: 'APPROVE',
+      entity: 'User',
+      entityId: id,
+    });
+    return user;
+  }
+
+  @Post(':id/reset-password')
+  @AdminOnly()
+  async resetPassword(
+    @Request() req: { user: { userId: string } },
+    @Param('id') id: string,
+    @Body() body: { password: string },
+  ) {
+    const user = await this.service.resetPassword(id, body.password);
+    await this.auditLog.log({
+      userId: req.user.userId,
+      action: 'PASSWORD_RESET',
       entity: 'User',
       entityId: id,
     });

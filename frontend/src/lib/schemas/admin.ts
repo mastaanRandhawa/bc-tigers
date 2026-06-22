@@ -40,6 +40,10 @@ export const teamSchema = z.object({
   primary_color: z.string().optional(),
   secondary_color: z.string().optional(),
   logo: z.string().optional(),
+  coach_user_id: z.string().optional().nullable(),
+  management_locked: z.boolean().optional(),
+  contact_email: z.string().optional(),
+  contact_phone: z.string().optional(),
 });
 
 export const playerSchema = z.object({

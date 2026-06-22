@@ -99,12 +99,16 @@ export class TournamentsService {
         : Promise.resolve([]),
     ]);
 
-    const liveMatches = matches.filter((m) => m.status === ('LIVE' as MatchStatus));
+    const liveMatches = matches.filter(
+      (m) => m.status === ('LIVE' as MatchStatus),
+    );
     const recentMatches = matches
       .filter((m) => m.status === 'COMPLETED')
       .slice(-4)
       .reverse();
-    const upcomingMatches = matches.filter((m) => m.status === 'SCHEDULED').slice(0, 4);
+    const upcomingMatches = matches
+      .filter((m) => m.status === 'SCHEDULED')
+      .slice(0, 4);
 
     return {
       tournament,
@@ -141,33 +145,41 @@ export class TournamentsService {
 
   create(data: unknown) {
     return this.auditable.createAudited(
-      asAuditable(prisma.tournament),
+      (tx) => asAuditable(tx.tournament),
       ENTITY,
-      pickAllowed(data, TOURNAMENT_CREATE_FIELDS) as Record<string, unknown>,
+      pickAllowed(data, TOURNAMENT_CREATE_FIELDS),
     );
   }
 
   update(id: string, data: unknown) {
     return this.auditable.updateAudited(
-      asAuditable(prisma.tournament),
+      (tx) => asAuditable(tx.tournament),
       ENTITY,
       id,
-      pickAllowed(data, TOURNAMENT_FIELDS) as Record<string, unknown>,
+      pickAllowed(data, TOURNAMENT_FIELDS),
     );
   }
 
   /** Soft delete (decommission) — never removes the row. */
   remove(id: string) {
-    return this.auditable.softDelete(asAuditable(prisma.tournament), ENTITY, id);
+    return this.auditable.softDelete(
+      (tx) => asAuditable(tx.tournament),
+      ENTITY,
+      id,
+    );
   }
 
   restore(id: string) {
-    return this.auditable.restore(asAuditable(prisma.tournament), ENTITY, id);
+    return this.auditable.restore(
+      (tx) => asAuditable(tx.tournament),
+      ENTITY,
+      id,
+    );
   }
 
   /** Permanent hard delete — admin only. */
   purge(id: string) {
-    return this.auditable.purge(asAuditable(prisma.tournament), ENTITY, id);
+    return this.auditable.purge((tx) => asAuditable(tx.tournament), ENTITY, id);
   }
 
   history(id: string) {
@@ -176,15 +188,19 @@ export class TournamentsService {
 
   async restoreVersion(id: string, versionId: string) {
     const version = await this.audit.getVersion(versionId);
-    if (!version || version.entity_type !== ENTITY || version.entity_id !== id) {
+    if (
+      !version ||
+      version.entity_type !== ENTITY ||
+      version.entity_id !== id
+    ) {
       throw new NotFoundException('Version not found for this tournament');
     }
     const snapshot = (version.new_values ?? {}) as Record<string, unknown>;
     return this.auditable.restoreVersion(
-      asAuditable(prisma.tournament),
+      (tx) => asAuditable(tx.tournament),
       ENTITY,
       id,
-      pickAllowed(snapshot, TOURNAMENT_FIELDS) as Record<string, unknown>,
+      pickAllowed(snapshot, TOURNAMENT_FIELDS),
       version.version,
     );
   }
