@@ -72,6 +72,39 @@ export interface Tournament {
 export type RecordStatus = 'ACTIVE' | 'ARCHIVED' | 'DECOMMISSIONED';
 export type RecordScope = 'active' | 'deleted' | 'all';
 
+export type TiebreakerRule =
+  | 'HEAD_TO_HEAD'
+  | 'GOALS_AGAINST'
+  | 'GOALS_FOR'
+  | 'GOAL_DIFFERENCE'
+  | 'WINS'
+  | 'FAIR_PLAY'
+  | 'PENALTY_KICKS'
+  | 'COIN_TOSS';
+
+export interface PointFormat {
+  id: string;
+  name: string;
+  slug: string;
+  description?: string | null;
+  is_system: boolean;
+  win: number;
+  draw: number;
+  loss: number;
+  bonuses_enabled: boolean;
+  shutout_bonus: number;
+  goal_bonus_per_goal: number;
+  goal_bonus_cap: number;
+  apply_bonuses_on_loss: boolean;
+  forfeit_win_score: number;
+  forfeit_loss_score: number;
+  forfeit_award_bonuses: boolean;
+  tiebreakers: TiebreakerRule[];
+  _count?: { divisions: number };
+  created_at?: string;
+  updated_at?: string;
+}
+
 export interface Division {
   id: string;
   tournament_id: string;
@@ -82,9 +115,8 @@ export interface Division {
   gender: Gender;
   max_teams: number;
   format: string;
-  points_win: number;
-  points_draw: number;
-  points_loss: number;
+  point_format_id: string;
+  point_format?: PointFormat;
   primary_color?: string;
   accent_color?: string;
   bracket_locked?: boolean;

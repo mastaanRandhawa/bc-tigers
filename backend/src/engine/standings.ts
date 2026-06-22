@@ -81,9 +81,10 @@ export function computeStandings(
   teamIds: string[],
   results: MatchResult[],
   config: TournamentConfig,
+  fairPlay?: Map<string, number>,
 ): StandingRow[] {
   const rows = aggregateRows(teamIds, results, config);
-  const ctx: TieContext = { rows, results, config };
+  const ctx: TieContext = { rows, results, config, fairPlay };
 
   // Sort by points first, then break ties within each equal-points group.
   const byPoints = [...rows.values()].sort((a, b) => b.points - a.points);

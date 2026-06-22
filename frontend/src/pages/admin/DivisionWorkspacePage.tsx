@@ -208,7 +208,11 @@ export default function DivisionWorkspacePage() {
                 { value: teams.length, label: 'Teams', icon: Users },
                 { value: matches.length, label: 'Matches', icon: Calendar },
                 { value: liveMatches.length, label: 'Live', icon: Zap, accent: liveMatches.length > 0 },
-                { value: `${division.points_win}/${division.points_draw}/${division.points_loss}`, label: 'W/D/L pts', icon: BarChart3 },
+                {
+                  value: division.point_format?.name ?? 'Standard',
+                  label: 'Point format',
+                  icon: BarChart3,
+                },
               ]}
             />
 

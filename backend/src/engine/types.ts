@@ -73,6 +73,7 @@ export type TiebreakerRule =
   | 'GOALS_FOR' // most scored wins
   | 'GOAL_DIFFERENCE'
   | 'WINS'
+  | 'FAIR_PLAY' // discipline score from cards (higher is better)
   | 'PENALTY_KICKS' // PKs taken after a drawn round-robin match
   | 'COIN_TOSS'; // deterministic random fallback
 

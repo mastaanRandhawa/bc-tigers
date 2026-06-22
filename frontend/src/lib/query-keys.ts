@@ -57,6 +57,10 @@ export const queryKeys = {
     all: (params?: object) => ['venues', params ?? {}] as const,
     detail: (slug: string) => ['venues', slug] as const,
   },
+  pointFormats: {
+    all: () => ['point-formats'] as const,
+    detail: (id: string) => ['point-formats', id] as const,
+  },
   settings: {
     public: ['settings', 'public'] as const,
     admin: ['settings', 'admin'] as const,

@@ -113,6 +113,9 @@ export const AdminMatches = lazyPage(
   () => import("@/pages/admin/AdminMatches"),
 );
 export const AdminVenues = lazyPage(() => import("@/pages/admin/AdminVenues"));
+export const AdminPointFormats = lazyPage(
+  () => import("@/pages/admin/AdminPointFormats"),
+);
 export const AdminUsers = lazyPage(() => import("@/pages/admin/AdminUsers"));
 export const AdminBrackets = lazyPage(
   () => import("@/pages/admin/AdminBrackets"),

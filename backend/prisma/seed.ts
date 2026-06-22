@@ -2,6 +2,12 @@ import 'dotenv/config';
 import { PrismaClient, type Gender, type MatchStatus } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 import * as bcrypt from 'bcrypt';
+import { computeStandings } from '../src/engine/standings';
+import {
+  buildFairPlayMap,
+  mapPrismaMatchToResult,
+  toTournamentConfig,
+} from '../src/engine/point-format-mapper';
 
 const connectionString = process.env.DATABASE_URL!;
 const isRemote =
@@ -425,80 +431,95 @@ interface FixturePlan {
   streamUrl?: string;
 }
 
+async function ensurePointFormats() {
+  const standardData = {
+    name: 'Standard Soccer (3 Point System)',
+    description: 'Traditional win 3 / draw 1 / loss 0 with no bonus points.',
+    is_system: true,
+    win: 3,
+    draw: 1,
+    loss: 0,
+    bonuses_enabled: false,
+    shutout_bonus: 0,
+    goal_bonus_per_goal: 0,
+    goal_bonus_cap: 0,
+    apply_bonuses_on_loss: false,
+    forfeit_win_score: 2,
+    forfeit_loss_score: 0,
+    forfeit_award_bonuses: false,
+    tiebreakers: ['GOAL_DIFFERENCE', 'GOALS_FOR', 'HEAD_TO_HEAD', 'FAIR_PLAY', 'COIN_TOSS'],
+  };
+  const usfaData = {
+    name: 'USFA 10-Point System',
+    description:
+      'Win 6 / draw 3 / loss 0, +1 shutout, +1 per goal (max 3). Forfeit 2-0. Max 10 pts per match.',
+    is_system: true,
+    win: 6,
+    draw: 3,
+    loss: 0,
+    bonuses_enabled: true,
+    shutout_bonus: 1,
+    goal_bonus_per_goal: 1,
+    goal_bonus_cap: 3,
+    apply_bonuses_on_loss: true,
+    forfeit_win_score: 2,
+    forfeit_loss_score: 0,
+    forfeit_award_bonuses: true,
+    tiebreakers: ['HEAD_TO_HEAD', 'GOALS_AGAINST', 'GOALS_FOR', 'FAIR_PLAY', 'COIN_TOSS'],
+  };
+
+  const standard = await prisma.pointFormat.upsert({
+    where: { slug: 'standard-soccer-3-point' },
+    create: { id: 'pf-standard-soccer', slug: 'standard-soccer-3-point', ...standardData },
+    update: standardData,
+  });
+  const usfa = await prisma.pointFormat.upsert({
+    where: { slug: 'usfa-10-point' },
+    create: { id: 'pf-usfa-10-point', slug: 'usfa-10-point', ...usfaData },
+    update: usfaData,
+  });
+  return { standard, usfa };
+}
+
 async function recalculateStandings(divisionId: string) {
-  const division = await prisma.division.findUniqueOrThrow({ where: { id: divisionId } });
-  const completedMatches = await prisma.match.findMany({
-    where: { division_id: divisionId, status: 'COMPLETED' },
+  const division = await prisma.division.findUniqueOrThrow({
+    where: { id: divisionId },
+    include: { point_format: true },
   });
+  const [completedMatches, teams, cardEvents] = await Promise.all([
+    prisma.match.findMany({
+      where: { division_id: divisionId, status: 'COMPLETED' },
+    }),
+    prisma.team.findMany({ where: { division_id: divisionId }, select: { id: true } }),
+    prisma.matchEvent.findMany({
+      where: {
+        type: { in: ['YELLOW_CARD', 'RED_CARD'] },
+        match: { division_id: divisionId, status: 'COMPLETED' },
+      },
+      select: { team_id: true, type: true },
+    }),
+  ]);
 
-  const statsMap = new Map<
-    string,
-    {
-      played: number;
-      wins: number;
-      draws: number;
-      losses: number;
-      goals_for: number;
-      goals_against: number;
-      points: number;
-      fair_play: number;
-    }
-  >();
-  const init = () => ({
-    played: 0,
-    wins: 0,
-    draws: 0,
-    losses: 0,
-    goals_for: 0,
-    goals_against: 0,
-    points: 0,
-    fair_play: 0,
-  });
+  const teamIds = teams.map((t) => t.id);
+  const fairPlay = buildFairPlayMap(cardEvents, teamIds);
+  const results = completedMatches.map(mapPrismaMatchToResult);
+  const config = toTournamentConfig(division.point_format);
+  const rows = computeStandings(teamIds, results, config, fairPlay);
 
-  for (const m of completedMatches) {
-    if (!statsMap.has(m.home_team_id)) statsMap.set(m.home_team_id, init());
-    if (!statsMap.has(m.away_team_id)) statsMap.set(m.away_team_id, init());
-    const home = statsMap.get(m.home_team_id)!;
-    const away = statsMap.get(m.away_team_id)!;
-    home.played++;
-    away.played++;
-    home.goals_for += m.home_score;
-    home.goals_against += m.away_score;
-    away.goals_for += m.away_score;
-    away.goals_against += m.home_score;
-    if (m.home_score > m.away_score) {
-      home.wins++;
-      home.points += division.points_win;
-      away.losses++;
-      away.points += division.points_loss;
-    } else if (m.home_score < m.away_score) {
-      away.wins++;
-      away.points += division.points_win;
-      home.losses++;
-      home.points += division.points_loss;
-    } else {
-      home.draws++;
-      away.draws++;
-      home.points += division.points_draw;
-      away.points += division.points_draw;
-    }
-  }
-
-  const sorted = Array.from(statsMap.entries()).sort(
-    ([, a], [, b]) =>
-      b.points - a.points ||
-      b.goals_for - b.goals_against - (a.goals_for - a.goals_against) ||
-      b.goals_for - a.goals_for ||
-      b.fair_play - a.fair_play,
-  );
-
-  for (const [team_id, stats] of sorted) {
+  for (const row of rows) {
     await prisma.standing.updateMany({
-      where: { division_id: divisionId, team_id },
+      where: { division_id: divisionId, team_id: row.teamId },
       data: {
-        ...stats,
-        goal_difference: stats.goals_for - stats.goals_against,
-        rank: sorted.findIndex(([id]) => id === team_id) + 1,
+        played: row.played,
+        wins: row.wins,
+        draws: row.draws,
+        losses: row.losses,
+        goals_for: row.goalsFor,
+        goals_against: row.goalsAgainst,
+        goal_difference: row.goalDifference,
+        points: row.points,
+        fair_play: fairPlay.get(row.teamId) ?? 0,
+        rank: row.rank,
       },
     });
   }
@@ -687,6 +708,9 @@ async function main() {
   await prisma.user.deleteMany();
   console.log('  Cleared existing data.');
 
+  const { standard: standardFormat, usfa: usfaFormat } = await ensurePointFormats();
+  console.log('  Point formats ready.');
+
   const adminUser = await prisma.user.create({
     data: {
       first_name: 'BC Tigers',
@@ -783,9 +807,8 @@ async function main() {
         gender: divConfig.gender,
         max_teams: Math.max(16, teamDefs.length),
         format: `${divConfig.format} · ${divConfig.prize_note}`,
-        points_win: 3,
-        points_draw: 1,
-        points_loss: 0,
+        point_format_id:
+          divConfig.slug === 'premier' ? usfaFormat.id : standardFormat.id,
         primary_color: colors.primary,
         accent_color: colors.accent,
       },

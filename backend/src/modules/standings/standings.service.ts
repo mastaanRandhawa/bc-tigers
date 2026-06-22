@@ -1,5 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import prisma from '../../prisma/prisma';
+import { computeStandings } from '../../engine/standings';
+import {
+  buildFairPlayMap,
+  mapPrismaMatchToResult,
+  toTournamentConfig,
+} from '../../engine/point-format-mapper';
 
 @Injectable()
 export class StandingsService {
@@ -7,12 +13,7 @@ export class StandingsService {
     return prisma.standing.findMany({
       where: { division_id: divisionId },
       include: { team: true },
-      orderBy: [
-        { points: 'desc' },
-        { goal_difference: 'desc' },
-        { goals_for: 'desc' },
-        { fair_play: 'desc' },
-      ],
+      orderBy: { rank: 'asc' },
     });
   }
 
@@ -21,7 +22,10 @@ export class StandingsService {
       prisma.match.findMany({
         where: { division_id: divisionId, status: 'COMPLETED' },
       }),
-      prisma.division.findUniqueOrThrow({ where: { id: divisionId } }),
+      prisma.division.findUniqueOrThrow({
+        where: { id: divisionId },
+        include: { point_format: true },
+      }),
       prisma.team.findMany({ where: { division_id: divisionId }, select: { id: true } }),
       prisma.matchEvent.findMany({
         where: {
@@ -32,95 +36,43 @@ export class StandingsService {
       }),
     ]);
 
-    type TeamStats = {
-      played: number;
-      wins: number;
-      draws: number;
-      losses: number;
-      goals_for: number;
-      goals_against: number;
-      points: number;
-      fair_play: number;
-    };
-
-    const statsMap = new Map<string, TeamStats>();
-    const init = (): TeamStats => ({
-      played: 0,
-      wins: 0,
-      draws: 0,
-      losses: 0,
-      goals_for: 0,
-      goals_against: 0,
-      points: 0,
-      fair_play: 0,
-    });
-
-    for (const team of teams) {
-      statsMap.set(team.id, init());
-    }
-
-    for (const event of cardEvents) {
-      const stats = statsMap.get(event.team_id);
-      if (!stats) continue;
-      if (event.type === 'YELLOW_CARD') stats.fair_play -= 1;
-      if (event.type === 'RED_CARD') stats.fair_play -= 3;
-    }
-
-    for (const match of matches) {
-      if (!statsMap.has(match.home_team_id)) statsMap.set(match.home_team_id, init());
-      if (!statsMap.has(match.away_team_id)) statsMap.set(match.away_team_id, init());
-
-      const home = statsMap.get(match.home_team_id)!;
-      const away = statsMap.get(match.away_team_id)!;
-
-      home.played++;
-      away.played++;
-      home.goals_for += match.home_score;
-      home.goals_against += match.away_score;
-      away.goals_for += match.away_score;
-      away.goals_against += match.home_score;
-
-      if (match.home_score > match.away_score) {
-        home.wins++;
-        home.points += division.points_win;
-        away.losses++;
-        away.points += division.points_loss;
-      } else if (match.home_score < match.away_score) {
-        away.wins++;
-        away.points += division.points_win;
-        home.losses++;
-        home.points += division.points_loss;
-      } else {
-        home.draws++;
-        away.draws++;
-        home.points += division.points_draw;
-        away.points += division.points_draw;
-      }
-    }
-
-    const sorted = Array.from(statsMap.entries()).sort(
-      ([, a], [, b]) =>
-        b.points - a.points ||
-        b.goals_for - b.goals_against - (a.goals_for - a.goals_against) ||
-        b.goals_for - a.goals_for ||
-        b.fair_play - a.fair_play,
-    );
+    const teamIds = teams.map((t) => t.id);
+    const fairPlay = buildFairPlayMap(cardEvents, teamIds);
+    const results = matches.map(mapPrismaMatchToResult);
+    const config = toTournamentConfig(division.point_format);
+    const rows = computeStandings(teamIds, results, config, fairPlay);
 
     await prisma.$transaction(
-      sorted.map(([team_id, stats], idx) =>
+      rows.map((row) =>
         prisma.standing.upsert({
-          where: { division_id_team_id: { division_id: divisionId, team_id } },
+          where: {
+            division_id_team_id: { division_id: divisionId, team_id: row.teamId },
+          },
           create: {
             division_id: divisionId,
-            team_id,
-            rank: idx + 1,
-            goal_difference: stats.goals_for - stats.goals_against,
-            ...stats,
+            team_id: row.teamId,
+            rank: row.rank,
+            played: row.played,
+            wins: row.wins,
+            draws: row.draws,
+            losses: row.losses,
+            goals_for: row.goalsFor,
+            goals_against: row.goalsAgainst,
+            goal_difference: row.goalDifference,
+            points: row.points,
+            fair_play: fairPlay.get(row.teamId) ?? 0,
           },
           update: {
-            rank: idx + 1,
-            goal_difference: stats.goals_for - stats.goals_against,
-            ...stats,
+            rank: row.rank,
+            played: row.played,
+            wins: row.wins,
+            draws: row.draws,
+            losses: row.losses,
+            goals_for: row.goalsFor,
+            goals_against: row.goalsAgainst,
+            goal_difference: row.goalDifference,
+            points: row.points,
+            fair_play: fairPlay.get(row.teamId) ?? 0,
           },
         }),
       ),

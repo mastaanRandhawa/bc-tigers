@@ -25,11 +25,38 @@ export const divisionSchema = z.object({
   gender: z.enum(['MALE', 'FEMALE', 'MIXED']),
   max_teams: z.string().min(1),
   format: z.string().min(1),
+  point_format_id: z.string().min(1, 'Point format is required'),
   primary_color: z.string().optional(),
   accent_color: z.string().optional(),
-  points_win: z.string().optional(),
-  points_draw: z.string().optional(),
-  points_loss: z.string().optional(),
+});
+
+const tiebreakerRuleSchema = z.enum([
+  'HEAD_TO_HEAD',
+  'GOALS_AGAINST',
+  'GOALS_FOR',
+  'GOAL_DIFFERENCE',
+  'WINS',
+  'FAIR_PLAY',
+  'PENALTY_KICKS',
+  'COIN_TOSS',
+]);
+
+export const pointFormatSchema = z.object({
+  name: z.string().min(2, 'Name is required'),
+  slug: z.string().min(2, 'Slug is required'),
+  description: z.string().optional(),
+  win: z.string().min(1),
+  draw: z.string().min(1),
+  loss: z.string().min(1),
+  bonuses_enabled: z.boolean(),
+  shutout_bonus: z.string().optional(),
+  goal_bonus_per_goal: z.string().optional(),
+  goal_bonus_cap: z.string().optional(),
+  apply_bonuses_on_loss: z.boolean(),
+  forfeit_win_score: z.string().min(1),
+  forfeit_loss_score: z.string().min(1),
+  forfeit_award_bonuses: z.boolean(),
+  tiebreakers: z.array(tiebreakerRuleSchema).min(1),
 });
 
 export const teamSchema = z.object({
@@ -96,6 +123,7 @@ export const userCreateSchema = z.object({
 
 export type TournamentFormValues = z.infer<typeof tournamentSchema>;
 export type DivisionFormValues = z.infer<typeof divisionSchema>;
+export type PointFormatFormValues = z.infer<typeof pointFormatSchema>;
 export type TeamFormValues = z.infer<typeof teamSchema>;
 export type PlayerFormValues = z.infer<typeof playerSchema>;
 export type MatchFormValues = z.infer<typeof matchSchema>;

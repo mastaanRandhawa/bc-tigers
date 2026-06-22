@@ -10,6 +10,7 @@ import {
   AdminTeams,
   AdminMatches,
   AdminVenues,
+  AdminPointFormats,
   AdminUsers,
   AdminBrackets,
   AdminAnnouncements,
@@ -38,6 +39,7 @@ export function adminRoutes() {
       <Route path="/admin/matches" element={<AdminRoute><L><AdminMatches /></L></AdminRoute>} />
       <Route path="/admin/brackets" element={<AdminRoute><L><AdminBrackets /></L></AdminRoute>} />
       <Route path="/admin/venues" element={<AdminRoute><L><AdminVenues /></L></AdminRoute>} />
+      <Route path="/admin/point-formats" element={<AdminRoute><L><AdminPointFormats /></L></AdminRoute>} />
       <Route path="/admin/users" element={<AdminRoute><L><AdminUsers /></L></AdminRoute>} />
       <Route path="/admin/announcements" element={<AdminRoute><L><AdminAnnouncements /></L></AdminRoute>} />
       <Route path="/admin/activity" element={<AdminRoute><L><AdminActivityLog /></L></AdminRoute>} />
