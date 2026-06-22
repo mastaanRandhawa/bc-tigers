@@ -10,6 +10,7 @@ import * as bcrypt from 'bcrypt';
 import { randomBytes } from 'crypto';
 import prisma from '../../prisma/prisma';
 import { MailService } from '../mail/mail.service';
+import { AuditLogService } from '../audit-log/audit-log.service';
 
 /** Admin-only authentication — public registration is not supported. */
 @Injectable()
@@ -17,6 +18,7 @@ export class AuthService {
   constructor(
     private jwt: JwtService,
     private mailService: MailService,
+    private audit: AuditLogService,
   ) {}
 
   async login(email: string, password: string) {
@@ -30,7 +32,23 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
+    await this.audit.log({
+      action: 'LOGIN',
+      entity: 'User',
+      entityId: user.id,
+      userId: user.id,
+    });
     return this.signToken(user);
+  }
+
+  async logout(userId: string) {
+    await this.audit.log({
+      action: 'LOGOUT',
+      entity: 'User',
+      entityId: userId,
+      userId,
+    });
+    return { success: true };
   }
 
   async getMe(userId: string) {
@@ -149,6 +167,12 @@ export class AuthService {
       }),
     ]);
 
+    await this.audit.log({
+      action: 'PASSWORD_RESET',
+      entity: 'User',
+      entityId: record.user_id,
+      userId: record.user_id,
+    });
     return { message: 'Password reset successfully.' };
   }
 

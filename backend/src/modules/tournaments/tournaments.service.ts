@@ -2,6 +2,10 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import type { MatchStatus, Prisma } from '@prisma/client';
 import prisma from '../../prisma/prisma';
 import { pickAllowed } from '../../common/pick';
+import { AuditLogService } from '../audit-log/audit-log.service';
+import { AuditableService, asAuditable } from '../audit-log/auditable.service';
+
+const ENTITY = 'Tournament';
 
 const TOURNAMENT_FIELDS = [
   'name',
@@ -21,6 +25,12 @@ const TOURNAMENT_CREATE_FIELDS = [...TOURNAMENT_FIELDS, 'created_by'] as const;
 
 @Injectable()
 export class TournamentsService {
+  constructor(
+    private readonly auditable: AuditableService,
+    private readonly audit: AuditLogService,
+  ) {}
+
+  /** List is auto-scoped by the soft-delete extension (active/deleted/all via request scope). */
   findAll(params?: { status?: string; page?: number; limit?: number }) {
     const { page = 1, limit = 20, status } = params ?? {};
     return prisma.tournament.findMany({
@@ -35,7 +45,8 @@ export class TournamentsService {
   }
 
   async findOne(slug: string) {
-    const t = await prisma.tournament.findUnique({
+    // findFirst (not findUnique) so the soft-delete extension hides deleted records from the public.
+    const t = await prisma.tournament.findFirst({
       where: { slug },
       include: {
         divisions: {
@@ -104,6 +115,7 @@ export class TournamentsService {
     };
   }
 
+  /** Admin single-record lookup by id — intentionally NOT scoped, so deleted records stay inspectable/restorable. */
   async findById(id: string) {
     const t = await prisma.tournament.findUnique({
       where: { id },
@@ -128,27 +140,52 @@ export class TournamentsService {
   }
 
   create(data: unknown) {
-    return prisma.tournament.create({
-      data: pickAllowed<Prisma.TournamentUncheckedCreateInput>(
-        data,
-        TOURNAMENT_CREATE_FIELDS,
-      ),
-    });
+    return this.auditable.createAudited(
+      asAuditable(prisma.tournament),
+      ENTITY,
+      pickAllowed(data, TOURNAMENT_CREATE_FIELDS) as Record<string, unknown>,
+    );
   }
 
-  async update(id: string, data: unknown) {
-    await prisma.tournament.findUniqueOrThrow({ where: { id } });
-    return prisma.tournament.update({
-      where: { id },
-      data: pickAllowed<Prisma.TournamentUncheckedUpdateInput>(
-        data,
-        TOURNAMENT_FIELDS,
-      ),
-    });
+  update(id: string, data: unknown) {
+    return this.auditable.updateAudited(
+      asAuditable(prisma.tournament),
+      ENTITY,
+      id,
+      pickAllowed(data, TOURNAMENT_FIELDS) as Record<string, unknown>,
+    );
   }
 
-  async remove(id: string) {
-    await prisma.tournament.findUniqueOrThrow({ where: { id } });
-    return prisma.tournament.delete({ where: { id } });
+  /** Soft delete (decommission) — never removes the row. */
+  remove(id: string) {
+    return this.auditable.softDelete(asAuditable(prisma.tournament), ENTITY, id);
+  }
+
+  restore(id: string) {
+    return this.auditable.restore(asAuditable(prisma.tournament), ENTITY, id);
+  }
+
+  /** Permanent hard delete — admin only. */
+  purge(id: string) {
+    return this.auditable.purge(asAuditable(prisma.tournament), ENTITY, id);
+  }
+
+  history(id: string) {
+    return this.audit.listVersions(ENTITY, id);
+  }
+
+  async restoreVersion(id: string, versionId: string) {
+    const version = await this.audit.getVersion(versionId);
+    if (!version || version.entity_type !== ENTITY || version.entity_id !== id) {
+      throw new NotFoundException('Version not found for this tournament');
+    }
+    const snapshot = (version.new_values ?? {}) as Record<string, unknown>;
+    return this.auditable.restoreVersion(
+      asAuditable(prisma.tournament),
+      ENTITY,
+      id,
+      pickAllowed(snapshot, TOURNAMENT_FIELDS) as Record<string, unknown>,
+      version.version,
+    );
   }
 }

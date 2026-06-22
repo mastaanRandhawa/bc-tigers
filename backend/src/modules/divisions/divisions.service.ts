@@ -3,6 +3,7 @@ import type { Prisma } from '@prisma/client';
 import prisma from '../../prisma/prisma';
 import { roundRobinPairs } from '../../common/round-robin';
 import { pickAllowed } from '../../common/pick';
+import { AuditLogService } from '../audit-log/audit-log.service';
 
 /** Client-settable scalar fields on a division. `bracket_locked` is managed by the brackets module. */
 const DIVISION_FIELDS = [
@@ -22,6 +23,8 @@ const DIVISION_FIELDS = [
 
 @Injectable()
 export class DivisionsService {
+  constructor(private readonly audit: AuditLogService) {}
+
   async findByTournament(tournamentSlug: string) {
     const tournament = await prisma.tournament.findUnique({
       where: { slug: tournamentSlug },
@@ -156,6 +159,12 @@ export class DivisionsService {
       }),
     );
 
+    await this.audit.log({
+      action: 'SCHEDULE_GENERATION',
+      entity: 'Division',
+      entityId: divisionId,
+      metadata: { created: matches.length },
+    });
     return { created: matches.length, matches };
   }
 }

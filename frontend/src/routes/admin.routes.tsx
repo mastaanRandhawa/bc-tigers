@@ -13,6 +13,7 @@ import {
   AdminUsers,
   AdminBrackets,
   AdminAnnouncements,
+  AdminActivityLog,
 } from '@/routes/lazy-pages';
 
 function L({ children }: { children: React.ReactNode }) {
@@ -39,6 +40,7 @@ export function adminRoutes() {
       <Route path="/admin/venues" element={<AdminRoute><L><AdminVenues /></L></AdminRoute>} />
       <Route path="/admin/users" element={<AdminRoute><L><AdminUsers /></L></AdminRoute>} />
       <Route path="/admin/announcements" element={<AdminRoute><L><AdminAnnouncements /></L></AdminRoute>} />
+      <Route path="/admin/activity" element={<AdminRoute><L><AdminActivityLog /></L></AdminRoute>} />
     </>
   );
 }

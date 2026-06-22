@@ -2,13 +2,19 @@ import AdminLayout from '@/components/AdminLayout';
 import AdminTable from '@/components/AdminTable';
 import QueryState from '@/components/shared/QueryState';
 import TournamentFormDialog from '@/components/admin/forms/TournamentFormDialog';
+import { RecordHistoryDrawer } from '@/components/admin/RecordHistoryDrawer';
 import { useFormDialog } from '@/hooks/useFormDialog';
-import { useTournaments, useDeleteTournament } from '@/hooks/useTournaments';
-import type { Tournament } from '@/types';
+import {
+  useManagedTournaments,
+  useDeleteTournament,
+  useRestoreTournament,
+  usePurgeTournament,
+  useRestoreTournamentVersion,
+} from '@/hooks/useTournaments';
+import type { RecordScope, Tournament } from '@/types';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { formatDate } from '@/lib/utils';
-import { getApiErrorMessage } from '@/lib/errors';
 import { useNavigate } from 'react-router-dom';
 import { ExternalLink } from 'lucide-react';
 import { ConfirmDialog } from '@/components/admin/inline/ConfirmDialog';
@@ -16,10 +22,19 @@ import { useState } from 'react';
 
 export default function AdminTournaments() {
   const navigate = useNavigate();
-  const { data: tournaments = [], isLoading, isError, refetch } = useTournaments();
+  const [scope, setScope] = useState<RecordScope>('active');
+  const { data: tournaments = [], isLoading, isError, refetch } =
+    useManagedTournaments(scope);
+
   const deleteMutation = useDeleteTournament();
+  const restoreMutation = useRestoreTournament();
+  const purgeMutation = usePurgeTournament();
+  const restoreVersionMutation = useRestoreTournamentVersion();
+
   const formDialog = useFormDialog<Tournament>();
   const [deleteTarget, setDeleteTarget] = useState<Tournament | null>(null);
+  const [purgeTarget, setPurgeTarget] = useState<Tournament | null>(null);
+  const [historyTarget, setHistoryTarget] = useState<Tournament | null>(null);
 
   const columns = [
     {
@@ -35,11 +50,14 @@ export default function AdminTournaments() {
     {
       key: 'status',
       label: 'Status',
-      render: (t: Tournament) => (
-        <Badge variant={t.status === 'ACTIVE' ? 'live' : t.status === 'COMPLETED' ? 'success' : 'default'}>
-          {t.status}
-        </Badge>
-      ),
+      render: (t: Tournament) =>
+        t.is_deleted ? (
+          <Badge variant="live">DELETED</Badge>
+        ) : (
+          <Badge variant={t.status === 'ACTIVE' ? 'live' : t.status === 'COMPLETED' ? 'success' : 'default'}>
+            {t.status}
+          </Badge>
+        ),
     },
     { key: 'location', label: 'Location' },
     {
@@ -78,6 +96,11 @@ export default function AdminTournaments() {
     },
   ];
 
+  const busy =
+    restoreMutation.isPending ||
+    purgeMutation.isPending ||
+    restoreVersionMutation.isPending;
+
   return (
     <AdminLayout title="Tournaments">
       <QueryState isLoading={isLoading} isError={isError} onRetry={() => refetch()}>
@@ -88,6 +111,12 @@ export default function AdminTournaments() {
           onAdd={formDialog.openCreate}
           onEdit={formDialog.openEdit}
           onDelete={(t) => setDeleteTarget(t)}
+          onHistory={(t) => setHistoryTarget(t)}
+          onRestore={(t) => restoreMutation.mutate(t.id)}
+          onPurge={(t) => setPurgeTarget(t)}
+          getIsDeleted={(t) => !!t.is_deleted}
+          scope={scope}
+          onScopeChange={setScope}
           searchKeys={['name', 'location']}
         />
       </QueryState>
@@ -97,17 +126,50 @@ export default function AdminTournaments() {
         onOpenChange={(open) => (open ? formDialog.setOpen(true) : formDialog.close())}
         tournament={formDialog.editing}
       />
+
       <ConfirmDialog
         open={!!deleteTarget}
         onOpenChange={(open) => !open && setDeleteTarget(null)}
         title={`Delete "${deleteTarget?.name}"?`}
-        description="This will permanently delete the tournament and all associated data."
+        description="This decommissions the tournament (soft delete). It is hidden from public views but preserved and fully restorable."
         confirmLabel="Delete"
         onConfirm={async () => {
           if (!deleteTarget) return;
           await deleteMutation.mutateAsync(deleteTarget.id);
           setDeleteTarget(null);
         }}
+      />
+
+      <ConfirmDialog
+        open={!!purgeTarget}
+        onOpenChange={(open) => !open && setPurgeTarget(null)}
+        title={`Permanently purge "${purgeTarget?.name}"?`}
+        description="This permanently hard-deletes the record and cannot be undone. Use Restore instead unless you are certain."
+        confirmLabel="Purge permanently"
+        onConfirm={async () => {
+          if (!purgeTarget) return;
+          await purgeMutation.mutateAsync(purgeTarget.id);
+          setPurgeTarget(null);
+        }}
+      />
+
+      <RecordHistoryDrawer
+        entity="Tournament"
+        open={!!historyTarget}
+        onOpenChange={(open) => !open && setHistoryTarget(null)}
+        recordId={historyTarget?.id}
+        recordLabel={historyTarget?.name}
+        isDeleted={historyTarget?.is_deleted}
+        busy={busy}
+        onRestoreRecord={
+          historyTarget ? () => restoreMutation.mutate(historyTarget.id) : undefined
+        }
+        onRestoreVersion={
+          historyTarget
+            ? (versionId) =>
+                restoreVersionMutation.mutate({ id: historyTarget.id, versionId })
+            : undefined
+        }
       />
     </AdminLayout>
   );

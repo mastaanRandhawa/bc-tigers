@@ -114,3 +114,6 @@ export const AdminBrackets = lazyPage(
 export const AdminAnnouncements = lazyPage(
   () => import("@/pages/admin/AdminAnnouncements"),
 );
+export const AdminActivityLog = lazyPage(
+  () => import("@/pages/admin/AuditLog"),
+);

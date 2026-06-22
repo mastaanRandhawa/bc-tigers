@@ -1,5 +1,6 @@
-import { Module } from '@nestjs/common';
+import { Module, type MiddlewareConsumer, type NestModule } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { RequestContextMiddleware } from './common/request-context.middleware';
 import { AuthModule } from './modules/auth/auth.module';
 import { TournamentsModule } from './modules/tournaments/tournaments.module';
 import { DivisionsModule } from './modules/divisions/divisions.module';
@@ -38,4 +39,9 @@ import { HealthModule } from './modules/health/health.module';
     AuditLogModule,
   ],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer): void {
+    // Establish per-request audit context for every route.
+    consumer.apply(RequestContextMiddleware).forRoutes('*');
+  }
+}

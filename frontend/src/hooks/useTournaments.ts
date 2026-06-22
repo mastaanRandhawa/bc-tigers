@@ -2,7 +2,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { queryKeys } from '@/lib/query-keys';
 import { queryTiming } from '@/lib/query-options';
 import { tournamentsService } from '@/services/tournaments.service';
-import type { Tournament } from '@/types';
+import { useCanAdminEdit } from '@/hooks/useCanAdminEdit';
+import type { RecordScope, Tournament } from '@/types';
 
 export function useTournaments(params?: { status?: string }) {
   return useQuery({
@@ -60,6 +61,41 @@ export function useDeleteTournament() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => tournamentsService.delete(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['tournaments'] }),
+  });
+}
+
+/** Admin list with active/deleted/all scope (gated to admins). */
+export function useManagedTournaments(scope: RecordScope) {
+  const canAdmin = useCanAdminEdit();
+  return useQuery({
+    queryKey: ['tournaments', 'manage', scope],
+    queryFn: async () => (await tournamentsService.getManaged(scope)).data,
+    enabled: canAdmin,
+  });
+}
+
+export function useRestoreTournament() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => tournamentsService.restore(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['tournaments'] }),
+  });
+}
+
+export function usePurgeTournament() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => tournamentsService.purge(id),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['tournaments'] }),
+  });
+}
+
+export function useRestoreTournamentVersion() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, versionId }: { id: string; versionId: string }) =>
+      tournamentsService.restoreVersion(id, versionId),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['tournaments'] }),
   });
 }
