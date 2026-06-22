@@ -8,6 +8,7 @@ import { useAnnouncements, useDeleteAnnouncement } from '@/hooks/useAnnouncement
 import type { Announcement } from '@/types';
 import { Badge } from '@/components/ui/badge';
 import { getApiErrorMessage } from '@/lib/errors';
+import { formatDate } from '@/lib/utils';
 import { useState } from 'react';
 import { toast } from 'sonner';
 
@@ -17,10 +18,6 @@ const TYPE_VARIANT: Record<string, 'default' | 'secondary' | 'destructive' | 'ou
   WARNING: 'destructive',
   SUCCESS: 'outline',
 };
-
-function formatDate(iso: string) {
-  return new Date(iso).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' });
-}
 
 export default function AdminAnnouncements() {
   const { data: announcements = [], isLoading, isError, refetch } = useAnnouncements();

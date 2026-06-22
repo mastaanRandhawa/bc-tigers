@@ -101,11 +101,15 @@ export class UsersController {
   @Post(':id/reset-password')
   @AdminOnly()
   async resetPassword(
-    @Request() req: { user: { userId: string } },
+    @Request() req: { user: { userId: string; role: UserRole } },
     @Param('id') id: string,
     @Body() body: { password: string },
   ) {
-    const user = await this.service.resetPassword(id, body.password);
+    const user = await this.service.resetPassword(
+      req.user.userId,
+      id,
+      body.password,
+    );
     await this.auditLog.log({
       userId: req.user.userId,
       action: 'PASSWORD_RESET',

@@ -8,6 +8,7 @@ import { ConfirmDialog } from '@/components/admin/inline/ConfirmDialog';
 import FormDialog from '@/components/admin/FormDialog';
 import { useMemo, useState } from 'react';
 import { useFormDialog } from '@/hooks/useFormDialog';
+import { useAuthStore } from '@/store/authStore';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -22,21 +23,31 @@ import {
 import type { User, UserRole } from '@/types';
 import { Badge } from '@/components/ui/badge';
 import { formatDate } from '@/lib/utils';
+import { canResetUserPassword } from '@/lib/auth-utils';
 import { getApiErrorMessage } from '@/lib/errors';
 import { toast } from 'sonner';
 
 type UserFilter = 'all' | 'admin' | 'coach' | 'pending';
 
 export default function AdminUsers() {
+  const { user: currentUser } = useAuthStore();
   const [filter, setFilter] = useState<UserFilter>('all');
   const queryParams = useMemo(() => {
-    if (filter === 'admin') return { role: 'ADMIN' as UserRole, limit: 200 };
     if (filter === 'coach') return { role: 'COACH' as UserRole, limit: 200 };
     if (filter === 'pending') return { role: 'COACH' as UserRole, approved: false, limit: 200 };
     return { limit: 200 };
   }, [filter]);
 
-  const { data: users = [], isLoading, isError, refetch } = useUsers(queryParams);
+  const { data: usersRaw = [], isLoading, isError, refetch } = useUsers(queryParams);
+  const users = useMemo(() => {
+    if (filter === 'admin') {
+      return usersRaw.filter((u) => u.role === 'ADMIN' || u.role === 'SUPERADMIN');
+    }
+    if (filter === 'coach') {
+      return usersRaw.filter((u) => u.approved !== false);
+    }
+    return usersRaw;
+  }, [usersRaw, filter]);
   const deleteMutation = useDeleteUser();
   const approveMutation = useApproveUser();
   const resetPasswordMutation = useResetUserPassword();
@@ -77,7 +88,11 @@ export default function AdminUsers() {
     {
       key: 'role',
       label: 'Role',
-      render: (u: User) => <Badge variant="default">{u.role}</Badge>,
+      render: (u: User) => (
+        <Badge variant="default">
+          {u.role === 'SUPERADMIN' ? 'Super Admin' : u.role}
+        </Badge>
+      ),
     },
     {
       key: 'status',
@@ -85,8 +100,20 @@ export default function AdminUsers() {
       render: (u: User) => statusBadge(u),
     },
     {
+      key: 'coaching_request',
+      label: 'Requested team',
+      render: (u: User) =>
+        u.role === 'COACH' && u.coaching_request ? (
+          <span className="text-xs text-foreground max-w-[12rem] block truncate" title={u.coaching_request}>
+            {u.coaching_request}
+          </span>
+        ) : (
+          <span className="text-xs text-muted-foreground">—</span>
+        ),
+    },
+    {
       key: 'team',
-      label: 'Team',
+      label: 'Assigned team',
       render: (u: User) =>
         u.coached_team ? (
           <span className="text-xs text-muted-foreground">{u.coached_team.name}</span>
@@ -144,7 +171,7 @@ export default function AdminUsers() {
               {u.active ? 'Deactivate' : 'Activate'}
             </Button>
           )}
-          {u.role === 'COACH' && (
+          {canResetUserPassword(currentUser, u) && (
             <Button
               variant="outline"
               size="sm"
@@ -202,7 +229,7 @@ export default function AdminUsers() {
           onAdd={() => setCreateOpen(true)}
           onEdit={formDialog.openEdit}
           onDelete={(u) => setDeleteTarget(u)}
-          searchKeys={['first_name', 'last_name', 'email']}
+          searchKeys={['first_name', 'last_name', 'email', 'coaching_request']}
         />
       </QueryState>
 
@@ -242,7 +269,7 @@ export default function AdminUsers() {
       <FormDialog
         open={!!resetTarget}
         onOpenChange={(open) => { if (!open) setResetTarget(null); }}
-        title="Reset coach password"
+        title="Reset password"
         description={resetTarget ? `Set a new password for ${resetTarget.email}` : undefined}
         onSubmit={() => {
           if (!resetTarget || newPassword.length < 8) return;

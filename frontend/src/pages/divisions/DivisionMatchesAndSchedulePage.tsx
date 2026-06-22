@@ -9,7 +9,7 @@ import { useDivisionRoute } from '@/context/DivisionContext';
 import { useDivisionMatches } from '@/hooks/useDivisionResources';
 import { useListSearch } from '@/hooks/useListSearch';
 import { matchSearchText } from '@/lib/search-text';
-import { formatScheduleDay } from '@/lib/date';
+import { compareDates, formatScheduleDay, scheduleDayKey } from '@/lib/date';
 import { cn } from '@/lib/utils';
 import { useCanAdminEdit } from '@/hooks/useCanAdminEdit';
 import { AdminContextBar } from '@/components/admin/inline/AdminContextBar';
@@ -70,11 +70,11 @@ export default function DivisionMatchesAndSchedulePage() {
   }, [allMatches]);
 
   const grouped = useMemo(() => {
-    const sorted = [...filtered].sort(
-      (a, b) => new Date(a.scheduled_start).getTime() - new Date(b.scheduled_start).getTime(),
+    const sorted = [...filtered].sort((a, b) =>
+      compareDates(a.scheduled_start, b.scheduled_start),
     );
     return sorted.reduce<Record<string, typeof sorted>>((acc, match) => {
-      const date = match.scheduled_start.split('T')[0];
+      const date = scheduleDayKey(match.scheduled_start);
       if (!acc[date]) acc[date] = [];
       acc[date].push(match);
       return acc;

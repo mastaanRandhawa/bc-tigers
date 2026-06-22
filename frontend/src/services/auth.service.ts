@@ -25,5 +25,6 @@ export const authService = {
     email: string;
     password: string;
     phone?: string;
+    coaching_request: string;
   }) => apiClient.post<{ message: string }>('/auth/register-coach', data),
 };

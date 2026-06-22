@@ -107,6 +107,7 @@ describe('AuthService coach gates', () => {
       last_name: 'Coach',
       email: 'new@test.com',
       password: 'password123',
+      coaching_request: 'BC Tigers U14',
     });
 
     expect(result.message).toContain('administrator');
@@ -116,6 +117,7 @@ describe('AuthService coach gates', () => {
           role: 'COACH',
           approved: false,
           active: false,
+          coaching_request: 'BC Tigers U14',
         }),
       }),
     );

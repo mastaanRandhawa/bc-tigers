@@ -15,7 +15,7 @@ import { useTournaments } from '@/hooks/useTournaments';
 import { useDivisions } from '@/hooks/useDivisions';
 import { useTeams } from '@/hooks/useTeams';
 import { useVenues } from '@/hooks/useVenues';
-import { fromDatetimeLocal, toDatetimeLocal } from '@/lib/datetime';
+import { fromDatetimeLocalValue, toDatetimeLocalValue } from '@/lib/date';
 import { getApiErrorMessage } from '@/lib/errors';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
@@ -87,7 +87,7 @@ export default function MatchFormDialog({ open, onOpenChange, match, defaultDivi
         home_team_id: match.home_team_id,
         away_team_id: match.away_team_id,
         venue_id: match.venue_id ?? '__none__',
-        scheduled_start: toDatetimeLocal(match.scheduled_start),
+        scheduled_start: toDatetimeLocalValue(match.scheduled_start),
         status: match.status,
         round: match.round != null ? String(match.round) : '',
       });
@@ -113,7 +113,7 @@ export default function MatchFormDialog({ open, onOpenChange, match, defaultDivi
     try {
       const payload = {
         ...values,
-        scheduled_start: fromDatetimeLocal(values.scheduled_start),
+        scheduled_start: fromDatetimeLocalValue(values.scheduled_start) ?? '',
         venue_id: values.venue_id && values.venue_id !== '__none__' ? values.venue_id : undefined,
         round: values.round ? Number(values.round) : undefined,
       };

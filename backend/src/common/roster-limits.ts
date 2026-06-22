@@ -1,0 +1,1 @@
+export const DEFAULT_MAX_PLAYERS_PER_TEAM = 25;

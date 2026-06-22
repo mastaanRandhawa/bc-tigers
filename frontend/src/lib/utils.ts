@@ -1,7 +1,23 @@
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
-export { formatDate, formatScheduleDay, formatTime } from '@/lib/date';
+export {
+  compareDates,
+  formatDate,
+  formatDateTime,
+  formatScheduleDay,
+  formatTime,
+  fromDateInput,
+  fromDatetimeLocalValue,
+  getCurrentYear,
+  getDaysUntil,
+  isFutureDate,
+  nowISO,
+  parseDatetimeLocalValue,
+  scheduleDayKey,
+  toDateInput,
+  toDatetimeLocalValue,
+} from '@/lib/date';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));

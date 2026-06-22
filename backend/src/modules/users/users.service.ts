@@ -3,11 +3,13 @@ import {
   NotFoundException,
   ConflictException,
   BadRequestException,
+  ForbiddenException,
 } from '@nestjs/common';
 import type { Prisma, UserRole } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 import prisma from '../../prisma/prisma';
 import { pickAllowed } from '../../common/pick';
+import { canActorResetTargetPassword } from '../auth/role-utils';
 
 /** Fields an admin may set via PATCH /users/:id. Excludes role, password_hash, id. */
 const USER_UPDATE_FIELDS = [
@@ -29,6 +31,7 @@ const SELECT = {
   profile_image: true,
   active: true,
   approved: true,
+  coaching_request: true,
   created_at: true,
   updated_at: true,
   coached_team: {
@@ -70,6 +73,7 @@ export class UsersService {
     if (existing) throw new ConflictException('Email already in use');
 
     const role = data.role ?? 'ADMIN';
+    const isStaff = role === 'ADMIN' || role === 'SUPERADMIN';
     const password_hash = await bcrypt.hash(data.password, 12);
     return prisma.user.create({
       data: {
@@ -79,8 +83,8 @@ export class UsersService {
         password_hash,
         phone: data.phone,
         role,
-        approved: role === 'ADMIN',
-        active: role === 'ADMIN',
+        approved: isStaff,
+        active: isStaff,
       },
       select: SELECT,
     });
@@ -112,13 +116,24 @@ export class UsersService {
     });
   }
 
-  async resetPassword(id: string, password: string) {
-    const user = await prisma.user.findUnique({ where: { id } });
+  async resetPassword(actorId: string, targetId: string, password: string) {
+    const actor = await prisma.user.findUnique({ where: { id: actorId } });
+    if (!actor) throw new NotFoundException('Actor not found');
+
+    const user = await prisma.user.findUnique({ where: { id: targetId } });
     if (!user) throw new NotFoundException('User not found');
+
+    if (!canActorResetTargetPassword(actor.role, user.role)) {
+      throw new ForbiddenException(
+        user.role === 'ADMIN' || user.role === 'SUPERADMIN'
+          ? 'Only a super administrator can reset administrator passwords.'
+          : 'You cannot reset this user\'s password.',
+      );
+    }
 
     const password_hash = await bcrypt.hash(password, 12);
     return prisma.user.update({
-      where: { id },
+      where: { id: targetId },
       data: { password_hash },
       select: SELECT,
     });

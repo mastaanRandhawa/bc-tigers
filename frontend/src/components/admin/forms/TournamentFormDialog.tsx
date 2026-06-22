@@ -7,7 +7,7 @@ import { tournamentSchema, type TournamentFormValues } from '@/lib/schemas/admin
 import { useCreateTournament, useUpdateTournament } from '@/hooks/useTournaments';
 import { useAuthStore } from '@/store/authStore';
 import { slugify } from '@/lib/utils';
-import { toDateInput, fromDateInput } from '@/lib/datetime';
+import { fromDateInput, toDateInput } from '@/lib/date';
 import { getApiErrorMessage } from '@/lib/errors';
 import type { Tournament } from '@/types';
 

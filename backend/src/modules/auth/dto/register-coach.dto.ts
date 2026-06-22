@@ -19,4 +19,8 @@ export class RegisterCoachDto {
   @IsOptional()
   @IsString()
   phone?: string;
+
+  @IsString()
+  @MinLength(1)
+  coaching_request!: string;
 }

@@ -324,7 +324,7 @@ export class MatchesService {
     message: string,
   ) {
     const admins = await prisma.user.findMany({
-      where: { active: true, role: 'ADMIN' },
+      where: { active: true, role: { in: ['ADMIN', 'SUPERADMIN'] } },
       select: { email: true },
     });
 

@@ -1,19 +1,12 @@
 import type { Tournament } from '@/types';
-
-function tournamentStartMs(t: Tournament) {
-  return new Date(t.start_date).getTime();
-}
-
-function tournamentEndMs(t: Tournament) {
-  return new Date(t.end_date).getTime();
-}
+import { compareDates } from '@/lib/date';
 
 function bySoonestStart(a: Tournament, b: Tournament) {
-  return tournamentStartMs(a) - tournamentStartMs(b);
+  return compareDates(a.start_date, b.start_date);
 }
 
 function bySoonestEnd(a: Tournament, b: Tournament) {
-  return tournamentEndMs(a) - tournamentEndMs(b);
+  return compareDates(a.end_date, b.end_date);
 }
 
 /** Primary tournament for home hero and hub deep-links (from API data only). */

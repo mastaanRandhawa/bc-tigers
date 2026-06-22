@@ -1,5 +1,4 @@
 import { useEffect, useState } from 'react';
-import { Link } from 'react-router-dom';
 import PageLayout from '@/components/PageLayout';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -7,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { useAuthStore } from '@/store/authStore';
 import { authService } from '@/services/auth.service';
 import { getRoleLabel, isCoachRole, COACH_PASSWORD_MESSAGE } from '@/lib/auth-utils';
-import { Save, Lock } from 'lucide-react';
+import { Save } from 'lucide-react';
 import PageLoader from '@/components/shared/PageLoader';
 
 export default function ProfilePage() {
@@ -18,7 +17,6 @@ export default function ProfilePage() {
     phone: '',
     profile_image: '',
   });
-  const [passwords, setPasswords] = useState({ current: '', next: '' });
   const [message, setMessage] = useState('');
   const [error, setError] = useState('');
   const [saving, setSaving] = useState(false);
@@ -49,22 +47,6 @@ export default function ProfilePage() {
       setMessage('Profile updated successfully.');
     } catch {
       setError('Failed to update profile.');
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const handlePasswordSave = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setSaving(true);
-    setError('');
-    setMessage('');
-    try {
-      await authService.changePassword(passwords.current, passwords.next);
-      setPasswords({ current: '', next: '' });
-      setMessage('Password updated successfully.');
-    } catch {
-      setError('Failed to update password. Check your current password.');
     } finally {
       setSaving(false);
     }
@@ -109,26 +91,12 @@ export default function ProfilePage() {
             </Button>
           </form>
 
-          <form onSubmit={handlePasswordSave} className="rounded-lg border border-border bg-card shadow-sm p-6 space-y-4">
-            <h2 className="font-semibold text-foreground">Change Password</h2>
-            {isCoachRole(user.role) ? (
+          {isCoachRole(user.role) && (
+            <div className="rounded-lg border border-border bg-card shadow-sm p-6 space-y-2">
+              <h2 className="font-semibold text-foreground">Password</h2>
               <p className="text-sm text-muted-foreground">{COACH_PASSWORD_MESSAGE}</p>
-            ) : (
-              <>
-                <div className="space-y-1.5">
-                  <Label>Current Password</Label>
-                  <Input type="password" value={passwords.current} onChange={(e) => setPasswords({ ...passwords, current: e.target.value })} required />
-                </div>
-                <div className="space-y-1.5">
-                  <Label>New Password</Label>
-                  <Input type="password" value={passwords.next} onChange={(e) => setPasswords({ ...passwords, next: e.target.value })} required minLength={8} />
-                </div>
-                <Button type="submit" disabled={saving}>
-                  <Lock className="w-4 h-4" /> Update Password
-                </Button>
-              </>
-            )}
-          </form>
+            </div>
+          )}
         </div>
       </section>
     </PageLayout>

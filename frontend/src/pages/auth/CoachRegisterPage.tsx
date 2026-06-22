@@ -4,6 +4,7 @@ import AuthLayout from '@/components/AuthLayout';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
+import { Textarea } from '@/components/ui/textarea';
 import { authService } from '@/services/auth.service';
 import { getApiErrorMessage } from '@/lib/errors';
 import { UserPlus, CheckCircle, Eye, EyeOff } from 'lucide-react';
@@ -15,6 +16,7 @@ export default function CoachRegisterPage() {
     email: '',
     password: '',
     phone: '',
+    coaching_request: '',
   });
   const [showPassword, setShowPassword] = useState(false);
   const [submitted, setSubmitted] = useState(false);
@@ -32,6 +34,7 @@ export default function CoachRegisterPage() {
         email: form.email,
         password: form.password,
         phone: form.phone || undefined,
+        coaching_request: form.coaching_request.trim(),
       });
       setSubmitted(true);
     } catch (err) {
@@ -100,6 +103,21 @@ export default function CoachRegisterPage() {
             value={form.phone}
             onChange={(e) => setForm({ ...form, phone: e.target.value })}
           />
+        </div>
+        <div className="space-y-1.5">
+          <Label htmlFor="coaching_request">Team you&apos;d like to coach</Label>
+          <Textarea
+            id="coaching_request"
+            value={form.coaching_request}
+            onChange={(e) => setForm({ ...form, coaching_request: e.target.value })}
+            placeholder="e.g. BC Tigers U14 Boys, Miri Piri FC"
+            required
+            rows={3}
+            className="resize-none"
+          />
+          <p className="text-xs text-muted-foreground">
+            Enter the team name you are requesting to manage. An administrator will review and assign you.
+          </p>
         </div>
         <div className="space-y-1.5">
           <Label htmlFor="password">Password</Label>

@@ -1,9 +1,10 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import prisma from '../../prisma/prisma';
 import { pickAllowed } from '../../common/pick';
-import { isCoachManagementLocked } from '../auth/coach-permissions';
+import { isCoachManagementLocked, getCoachLockStatus } from '../auth/coach-permissions';
 import { getCoachTeamId } from '../teams/coach-team-link';
 import { TeamPlayersService } from '../teams/team-players.service';
+import { getMaxPlayersPerTeam } from '../settings/settings.service';
 
 const COACH_TEAM_FIELDS = [
   'logo',
@@ -59,28 +60,37 @@ export class CoachService {
     });
     if (!user) throw new NotFoundException('User not found');
 
-    const globalLocked = await isCoachManagementLocked();
+    const lockStatus = await getCoachLockStatus();
     return {
       ...user,
       team_id: user.coached_team?.id ?? null,
-      coach_management_locked: globalLocked,
+      ...lockStatus,
     };
   }
 
   async getTeamForCoach(userId: string) {
     const teamId = await getCoachTeamId(userId);
-    const globalLocked = await isCoachManagementLocked();
+    const lockStatus = await getCoachLockStatus();
 
     if (!teamId) {
       return {
         assigned: false,
-        coach_management_locked: globalLocked,
+        ...lockStatus,
         can_edit: false,
       };
     }
 
     const team = await this.getTeam(teamId);
-    return { assigned: true, ...team };
+    const max_players_per_team = await getMaxPlayersPerTeam();
+    const roster_count = team.players?.length ?? 0;
+    return {
+      assigned: true,
+      ...team,
+      ...lockStatus,
+      max_players_per_team,
+      roster_count,
+      can_edit: !lockStatus.coach_management_locked && !team.management_locked,
+    };
   }
 
   async getTeam(teamId: string) {
@@ -91,9 +101,12 @@ export class CoachService {
     if (!team) throw new NotFoundException('Team not found');
 
     const globalLocked = await isCoachManagementLocked();
+    const max_players_per_team = await getMaxPlayersPerTeam();
     return {
       ...team,
       coach_management_locked: globalLocked,
+      max_players_per_team,
+      roster_count: team.players.length,
       can_edit: !globalLocked && !team.management_locked,
     };
   }

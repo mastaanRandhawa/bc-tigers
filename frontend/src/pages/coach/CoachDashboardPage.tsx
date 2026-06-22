@@ -10,6 +10,7 @@ import CoachRosterPanel from '@/components/coach/CoachRosterPanel';
 import { useAuthStore } from '@/store/authStore';
 import { useCoachTeamData, useUpdateCoachTeam } from '@/hooks/useCoach';
 import { getApiErrorMessage } from '@/lib/errors';
+import { formatDateTime } from '@/lib/utils';
 import { Lock, LogOut, Save } from 'lucide-react';
 import { toast } from 'sonner';
 
@@ -26,7 +27,11 @@ export default function CoachDashboardPage() {
     contact_phone: '',
   });
 
-  const locked = coachData?.coach_management_locked || team?.management_locked;
+  const locked =
+    coachData?.coach_management_locked ||
+    team?.management_locked;
+  const scheduledPending = coachData?.coach_lock_scheduled_pending;
+  const scheduledAt = coachData?.coach_lock_scheduled_at;
   const canEdit = team?.can_edit ?? false;
 
   useEffect(() => {
@@ -79,15 +84,27 @@ export default function CoachDashboardPage() {
             </div>
           </div>
 
+          {scheduledPending && scheduledAt && !locked && (
+            <div className="flex items-start gap-3 rounded-xl border border-blue-200 bg-blue-50 p-4 text-sm text-blue-900">
+              <Lock className="w-5 h-5 shrink-0 mt-0.5" />
+              <p>
+                Team management will be locked system-wide on{' '}
+                <strong>{formatDateTime(scheduledAt)}</strong>.
+              </p>
+            </div>
+          )}
+
           {locked && (
             <div className="flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
               <Lock className="w-5 h-5 shrink-0 mt-0.5" />
               <div>
                 <p className="font-semibold">Team management is locked</p>
                 <p className="mt-1 text-amber-800/90">
-                  {team?.coach_management_locked
-                    ? 'An administrator has locked all coach edits system-wide.'
-                    : 'An administrator has locked edits for your team.'}
+                  {coachData?.coach_lock_scheduled_active && !coachData?.coach_lock_manual
+                    ? 'A scheduled global coach lock is now in effect.'
+                    : coachData?.coach_management_locked
+                      ? 'An administrator has locked all coach edits system-wide.'
+                      : 'An administrator has locked edits for your team.'}
                   {' '}Contact an administrator to make changes.
                 </p>
               </div>
@@ -184,7 +201,11 @@ export default function CoachDashboardPage() {
                   )}
                 </form>
 
-                <CoachRosterPanel team={team} canEdit={canEdit} />
+                <CoachRosterPanel
+                  team={team}
+                  canEdit={canEdit}
+                  maxPlayers={coachData?.max_players_per_team ?? team.max_players_per_team ?? 25}
+                />
               </>
             )}
           </QueryState>
