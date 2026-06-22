@@ -390,7 +390,13 @@ export class BracketsService {
     nodeIdA: string,
     nodeIdB: string,
   ): Promise<BracketNodeDetail[]> {
-    if (nodeIdA === nodeIdB) return this.getNode(nodeIdA);
+    if (nodeIdA === nodeIdB) {
+      const node = await prisma.bracketNode.findUniqueOrThrow({
+        where: { id: nodeIdA },
+        select: { division_id: true },
+      });
+      return this.getByDivisionId(node.division_id);
+    }
 
     const [a, b] = await Promise.all([
       prisma.bracketNode.findUniqueOrThrow({ where: { id: nodeIdA } }),
