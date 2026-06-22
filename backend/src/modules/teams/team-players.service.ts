@@ -76,7 +76,6 @@ export class TeamPlayersService {
         slug,
         team_id: teamId,
         active: input.active ?? true,
-        nationality: input.nationality as string | undefined,
         jersey_number: input.jersey_number as number | undefined,
         preferred_position: input.preferred_position as string | undefined,
         profile_image: input.profile_image as string | undefined,

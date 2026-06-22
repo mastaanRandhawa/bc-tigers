@@ -198,7 +198,6 @@ model Player {
   last_name          String
   slug               String
   dob                DateTime?
-  nationality        String?
   jersey_number      Int?
   preferred_position String?
   profile_image      String?

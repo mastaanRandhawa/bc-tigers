@@ -45,7 +45,6 @@ export const teamSchema = z.object({
 export const playerSchema = z.object({
   first_name: z.string().min(1, 'First name is required'),
   last_name: z.string().min(1, 'Last name is required'),
-  nationality: z.string().optional(),
   jersey_number: z.string().optional(),
   preferred_position: z.string().optional(),
   profile_image: z.string().optional(),

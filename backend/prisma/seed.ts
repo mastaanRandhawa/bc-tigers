@@ -405,7 +405,6 @@ function makePlayers(teamSlug: string, count: number, gender: Gender, ageGroup: 
       slug: slugifySeedName(first_name, last_name, teamSlug, i),
       jersey_number: i + 1,
       preferred_position: PLAYER_POSITIONS[i % PLAYER_POSITIONS.length],
-      nationality: 'Canadian',
       dob: playerDob(ageGroup, i),
     };
   });

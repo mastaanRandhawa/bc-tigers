@@ -113,7 +113,6 @@ export interface Player {
   last_name: string;
   slug: string;
   dob?: string;
-  nationality?: string;
   jersey_number?: number;
   preferred_position?: string;
   profile_image?: string;

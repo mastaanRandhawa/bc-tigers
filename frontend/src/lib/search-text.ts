@@ -35,7 +35,6 @@ export function playerSearchText(p: Player) {
     p.first_name,
     p.last_name,
     p.preferred_position,
-    p.nationality,
     String(p.jersey_number ?? ''),
   ]);
 }
