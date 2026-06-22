@@ -699,6 +699,18 @@ async function main() {
     },
   });
 
+  await prisma.user.create({
+    data: {
+      first_name: 'BC Tigers',
+      last_name: 'Super Admin',
+      email: 'superadmin@bctigers.ca',
+      password_hash: await bcrypt.hash('SuperAdmin1234!', 12),
+      role: 'SUPERADMIN',
+      approved: true,
+      active: true,
+    },
+  });
+
   await prisma.siteSettings.upsert({
     where: { id: 'default' },
     create: {
@@ -893,6 +905,7 @@ async function main() {
   console.log('\nSeed complete.');
   console.log('  Hub: /tournaments/miri-piri-2026');
   console.log('  Admin: admin@bctigers.ca / Admin1234!');
+  console.log('  Super Admin: superadmin@bctigers.ca / SuperAdmin1234!');
 }
 
 main()

@@ -9,15 +9,16 @@ import { Button } from '@/components/ui/button';
 import CoachPlayerFormDialog from '@/components/coach/CoachPlayerFormDialog';
 import { ConfirmDialog } from '@/components/admin/inline/ConfirmDialog';
 import { getApiErrorMessage } from '@/lib/errors';
-import { Pencil, UserPlus } from 'lucide-react';
+import { Pencil, UserPlus, Users } from 'lucide-react';
 import type { Player, Team } from '@/types';
 
 interface CoachRosterPanelProps {
   team: Team;
   canEdit: boolean;
+  maxPlayers?: number;
 }
 
-export default function CoachRosterPanel({ team, canEdit }: CoachRosterPanelProps) {
+export default function CoachRosterPanel({ team, canEdit, maxPlayers = 25 }: CoachRosterPanelProps) {
   const { data: players = [], isLoading, refetch } = useCoachPlayers(!!team.id);
   const updateMutation = useUpdateCoachPlayer();
   const deleteMutation = useDeleteCoachPlayer();
@@ -25,6 +26,8 @@ export default function CoachRosterPanel({ team, canEdit }: CoachRosterPanelProp
   const [editingPlayer, setEditingPlayer] = useState<Player | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Player | null>(null);
   const [error, setError] = useState('');
+
+  const atRosterCap = players.length >= maxPlayers;
 
   const toggleActive = async (player: Player) => {
     try {
@@ -49,7 +52,13 @@ export default function CoachRosterPanel({ team, canEdit }: CoachRosterPanelProp
 
   return (
     <div className="rounded-xl border border-border bg-card p-4">
-      <h3 className="mb-3 text-sm font-semibold text-foreground">Roster — {team.name}</h3>
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+        <h3 className="text-sm font-semibold text-foreground m-0">Roster — {team.name}</h3>
+        <span className="text-xs text-muted-foreground flex items-center gap-1">
+          <Users className="h-3.5 w-3.5" aria-hidden />
+          {players.length} / {maxPlayers} players
+        </span>
+      </div>
 
       {error && (
         <p className="mb-3 rounded-md border border-destructive/30 bg-destructive/10 px-3 py-2 text-sm text-destructive">
@@ -64,10 +73,16 @@ export default function CoachRosterPanel({ team, canEdit }: CoachRosterPanelProp
             variant="outline"
             onClick={() => setNewPlayerOpen(true)}
             className="gap-1.5"
+            disabled={atRosterCap}
           >
             <UserPlus className="h-3.5 w-3.5" />
             Add player
           </Button>
+          {atRosterCap && (
+            <p className="mt-2 text-xs text-amber-700">
+              Roster is full ({maxPlayers} players max). Contact an administrator if you need more slots.
+            </p>
+          )}
         </div>
       )}
 

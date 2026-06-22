@@ -1,6 +1,10 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { coachService, type CoachTeamResponse } from '@/services/coach.service';
 import type { Player, Team } from '@/types';
+import {
+  scheduledCoachLockPollInterval,
+  useScheduledCoachLockRefetch,
+} from '@/hooks/useScheduledCoachLockWatch';
 
 function isAssignedTeam(
   data: CoachTeamResponse | undefined,
@@ -9,17 +13,37 @@ function isAssignedTeam(
 }
 
 export function useCoachMe() {
-  return useQuery({
+  const query = useQuery({
     queryKey: ['coach', 'me'],
     queryFn: async () => (await coachService.me()).data,
+    refetchInterval: (q) =>
+      scheduledCoachLockPollInterval(q.state.data?.coach_lock_scheduled_pending),
   });
+
+  useScheduledCoachLockRefetch(
+    query.data?.coach_lock_scheduled_at,
+    query.data?.coach_lock_scheduled_pending,
+    query.refetch,
+  );
+
+  return query;
 }
 
 export function useCoachTeam() {
-  return useQuery({
+  const query = useQuery({
     queryKey: ['coach', 'team'],
     queryFn: async () => (await coachService.getTeam()).data,
+    refetchInterval: (q) =>
+      scheduledCoachLockPollInterval(q.state.data?.coach_lock_scheduled_pending),
   });
+
+  useScheduledCoachLockRefetch(
+    query.data?.coach_lock_scheduled_at,
+    query.data?.coach_lock_scheduled_pending,
+    query.refetch,
+  );
+
+  return query;
 }
 
 export function useCoachTeamData() {

@@ -6,6 +6,7 @@ import {
   playerLookupWhere,
   slugifyPlayerName,
 } from '../../common/player-slug';
+import { getMaxPlayersPerTeam } from '../settings/settings.service';
 
 type PlayerWriteInput = {
   first_name?: string;
@@ -17,6 +18,18 @@ type PlayerWriteInput = {
 
 @Injectable()
 export class TeamPlayersService {
+  async assertRosterCapacity(teamId: string) {
+    const [count, max] = await Promise.all([
+      prisma.player.count({ where: { team_id: teamId } }),
+      getMaxPlayersPerTeam(),
+    ]);
+    if (count >= max) {
+      throw new BadRequestException(
+        `Team roster is full (maximum ${max} players per team).`,
+      );
+    }
+  }
+
   async findByTeam(teamId: string) {
     const team = await prisma.team.findUnique({ where: { id: teamId } });
     if (!team) throw new NotFoundException('Team not found');
@@ -65,6 +78,8 @@ export class TeamPlayersService {
     if (!first_name || !last_name) {
       throw new BadRequestException('First and last name are required');
     }
+
+    await this.assertRosterCapacity(teamId);
 
     const base = slugifyPlayerName(first_name, last_name);
     const slug = await ensureUniquePlayerSlug(prisma, teamId, base);

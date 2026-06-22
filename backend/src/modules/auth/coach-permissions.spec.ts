@@ -12,6 +12,7 @@ jest.mock('../../prisma/prisma', () => ({
     },
     siteSettings: {
       findUnique: jest.fn(),
+      update: jest.fn(),
     },
   },
 }));
@@ -35,6 +36,7 @@ describe('coach-permissions', () => {
       } as never);
       mockPrisma.siteSettings.findUnique.mockResolvedValue({
         coach_management_locked: false,
+        coach_lock_scheduled_at: null,
       } as never);
 
       await expect(assertCoachCanEditTeam('coach-1', 'team-1')).resolves.toBeUndefined();
@@ -58,6 +60,7 @@ describe('coach-permissions', () => {
       } as never);
       mockPrisma.siteSettings.findUnique.mockResolvedValue({
         coach_management_locked: true,
+        coach_lock_scheduled_at: null,
       } as never);
 
       await expect(assertCoachCanEditTeam('coach-1', 'team-1')).rejects.toBeInstanceOf(
@@ -72,11 +75,32 @@ describe('coach-permissions', () => {
       } as never);
       mockPrisma.siteSettings.findUnique.mockResolvedValue({
         coach_management_locked: false,
+        coach_lock_scheduled_at: null,
       } as never);
 
       await expect(assertCoachCanEditTeam('coach-1', 'team-1')).rejects.toBeInstanceOf(
         ForbiddenException,
       );
+    });
+
+    it('denies when scheduled global lock time has passed', async () => {
+      mockPrisma.team.findUnique.mockResolvedValue({
+        coach_user_id: 'coach-1',
+        management_locked: false,
+      } as never);
+      mockPrisma.siteSettings.findUnique.mockResolvedValue({
+        coach_management_locked: false,
+        coach_lock_scheduled_at: new Date('2020-01-01'),
+      } as never);
+      mockPrisma.siteSettings.update.mockResolvedValue({
+        coach_management_locked: true,
+        coach_lock_scheduled_at: null,
+      } as never);
+
+      await expect(assertCoachCanEditTeam('coach-1', 'team-1')).rejects.toBeInstanceOf(
+        ForbiddenException,
+      );
+      expect(mockPrisma.siteSettings.update).toHaveBeenCalled();
     });
 
     it('throws when team does not exist', async () => {
@@ -91,6 +115,19 @@ describe('coach-permissions', () => {
     it('returns true when site setting is locked', async () => {
       mockPrisma.siteSettings.findUnique.mockResolvedValue({
         coach_management_locked: true,
+        coach_lock_scheduled_at: null,
+      } as never);
+      await expect(isCoachManagementLocked()).resolves.toBe(true);
+    });
+
+    it('returns true when scheduled lock time has passed', async () => {
+      mockPrisma.siteSettings.findUnique.mockResolvedValue({
+        coach_management_locked: false,
+        coach_lock_scheduled_at: new Date('2020-01-01'),
+      } as never);
+      mockPrisma.siteSettings.update.mockResolvedValue({
+        coach_management_locked: true,
+        coach_lock_scheduled_at: null,
       } as never);
       await expect(isCoachManagementLocked()).resolves.toBe(true);
     });

@@ -9,6 +9,7 @@ datasource db {
 // ─── Enums ───────────────────────────────────────────────────────────────────
 
 enum UserRole {
+  SUPERADMIN
   ADMIN
   COACH
 }
@@ -93,6 +94,7 @@ model User {
   active        Boolean  @default(true)
   approved      Boolean  @default(false)
   profile_image String?
+  coaching_request String?
   created_at    DateTime @default(now())
   updated_at    DateTime @updatedAt
 
@@ -454,5 +456,7 @@ model SiteSettings {
   contact_address         String?
   timezone                String   @default("America/Vancouver")
   coach_management_locked Boolean  @default(false)
+  coach_lock_scheduled_at DateTime?
+  max_players_per_team    Int      @default(25)
   updated_at              DateTime @updatedAt
 }

@@ -16,6 +16,7 @@ import {
 import QueryState from '@/components/shared/QueryState';
 import { BracketGenerateSheet, BracketEmptyState } from '@/components/admin/BracketGenerateSheet';
 import { getApiErrorMessage } from '@/lib/errors';
+import { nowISO } from '@/lib/date';
 import {
   isStructureLocked,
   isResultsFrozen,
@@ -357,7 +358,7 @@ export function BracketCanvas({
       divisionSlug,
       divisionName,
       tournamentName,
-      exportedAt: new Date().toISOString(),
+      exportedAt: nowISO(),
       nodes: snapshotFromNodes(nodes),
     };
     const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });

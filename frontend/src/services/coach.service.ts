@@ -5,16 +5,37 @@ export type CoachTeamResponse =
   | (Team & {
       assigned: true;
       coach_management_locked?: boolean;
+      coach_lock_scheduled_at?: string | null;
+      coach_lock_scheduled_pending?: boolean;
+      coach_lock_manual?: boolean;
+      coach_lock_scheduled_active?: boolean;
       can_edit?: boolean;
+      max_players_per_team?: number;
+      roster_count?: number;
     })
   | {
       assigned: false;
       coach_management_locked?: boolean;
+      coach_lock_scheduled_at?: string | null;
+      coach_lock_scheduled_pending?: boolean;
+      coach_lock_manual?: boolean;
+      coach_lock_scheduled_active?: boolean;
       can_edit: false;
+      max_players_per_team?: number;
+      roster_count?: number;
     };
 
 export const coachService = {
-  me: () => apiClient.get<User & { coach_management_locked?: boolean }>('/coach/me'),
+  me: () =>
+    apiClient.get<
+      User & {
+        coach_management_locked?: boolean;
+        coach_lock_scheduled_at?: string | null;
+        coach_lock_scheduled_pending?: boolean;
+        coach_lock_manual?: boolean;
+        coach_lock_scheduled_active?: boolean;
+      }
+    >('/coach/me'),
 
   getTeam: () => apiClient.get<CoachTeamResponse>('/coach/team'),
 

@@ -18,6 +18,10 @@ import type { RegisterCoachDto } from './dto/register-coach.dto';
 
 const COACH_PASSWORD_MESSAGE =
   'Coach password resets are managed by an administrator. Please contact your tournament administrator.';
+const ADMIN_PASSWORD_MESSAGE =
+  'Administrator passwords can only be reset by a super administrator.';
+const SUPERADMIN_PASSWORD_MESSAGE =
+  'Super administrator passwords can only be reset by another super administrator.';
 @Injectable()
 export class AuthService {
   constructor(
@@ -42,7 +46,7 @@ export class AuthService {
       if (!user.active) {
         throw new UnauthorizedException('Your coach account is inactive.');
       }
-    } else if (user.role !== 'ADMIN' || !user.active) {
+    } else if (!['ADMIN', 'SUPERADMIN'].includes(user.role) || !user.active) {
       throw new UnauthorizedException('Invalid credentials');
     }
 
@@ -67,6 +71,7 @@ export class AuthService {
         email: data.email,
         password_hash,
         phone: data.phone,
+        coaching_request: data.coaching_request.trim(),
         role: 'COACH',
         approved: false,
         active: false,
@@ -145,6 +150,12 @@ export class AuthService {
     if (user.role === 'COACH') {
       throw new ForbiddenException(COACH_PASSWORD_MESSAGE);
     }
+    if (user.role === 'ADMIN') {
+      throw new ForbiddenException(ADMIN_PASSWORD_MESSAGE);
+    }
+    if (user.role === 'SUPERADMIN') {
+      throw new ForbiddenException(SUPERADMIN_PASSWORD_MESSAGE);
+    }
 
     const valid = await bcrypt.compare(currentPassword, user.password_hash);
     if (!valid) throw new UnauthorizedException('Current password is incorrect');
@@ -161,6 +172,12 @@ export class AuthService {
     }
     if (user.role === 'COACH') {
       return { message: COACH_PASSWORD_MESSAGE };
+    }
+    if (user.role === 'ADMIN') {
+      return { message: ADMIN_PASSWORD_MESSAGE };
+    }
+    if (user.role === 'SUPERADMIN') {
+      return { message: SUPERADMIN_PASSWORD_MESSAGE };
     }
 
     await prisma.passwordResetToken.updateMany({
@@ -207,6 +224,12 @@ export class AuthService {
     }
     if (record.user.role === 'COACH') {
       throw new ForbiddenException(COACH_PASSWORD_MESSAGE);
+    }
+    if (record.user.role === 'ADMIN') {
+      throw new ForbiddenException(ADMIN_PASSWORD_MESSAGE);
+    }
+    if (record.user.role === 'SUPERADMIN') {
+      throw new ForbiddenException(SUPERADMIN_PASSWORD_MESSAGE);
     }
 
     const password_hash = await bcrypt.hash(password, 12);

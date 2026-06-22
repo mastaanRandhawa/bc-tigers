@@ -2,7 +2,7 @@ import { FaFacebook, FaInstagram, FaLinkedin } from 'react-icons/fa';
 import { usePublicSettings } from '@/hooks/useSettings';
 import { Footer7 } from '@/components/ui/footer-7';
 import logoUrl from '@/assets/logo.png';
-import { cn } from '@/lib/utils';
+import { cn, getCurrentYear } from '@/lib/utils';
 
 interface FooterProps {
   className?: string;
@@ -39,7 +39,7 @@ const socialLinks = [
 export default function Footer({ className }: FooterProps) {
   const { data: settings } = usePublicSettings();
   const siteName = settings?.site_name ?? 'BC Tigers FC';
-  const year = new Date().getFullYear();
+  const year = getCurrentYear();
 
   return (
     <Footer7

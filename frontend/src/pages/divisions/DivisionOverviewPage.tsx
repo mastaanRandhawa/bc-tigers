@@ -20,12 +20,7 @@ import { RevealOnScroll } from '@/components/motion/RevealOnScroll';
 import { useCanAdminEdit } from '@/hooks/useCanAdminEdit';
 import { AdminActionButton } from '@/components/admin/inline/AdminActionButton';
 import MatchFormDialog from '@/components/admin/forms/MatchFormDialog';
-
-function getCountdownDays(dateStr?: string): number | null {
-  if (!dateStr) return null;
-  const diff = new Date(dateStr).getTime() - Date.now();
-  return diff > 0 ? Math.ceil(diff / 86_400_000) : null;
-}
+import { compareDates, getDaysUntil } from '@/lib/date';
 
 export default function DivisionOverviewPage() {
   const { division, basePath, tournamentSlug, divisionSlug, theme } = useDivisionRoute();
@@ -45,23 +40,17 @@ export default function DivisionOverviewPage() {
   const liveMatches = matches.filter((m) => m.status === 'LIVE');
   const upcomingMatches = matches
     .filter((m) => m.status === 'SCHEDULED')
-    .sort((a, b) => new Date(a.scheduled_start).getTime() - new Date(b.scheduled_start).getTime());
+    .sort((a, b) => compareDates(a.scheduled_start, b.scheduled_start));
 
   const showLive = liveMatches.length > 0;
   const displayMatches = showLive ? liveMatches : upcomingMatches.slice(0, 3);
   const hasNoMatches = matches.length === 0;
   const isUpcoming = division.tournament?.status === 'UPCOMING' || hasNoMatches;
 
-  const countdownDays = isUpcoming
-    ? getCountdownDays(upcomingMatches[0]?.scheduled_start ?? division.tournament?.start_date)
-    : null;
-
-  const firstMatchDate = upcomingMatches[0]?.scheduled_start
-    ? new Date(upcomingMatches[0].scheduled_start).toLocaleDateString('en-US', {
-        month: 'short',
-        day: 'numeric',
-      })
-    : null;
+  const countdownTarget =
+    upcomingMatches[0]?.scheduled_start ?? division.tournament?.start_date;
+  const countdownDays =
+    isUpcoming && countdownTarget ? getDaysUntil(countdownTarget) : null;
 
   const accentColor = theme?.primary;
 
