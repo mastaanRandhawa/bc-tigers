@@ -1,5 +1,4 @@
 import { useCallback, useState } from 'react';
-import { m, AnimatePresence } from 'motion/react';
 import {
   useBracket,
   useGenerateBracket,
@@ -14,75 +13,46 @@ import {
   useAssignBracketTeams,
   useValidateBracket,
 } from '@/hooks/useBrackets';
-import { Button } from '@/components/ui/button';
 import QueryState from '@/components/shared/QueryState';
 import { BracketGenerateSheet, BracketEmptyState } from '@/components/admin/BracketGenerateSheet';
-import { BracketTeamPool } from '@/components/admin/BracketTeamPool';
 import { getApiErrorMessage } from '@/lib/errors';
 import {
   isStructureLocked,
   isResultsFrozen,
   hasPlayedMatches,
-  canEditNodeStructure,
   canManuallyPlaceInNode,
   isByeSlot,
   snapshotFromNodes,
   earliestStage,
   configureTeamDrag,
-  configureMatchDrag,
   readTeamDragId,
   readMatchDragId,
   type BracketSnapshot,
 } from '@/lib/bracket-utils';
-import {
-  GitBranch,
-  Trophy,
-  Shuffle,
-  Undo2,
-  Redo2,
-  Lock,
-  MousePointerClick,
-  GripVertical,
-  Unlock,
-  CheckCircle2,
-  RotateCcw,
-} from 'lucide-react';
-import type { BracketNode, BracketStage, Team } from '@/types';
-
-const STAGE_ORDER: BracketStage[] = [
-  'ROUND_OF_16',
-  'QUARTER_FINAL',
-  'SEMI_FINAL',
-  'FINAL',
-  'THIRD_PLACE',
-];
-
-const STAGE_LABELS: Record<BracketStage, string> = {
-  ROUND_OF_16: 'Round of 16',
-  QUARTER_FINAL: 'Quarter Finals',
-  SEMI_FINAL: 'Semi Finals',
-  THIRD_PLACE: '3rd Place',
-  FINAL: 'Final',
-};
+import type { BracketNode, Team } from '@/types';
+import { STAGE_ORDER } from '@/components/admin/bracket/constants';
+import { BracketStatusBanner } from '@/components/admin/bracket/BracketStatusBanner';
+import { BracketTree } from '@/components/admin/bracket/BracketTree';
+import { TeamPool } from '@/components/admin/bracket/TeamPool';
+import { TournamentToolbar } from '@/components/admin/bracket/TournamentToolbar';
+import type { DragState } from '@/components/admin/bracket/types';
 
 interface BracketCanvasProps {
   divisionId: string;
   divisionSlug: string;
+  divisionName?: string;
+  tournamentName?: string;
   teams?: Team[];
   adminBracketLocked?: boolean;
   adminBracketFinalized?: boolean;
-}
-
-interface DragState {
-  teamId: string;
-  teamName: string;
-  from?: { nodeId: string; slot: 'home' | 'away' };
 }
 
 export function BracketCanvas({
   divisionId,
   divisionSlug,
   teams = [],
+  divisionName,
+  tournamentName,
   adminBracketLocked = false,
   adminBracketFinalized = false,
 }: BracketCanvasProps) {
@@ -99,7 +69,6 @@ export function BracketCanvas({
   const assignMutation = useAssignBracketTeams();
 
   const [showGenerate, setShowGenerate] = useState(false);
-
   const { data: bracketValidation } = useValidateBracket(showGenerate ? divisionId : undefined);
   const [dragOver, setDragOver] = useState<{ nodeId: string; slot: 'home' | 'away' } | null>(null);
   const [dragState, setDragState] = useState<DragState | null>(null);
@@ -122,8 +91,6 @@ export function BracketCanvas({
     if (node.home_team_id) assignedTeamIds.add(node.home_team_id);
     if (node.away_team_id) assignedTeamIds.add(node.away_team_id);
   }
-
-  const presentStages = STAGE_ORDER.filter((stage) => nodes.some((n) => n.stage === stage));
 
   const recordHistory = useCallback((snapshot?: BracketSnapshot) => {
     const snap = snapshot ?? snapshotFromNodes(nodes);
@@ -170,6 +137,7 @@ export function BracketCanvas({
     e?: React.DragEvent,
   ) => {
     if (structureLocked) return;
+    if (!from && assignedTeamIds.has(team.id)) return;
     if (from) {
       const sourceNode = nodes.find((n) => n.id === from.nodeId);
       if (sourceNode && !canManuallyPlaceInNode(sourceNode, firstStage)) return;
@@ -220,6 +188,7 @@ export function BracketCanvas({
 
   const handlePoolClick = (team: Team, multi: boolean) => {
     if (structureLocked) return;
+    if (!multi && assignedTeamIds.has(team.id)) return;
     if (multi) {
       setSelectedTeamIds((prev) => {
         const next = new Set(prev);
@@ -382,6 +351,24 @@ export function BracketCanvas({
     }
   };
 
+  const handleExport = () => {
+    const payload = {
+      divisionId,
+      divisionSlug,
+      divisionName,
+      tournamentName,
+      exportedAt: new Date().toISOString(),
+      nodes: snapshotFromNodes(nodes),
+    };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `bracket-${divisionSlug || divisionId}.json`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
   const busy =
     generateMutation.isPending ||
     randomizeMutation.isPending ||
@@ -395,20 +382,24 @@ export function BracketCanvas({
     assignMutation.isPending;
 
   return (
-    <div className="space-y-4">
-      {(structureLocked || resultsFrozen) && (
-        <div className="flex items-center gap-2 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-800 dark:text-amber-200">
-          <Lock className="h-3.5 w-3.5 shrink-0" />
-          {resultsFrozen
-            ? 'Bracket finalized — results cannot be changed. Unfinalize to edit again.'
-            : adminBracketLocked
-            ? 'Structure locked — unlock to edit teams and seeding. You can still enter match results.'
-            : 'Structure locked.'}
-        </div>
+    <div className="space-y-8">
+      {(tournamentName || divisionName) && (
+        <header className="space-y-1">
+          {tournamentName && (
+            <p className="text-xs font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+              {tournamentName}
+            </p>
+          )}
+          {divisionName && (
+            <h1 className="font-display text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
+              {divisionName}
+            </h1>
+          )}
+        </header>
       )}
 
       {error && (
-        <p className="rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-2 text-sm text-destructive">
+        <p className="rounded-xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
           {error}
         </p>
       )}
@@ -417,91 +408,34 @@ export function BracketCanvas({
         {nodes.length === 0 ? (
           <BracketEmptyState teamCount={teams.length} onCreate={() => setShowGenerate(true)} />
         ) : (
-          <div className="space-y-4">
-            <div className="flex flex-wrap items-center gap-2 justify-between">
-              <p className="text-xs sm:text-sm text-muted-foreground flex items-start gap-2 min-w-[200px] flex-1">
-                <MousePointerClick className="h-4 w-4 shrink-0 mt-0.5" aria-hidden />
-                <span>
-                  Drag or <strong className="font-medium text-foreground">click team → click slot</strong>.
-                  Drop on a team to swap. Drag match handles to swap fixtures. Ctrl+click for bulk select.
-                </span>
-              </p>
-              <div className="flex flex-wrap gap-1.5">
-                <Button variant="outline" size="sm" onClick={undo} disabled={structureLocked || undoStack.length === 0 || busy}>
-                  <Undo2 className="h-3.5 w-3.5 mr-1" /> Undo
-                </Button>
-                <Button variant="outline" size="sm" onClick={redo} disabled={structureLocked || redoStack.length === 0 || busy}>
-                  <Redo2 className="h-3.5 w-3.5 mr-1" /> Redo
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleRandomize}
-                  disabled={structureLocked || busy}
-                  className={randomizing ? 'animate-pulse' : ''}
-                >
-                  <Shuffle className="h-3.5 w-3.5 mr-1" />
-                  Random draw
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={handleToggleLock}
-                  disabled={resultsFrozen || playedMatches || lockMutation.isPending || busy}
-                  title={
-                    resultsFrozen
-                      ? 'Unfinalize the bracket to change structure lock'
-                      : playedMatches
-                      ? 'Cannot change lock — matches have started'
-                      : adminBracketLocked
-                      ? 'Unlock bracket structure for editing'
-                      : 'Lock bracket structure'
-                  }
-                >
-                  {adminBracketLocked ? (
-                    <>
-                      <Unlock className="h-3.5 w-3.5 mr-1" /> Unlock
-                    </>
-                  ) : (
-                    <>
-                      <Lock className="h-3.5 w-3.5 mr-1" /> Lock
-                    </>
-                  )}
-                </Button>
-                {resultsFrozen ? (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleUnfinalize}
-                    disabled={unfinalizeMutation.isPending || busy}
-                  >
-                    <RotateCcw className="h-3.5 w-3.5 mr-1" />
-                    Unfinalize
-                  </Button>
-                ) : (
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleFinalize}
-                    disabled={finalizeMutation.isPending || busy}
-                  >
-                    <CheckCircle2 className="h-3.5 w-3.5 mr-1" />
-                    Finalize
-                  </Button>
-                )}
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setShowGenerate(true)}
-                  disabled={structureLocked || busy}
-                >
-                  <GitBranch className="h-3.5 w-3.5 mr-1" />
-                  Regenerate
-                </Button>
-              </div>
-            </div>
+          <div className="space-y-8">
+            <BracketStatusBanner
+              resultsFrozen={resultsFrozen}
+              structureLocked={structureLocked}
+              adminBracketLocked={adminBracketLocked}
+              unassignedCount={teams.filter((t) => !assignedTeamIds.has(t.id)).length}
+            />
 
-            <BracketTeamPool
+            <TournamentToolbar
+              structureLocked={structureLocked}
+              resultsFrozen={resultsFrozen}
+              adminBracketLocked={adminBracketLocked}
+              playedMatches={playedMatches}
+              busy={busy}
+              randomizing={randomizing}
+              canUndo={undoStack.length > 0}
+              canRedo={redoStack.length > 0}
+              onUndo={undo}
+              onRedo={redo}
+              onRandomDraw={handleRandomize}
+              onRegenerate={() => setShowGenerate(true)}
+              onToggleLock={handleToggleLock}
+              onFinalize={handleFinalize}
+              onUnfinalize={handleUnfinalize}
+              onExport={handleExport}
+            />
+
+            <TeamPool
               teams={teams}
               assignedTeamIds={assignedTeamIds}
               selectedTeamId={selectedTeam?.id ?? null}
@@ -517,84 +451,45 @@ export function BracketCanvas({
               onClearSelection={() => setSelectedTeamIds(new Set())}
             />
 
-            <div className="overflow-x-auto overscroll-x-contain rounded-lg">
-              <div className="flex gap-5 min-w-max pb-4">
-                {presentStages.map((stage) => {
-                  const stageNodes = nodes
-                    .filter((n) => n.stage === stage)
-                    .sort((a, b) => a.position - b.position);
-
-                  return (
-                    <div key={stage} className="flex flex-col gap-3" style={{ minWidth: 228 }}>
-                      <div className="flex items-center gap-2">
-                        {stage === 'FINAL' && <Trophy className="h-4 w-4 text-amber-500" />}
-                        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
-                          {STAGE_LABELS[stage]}
-                        </p>
-                      </div>
-                      <div className="flex flex-col gap-3">
-                        <AnimatePresence mode="popLayout">
-                          {stageNodes.map((node) => (
-                            <m.div
-                              key={node.id}
-                              layout
-                              initial={{ opacity: 0, scale: 0.96 }}
-                              animate={{ opacity: 1, scale: 1 }}
-                              transition={{ duration: 0.2 }}
-                            >
-                              <BracketNodeCard
-                                node={node}
-                                firstStage={firstStage}
-                                structureLocked={structureLocked}
-                                resultsFrozen={resultsFrozen}
-                                canSwapMatch={
-                                  !structureLocked &&
-                                  !!firstStage &&
-                                  node.stage === firstStage &&
-                                  !node.winner_id
-                                }
-                                matchDragId={matchDragId}
-                                matchDropId={matchDropId}
-                                dragOver={dragOver}
-                                dragState={dragState}
-                                selectedTeamId={selectedTeam?.id ?? null}
-                                onMatchDragStart={(nodeId) => setMatchDragId(nodeId)}
-                                onMatchDragOver={(nodeId) => setMatchDropId(nodeId)}
-                                onMatchDragLeave={() => setMatchDropId(null)}
-                                onMatchDragEnd={() => {
-                                  setMatchDragId(null);
-                                  setMatchDropId(null);
-                                }}
-                                onMatchDrop={(nodeIdA, nodeIdB) => handleSwapMatches(nodeIdA, nodeIdB)}
-                                onDragStartFromSlot={(team, from, e) => startDrag(team, from, e)}
-                                onDragOverSlot={(nodeId, slot) => {
-                                  const target = nodes.find((n) => n.id === nodeId);
-                                  if (
-                                    !structureLocked &&
-                                    dragState &&
-                                    !matchDragId &&
-                                    target &&
-                                    canManuallyPlaceInNode(target, firstStage)
-                                  ) {
-                                    setDragOver({ nodeId, slot });
-                                  }
-                                }}
-                                onDragLeave={() => setDragOver(null)}
-                                onDrop={handleDrop}
-                                onSlotClick={handleSlotClick}
-                                onRemoveSlot={handleRemove}
-                                onAdvance={handleAdvance}
-                                advancePending={advanceMutation.isPending}
-                              />
-                            </m.div>
-                          ))}
-                        </AnimatePresence>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
+            <BracketTree
+              nodes={nodes}
+              firstStage={firstStage}
+              structureLocked={structureLocked}
+              resultsFrozen={resultsFrozen}
+              adminBracketFinalized={adminBracketFinalized}
+              matchDragId={matchDragId}
+              matchDropId={matchDropId}
+              dragOver={dragOver}
+              dragState={dragState}
+              selectedTeamId={selectedTeam?.id ?? null}
+              advancePending={advanceMutation.isPending}
+              onMatchDragStart={(nodeId) => setMatchDragId(nodeId)}
+              onMatchDragOver={(nodeId) => setMatchDropId(nodeId)}
+              onMatchDragLeave={() => setMatchDropId(null)}
+              onMatchDragEnd={() => {
+                setMatchDragId(null);
+                setMatchDropId(null);
+              }}
+              onMatchDrop={handleSwapMatches}
+              onDragStartFromSlot={(team, from, e) => startDrag(team, from, e)}
+              onDragOverSlot={(nodeId, slot) => {
+                const target = nodes.find((n) => n.id === nodeId);
+                if (
+                  !structureLocked &&
+                  dragState &&
+                  !matchDragId &&
+                  target &&
+                  canManuallyPlaceInNode(target, firstStage)
+                ) {
+                  setDragOver({ nodeId, slot });
+                }
+              }}
+              onDragLeave={() => setDragOver(null)}
+              onDrop={handleDrop}
+              onSlotClick={handleSlotClick}
+              onRemoveSlot={handleRemove}
+              onAdvance={handleAdvance}
+            />
           </div>
         )}
       </QueryState>
@@ -608,324 +503,6 @@ export function BracketCanvas({
         pending={generateMutation.isPending}
         onGenerate={handleGenerate}
       />
-    </div>
-  );
-}
-
-interface BracketNodeCardProps {
-  node: BracketNode;
-  firstStage: string | null;
-  structureLocked: boolean;
-  resultsFrozen: boolean;
-  canSwapMatch: boolean;
-  matchDragId: string | null;
-  matchDropId: string | null;
-  dragOver: { nodeId: string; slot: 'home' | 'away' } | null;
-  dragState: DragState | null;
-  selectedTeamId: string | null;
-  onMatchDragStart: (nodeId: string) => void;
-  onMatchDragOver: (nodeId: string) => void;
-  onMatchDragLeave: () => void;
-  onMatchDragEnd: () => void;
-  onMatchDrop: (nodeIdA: string, nodeIdB: string) => void;
-  onDragStartFromSlot: (team: Team, from: { nodeId: string; slot: 'home' | 'away' }, e: React.DragEvent) => void;
-  onDragOverSlot: (nodeId: string, slot: 'home' | 'away') => void;
-  onDragLeave: () => void;
-  onDrop: (e: React.DragEvent, nodeId: string, slot: 'home' | 'away') => void;
-  onSlotClick: (node: BracketNode, slot: 'home' | 'away') => void;
-  onRemoveSlot: (node: BracketNode, slot: 'home' | 'away') => void;
-  onAdvance: (node: BracketNode, winnerId: string) => void;
-  advancePending: boolean;
-}
-
-function BracketNodeCard({
-  node,
-  firstStage,
-  structureLocked,
-  resultsFrozen,
-  canSwapMatch,
-  matchDragId,
-  matchDropId,
-  dragOver,
-  dragState,
-  selectedTeamId,
-  onMatchDragStart,
-  onMatchDragOver,
-  onMatchDragLeave,
-  onMatchDragEnd,
-  onMatchDrop,
-  onDragStartFromSlot,
-  onDragOverSlot,
-  onDragLeave,
-  onDrop,
-  onSlotClick,
-  onRemoveSlot,
-  onAdvance,
-  advancePending,
-}: BracketNodeCardProps) {
-  const nodeReady =
-    !node.status || node.status === 'READY' || node.status === 'IN_PROGRESS';
-  const canAdvance =
-    nodeReady &&
-    !!(node.home_team_id && node.away_team_id && !node.winner_id) &&
-    !isByeSlot(node, 'home') &&
-    !isByeSlot(node, 'away');
-  const isDecided = !!node.winner_id;
-  const isAutoAdvanced = node.auto_advanced || node.status === 'AUTO_ADVANCED';
-  const winnerName =
-    node.winner_id === node.home_team_id ? node.home_team?.name : node.away_team?.name;
-  const isMatchDragging = matchDragId === node.id;
-  const isMatchDropTarget = matchDropId === node.id && matchDragId !== node.id;
-  const allowPlacement = canManuallyPlaceInNode(node, firstStage);
-  const slotLocked = structureLocked || !allowPlacement;
-
-  return (
-    <div
-      className={`rounded-lg border bg-card shadow-sm overflow-hidden ${
-        isDecided ? 'border-primary/30' : 'border-border'
-      } ${isMatchDropTarget ? 'ring-2 ring-primary/40' : ''} ${isMatchDragging ? 'opacity-60' : ''}`}
-      onDragOver={
-        canSwapMatch && matchDragId && matchDragId !== node.id && !dragState
-          ? (e) => {
-              e.preventDefault();
-              if (e.dataTransfer) e.dataTransfer.dropEffect = 'move';
-              onMatchDragOver(node.id);
-            }
-          : undefined
-      }
-      onDragLeave={canSwapMatch && !dragState ? onMatchDragLeave : undefined}
-      onDrop={
-        canSwapMatch && matchDragId && matchDragId !== node.id && !dragState
-          ? (e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              onMatchDrop(matchDragId, node.id);
-            }
-          : undefined
-      }
-    >
-      {canSwapMatch && (
-        <div
-          draggable
-          onDragStart={(e) => {
-            e.stopPropagation();
-            configureMatchDrag(e.nativeEvent, node.id);
-            onMatchDragStart(node.id);
-          }}
-          onDragEnd={() => onMatchDragEnd()}
-          className="flex cursor-grab items-center justify-center gap-1 border-b border-border bg-muted/40 py-0.5 text-[10px] text-muted-foreground active:cursor-grabbing"
-          title="Drag to swap with another match in this round"
-        >
-          <GripVertical className="h-3 w-3" />
-          Swap match
-        </div>
-      )}
-      <TeamSlot
-        node={node}
-        slot="home"
-        team={node.home_team}
-        locked={slotLocked}
-        isOver={dragOver?.nodeId === node.id && dragOver.slot === 'home'}
-        isDragging={!!dragState}
-        isClickTarget={!!selectedTeamId && allowPlacement && !isByeSlot(node, 'home')}
-        isWinner={!!node.winner_id && node.winner_id === node.home_team_id}
-        onDragStartFromSlot={onDragStartFromSlot}
-        onDragOver={(e) => {
-          e.preventDefault();
-          if (e.dataTransfer) e.dataTransfer.dropEffect = 'move';
-          onDragOverSlot(node.id, 'home');
-        }}
-        onDragLeave={onDragLeave}
-        onDrop={(e) => onDrop(e, node.id, 'home')}
-        onClick={() => onSlotClick(node, 'home')}
-        onRemove={
-          node.home_team && allowPlacement
-            ? () => onRemoveSlot(node, 'home')
-            : undefined
-        }
-      />
-
-      {node.match ? (
-        <div className="flex justify-center border-y border-border bg-muted/40 py-1 text-xs font-bold">
-          {node.match.home_score} – {node.match.away_score}
-        </div>
-      ) : (
-        <div className="border-y border-border" />
-      )}
-
-      <TeamSlot
-        node={node}
-        slot="away"
-        team={node.away_team}
-        locked={slotLocked}
-        isOver={dragOver?.nodeId === node.id && dragOver.slot === 'away'}
-        isDragging={!!dragState}
-        isClickTarget={!!selectedTeamId && allowPlacement && !isByeSlot(node, 'away')}
-        isWinner={!!node.winner_id && node.winner_id === node.away_team_id}
-        onDragStartFromSlot={onDragStartFromSlot}
-        onDragOver={(e) => {
-          e.preventDefault();
-          if (e.dataTransfer) e.dataTransfer.dropEffect = 'move';
-          onDragOverSlot(node.id, 'away');
-        }}
-        onDragLeave={onDragLeave}
-        onDrop={(e) => onDrop(e, node.id, 'away')}
-        onClick={() => onSlotClick(node, 'away')}
-        onRemove={
-          node.away_team && allowPlacement
-            ? () => onRemoveSlot(node, 'away')
-            : undefined
-        }
-      />
-
-      {canAdvance && !resultsFrozen && (
-        <div className="border-t border-border bg-muted/30 p-2 flex gap-1.5">
-          <p className="text-[10px] text-muted-foreground self-center mr-1">Winner:</p>
-          {[node.home_team, node.away_team].map(
-            (t) =>
-              t && (
-                <Button
-                  key={t.id}
-                  size="sm"
-                  variant="outline"
-                  className="h-6 px-2 text-[10px] flex-1 truncate"
-                  onClick={() => onAdvance(node, t.id)}
-                  disabled={advancePending}
-                >
-                  {t.name}
-                </Button>
-              ),
-          )}
-        </div>
-      )}
-
-      {isDecided && (
-        <div className="border-t border-border bg-primary/5 px-3 py-1.5">
-          <p className="text-[10px] font-semibold text-primary">
-            {isAutoAdvanced ? 'Auto-advanced' : 'Winner'}: {winnerName ?? '—'}
-          </p>
-        </div>
-      )}
-    </div>
-  );
-}
-
-interface TeamSlotProps {
-  node: BracketNode;
-  slot: 'home' | 'away';
-  team?: Team | null;
-  locked: boolean;
-  isOver: boolean;
-  isDragging: boolean;
-  isClickTarget: boolean;
-  isWinner: boolean;
-  onDragStartFromSlot: (team: Team, from: { nodeId: string; slot: 'home' | 'away' }, e: React.DragEvent) => void;
-  onDragOver: (e: React.DragEvent) => void;
-  onDragLeave: () => void;
-  onDrop: (e: React.DragEvent) => void;
-  onClick: () => void;
-  onRemove?: () => void;
-}
-
-function TeamSlot({
-  node,
-  slot,
-  team,
-  locked,
-  isOver,
-  isDragging,
-  isClickTarget,
-  isWinner,
-  onDragStartFromSlot,
-  onDragOver,
-  onDragLeave,
-  onDrop,
-  onClick,
-  onRemove,
-}: TeamSlotProps) {
-  const bye = isByeSlot(node, slot);
-
-  return (
-    <div
-      role="button"
-      tabIndex={isClickTarget ? 0 : undefined}
-      onKeyDown={(e) => {
-        if (isClickTarget && (e.key === 'Enter' || e.key === ' ')) {
-          e.preventDefault();
-          onClick();
-        }
-      }}
-      className={`flex items-center justify-between gap-2 px-3 py-2 min-h-[38px] transition-all duration-150 ${
-        isOver
-          ? 'bg-primary/15 ring-1 ring-primary/50'
-          : isClickTarget
-          ? 'bg-primary/5 ring-1 ring-primary/40 cursor-pointer'
-          : isDragging && !team && !bye
-          ? 'bg-muted/60 border-dashed'
-          : ''
-      } ${isWinner ? 'bg-primary/5' : ''} ${locked ? 'cursor-default' : ''}`}
-      onDragOver={locked ? undefined : onDragOver}
-      onDragLeave={locked ? undefined : onDragLeave}
-      onDrop={locked ? undefined : onDrop}
-      onClick={isClickTarget ? onClick : undefined}
-    >
-      {bye ? (
-        <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground/70 italic">
-          BYE — auto-advance
-        </span>
-      ) : team ? (
-        <>
-          <div
-            className="flex items-center gap-2 min-w-0 flex-1"
-            draggable={!locked}
-            onDragStart={(e) => {
-              if (locked) {
-                e.preventDefault();
-                return;
-              }
-              e.stopPropagation();
-              onDragStartFromSlot(team, { nodeId: node.id, slot }, e);
-            }}
-          >
-            {team.logo ? (
-              <img src={team.logo} alt="" className="h-5 w-5 rounded object-cover shrink-0" />
-            ) : (
-              <div
-                className="h-2.5 w-2.5 rounded-full shrink-0"
-                style={{ backgroundColor: team.primary_color ?? '#94a3b8' }}
-              />
-            )}
-            <span
-              className={`text-xs font-medium truncate ${
-                locked ? '' : 'cursor-grab active:cursor-grabbing'
-              } ${isWinner ? 'text-primary font-semibold' : 'text-foreground'}`}
-            >
-              {team.name}
-            </span>
-          </div>
-          {onRemove && (
-            <button
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation();
-                onRemove();
-              }}
-              className="text-muted-foreground hover:text-destructive text-sm shrink-0 px-1"
-              title="Remove from slot"
-            >
-              ×
-            </button>
-          )}
-        </>
-      ) : (
-        <span
-          className={`text-[11px] italic ${
-            isOver || isClickTarget ? 'text-primary font-medium' : 'text-muted-foreground/60'
-          }`}
-        >
-          {isOver ? 'Release to place' : isClickTarget ? 'Click to place team' : 'Empty slot'}
-        </span>
-      )}
     </div>
   );
 }

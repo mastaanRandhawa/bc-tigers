@@ -110,17 +110,19 @@ export function BracketEmptyState({
   onCreate: () => void;
 }) {
   return (
-    <div className="flex flex-col items-center gap-4 rounded-xl border border-dashed border-border py-16 text-center px-4">
-      <GitBranch className="h-12 w-12 text-muted-foreground/40" />
-      <div>
-        <p className="text-sm font-medium text-foreground">No bracket yet</p>
-        <p className="text-xs text-muted-foreground mt-1 max-w-sm">
-          Create an empty knockout tree, then drag teams into slots or use Random draw to shuffle the first round.
+    <div className="flex flex-col items-center gap-6 rounded-2xl border border-dashed border-border/80 bg-[hsl(var(--surface-muted))] py-20 text-center px-6 shadow-[var(--shadow-xs)]">
+      <div className="flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10">
+        <GitBranch className="h-8 w-8 text-primary" aria-hidden />
+      </div>
+      <div className="max-w-md space-y-2">
+        <p className="font-display text-xl font-semibold tracking-tight text-foreground">No bracket yet</p>
+        <p className="text-sm leading-relaxed text-muted-foreground">
+          Create an empty knockout tree, then drag teams into first-round slots or use Random draw to shuffle placements.
         </p>
       </div>
-      <Button onClick={onCreate} disabled={teamCount < 2}>
-        <GitBranch className="mr-1.5 h-4 w-4" />
-        Create Bracket
+      <Button onClick={onCreate} disabled={teamCount < 2} size="lg" className="rounded-full px-6">
+        <GitBranch className="mr-2 h-4 w-4" />
+        Create bracket
       </Button>
     </div>
   );

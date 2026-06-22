@@ -19,17 +19,17 @@ export default function AdminBrackets() {
   return (
     <AdminLayout
       title="Brackets"
-      description="Generate knockout brackets per division. Drag teams into slots or click a team, then click a slot."
+      description="Manage knockout tournaments with drag-and-drop seeding and live bracket progression."
     >
-      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-        <div className="w-full max-w-sm">
-          <label className="mb-1 block text-xs font-medium uppercase tracking-wide text-muted-foreground">
+      <div className="mb-8 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div className="w-full max-w-md space-y-2">
+          <label className="block text-[11px] font-semibold uppercase tracking-[0.1em] text-muted-foreground">
             Division
           </label>
           <select
             value={divisionId}
             onChange={(e) => setDivisionId(e.target.value)}
-            className="w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+            className="h-11 w-full rounded-xl border border-border/80 bg-card px-3 text-sm text-foreground shadow-[var(--shadow-xs)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
             aria-label="Select division"
           >
             <option value="">Select a division…</option>
@@ -65,6 +65,8 @@ export default function AdminBrackets() {
           <BracketCanvas
             divisionId={selectedDivision!.id}
             divisionSlug={selectedDivision!.slug}
+            divisionName={selectedDivision!.name}
+            tournamentName={selectedDivision!.tournament?.name}
             teams={teams}
             adminBracketLocked={selectedDivision!.bracket_locked ?? false}
             adminBracketFinalized={selectedDivision!.bracket_finalized ?? false}
