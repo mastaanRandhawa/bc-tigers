@@ -9,6 +9,8 @@ import {
   usePlaceBracketTeam,
   useRestoreBracket,
   useSetBracketLock,
+  useFinalizeBracket,
+  useUnfinalizeBracket,
   useSwapBracketMatches,
   useAssignBracketTeams,
   useValidateBracket,
@@ -20,7 +22,9 @@ import { BracketGenerateSheet, BracketEmptyState } from '@/components/admin/Brac
 import { BracketTeamPool } from '@/components/admin/BracketTeamPool';
 import { getApiErrorMessage } from '@/lib/errors';
 import {
-  isBracketLocked,
+  isStructureLocked,
+  isResultsFrozen,
+  hasPlayedMatches,
   isByeSlot,
   snapshotFromNodes,
   earliestStage,
@@ -42,6 +46,8 @@ import {
   MousePointerClick,
   GripVertical,
   Unlock,
+  CheckCircle2,
+  RotateCcw,
 } from 'lucide-react';
 import type { BracketNode, BracketStage, Team } from '@/types';
 
@@ -49,8 +55,8 @@ const STAGE_ORDER: BracketStage[] = [
   'ROUND_OF_16',
   'QUARTER_FINAL',
   'SEMI_FINAL',
-  'THIRD_PLACE',
   'FINAL',
+  'THIRD_PLACE',
 ];
 
 const STAGE_LABELS: Record<BracketStage, string> = {
@@ -66,6 +72,7 @@ interface BracketCanvasProps {
   divisionSlug: string;
   teams?: Team[];
   adminBracketLocked?: boolean;
+  adminBracketFinalized?: boolean;
 }
 
 interface DragState {
@@ -79,6 +86,7 @@ export function BracketCanvas({
   divisionSlug,
   teams = [],
   adminBracketLocked = false,
+  adminBracketFinalized = false,
 }: BracketCanvasProps) {
   const { data: nodes = [], isLoading, isError, refetch } = useBracket(divisionId);
   const generateMutation = useGenerateBracket();
@@ -87,6 +95,8 @@ export function BracketCanvas({
   const placeMutation = usePlaceBracketTeam();
   const restoreMutation = useRestoreBracket();
   const lockMutation = useSetBracketLock();
+  const finalizeMutation = useFinalizeBracket();
+  const unfinalizeMutation = useUnfinalizeBracket();
   const swapMutation = useSwapBracketMatches();
   const assignMutation = useAssignBracketTeams();
 
@@ -115,8 +125,9 @@ export function BracketCanvas({
   const [redoStack, setRedoStack] = useState<BracketSnapshot[]>([]);
   const [randomizing, setRandomizing] = useState(false);
 
-  const matchActivityLocked = isBracketLocked(nodes);
-  const locked = adminBracketLocked || matchActivityLocked;
+  const playedMatches = hasPlayedMatches(nodes);
+  const structureLocked = isStructureLocked(adminBracketLocked, adminBracketFinalized);
+  const resultsFrozen = isResultsFrozen(adminBracketFinalized);
   const firstStage = earliestStage(nodes, STAGE_ORDER);
 
   const assignedTeamIds = new Set<string>();
@@ -127,9 +138,10 @@ export function BracketCanvas({
 
   const presentStages = STAGE_ORDER.filter((stage) => nodes.some((n) => n.stage === stage));
 
-  const pushHistory = useCallback(() => {
-    if (nodes.length === 0) return;
-    setUndoStack((prev) => [...prev, snapshotFromNodes(nodes)].slice(-40));
+  const recordHistory = useCallback((snapshot?: BracketSnapshot) => {
+    const snap = snapshot ?? snapshotFromNodes(nodes);
+    if (snap.length === 0) return;
+    setUndoStack((prev) => [...prev, snap].slice(-40));
     setRedoStack([]);
   }, [nodes]);
 
@@ -139,7 +151,7 @@ export function BracketCanvas({
 
   const undo = async () => {
     const prev = undoStack[undoStack.length - 1];
-    if (!prev || locked) return;
+    if (!prev || structureLocked) return;
     setError('');
     try {
       const current = snapshotFromNodes(nodes);
@@ -153,7 +165,7 @@ export function BracketCanvas({
 
   const redo = async () => {
     const next = redoStack[redoStack.length - 1];
-    if (!next || locked) return;
+    if (!next || structureLocked) return;
     setError('');
     try {
       const current = snapshotFromNodes(nodes);
@@ -170,7 +182,7 @@ export function BracketCanvas({
     from?: { nodeId: string; slot: 'home' | 'away' },
     e?: React.DragEvent,
   ) => {
-    if (locked) return;
+    if (structureLocked) return;
     if (e) configureTeamDrag(e.nativeEvent, team.id);
     setDragState({ teamId: team.id, teamName: team.name, from });
     setSelectedTeam(null);
@@ -178,11 +190,12 @@ export function BracketCanvas({
   };
 
   const placeTeam = async (nodeId: string, slot: 'home' | 'away', teamId: string) => {
-    if (locked) return;
-    pushHistory();
+    if (structureLocked) return;
+    const before = snapshotFromNodes(nodes);
     setError('');
     try {
       await placeMutation.mutateAsync({ nodeId, teamId, slot });
+      recordHistory(before);
       setSelectedTeam(null);
       setDragState(null);
       setDragOver(null);
@@ -192,7 +205,7 @@ export function BracketCanvas({
   };
 
   const handleDrop = async (e: React.DragEvent, nodeId: string, slot: 'home' | 'away') => {
-    if (locked || readMatchDragId(e.nativeEvent)) return;
+    if (structureLocked || readMatchDragId(e.nativeEvent)) return;
     e.preventDefault();
     e.stopPropagation();
     const teamId = dragState?.teamId ?? readTeamDragId(e.nativeEvent);
@@ -201,13 +214,13 @@ export function BracketCanvas({
   };
 
   const handleSlotClick = async (node: BracketNode, slot: 'home' | 'away') => {
-    if (!selectedTeam || locked || node.winner_id) return;
+    if (!selectedTeam || structureLocked || node.winner_id) return;
     if (isByeSlot(node, slot)) return;
     await placeTeam(node.id, slot, selectedTeam.id);
   };
 
   const handlePoolClick = (team: Team, multi: boolean) => {
-    if (locked) return;
+    if (structureLocked) return;
     if (multi) {
       setSelectedTeamIds((prev) => {
         const next = new Set(prev);
@@ -224,10 +237,10 @@ export function BracketCanvas({
   };
 
   const handleRemoveSelected = async (teamIds: string[]) => {
-    if (locked || teamIds.length === 0) return;
-    pushHistory();
+    if (structureLocked || teamIds.length === 0) return;
+    const before = snapshotFromNodes(nodes);
     const removeSet = new Set(teamIds);
-    const snap = snapshotFromNodes(nodes).map((s) => {
+    const snap = before.map((s) => {
       const node = nodes.find((n) => n.id === s.id)!;
       return {
         ...s,
@@ -236,8 +249,10 @@ export function BracketCanvas({
         winner_id: null,
       };
     });
+    setError('');
     try {
       await restoreMutation.mutateAsync({ divisionId, snapshot: snap });
+      recordHistory(before);
       setSelectedTeamIds(new Set());
     } catch (err) {
       setError(getApiErrorMessage(err, 'Failed to remove teams'));
@@ -245,11 +260,13 @@ export function BracketCanvas({
   };
 
   const handleRandomizeSelected = async (teamIds: string[]) => {
-    if (locked || teamIds.length === 0) return;
-    pushHistory();
+    if (structureLocked || teamIds.length === 0) return;
+    const before = snapshotFromNodes(nodes);
     setRandomizing(true);
+    setError('');
     try {
       await assignMutation.mutateAsync({ divisionId, teamIds });
+      recordHistory(before);
       setSelectedTeamIds(new Set());
     } catch (err) {
       setError(getApiErrorMessage(err, 'Failed to assign teams'));
@@ -259,7 +276,11 @@ export function BracketCanvas({
   };
 
   const handleToggleLock = async () => {
-    if (matchActivityLocked && adminBracketLocked) {
+    if (resultsFrozen) {
+      setError('Unfinalize the bracket before changing structure lock');
+      return;
+    }
+    if (playedMatches && adminBracketLocked) {
       setError('Cannot unlock — matches have already started');
       return;
     }
@@ -271,12 +292,31 @@ export function BracketCanvas({
     }
   };
 
+  const handleFinalize = async () => {
+    setError('');
+    try {
+      await finalizeMutation.mutateAsync(divisionId);
+    } catch (err) {
+      setError(getApiErrorMessage(err, 'Failed to finalize bracket'));
+    }
+  };
+
+  const handleUnfinalize = async () => {
+    setError('');
+    try {
+      await unfinalizeMutation.mutateAsync(divisionId);
+    } catch (err) {
+      setError(getApiErrorMessage(err, 'Failed to unfinalize bracket'));
+    }
+  };
+
   const handleSwapMatches = async (nodeIdA: string, nodeIdB: string) => {
-    if (locked) return;
-    pushHistory();
+    if (structureLocked) return;
+    const before = snapshotFromNodes(nodes);
     setError('');
     try {
       await swapMutation.mutateAsync({ nodeIdA, nodeIdB });
+      recordHistory(before);
     } catch (err) {
       setError(getApiErrorMessage(err, 'Failed to swap matches'));
     }
@@ -285,10 +325,10 @@ export function BracketCanvas({
   };
 
   const handleRemove = async (node: BracketNode, slot: 'home' | 'away') => {
-    if (locked) return;
-    pushHistory();
+    if (structureLocked) return;
+    const before = snapshotFromNodes(nodes);
     setError('');
-    const snap = snapshotFromNodes(nodes).map((s) =>
+    const snap = before.map((s) =>
       s.id === node.id
         ? {
             ...s,
@@ -299,16 +339,18 @@ export function BracketCanvas({
     );
     try {
       await restoreMutation.mutateAsync({ divisionId, snapshot: snap });
+      recordHistory(before);
     } catch (err) {
       setError(getApiErrorMessage(err, 'Failed to remove team'));
     }
   };
 
   const handleAdvance = async (node: BracketNode, winnerId: string) => {
-    pushHistory();
+    const before = snapshotFromNodes(nodes);
     setError('');
     try {
       await advanceMutation.mutateAsync({ nodeId: node.id, winnerId });
+      recordHistory(before);
     } catch (err) {
       setError(getApiErrorMessage(err, 'Failed to advance winner'));
     }
@@ -327,12 +369,13 @@ export function BracketCanvas({
   };
 
   const handleRandomize = async () => {
-    if (locked) return;
-    pushHistory();
+    if (structureLocked) return;
+    const before = snapshotFromNodes(nodes);
     setRandomizing(true);
     setError('');
     try {
       await randomizeMutation.mutateAsync(divisionId);
+      recordHistory(before);
     } catch (err) {
       setError(getApiErrorMessage(err, 'Random draw failed'));
     } finally {
@@ -347,17 +390,21 @@ export function BracketCanvas({
     advanceMutation.isPending ||
     restoreMutation.isPending ||
     lockMutation.isPending ||
+    finalizeMutation.isPending ||
+    unfinalizeMutation.isPending ||
     swapMutation.isPending ||
     assignMutation.isPending;
 
   return (
     <div className="space-y-4">
-      {locked && (
+      {(structureLocked || resultsFrozen) && (
         <div className="flex items-center gap-2 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-800 dark:text-amber-200">
           <Lock className="h-3.5 w-3.5 shrink-0" />
-          {matchActivityLocked
-            ? 'Bracket locked — matches have started. Scores can still be updated from match pages.'
-            : 'Bracket locked by admin — unlock to edit placements.'}
+          {resultsFrozen
+            ? 'Bracket finalized — results cannot be changed. Unfinalize to edit again.'
+            : adminBracketLocked
+            ? 'Structure locked — unlock to edit teams and seeding. You can still enter match results.'
+            : 'Structure locked.'}
         </div>
       )}
 
@@ -381,17 +428,17 @@ export function BracketCanvas({
                 </span>
               </p>
               <div className="flex flex-wrap gap-1.5">
-                <Button variant="outline" size="sm" onClick={undo} disabled={locked || undoStack.length === 0 || busy}>
+                <Button variant="outline" size="sm" onClick={undo} disabled={structureLocked || undoStack.length === 0 || busy}>
                   <Undo2 className="h-3.5 w-3.5 mr-1" /> Undo
                 </Button>
-                <Button variant="outline" size="sm" onClick={redo} disabled={locked || redoStack.length === 0 || busy}>
+                <Button variant="outline" size="sm" onClick={redo} disabled={structureLocked || redoStack.length === 0 || busy}>
                   <Redo2 className="h-3.5 w-3.5 mr-1" /> Redo
                 </Button>
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={handleRandomize}
-                  disabled={locked || busy}
+                  disabled={structureLocked || busy}
                   className={randomizing ? 'animate-pulse' : ''}
                 >
                   <Shuffle className="h-3.5 w-3.5 mr-1" />
@@ -401,13 +448,15 @@ export function BracketCanvas({
                   variant="outline"
                   size="sm"
                   onClick={handleToggleLock}
-                  disabled={matchActivityLocked || lockMutation.isPending || busy}
+                  disabled={resultsFrozen || playedMatches || lockMutation.isPending || busy}
                   title={
-                    matchActivityLocked
+                    resultsFrozen
+                      ? 'Unfinalize the bracket to change structure lock'
+                      : playedMatches
                       ? 'Cannot change lock — matches have started'
                       : adminBracketLocked
-                      ? 'Unlock bracket for editing'
-                      : 'Lock bracket to prevent edits'
+                      ? 'Unlock bracket structure for editing'
+                      : 'Lock bracket structure'
                   }
                 >
                   {adminBracketLocked ? (
@@ -420,7 +469,33 @@ export function BracketCanvas({
                     </>
                   )}
                 </Button>
-                <Button variant="outline" size="sm" onClick={() => setShowGenerate(true)} disabled={busy}>
+                {resultsFrozen ? (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleUnfinalize}
+                    disabled={unfinalizeMutation.isPending || busy}
+                  >
+                    <RotateCcw className="h-3.5 w-3.5 mr-1" />
+                    Unfinalize
+                  </Button>
+                ) : (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleFinalize}
+                    disabled={finalizeMutation.isPending || busy}
+                  >
+                    <CheckCircle2 className="h-3.5 w-3.5 mr-1" />
+                    Finalize
+                  </Button>
+                )}
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setShowGenerate(true)}
+                  disabled={structureLocked || busy}
+                >
                   <GitBranch className="h-3.5 w-3.5 mr-1" />
                   Regenerate
                 </Button>
@@ -434,7 +509,7 @@ export function BracketCanvas({
               selectedTeamId={selectedTeam?.id ?? null}
               selectedTeamIds={selectedTeamIds}
               dragTeamId={dragState?.teamId ?? null}
-              locked={locked}
+              locked={structureLocked}
               busy={busy}
               onSelectTeam={handlePoolClick}
               onDragStart={(team, e) => startDrag(team, undefined, e)}
@@ -471,9 +546,10 @@ export function BracketCanvas({
                             >
                               <BracketNodeCard
                                 node={node}
-                                locked={locked}
+                                structureLocked={structureLocked}
+                                resultsFrozen={resultsFrozen}
                                 canSwapMatch={
-                                  !locked &&
+                                  !structureLocked &&
                                   !!firstStage &&
                                   node.stage === firstStage &&
                                   !node.winner_id
@@ -493,7 +569,7 @@ export function BracketCanvas({
                                 onMatchDrop={(nodeIdA, nodeIdB) => handleSwapMatches(nodeIdA, nodeIdB)}
                                 onDragStartFromSlot={(team, from, e) => startDrag(team, from, e)}
                                 onDragOverSlot={(nodeId, slot) => {
-                                  if (!locked && dragState && !matchDragId) {
+                                  if (!structureLocked && dragState && !matchDragId) {
                                     setDragOver({ nodeId, slot });
                                   }
                                 }}
@@ -532,7 +608,8 @@ export function BracketCanvas({
 
 interface BracketNodeCardProps {
   node: BracketNode;
-  locked: boolean;
+  structureLocked: boolean;
+  resultsFrozen: boolean;
   canSwapMatch: boolean;
   matchDragId: string | null;
   matchDropId: string | null;
@@ -556,7 +633,8 @@ interface BracketNodeCardProps {
 
 function BracketNodeCard({
   node,
-  locked,
+  structureLocked,
+  resultsFrozen,
   canSwapMatch,
   matchDragId,
   matchDropId,
@@ -577,11 +655,17 @@ function BracketNodeCard({
   onAdvance,
   advancePending,
 }: BracketNodeCardProps) {
+  const nodeReady =
+    !node.status || node.status === 'READY' || node.status === 'IN_PROGRESS';
   const canAdvance =
+    nodeReady &&
     !!(node.home_team_id && node.away_team_id && !node.winner_id) &&
     !isByeSlot(node, 'home') &&
     !isByeSlot(node, 'away');
   const isDecided = !!node.winner_id;
+  const isAutoAdvanced = node.auto_advanced || node.status === 'AUTO_ADVANCED';
+  const winnerName =
+    node.winner_id === node.home_team_id ? node.home_team?.name : node.away_team?.name;
   const isMatchDragging = matchDragId === node.id;
   const isMatchDropTarget = matchDropId === node.id && matchDragId !== node.id;
 
@@ -630,7 +714,7 @@ function BracketNodeCard({
         node={node}
         slot="home"
         team={node.home_team}
-        locked={locked}
+        locked={structureLocked}
         isOver={dragOver?.nodeId === node.id && dragOver.slot === 'home'}
         isDragging={!!dragState}
         isClickTarget={!!selectedTeamId && !node.winner_id && !isByeSlot(node, 'home')}
@@ -644,7 +728,11 @@ function BracketNodeCard({
         onDragLeave={onDragLeave}
         onDrop={(e) => onDrop(e, node.id, 'home')}
         onClick={() => onSlotClick(node, 'home')}
-        onRemove={node.home_team && !locked && !node.winner_id ? () => onRemoveSlot(node, 'home') : undefined}
+        onRemove={
+          node.home_team && !structureLocked && !node.winner_id
+            ? () => onRemoveSlot(node, 'home')
+            : undefined
+        }
       />
 
       {node.match ? (
@@ -659,7 +747,7 @@ function BracketNodeCard({
         node={node}
         slot="away"
         team={node.away_team}
-        locked={locked}
+        locked={structureLocked}
         isOver={dragOver?.nodeId === node.id && dragOver.slot === 'away'}
         isDragging={!!dragState}
         isClickTarget={!!selectedTeamId && !node.winner_id && !isByeSlot(node, 'away')}
@@ -673,10 +761,14 @@ function BracketNodeCard({
         onDragLeave={onDragLeave}
         onDrop={(e) => onDrop(e, node.id, 'away')}
         onClick={() => onSlotClick(node, 'away')}
-        onRemove={node.away_team && !locked && !node.winner_id ? () => onRemoveSlot(node, 'away') : undefined}
+        onRemove={
+          node.away_team && !structureLocked && !node.winner_id
+            ? () => onRemoveSlot(node, 'away')
+            : undefined
+        }
       />
 
-      {canAdvance && !locked && (
+      {canAdvance && !resultsFrozen && (
         <div className="border-t border-border bg-muted/30 p-2 flex gap-1.5">
           <p className="text-[10px] text-muted-foreground self-center mr-1">Winner:</p>
           {[node.home_team, node.away_team].map(
@@ -700,8 +792,7 @@ function BracketNodeCard({
       {isDecided && (
         <div className="border-t border-border bg-primary/5 px-3 py-1.5">
           <p className="text-[10px] font-semibold text-primary">
-            Winner:{' '}
-            {node.winner_id === node.home_team_id ? node.home_team?.name : node.away_team?.name}
+            {isAutoAdvanced ? 'Auto-advanced' : 'Winner'}: {winnerName ?? '—'}
           </p>
         </div>
       )}

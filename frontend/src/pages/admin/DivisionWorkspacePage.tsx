@@ -337,6 +337,7 @@ export default function DivisionWorkspacePage() {
                   divisionSlug={division.slug}
                   teams={teams}
                   adminBracketLocked={division.bracket_locked ?? false}
+                  adminBracketFinalized={division.bracket_finalized ?? false}
                 />
               </TabsContent>
             </Tabs>

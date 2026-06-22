@@ -67,6 +67,7 @@ export default function AdminBrackets() {
             divisionSlug={selectedDivision!.slug}
             teams={teams}
             adminBracketLocked={selectedDivision!.bracket_locked ?? false}
+            adminBracketFinalized={selectedDivision!.bracket_finalized ?? false}
           />
         </QueryState>
       )}

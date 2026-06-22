@@ -57,12 +57,31 @@ export function snapshotFromNodes(
 export function isBracketLocked(
   nodes: Array<{ winner_id?: string | null; match?: { status?: string } | null }>,
 ): boolean {
+  /** @deprecated Use hasPlayedMatches — BYE auto-advance must not lock structure */
+  return hasPlayedMatches(nodes);
+}
+
+/** True when linked matches are live or completed (not BYE auto-advance). */
+export function hasPlayedMatches(
+  nodes: Array<{ match?: { status?: string } | null }>,
+): boolean {
   return nodes.some(
     (n) =>
-      !!n.winner_id ||
       n.match?.status === 'LIVE' ||
-      n.match?.status === 'COMPLETED',
+      n.match?.status === 'COMPLETED' ||
+      n.match?.status === 'HALFTIME',
   );
+}
+
+export function isStructureLocked(
+  adminBracketLocked: boolean,
+  adminBracketFinalized = false,
+): boolean {
+  return adminBracketLocked || adminBracketFinalized;
+}
+
+export function isResultsFrozen(adminBracketFinalized = false): boolean {
+  return adminBracketFinalized;
 }
 
 export function isByeSlot(

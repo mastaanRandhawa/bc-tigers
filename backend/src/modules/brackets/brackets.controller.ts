@@ -49,6 +49,18 @@ export class BracketsController {
     return this.service.setBracketLock(divisionId, body.locked);
   }
 
+  @Patch(':divisionId/finalize')
+  @AdminOnly()
+  finalize(@Param('divisionId') divisionId: string) {
+    return this.service.finalizeBracket(divisionId);
+  }
+
+  @Patch(':divisionId/unfinalize')
+  @AdminOnly()
+  unfinalize(@Param('divisionId') divisionId: string) {
+    return this.service.unfinalizeBracket(divisionId);
+  }
+
   @Post(':divisionId/assign-teams')
   @AdminOnly()
   assignTeams(

@@ -27,6 +27,12 @@ export const bracketsService = {
   setLock: (divisionId: string, locked: boolean) =>
     apiClient.patch<{ id: string; bracket_locked: boolean }>(`/brackets/${divisionId}/lock`, { locked }),
 
+  finalize: (divisionId: string) =>
+    apiClient.patch<{ id: string; bracket_finalized: boolean }>(`/brackets/${divisionId}/finalize`),
+
+  unfinalize: (divisionId: string) =>
+    apiClient.patch<{ id: string; bracket_finalized: boolean }>(`/brackets/${divisionId}/unfinalize`),
+
   swapMatches: (nodeIdA: string, nodeIdB: string) =>
     apiClient.patch<BracketNode[]>('/brackets/nodes/swap', {
       node_id_a: nodeIdA,
