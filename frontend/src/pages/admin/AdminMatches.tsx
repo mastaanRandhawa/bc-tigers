@@ -6,6 +6,7 @@ import MatchFormDialog from '@/components/admin/forms/MatchFormDialog';
 import MatchScoreFormDialog from '@/components/admin/forms/MatchScoreFormDialog';
 import MatchEventFormDialog from '@/components/admin/forms/MatchEventFormDialog';
 import { ConfirmDialog } from '@/components/admin/inline/ConfirmDialog';
+import { AdminMatchMobileRow } from '@/components/admin/AdminMatchMobileRow';
 import { useFormDialog } from '@/hooks/useFormDialog';
 import { useMatches, useDeleteMatch } from '@/hooks/useMatches';
 import type { Match } from '@/types';
@@ -21,10 +22,13 @@ const columns = (onScore: (m: Match) => void, onEvent: (m: Match) => void) => [
   {
     key: 'teams',
     label: 'Match',
+    className: 'min-w-[12rem]',
     render: (m: Match) => (
-      <div>
-        <p className="font-semibold text-foreground">
-          {m.home_team?.name ?? 'TBD'} vs {m.away_team?.name ?? 'TBD'}
+      <div className="min-w-0">
+        <p className="font-semibold text-foreground leading-snug">
+          <span className="whitespace-nowrap">{m.home_team?.name ?? 'TBD'}</span>
+          <span className="mx-1 font-normal text-muted-foreground">vs</span>
+          <span className="whitespace-nowrap">{m.away_team?.name ?? 'TBD'}</span>
         </p>
         <p className="text-xs text-muted-foreground">
           {formatDate(m.scheduled_start)} · {formatTime(m.scheduled_start)}
@@ -74,7 +78,7 @@ const columns = (onScore: (m: Match) => void, onEvent: (m: Match) => void) => [
       </div>
     ),
   },
-  { key: 'round', label: 'Round', render: (m: Match) => <span>{m.round ?? '—'}</span> },
+  { key: 'round', label: 'Round', className: 'hidden lg:table-cell whitespace-nowrap', render: (m: Match) => <span>{m.round ?? '—'}</span> },
 ];
 
 export default function AdminMatches() {
@@ -92,6 +96,13 @@ export default function AdminMatches() {
           title="All Matches"
           data={matches}
           columns={columns(setScoreMatch, setEventMatch)}
+          mobileRender={(m) => (
+            <AdminMatchMobileRow
+              match={m}
+              onScore={setScoreMatch}
+              onEvent={setEventMatch}
+            />
+          )}
           onAdd={formDialog.openCreate}
           onEdit={formDialog.openEdit}
           onDelete={(m) => setDeleteTarget(m)}

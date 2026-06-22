@@ -12,6 +12,7 @@ import DivisionFormDialog from '@/components/admin/forms/DivisionFormDialog';
 import { ScheduleGeneratorSheet } from '@/components/admin/ScheduleGeneratorSheet';
 import { BracketCanvas } from '@/components/admin/BracketCanvas';
 import { ConfirmDialog } from '@/components/admin/inline/ConfirmDialog';
+import { AdminMatchMobileRow } from '@/components/admin/AdminMatchMobileRow';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import AdminStatGrid from '@/components/admin/AdminStatGrid';
@@ -106,10 +107,13 @@ export default function DivisionWorkspacePage() {
     {
       key: 'teams',
       label: 'Match',
+      className: 'min-w-[12rem]',
       render: (m: Match) => (
-        <div>
-          <p className="text-sm font-semibold text-foreground">
-            {m.home_team?.name ?? 'TBD'} vs {m.away_team?.name ?? 'TBD'}
+        <div className="min-w-0">
+          <p className="text-sm font-semibold text-foreground leading-snug">
+            <span className="whitespace-nowrap">{m.home_team?.name ?? 'TBD'}</span>
+            <span className="mx-1 font-normal text-muted-foreground">vs</span>
+            <span className="whitespace-nowrap">{m.away_team?.name ?? 'TBD'}</span>
           </p>
           <p className="text-xs text-muted-foreground">
             {formatDate(m.scheduled_start)} · {formatTime(m.scheduled_start)}
@@ -155,7 +159,7 @@ export default function DivisionWorkspacePage() {
         </div>
       ),
     },
-    { key: 'round', label: 'Rnd', render: (m: Match) => <span className="text-xs">{m.round ?? '—'}</span> },
+    { key: 'round', label: 'Rnd', className: 'hidden lg:table-cell whitespace-nowrap', render: (m: Match) => <span className="text-xs">{m.round ?? '—'}</span> },
   ];
 
   return (
@@ -269,6 +273,15 @@ export default function DivisionWorkspacePage() {
                   title=""
                   data={matches}
                   columns={matchColumns}
+                  mobileRender={(m) => (
+                    <AdminMatchMobileRow
+                      match={m}
+                      onScore={setScoreMatch}
+                      onEvent={setEventMatch}
+                      onStatusChange={handleStatusChange}
+                      statusOptions={MATCH_STATUS_OPTIONS}
+                    />
+                  )}
                   onEdit={matchDialog.openEdit}
                   onDelete={(m) => setDeleteTarget({ type: 'match', id: m.id, label: `${m.home_team?.name} vs ${m.away_team?.name}` })}
                   getSearchText={matchSearchText}

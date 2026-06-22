@@ -78,6 +78,8 @@ interface AdminTableProps<T extends { id: string }> {
   /** Active/Deleted/All scope toggle (rendered when onScopeChange provided). */
   scope?: RecordScope;
   onScopeChange?: (scope: RecordScope) => void;
+  /** Card layout for viewports below `md` (table still used on desktop). */
+  mobileRender?: (row: T) => React.ReactNode;
 }
 
 export default function AdminTable<T extends { id: string }>({
@@ -97,6 +99,7 @@ export default function AdminTable<T extends { id: string }>({
   getIsDeleted,
   scope,
   onScopeChange,
+  mobileRender,
 }: AdminTableProps<T>) {
   const hasActions = !!(onEdit || onDelete || onHistory || onRestore || onPurge);
   const [search, setSearch] = useState('');
@@ -116,6 +119,74 @@ export default function AdminTable<T extends { id: string }>({
 
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
   const paginated = filtered.slice((page - 1) * pageSize, page * pageSize);
+
+  const renderActions = (row: T) => {
+    const deleted = getIsDeleted?.(row) ?? false;
+    return (
+      <div className="flex items-center justify-end gap-0.5">
+        {onHistory && (
+          <button
+            type="button"
+            onClick={() => onHistory(row)}
+            className="flex items-center justify-center w-9 h-9 sm:w-8 sm:h-8 text-muted-foreground hover:text-primary hover:bg-primary-muted rounded-lg transition-colors touch-manipulation"
+            aria-label="History"
+            title="View history"
+          >
+            <History className="w-4 h-4" />
+          </button>
+        )}
+        {deleted ? (
+          <>
+            {onRestore && (
+              <button
+                type="button"
+                onClick={() => onRestore(row)}
+                className="flex items-center justify-center w-9 h-9 sm:w-8 sm:h-8 text-muted-foreground hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors touch-manipulation"
+                aria-label="Restore"
+                title="Restore"
+              >
+                <RotateCcw className="w-4 h-4" />
+              </button>
+            )}
+            {onPurge && (
+              <button
+                type="button"
+                onClick={() => onPurge(row)}
+                className="flex items-center justify-center w-9 h-9 sm:w-8 sm:h-8 text-muted-foreground hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors touch-manipulation"
+                aria-label="Purge"
+                title="Permanently delete"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+            )}
+          </>
+        ) : (
+          <>
+            {onEdit && (
+              <button
+                type="button"
+                onClick={() => onEdit(row)}
+                className="flex items-center justify-center w-9 h-9 sm:w-8 sm:h-8 text-muted-foreground hover:text-primary hover:bg-primary-muted rounded-lg transition-colors touch-manipulation"
+                aria-label="Edit"
+              >
+                <Edit2 className="w-4 h-4" />
+              </button>
+            )}
+            {onDelete && (
+              <button
+                type="button"
+                onClick={() => onDelete(row)}
+                className="flex items-center justify-center w-9 h-9 sm:w-8 sm:h-8 text-muted-foreground hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors touch-manipulation"
+                aria-label="Delete"
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+            )}
+          </>
+        )}
+      </div>
+    );
+  };
 
   return (
     <Card className="overflow-hidden">
@@ -166,106 +237,65 @@ export default function AdminTable<T extends { id: string }>({
       {paginated.length === 0 ? (
         <EmptyState title="No records found" message="Try adjusting your search or add a new record." />
       ) : (
-        <div className="overflow-x-auto">
-          <Table>
-            <TableHeader>
-              <TableRow className="hover:bg-transparent">
-                {columns.map((col) => (
-                  <TableHead key={col.key} className={col.className}>
-                    {col.label}
-                  </TableHead>
-                ))}
-                {hasActions && <TableHead className="text-right">Actions</TableHead>}
-              </TableRow>
-            </TableHeader>
-            <TableBody>
+        <>
+          {mobileRender && (
+            <div className="divide-y divide-border md:hidden">
               {paginated.map((row) => {
                 const deleted = getIsDeleted?.(row) ?? false;
                 return (
-                <TableRow key={row.id} className={cn(deleted && 'opacity-60')}>
-                  {columns.map((col) => (
-                    <TableCell key={col.key} className={col.className}>
-                      {col.render
-                        ? col.render(row)
-                        : (
-                          <span className="break-words">
-                            {String((row as Record<string, unknown>)[col.key] ?? '—')}
-                          </span>
-                        )}
-                    </TableCell>
-                  ))}
-                  {hasActions && (
-                    <TableCell className="text-right">
-                      <div className="flex items-center justify-end gap-0.5">
-                        {onHistory && (
-                          <button
-                            type="button"
-                            onClick={() => onHistory(row)}
-                            className="flex items-center justify-center w-9 h-9 sm:w-8 sm:h-8 text-muted-foreground hover:text-primary hover:bg-primary-muted rounded-lg transition-colors touch-manipulation"
-                            aria-label="History"
-                            title="View history"
-                          >
-                            <History className="w-4 h-4" />
-                          </button>
-                        )}
-                        {deleted ? (
-                          <>
-                            {onRestore && (
-                              <button
-                                type="button"
-                                onClick={() => onRestore(row)}
-                                className="flex items-center justify-center w-9 h-9 sm:w-8 sm:h-8 text-muted-foreground hover:text-green-600 hover:bg-green-50 rounded-lg transition-colors touch-manipulation"
-                                aria-label="Restore"
-                                title="Restore"
-                              >
-                                <RotateCcw className="w-4 h-4" />
-                              </button>
-                            )}
-                            {onPurge && (
-                              <button
-                                type="button"
-                                onClick={() => onPurge(row)}
-                                className="flex items-center justify-center w-9 h-9 sm:w-8 sm:h-8 text-muted-foreground hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors touch-manipulation"
-                                aria-label="Purge"
-                                title="Permanently delete"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </button>
-                            )}
-                          </>
-                        ) : (
-                          <>
-                            {onEdit && (
-                              <button
-                                type="button"
-                                onClick={() => onEdit(row)}
-                                className="flex items-center justify-center w-9 h-9 sm:w-8 sm:h-8 text-muted-foreground hover:text-primary hover:bg-primary-muted rounded-lg transition-colors touch-manipulation"
-                                aria-label="Edit"
-                              >
-                                <Edit2 className="w-4 h-4" />
-                              </button>
-                            )}
-                            {onDelete && (
-                              <button
-                                type="button"
-                                onClick={() => onDelete(row)}
-                                className="flex items-center justify-center w-9 h-9 sm:w-8 sm:h-8 text-muted-foreground hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors touch-manipulation"
-                                aria-label="Delete"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </button>
-                            )}
-                          </>
-                        )}
+                  <div key={row.id} className={cn('p-3.5', deleted && 'opacity-60')}>
+                    {mobileRender(row)}
+                    {hasActions && (
+                      <div className="mt-3 flex items-center justify-end border-t border-border/60 pt-2">
+                        {renderActions(row)}
                       </div>
-                    </TableCell>
-                  )}
-                </TableRow>
+                    )}
+                  </div>
                 );
               })}
-            </TableBody>
-          </Table>
-        </div>
+            </div>
+          )}
+
+          <div className={cn('overflow-x-auto', mobileRender && 'hidden md:block')}>
+            <Table>
+              <TableHeader>
+                <TableRow className="hover:bg-transparent">
+                  {columns.map((col) => (
+                    <TableHead key={col.key} className={col.className}>
+                      {col.label}
+                    </TableHead>
+                  ))}
+                  {hasActions && <TableHead className="text-right">Actions</TableHead>}
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {paginated.map((row) => {
+                  const deleted = getIsDeleted?.(row) ?? false;
+                  return (
+                    <TableRow key={row.id} className={cn(deleted && 'opacity-60')}>
+                      {columns.map((col) => (
+                        <TableCell key={col.key} className={col.className}>
+                          {col.render
+                            ? col.render(row)
+                            : (
+                              <span className="break-words">
+                                {String((row as Record<string, unknown>)[col.key] ?? '—')}
+                              </span>
+                            )}
+                        </TableCell>
+                      ))}
+                      {hasActions && (
+                        <TableCell className="text-right">
+                          {renderActions(row)}
+                        </TableCell>
+                      )}
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          </div>
+        </>
       )}
 
       {totalPages > 1 && (
