@@ -10,7 +10,8 @@ export class MatchOfficialsController {
   @AdminOnly()
   assign(
     @Param('matchId') matchId: string,
-    @Body() body: { name: string; role?: string; email?: string; phone?: string },
+    @Body()
+    body: { name: string; role?: string; email?: string; phone?: string },
   ) {
     return this.service.assignOfficial(matchId, body);
   }

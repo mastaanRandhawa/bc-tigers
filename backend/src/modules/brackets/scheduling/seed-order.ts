@@ -32,12 +32,19 @@ export function standardSeedPairs(bracketSize: number): SeedPair[] {
 export function buildFirstRoundSlots(
   teamIds: string[],
   bracketSize: number,
-): Array<{ homeTeamId: string | null; awayTeamId: string | null; homeSeed: number; awaySeed: number }> {
+): Array<{
+  homeTeamId: string | null;
+  awayTeamId: string | null;
+  homeSeed: number;
+  awaySeed: number;
+}> {
   if (teamIds.length < 2) {
     throw new Error('Need at least 2 teams');
   }
   if (teamIds.length > bracketSize) {
-    throw new Error(`Too many teams (${teamIds.length}) for bracket size ${bracketSize}`);
+    throw new Error(
+      `Too many teams (${teamIds.length}) for bracket size ${bracketSize}`,
+    );
   }
 
   const unique = new Set(teamIds);
@@ -62,13 +69,17 @@ export function buildFirstRoundSlots(
 
     if (homeTeamId) {
       if (used.has(homeTeamId)) {
-        throw new Error(`Team ${homeTeamId} would appear twice (seed ${homeSeed})`);
+        throw new Error(
+          `Team ${homeTeamId} would appear twice (seed ${homeSeed})`,
+        );
       }
       used.add(homeTeamId);
     }
     if (awayTeamId) {
       if (used.has(awayTeamId)) {
-        throw new Error(`Team ${awayTeamId} would appear twice (seed ${awaySeed})`);
+        throw new Error(
+          `Team ${awayTeamId} would appear twice (seed ${awaySeed})`,
+        );
       }
       used.add(awayTeamId);
     }

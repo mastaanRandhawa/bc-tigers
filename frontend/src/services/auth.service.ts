@@ -10,9 +10,6 @@ export const authService = {
   updateProfile: (data: Partial<Pick<User, 'first_name' | 'last_name' | 'phone' | 'profile_image'>>) =>
     apiClient.patch<User>('/auth/me', data),
 
-  changePassword: (current_password: string, new_password: string) =>
-    apiClient.post<{ message: string }>('/auth/change-password', { current_password, new_password }),
-
   forgotPassword: (email: string) =>
     apiClient.post<{ message: string }>('/auth/forgot-password', { email }),
 

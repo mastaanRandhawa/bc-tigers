@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import type { Prisma } from '@prisma/client';
 import prisma from '../../prisma/prisma';
 import {
@@ -7,6 +11,7 @@ import {
   slugifyPlayerName,
 } from '../../common/player-slug';
 import { getMaxPlayersPerTeam } from '../settings/settings.service';
+import { pickAllowed } from '../../common/pick';
 
 type PlayerWriteInput = {
   first_name?: string;
@@ -15,6 +20,15 @@ type PlayerWriteInput = {
   active?: boolean;
   [key: string]: unknown;
 };
+
+function parseDobInput(value: unknown): Date | undefined {
+  if (value == null || value === '') return undefined;
+  if (value instanceof Date) return value;
+  if (typeof value === 'string' || typeof value === 'number') {
+    return new Date(value);
+  }
+  return undefined;
+}
 
 @Injectable()
 export class TeamPlayersService {
@@ -36,7 +50,11 @@ export class TeamPlayersService {
 
     return prisma.player.findMany({
       where: { team_id: teamId },
-      orderBy: [{ active: 'desc' }, { last_name: 'asc' }, { first_name: 'asc' }],
+      orderBy: [
+        { active: 'desc' },
+        { last_name: 'asc' },
+        { first_name: 'asc' },
+      ],
     });
   }
 
@@ -94,7 +112,7 @@ export class TeamPlayersService {
         jersey_number: input.jersey_number as number | undefined,
         preferred_position: input.preferred_position as string | undefined,
         profile_image: input.profile_image as string | undefined,
-        dob: input.dob ? new Date(String(input.dob)) : undefined,
+        dob: parseDobInput(input.dob),
       },
     });
   }
@@ -105,11 +123,21 @@ export class TeamPlayersService {
     });
     if (!player) throw new NotFoundException('Player not found on this team');
 
-    const input = data as PlayerWriteInput;
-    const { slug: _ignored, ...rest } = input;
+    const patch = pickAllowed<Prisma.PlayerUncheckedUpdateInput>(data, [
+      'first_name',
+      'last_name',
+      'jersey_number',
+      'preferred_position',
+      'profile_image',
+      'active',
+      'dob',
+    ]);
+    if (typeof patch.dob === 'string') {
+      patch.dob = patch.dob ? new Date(patch.dob) : null;
+    }
     return prisma.player.update({
       where: { id: playerId },
-      data: rest as Prisma.PlayerUpdateInput,
+      data: patch,
     });
   }
 

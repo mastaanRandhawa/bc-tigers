@@ -1,9 +1,8 @@
-import { propagateByes, setWinner } from './bracket-engine/progression';
+import { propagateByes } from './bracket-engine/progression';
 import {
   canEditResults,
   canEditStructure,
   hasPlayedMatches,
-  validateBracket,
 } from './bracket-engine/validation';
 import type { EngineNode } from './bracket-engine/types';
 import { planBracket, planToNodeDrafts } from './scheduling/bracket-planner';
@@ -15,7 +14,9 @@ function mockTeam(id: string): EligibleTeam {
 }
 
 function buildNodes(teamCount: number): EngineNode[] {
-  const teams = Array.from({ length: teamCount }, (_, i) => mockTeam(`t${i + 1}`));
+  const teams = Array.from({ length: teamCount }, (_, i) =>
+    mockTeam(`t${i + 1}`),
+  );
   const plan = planBracket({
     divisionId: 'div-1',
     teams,
@@ -70,19 +71,27 @@ describe('BracketsService integration (lock & progression)', () => {
   });
 
   it('structure lock is separate from results frozen', () => {
-    expect(canEditStructure({ bracket_locked: true, bracket_finalized: false })).toBe(false);
-    expect(canEditStructure({ bracket_locked: false, bracket_finalized: false })).toBe(true);
-    expect(canEditStructure({ bracket_locked: false, bracket_finalized: true })).toBe(false);
+    expect(
+      canEditStructure({ bracket_locked: true, bracket_finalized: false }),
+    ).toBe(false);
+    expect(
+      canEditStructure({ bracket_locked: false, bracket_finalized: false }),
+    ).toBe(true);
+    expect(
+      canEditStructure({ bracket_locked: false, bracket_finalized: true }),
+    ).toBe(false);
 
     expect(canEditResults({ bracket_finalized: false })).toBe(true);
     expect(canEditResults({ bracket_finalized: true })).toBe(false);
   });
 
-  it('unfinalize unlocks structure when no matches have been played', async () => {
+  it('unfinalize unlocks structure when no matches have been played', () => {
     const nodes = buildNodes(8);
     const played = hasPlayedMatches(nodes);
     expect(played).toBe(false);
-    expect(canEditStructure({ bracket_locked: true, bracket_finalized: false })).toBe(false);
+    expect(
+      canEditStructure({ bracket_locked: true, bracket_finalized: false }),
+    ).toBe(false);
     expect(canEditResults({ bracket_finalized: false })).toBe(true);
   });
 });

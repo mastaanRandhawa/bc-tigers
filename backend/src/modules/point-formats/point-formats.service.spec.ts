@@ -24,9 +24,11 @@ describe('PointFormatsService', () => {
     mockPrisma.pointFormat.findUnique.mockResolvedValue({
       id: 'pf-1',
       _count: { divisions: 2 },
-    } as never);
+    });
 
-    await expect(service.remove('pf-1')).rejects.toBeInstanceOf(ConflictException);
+    await expect(service.remove('pf-1')).rejects.toBeInstanceOf(
+      ConflictException,
+    );
     expect(mockPrisma.pointFormat.delete).not.toHaveBeenCalled();
   });
 
@@ -34,8 +36,8 @@ describe('PointFormatsService', () => {
     mockPrisma.pointFormat.findUnique.mockResolvedValue({
       id: 'pf-1',
       _count: { divisions: 0 },
-    } as never);
-    mockPrisma.pointFormat.delete.mockResolvedValue({ id: 'pf-1' } as never);
+    });
+    mockPrisma.pointFormat.delete.mockResolvedValue({ id: 'pf-1' });
 
     await expect(service.remove('pf-1')).resolves.toEqual({ id: 'pf-1' });
   });
@@ -43,6 +45,8 @@ describe('PointFormatsService', () => {
   it('throws when format is missing', async () => {
     mockPrisma.pointFormat.findUnique.mockResolvedValue(null);
 
-    await expect(service.remove('missing')).rejects.toBeInstanceOf(NotFoundException);
+    await expect(service.remove('missing')).rejects.toBeInstanceOf(
+      NotFoundException,
+    );
   });
 });

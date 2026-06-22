@@ -1,7 +1,4 @@
-import {
-  ForbiddenException,
-  UnauthorizedException,
-} from '@nestjs/common';
+import { ForbiddenException, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { AuthService } from './auth.service';
@@ -42,7 +39,9 @@ describe('AuthService coach gates', () => {
   let service: AuthService;
   const audit = { log: jest.fn() };
   const mail = { send: jest.fn(), appUrl: jest.fn((p: string) => p) };
-  const jwt = { sign: jest.fn().mockReturnValue('token') } as unknown as JwtService;
+  const jwt = {
+    sign: jest.fn().mockReturnValue('token'),
+  } as unknown as JwtService;
 
   beforeEach(() => {
     jest.clearAllMocks();
@@ -67,15 +66,15 @@ describe('AuthService coach gates', () => {
       ...baseUser,
       approved: false,
       active: false,
-    } as never);
+    });
 
-    await expect(service.login('coach@test.com', 'pass')).rejects.toBeInstanceOf(
-      UnauthorizedException,
-    );
+    await expect(
+      service.login('coach@test.com', 'pass'),
+    ).rejects.toBeInstanceOf(UnauthorizedException);
   });
 
   it('allows approved active coach login', async () => {
-    mockPrisma.user.findUnique.mockResolvedValue(baseUser as never);
+    mockPrisma.user.findUnique.mockResolvedValue(baseUser);
 
     const result = await service.login('coach@test.com', 'pass');
     expect(result.access_token).toBe('token');
@@ -83,7 +82,7 @@ describe('AuthService coach gates', () => {
   });
 
   it('rejects coach change password', async () => {
-    mockPrisma.user.findUnique.mockResolvedValue(baseUser as never);
+    mockPrisma.user.findUnique.mockResolvedValue(baseUser);
 
     await expect(
       service.changePassword('user-1', 'old', 'newpassword'),
@@ -91,7 +90,7 @@ describe('AuthService coach gates', () => {
   });
 
   it('returns admin-contact message for coach forgot password', async () => {
-    mockPrisma.user.findUnique.mockResolvedValue(baseUser as never);
+    mockPrisma.user.findUnique.mockResolvedValue(baseUser);
 
     const result = await service.forgotPassword('coach@test.com');
     expect(result.message).toContain('administrator');
@@ -100,7 +99,7 @@ describe('AuthService coach gates', () => {
 
   it('registers coach as pending without issuing token', async () => {
     mockPrisma.user.findUnique.mockResolvedValue(null);
-    mockPrisma.user.create.mockResolvedValue({ id: 'new-coach' } as never);
+    mockPrisma.user.create.mockResolvedValue({ id: 'new-coach' });
 
     const result = await service.registerCoach({
       first_name: 'New',

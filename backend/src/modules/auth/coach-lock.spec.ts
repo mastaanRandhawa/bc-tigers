@@ -60,11 +60,11 @@ describe('coach-lock', () => {
     mockPrisma.siteSettings.findUnique.mockResolvedValue({
       coach_management_locked: false,
       coach_lock_scheduled_at: new Date('2026-06-22T11:00:00.000Z'),
-    } as never);
+    });
     mockPrisma.siteSettings.update.mockResolvedValue({
       coach_management_locked: true,
       coach_lock_scheduled_at: null,
-    } as never);
+    });
 
     const result = await resolveCoachLockSettings(now);
 

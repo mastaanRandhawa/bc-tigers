@@ -1,4 +1,3 @@
-import type { BracketStage } from '@prisma/client';
 import { propagateByes, setWinner } from './progression';
 import { validateBracket } from './validation';
 import type { EngineNode } from './types';
@@ -10,7 +9,9 @@ function team(id: string): EligibleTeam {
   return { id, name: id, slug: id, division_id: 'div-1', playerCount: 5 };
 }
 
-function draftsToEngine(drafts: ReturnType<typeof planToNodeDrafts>): EngineNode[] {
+function draftsToEngine(
+  drafts: ReturnType<typeof planToNodeDrafts>,
+): EngineNode[] {
   return drafts.map((d) => ({
     id: d.id!,
     division_id: d.division_id,
@@ -54,7 +55,11 @@ function buildBracket(teamCount: number) {
   });
   const drafts = planToNodeDrafts(plan);
   const nodes = draftsToEngine(drafts);
-  placeTeamsInFirstRound(nodes, plan, teams.map((t) => t.id));
+  placeTeamsInFirstRound(
+    nodes,
+    plan,
+    teams.map((t) => t.id),
+  );
   propagateByes(nodes);
   return { plan, nodes };
 }
@@ -81,17 +86,19 @@ describe('bracket-engine', () => {
 
   it('propagates winner through quarter to semi to final', () => {
     const { nodes } = buildBracket(8);
-    const qf = nodes.filter((n) => n.stage === 'QUARTER_FINAL' && n.status === 'READY');
+    const qf = nodes.filter(
+      (n) => n.stage === 'QUARTER_FINAL' && n.status === 'READY',
+    );
     expect(qf.length).toBeGreaterThan(0);
 
     const first = qf[0];
     const winnerId = first.home_team_id!;
     setWinner(nodes, first.id, winnerId, 'manual');
 
-    const sf = nodes.find(
-      (n) => n.id === first.next_node_id,
+    const sf = nodes.find((n) => n.id === first.next_node_id);
+    expect(sf?.home_team_id === winnerId || sf?.away_team_id === winnerId).toBe(
+      true,
     );
-    expect(sf?.home_team_id === winnerId || sf?.away_team_id === winnerId).toBe(true);
 
     const validation = validateBracket(nodes);
     expect(validation.valid).toBe(true);
@@ -99,17 +106,23 @@ describe('bracket-engine', () => {
 
   it('clears downstream when winner changes', () => {
     const { nodes } = buildBracket(8);
-    const qf = nodes.find((n) => n.stage === 'QUARTER_FINAL' && n.home_team_id && n.away_team_id)!;
+    const qf = nodes.find(
+      (n) => n.stage === 'QUARTER_FINAL' && n.home_team_id && n.away_team_id,
+    )!;
     const home = qf.home_team_id!;
     const away = qf.away_team_id!;
 
     setWinner(nodes, qf.id, home, 'manual');
     const sfAfterHome = nodes.find((n) => n.id === qf.next_node_id);
-    expect(sfAfterHome?.home_team_id === home || sfAfterHome?.away_team_id === home).toBe(true);
+    expect(
+      sfAfterHome?.home_team_id === home || sfAfterHome?.away_team_id === home,
+    ).toBe(true);
 
     setWinner(nodes, qf.id, away, 'manual');
     const sfAfterAway = nodes.find((n) => n.id === qf.next_node_id);
-    expect(sfAfterAway?.home_team_id === away || sfAfterAway?.away_team_id === away).toBe(true);
+    expect(
+      sfAfterAway?.home_team_id === away || sfAfterAway?.away_team_id === away,
+    ).toBe(true);
     expect(
       sfAfterAway?.home_team_id === home || sfAfterAway?.away_team_id === home,
     ).toBe(false);
@@ -134,12 +147,16 @@ describe('bracket-engine', () => {
     setWinner(nodes, sf.id, winner, 'manual');
 
     const third = nodes.find((n) => n.stage === 'THIRD_PLACE');
-    expect(third?.home_team_id === loser || third?.away_team_id === loser).toBe(true);
+    expect(third?.home_team_id === loser || third?.away_team_id === loser).toBe(
+      true,
+    );
   });
 
   it('rejects winner not on node', () => {
     const { nodes } = buildBracket(8);
-    const qf = nodes.find((n) => n.stage === 'QUARTER_FINAL' && n.home_team_id && n.away_team_id)!;
+    const qf = nodes.find(
+      (n) => n.stage === 'QUARTER_FINAL' && n.home_team_id && n.away_team_id,
+    )!;
     expect(() => setWinner(nodes, qf.id, 'unknown-team', 'manual')).toThrow();
   });
 

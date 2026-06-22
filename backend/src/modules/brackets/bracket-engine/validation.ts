@@ -53,7 +53,9 @@ export function validateBracket(nodes: EngineNode[]): ValidationResult {
     const stageNodes = nodes.filter((n) => n.stage === stage);
     const teamIds = new Set<string>();
     for (const n of stageNodes) {
-      for (const tid of [n.home_team_id, n.away_team_id].filter(Boolean) as string[]) {
+      for (const tid of [n.home_team_id, n.away_team_id].filter(
+        Boolean,
+      ) as string[]) {
         if (teamIds.has(tid)) {
           errors.push(`Team ${tid} appears twice in ${stage}`);
         }

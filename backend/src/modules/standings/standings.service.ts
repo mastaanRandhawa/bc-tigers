@@ -26,7 +26,10 @@ export class StandingsService {
         where: { id: divisionId },
         include: { point_format: true },
       }),
-      prisma.team.findMany({ where: { division_id: divisionId }, select: { id: true } }),
+      prisma.team.findMany({
+        where: { division_id: divisionId },
+        select: { id: true },
+      }),
       prisma.matchEvent.findMany({
         where: {
           type: { in: ['YELLOW_CARD', 'RED_CARD'] },
@@ -46,7 +49,10 @@ export class StandingsService {
       rows.map((row) =>
         prisma.standing.upsert({
           where: {
-            division_id_team_id: { division_id: divisionId, team_id: row.teamId },
+            division_id_team_id: {
+              division_id: divisionId,
+              team_id: row.teamId,
+            },
           },
           create: {
             division_id: divisionId,

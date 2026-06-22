@@ -20,7 +20,10 @@ export class DivisionResourcesService {
     private readonly venuesService: VenuesService,
   ) {}
 
-  private async resolveDivisionId(tournamentSlug: string, divisionSlug: string) {
+  private async resolveDivisionId(
+    tournamentSlug: string,
+    divisionSlug: string,
+  ) {
     const division = await this.divisionsService.resolveDivision(
       tournamentSlug,
       divisionSlug,
@@ -29,7 +32,10 @@ export class DivisionResourcesService {
   }
 
   async getTeams(tournamentSlug: string, divisionSlug: string) {
-    const divisionId = await this.resolveDivisionId(tournamentSlug, divisionSlug);
+    const divisionId = await this.resolveDivisionId(
+      tournamentSlug,
+      divisionSlug,
+    );
     return this.teamsService.findAll({ divisionId });
   }
 
@@ -38,12 +44,18 @@ export class DivisionResourcesService {
     divisionSlug: string,
     teamSlug: string,
   ) {
-    const divisionId = await this.resolveDivisionId(tournamentSlug, divisionSlug);
+    const divisionId = await this.resolveDivisionId(
+      tournamentSlug,
+      divisionSlug,
+    );
     return this.teamsService.findOneInDivision(divisionId, teamSlug);
   }
 
   async getPlayers(tournamentSlug: string, divisionSlug: string) {
-    const divisionId = await this.resolveDivisionId(tournamentSlug, divisionSlug);
+    const divisionId = await this.resolveDivisionId(
+      tournamentSlug,
+      divisionSlug,
+    );
     return this.teamPlayersService.findByDivision(divisionId);
   }
 
@@ -52,7 +64,10 @@ export class DivisionResourcesService {
     divisionSlug: string,
     params?: { status?: string; page?: number; limit?: number },
   ) {
-    const divisionId = await this.resolveDivisionId(tournamentSlug, divisionSlug);
+    const divisionId = await this.resolveDivisionId(
+      tournamentSlug,
+      divisionSlug,
+    );
     return this.matchesService.findAll({
       divisionId,
       status: params?.status as MatchStatus | undefined,
@@ -62,12 +77,18 @@ export class DivisionResourcesService {
   }
 
   async getStandings(tournamentSlug: string, divisionSlug: string) {
-    const divisionId = await this.resolveDivisionId(tournamentSlug, divisionSlug);
+    const divisionId = await this.resolveDivisionId(
+      tournamentSlug,
+      divisionSlug,
+    );
     return this.standingsService.getByDivision(divisionId);
   }
 
   async getBracket(tournamentSlug: string, divisionSlug: string) {
-    const divisionId = await this.resolveDivisionId(tournamentSlug, divisionSlug);
+    const divisionId = await this.resolveDivisionId(
+      tournamentSlug,
+      divisionSlug,
+    );
     return this.bracketsService.getByDivisionId(divisionId);
   }
 

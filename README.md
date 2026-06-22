@@ -2,8 +2,9 @@
 
 Full-stack web app for **BC Tigers FC** tournament operations and the public fan
 experience. Manage tournaments, divisions, teams, schedules, live scores,
-standings, and knockout brackets. A single **ADMIN** role runs the back office;
-everything else is a public, read-only fan site.
+standings, and knockout brackets. Staff roles (**SUPERADMIN**, **ADMIN**) run the
+back office and **COACH**es self-manage their own team's roster; everything else
+is a public, read-only fan site.
 
 **Stack:** React (Vite) + TypeScript + Tailwind · NestJS + Prisma + PostgreSQL · Socket.IO
 
@@ -54,9 +55,21 @@ This is a **competition hierarchy**, not a flat directory:
 
 ## Authentication & roles
 
-The schema defines a single role: **`ADMIN`**. There is **no public registration** —
-login is rejected for any non-admin account. Admin mutations are guarded by
-`@AdminOnly()` (JWT + role check). Public read endpoints need no auth.
+Roles: **`SUPERADMIN`** > **`ADMIN`** > **`COACH`**.
+
+- **Staff** (`SUPERADMIN`/`ADMIN`) — back-office CRUD, guarded by `@AdminOnly()`
+  (JWT + role check). Only a `SUPERADMIN` may create, modify, delete, or reset the
+  password of another `ADMIN`/`SUPERADMIN` account.
+- **Coaches** — self-register at `/coach/register`, then require **admin approval**
+  before they can sign in. Once approved they manage only their assigned team's
+  roster, guarded by `@CoachOnly()` + ownership/lock guards.
+- **Public** read endpoints need no auth.
+
+**Passwords are admin-managed.** There is no self-service password change, and the
+`/forgot-password` flow directs users to contact an administrator (admins reset
+passwords from `/admin/users`). The JWT is re-validated against the database on
+every request, so deactivating, deleting, or un-approving an account revokes
+access immediately.
 
 ---
 
@@ -94,11 +107,12 @@ canonical routes above.
 | URL | Page |
 |-----|------|
 | `/login` | Sign in |
-| `/forgot-password` | Request password reset |
-| `/reset-password` | Set new password (token from email) |
-| `/profile` | Edit profile & change password (logged in) |
+| `/coach/register` | Coach self-registration (requires admin approval) |
+| `/forgot-password` | Shows "contact your administrator" (passwords are admin-managed) |
+| `/profile` | Edit profile (name, phone, image) — passwords are admin-managed |
 
-> There is no `/register` page — accounts are created by an admin under `/admin/users`.
+> Staff accounts are created by an admin under `/admin/users`. Coaches self-register
+> at `/coach/register` and become active once an admin approves them.
 
 ### Admin panel (`ADMIN` only)
 
@@ -164,7 +178,7 @@ tournament:
 - **7 divisions** — Premier, Div 1 Gold, Div 2 Silver, Div 3 Bronze, Recreational, Over 40, Over 45
 - **Up to 8 teams per division** (`SEED_MAX_TEAMS_PER_DIVISION`, default 8) × **5 players per team**
 - **Newton Athletic Park** with fields, plus sample matches and standings
-- One admin user (`admin@bctigers.ca`) — see `backend/prisma/seed.ts` for the default password
+- Two staff users — `superadmin@bctigers.ca` and `admin@bctigers.ca` (see `backend/prisma/seed.ts` for default passwords)
 
 ---
 

@@ -54,7 +54,8 @@ export class MailService {
       await transport.sendMail({ from, ...options });
       return { ok: true };
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Failed to send email';
+      const message =
+        err instanceof Error ? err.message : 'Failed to send email';
       this.logger.error('Failed to send email', err);
       return { ok: false, error: message };
     }

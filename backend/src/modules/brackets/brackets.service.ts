@@ -1,16 +1,21 @@
-import { BadRequestException, Inject, Injectable, forwardRef } from '@nestjs/common';
+import {
+  BadRequestException,
+  Inject,
+  Injectable,
+  forwardRef,
+} from '@nestjs/common';
 import { MatchesGateway } from '../../gateways/matches.gateway';
 import { AuditLogService } from '../audit-log/audit-log.service';
 import type { BracketStage } from '@prisma/client';
 import prisma from '../../prisma/prisma';
 import { BracketEngine } from './bracket-engine';
+import type { BracketNodeDetail } from './bracket-engine/bracket-node.types';
 import {
   planBracket,
   planToNodeDrafts,
   selectEligibleTeams,
   buildFirstRoundSlots,
   shuffleTeamIds,
-  firstStageForSize,
   type EligibleTeam,
 } from './scheduling';
 
@@ -27,7 +32,7 @@ export class BracketsService {
     this.gateway.emitBracketUpdated(divisionId, payload ?? { divisionId });
   }
 
-  getByDivisionId(divisionId: string) {
+  getByDivisionId(divisionId: string): Promise<BracketNodeDetail[]> {
     return this.engine.getFullBracket(divisionId);
   }
 
@@ -48,7 +53,9 @@ export class BracketsService {
   }
 
   async validateGeneration(divisionId: string) {
-    const division = await prisma.division.findUnique({ where: { id: divisionId } });
+    const division = await prisma.division.findUnique({
+      where: { id: divisionId },
+    });
     if (!division) throw new BadRequestException('Division not found');
 
     const flags = await this.engine.loadDivisionFlags(divisionId);
@@ -65,7 +72,10 @@ export class BracketsService {
       minPlayersPerTeam: 0,
     });
 
-    return { ...validation, eligibleTeams: eligible.map((t) => ({ id: t.id, name: t.name })) };
+    return {
+      ...validation,
+      eligibleTeams: eligible.map((t) => ({ id: t.id, name: t.name })),
+    };
   }
 
   /** True when real linked matches are live or completed (not BYE auto-advance). */
@@ -122,8 +132,10 @@ export class BracketsService {
     return division;
   }
 
-  async generate(divisionId: string) {
-    const division = await prisma.division.findUnique({ where: { id: divisionId } });
+  async generate(divisionId: string): Promise<BracketNodeDetail[]> {
+    const division = await prisma.division.findUnique({
+      where: { id: divisionId },
+    });
     if (!division) throw new BadRequestException('Division not found');
 
     await this.engine.assertStructureEditable(divisionId);
@@ -158,13 +170,13 @@ export class BracketsService {
     return result;
   }
 
-  async randomize(divisionId: string) {
+  async randomize(divisionId: string): Promise<BracketNodeDetail[]> {
     await this.engine.assertStructureEditable(divisionId);
 
     const nodes = await this.getByDivisionId(divisionId);
     if (nodes.length === 0) {
       await this.generate(divisionId);
-      return this.randomize(divisionId);
+      return await this.randomize(divisionId);
     }
 
     const eligible = await this.loadEligibleTeams(divisionId);
@@ -232,10 +244,13 @@ export class BracketsService {
         : 'away'
       : null;
     const targetNode = nodes.find((n) => n.id === nodeId)!;
-    const targetTeamId = slot === 'home' ? targetNode.home_team_id : targetNode.away_team_id;
+    const targetTeamId =
+      slot === 'home' ? targetNode.home_team_id : targetNode.away_team_id;
 
     if (targetNode.winner_id) {
-      throw new BadRequestException('Cannot modify a match that already has a winner');
+      throw new BadRequestException(
+        'Cannot modify a match that already has a winner',
+      );
     }
     if (source?.winner_id) {
       throw new BadRequestException('Cannot move a team from a decided match');
@@ -246,14 +261,19 @@ export class BracketsService {
       throw new BadRequestException('Invalid bracket');
     }
     if (targetNode.stage !== firstStage) {
-      throw new BadRequestException('Teams can only be placed in the first knockout round');
+      throw new BadRequestException(
+        'Teams can only be placed in the first knockout round',
+      );
     }
     if (source && source.stage !== firstStage) {
-      throw new BadRequestException('Teams in later rounds cannot be moved manually');
+      throw new BadRequestException(
+        'Teams in later rounds cannot be moved manually',
+      );
     }
 
     if (source?.id === target.id && sourceSlot && sourceSlot !== slot) {
-      const otherId = slot === 'home' ? targetNode.away_team_id : targetNode.home_team_id;
+      const otherId =
+        slot === 'home' ? targetNode.away_team_id : targetNode.home_team_id;
       targetNode.home_team_id = slot === 'home' ? teamId : otherId;
       targetNode.away_team_id = slot === 'away' ? teamId : otherId;
       targetNode.winner_id = null;
@@ -336,7 +356,7 @@ export class BracketsService {
       away_team_id?: string | null;
       winner_id?: string | null;
     }>,
-  ) {
+  ): Promise<BracketNodeDetail[]> {
     await this.engine.assertStructureEditable(divisionId);
 
     await prisma.$transaction(
@@ -358,7 +378,7 @@ export class BracketsService {
     const nodes = await this.engine.loadNodes(divisionId);
     const firstStage = this.earliestStageFromEngine(nodes);
     if (firstStage) {
-      await this.engine.runPropagateByes(divisionId, firstStage as BracketStage);
+      await this.engine.runPropagateByes(divisionId, firstStage);
     }
 
     const result = await this.getByDivisionId(divisionId);
@@ -366,7 +386,10 @@ export class BracketsService {
     return result;
   }
 
-  async swapMatches(nodeIdA: string, nodeIdB: string) {
+  async swapMatches(
+    nodeIdA: string,
+    nodeIdB: string,
+  ): Promise<BracketNodeDetail[]> {
     if (nodeIdA === nodeIdB) return this.getNode(nodeIdA);
 
     const [a, b] = await Promise.all([
@@ -375,11 +398,15 @@ export class BracketsService {
     ]);
 
     if (a.division_id !== b.division_id || a.stage !== b.stage) {
-      throw new BadRequestException('Matches must be in the same round to swap');
+      throw new BadRequestException(
+        'Matches must be in the same round to swap',
+      );
     }
     await this.engine.assertStructureEditable(a.division_id);
     if (a.winner_id || b.winner_id) {
-      throw new BadRequestException('Cannot swap matches that already have a winner');
+      throw new BadRequestException(
+        'Cannot swap matches that already have a winner',
+      );
     }
 
     await prisma.$transaction([
@@ -416,7 +443,10 @@ export class BracketsService {
     return result;
   }
 
-  async assignTeamsToFirstRound(divisionId: string, teamIds: string[]) {
+  async assignTeamsToFirstRound(
+    divisionId: string,
+    teamIds: string[],
+  ): Promise<BracketNodeDetail[]> {
     await this.engine.assertStructureEditable(divisionId);
 
     const nodes = await this.getByDivisionId(divisionId);

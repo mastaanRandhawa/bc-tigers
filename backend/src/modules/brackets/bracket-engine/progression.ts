@@ -5,24 +5,6 @@ import { computeNodeStatus, isByeNode, soleTeamId } from './status';
 /** Clear all downstream state fed from this node (winners + team slots). */
 export function clearDownstream(nodes: EngineNode[], fromNodeId: string): void {
   const map = nodeMap(nodes);
-  const visited = new Set<string>();
-
-  const clearNode = (nodeId: string) => {
-    if (visited.has(nodeId)) return;
-    visited.add(nodeId);
-    const node = map.get(nodeId);
-    if (!node) return;
-
-    node.home_team_id = null;
-    node.away_team_id = null;
-    node.winner_id = null;
-    node.auto_advanced = false;
-    node.completed_at = null;
-    node.status = computeNodeStatus(node);
-
-    if (node.next_node_id) clearNode(node.next_node_id);
-    if (node.loser_next_node_id) clearNode(node.loser_next_node_id);
-  };
 
   const from = map.get(fromNodeId);
   if (!from) return;
@@ -210,7 +192,10 @@ export function propagateByes(nodes: EngineNode[]): boolean {
 }
 
 /** Reset downstream from first stage before full bye re-propagation. */
-export function resetDownstreamTeams(nodes: EngineNode[], firstStage: string): void {
+export function resetDownstreamTeams(
+  nodes: EngineNode[],
+  firstStage: string,
+): void {
   for (const node of nodes) {
     if (node.stage === firstStage) {
       node.winner_id = null;

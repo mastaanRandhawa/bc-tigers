@@ -1,5 +1,11 @@
-import { Module, type MiddlewareConsumer, type NestModule } from '@nestjs/common';
+import {
+  Module,
+  type MiddlewareConsumer,
+  type NestModule,
+} from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { APP_GUARD } from '@nestjs/core';
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { RequestContextMiddleware } from './common/request-context.middleware';
 import { AuthModule } from './modules/auth/auth.module';
 import { TournamentsModule } from './modules/tournaments/tournaments.module';
@@ -23,6 +29,9 @@ import { CoachModule } from './modules/coach/coach.module';
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
+    // Global baseline rate limit (per IP). Auth endpoints add a tighter limit
+    // via @Throttle on the controller. See AuthController.
+    ThrottlerModule.forRoot([{ ttl: 60_000, limit: 100 }]),
     MailModule,
     HealthModule,
     AuthModule,
@@ -42,6 +51,7 @@ import { CoachModule } from './modules/coach/coach.module';
     AuditLogModule,
     CoachModule,
   ],
+  providers: [{ provide: APP_GUARD, useClass: ThrottlerGuard }],
 })
 export class AppModule implements NestModule {
   configure(consumer: MiddlewareConsumer): void {

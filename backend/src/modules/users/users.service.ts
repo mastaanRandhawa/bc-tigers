@@ -9,7 +9,10 @@ import type { Prisma, UserRole } from '@prisma/client';
 import * as bcrypt from 'bcrypt';
 import prisma from '../../prisma/prisma';
 import { pickAllowed } from '../../common/pick';
-import { canActorResetTargetPassword } from '../auth/role-utils';
+import {
+  canActorManageTarget,
+  canActorResetTargetPassword,
+} from '../auth/role-utils';
 
 /** Fields an admin may set via PATCH /users/:id. Excludes role, password_hash, id. */
 const USER_UPDATE_FIELDS = [
@@ -61,18 +64,29 @@ export class UsersService {
     });
   }
 
-  async create(data: {
-    first_name: string;
-    last_name: string;
-    email: string;
-    password: string;
-    phone?: string;
-    role?: UserRole;
-  }) {
-    const existing = await prisma.user.findUnique({ where: { email: data.email } });
+  async create(
+    actorRole: UserRole,
+    data: {
+      first_name: string;
+      last_name: string;
+      email: string;
+      password: string;
+      phone?: string;
+      role?: UserRole;
+    },
+  ) {
+    const role = data.role ?? 'ADMIN';
+    if (!canActorManageTarget(actorRole, role)) {
+      throw new ForbiddenException(
+        'Only a super administrator can create administrator accounts.',
+      );
+    }
+
+    const existing = await prisma.user.findUnique({
+      where: { email: data.email },
+    });
     if (existing) throw new ConflictException('Email already in use');
 
-    const role = data.role ?? 'ADMIN';
     const isStaff = role === 'ADMIN' || role === 'SUPERADMIN';
     const password_hash = await bcrypt.hash(data.password, 12);
     return prisma.user.create({
@@ -90,9 +104,15 @@ export class UsersService {
     });
   }
 
-  async update(id: string, data: unknown) {
+  async update(actorRole: UserRole, id: string, data: unknown) {
     const existing = await prisma.user.findUnique({ where: { id } });
     if (!existing) throw new NotFoundException('User not found');
+
+    if (!canActorManageTarget(actorRole, existing.role)) {
+      throw new ForbiddenException(
+        'Only a super administrator can modify administrator accounts.',
+      );
+    }
 
     const input = pickAllowed<Prisma.UserUpdateInput>(data, USER_UPDATE_FIELDS);
     return prisma.user.update({
@@ -127,7 +147,7 @@ export class UsersService {
       throw new ForbiddenException(
         user.role === 'ADMIN' || user.role === 'SUPERADMIN'
           ? 'Only a super administrator can reset administrator passwords.'
-          : 'You cannot reset this user\'s password.',
+          : "You cannot reset this user's password.",
       );
     }
 
@@ -139,7 +159,20 @@ export class UsersService {
     });
   }
 
-  remove(id: string) {
+  async remove(actorId: string, actorRole: UserRole, id: string) {
+    if (actorId === id) {
+      throw new ForbiddenException('You cannot delete your own account.');
+    }
+
+    const existing = await prisma.user.findUnique({ where: { id } });
+    if (!existing) throw new NotFoundException('User not found');
+
+    if (!canActorManageTarget(actorRole, existing.role)) {
+      throw new ForbiddenException(
+        'Only a super administrator can delete administrator accounts.',
+      );
+    }
+
     return prisma.user.delete({ where: { id } });
   }
 }

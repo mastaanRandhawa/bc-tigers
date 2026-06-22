@@ -27,7 +27,13 @@ function formatRow(overrides: Partial<PointFormat>): PointFormat {
     forfeit_win_score: 2,
     forfeit_loss_score: 0,
     forfeit_award_bonuses: false,
-    tiebreakers: ['GOAL_DIFFERENCE', 'GOALS_FOR', 'HEAD_TO_HEAD', 'FAIR_PLAY', 'COIN_TOSS'],
+    tiebreakers: [
+      'GOAL_DIFFERENCE',
+      'GOALS_FOR',
+      'HEAD_TO_HEAD',
+      'FAIR_PLAY',
+      'COIN_TOSS',
+    ],
     created_at: new Date(),
     updated_at: new Date(),
     ...overrides,
@@ -44,7 +50,13 @@ describe('point-format-mapper', () => {
       loss: 0,
       bonuses_enabled: false,
       forfeit_award_bonuses: false,
-      tiebreakers: ['GOAL_DIFFERENCE', 'GOALS_FOR', 'HEAD_TO_HEAD', 'FAIR_PLAY', 'COIN_TOSS'],
+      tiebreakers: [
+        'GOAL_DIFFERENCE',
+        'GOALS_FOR',
+        'HEAD_TO_HEAD',
+        'FAIR_PLAY',
+        'COIN_TOSS',
+      ],
     });
     const cfg = toTournamentConfig(row);
     expect(cfg.pointSystem).toEqual(TRADITIONAL_TOURNAMENT_CONFIG.pointSystem);
@@ -75,7 +87,13 @@ describe('point-format-mapper', () => {
       goal_bonus_cap: 3,
       apply_bonuses_on_loss: true,
       forfeit_award_bonuses: true,
-      tiebreakers: ['HEAD_TO_HEAD', 'GOALS_AGAINST', 'GOALS_FOR', 'FAIR_PLAY', 'COIN_TOSS'],
+      tiebreakers: [
+        'HEAD_TO_HEAD',
+        'GOALS_AGAINST',
+        'GOALS_FOR',
+        'FAIR_PLAY',
+        'COIN_TOSS',
+      ],
     });
     const cfg = toTournamentConfig(row);
     expect(cfg.pointSystem).toEqual(USFA_TOURNAMENT_CONFIG.pointSystem);

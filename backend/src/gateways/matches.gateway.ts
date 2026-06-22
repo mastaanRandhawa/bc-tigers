@@ -54,7 +54,7 @@ export class MatchesGateway
     @MessageBody() matchId: string,
     @ConnectedSocket() client: Socket,
   ) {
-    client.join(`match:${matchId}`);
+    void client.join(`match:${matchId}`);
     this.logger.log(`Client ${client.id} joined room match:${matchId}`);
   }
 
@@ -63,7 +63,7 @@ export class MatchesGateway
     @MessageBody() matchId: string,
     @ConnectedSocket() client: Socket,
   ) {
-    client.leave(`match:${matchId}`);
+    void client.leave(`match:${matchId}`);
   }
 
   @SubscribeMessage('join:division')
@@ -71,11 +71,11 @@ export class MatchesGateway
     @MessageBody() divisionId: string,
     @ConnectedSocket() client: Socket,
   ) {
-    client.join(`division:${divisionId}`);
+    void client.join(`division:${divisionId}`);
   }
 
   /** Called by MatchesService when a match event is recorded */
-  async emitMatchEvent(event: {
+  emitMatchEvent(event: {
     matchId: string;
     divisionId: string;
     type: string;
@@ -93,7 +93,7 @@ export class MatchesGateway
     this.server.to(`match:${event.matchId}`).emit(eventName, event.data);
   }
 
-  async emitMatchStarted(matchId: string, data: unknown) {
+  emitMatchStarted(matchId: string, data: unknown) {
     this.server.to(`match:${matchId}`).emit(SOCKET_EVENTS.MATCH_STARTED, data);
     this.server.emit(SOCKET_EVENTS.MATCH_UPDATED, data);
   }
@@ -131,6 +131,27 @@ export class MatchesGateway
       home_score: homeScore,
       away_score: awayScore,
     });
+  }
+
+  /**
+   * Recalculate standings for a division and broadcast the result. Used when a
+   * match that is *already* COMPLETED has its score/events edited — the
+   * completion event already fired, but the table still needs to be corrected.
+   */
+  async refreshStandings(divisionId: string) {
+    try {
+      const updatedStandings =
+        await this.standingsService.recalculate(divisionId);
+      this.server
+        .to(`division:${divisionId}`)
+        .emit(SOCKET_EVENTS.STANDINGS_UPDATED, updatedStandings);
+      this.server.emit(SOCKET_EVENTS.STANDINGS_UPDATED, {
+        divisionId,
+        standings: updatedStandings,
+      });
+    } catch (err) {
+      this.logger.error('Failed to refresh standings', err);
+    }
   }
 
   emitBracketUpdated(divisionId: string, data: unknown) {

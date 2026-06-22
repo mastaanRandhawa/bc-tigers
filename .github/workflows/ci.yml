@@ -38,6 +38,9 @@ jobs:
       - run: npm ci
       # Prisma client is required for ts-jest to compile files that import @prisma/client.
       - run: npx prisma generate
+      # Typecheck shipped code (specs are excluded; their Prisma 7 mock typings
+      # are tracked tech debt). Catches production type regressions CI missed.
+      - run: npm run typecheck
       - run: npm test
       # Lint is currently non-blocking: the committed code predates the prettier
       # eslint rule, so a green gate needs a dedicated repo-wide formatting PR.

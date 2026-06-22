@@ -1,8 +1,17 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import type { BracketNodeStatus, BracketStage, Prisma } from '@prisma/client';
+import type { BracketStage } from '@prisma/client';
 import prisma from '../../../prisma/prisma';
 import type { BracketNodeDraft } from '../scheduling/types';
-import { propagateByes, resetDownstreamTeams, setWinner, type WinnerSource } from './progression';
+import {
+  BRACKET_NODE_INCLUDE,
+  type BracketNodeDetail,
+} from './bracket-node.types';
+import {
+  propagateByes,
+  resetDownstreamTeams,
+  setWinner,
+  type WinnerSource,
+} from './progression';
 import {
   canEditResults,
   canEditStructure,
@@ -17,12 +26,7 @@ import {
   repairProgressionLinks,
 } from './repair';
 
-const NODE_INCLUDE = {
-  home_team: true,
-  away_team: true,
-  winner: true,
-  match: { include: { home_team: true, away_team: true } },
-} as const;
+export type { BracketNodeDetail } from './bracket-node.types';
 
 @Injectable()
 export class BracketEngine {
@@ -69,7 +73,9 @@ export class BracketEngine {
   async assertResultsEditable(divisionId: string) {
     const flags = await this.loadDivisionFlags(divisionId);
     if (!canEditResults(flags)) {
-      throw new BadRequestException('Bracket is finalized — results cannot be changed');
+      throw new BadRequestException(
+        'Bracket is finalized — results cannot be changed',
+      );
     }
   }
 
@@ -128,7 +134,10 @@ export class BracketEngine {
     );
   }
 
-  async runPropagateByes(divisionId: string, firstStage: BracketStage): Promise<EngineNode[]> {
+  async runPropagateByes(
+    divisionId: string,
+    firstStage: BracketStage,
+  ): Promise<EngineNode[]> {
     const nodes = await this.loadNodes(divisionId);
     resetDownstreamTeams(nodes, firstStage);
     propagateByes(nodes);
@@ -220,7 +229,7 @@ export class BracketEngine {
     return hasPlayedMatches(nodes);
   }
 
-  async getFullBracket(divisionId: string) {
+  async getFullBracket(divisionId: string): Promise<BracketNodeDetail[]> {
     const linkSample = await prisma.bracketNode.findMany({
       where: { division_id: divisionId },
       select: {
@@ -241,18 +250,26 @@ export class BracketEngine {
         division_id: true,
       },
     });
-    if (linkSample.length > 0 && needsProgressionRepair(linkSample as EngineNode[])) {
+    if (
+      linkSample.length > 0 &&
+      needsProgressionRepair(linkSample as EngineNode[])
+    ) {
       await this.loadNodes(divisionId);
     }
 
     return prisma.bracketNode.findMany({
       where: { division_id: divisionId },
-      include: NODE_INCLUDE,
+      include: BRACKET_NODE_INCLUDE,
       orderBy: [{ stage: 'asc' }, { position: 'asc' }],
     });
   }
 }
 
 export { propagateByes, setWinner } from './progression';
-export { validateBracket, canEditStructure, canEditResults, hasPlayedMatches } from './validation';
+export {
+  validateBracket,
+  canEditStructure,
+  canEditResults,
+  hasPlayedMatches,
+} from './validation';
 export type { EngineNode } from './types';

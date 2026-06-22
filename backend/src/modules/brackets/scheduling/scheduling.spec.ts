@@ -3,7 +3,11 @@ import {
   byeCountForTeamCount,
   nextPowerOfTwo,
 } from './bye-calculator';
-import { standardSeedOrder, standardSeedPairs, buildFirstRoundSlots } from './seed-order';
+import {
+  standardSeedOrder,
+  standardSeedPairs,
+  buildFirstRoundSlots,
+} from './seed-order';
 import { planBracket } from './bracket-planner';
 import { shuffleTeamIds } from './seeding-strategy';
 import type { EligibleTeam } from './types';
@@ -42,7 +46,8 @@ describe('standardSeedOrder', () => {
 });
 
 describe('buildFirstRoundSlots', () => {
-  const ids = (n: number) => Array.from({ length: n }, (_, i) => `team-${i + 1}`);
+  const ids = (n: number) =>
+    Array.from({ length: n }, (_, i) => `team-${i + 1}`);
 
   it.each([2, 3, 4, 5, 6, 7, 8, 9, 14, 15, 16])(
     'places exactly %i teams once each in a %i bracket',
@@ -103,7 +108,9 @@ describe('planBracket', () => {
     expect(plan.byeCount).toBe(2);
     expect(plan.firstRound).toHaveLength(8);
     expect(plan.firstStage).toBe('ROUND_OF_16');
-    expect(plan.firstRound.every((s) => !s.homeTeamId && !s.awayTeamId)).toBe(true);
+    expect(plan.firstRound.every((s) => !s.homeTeamId && !s.awayTeamId)).toBe(
+      true,
+    );
   });
 
   it('fails validation with fewer than 2 teams', () => {
@@ -129,7 +136,9 @@ describe('planBracket', () => {
       teams: mockTeams(8),
     });
     expect(plan.stages).toContain('THIRD_PLACE');
-    expect(plan.stages.indexOf('FINAL')).toBeLessThan(plan.stages.indexOf('THIRD_PLACE'));
+    expect(plan.stages.indexOf('FINAL')).toBeLessThan(
+      plan.stages.indexOf('THIRD_PLACE'),
+    );
   });
 });
 

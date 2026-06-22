@@ -46,14 +46,20 @@ export class PointFormatsService {
 
   create(data: unknown) {
     return prisma.pointFormat.create({
-      data: pickAllowed<Prisma.PointFormatUncheckedCreateInput>(data, POINT_FORMAT_FIELDS),
+      data: pickAllowed<Prisma.PointFormatUncheckedCreateInput>(
+        data,
+        POINT_FORMAT_FIELDS,
+      ),
     });
   }
 
   update(id: string, data: unknown) {
     return prisma.pointFormat.update({
       where: { id },
-      data: pickAllowed<Prisma.PointFormatUncheckedUpdateInput>(data, POINT_FORMAT_FIELDS),
+      data: pickAllowed<Prisma.PointFormatUncheckedUpdateInput>(
+        data,
+        POINT_FORMAT_FIELDS,
+      ),
     });
   }
 

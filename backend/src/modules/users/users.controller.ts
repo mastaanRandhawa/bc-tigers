@@ -12,6 +12,9 @@ import {
 import { UsersService } from './users.service';
 import { AdminOnly } from '../auth/admin.decorator';
 import { AuditLogService } from '../audit-log/audit-log.service';
+import { CreateUserDto } from './dto/create-user.dto';
+import { UpdateUserDto } from './dto/update-user.dto';
+import { ResetUserPasswordDto } from './dto/reset-user-password.dto';
 import type { UserRole } from '@prisma/client';
 
 @Controller('users')
@@ -36,26 +39,17 @@ export class UsersController {
       page: Number(q.page ?? 1),
       limit: Number(q.limit ?? 20),
       role: q.role,
-      approved:
-        q.approved === undefined ? undefined : q.approved === 'true',
+      approved: q.approved === undefined ? undefined : q.approved === 'true',
     });
   }
 
   @Post()
   @AdminOnly()
   async create(
-    @Request() req: { user: { userId: string } },
-    @Body()
-    body: {
-      first_name: string;
-      last_name: string;
-      email: string;
-      password: string;
-      phone?: string;
-      role?: UserRole;
-    },
+    @Request() req: { user: { userId: string; role: UserRole } },
+    @Body() body: CreateUserDto,
   ) {
-    const user = await this.service.create(body);
+    const user = await this.service.create(req.user.role, body);
     await this.auditLog.log({
       userId: req.user.userId,
       action: 'CREATE',
@@ -68,11 +62,11 @@ export class UsersController {
   @Patch(':id')
   @AdminOnly()
   async update(
-    @Request() req: { user: { userId: string } },
+    @Request() req: { user: { userId: string; role: UserRole } },
     @Param('id') id: string,
-    @Body() b: Record<string, unknown>,
+    @Body() b: UpdateUserDto,
   ) {
-    const user = await this.service.update(id, b);
+    const user = await this.service.update(req.user.role, id, b);
     await this.auditLog.log({
       userId: req.user.userId,
       action: 'UPDATE',
@@ -103,7 +97,7 @@ export class UsersController {
   async resetPassword(
     @Request() req: { user: { userId: string; role: UserRole } },
     @Param('id') id: string,
-    @Body() body: { password: string },
+    @Body() body: ResetUserPasswordDto,
   ) {
     const user = await this.service.resetPassword(
       req.user.userId,
@@ -122,10 +116,14 @@ export class UsersController {
   @Delete(':id')
   @AdminOnly()
   async remove(
-    @Request() req: { user: { userId: string } },
+    @Request() req: { user: { userId: string; role: UserRole } },
     @Param('id') id: string,
   ) {
-    const result = await this.service.remove(id);
+    const result = await this.service.remove(
+      req.user.userId,
+      req.user.role,
+      id,
+    );
     await this.auditLog.log({
       userId: req.user.userId,
       action: 'DELETE',

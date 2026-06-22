@@ -14,9 +14,20 @@ function createBaseClient(): PrismaClient {
     !connectionString.includes('localhost') &&
     !connectionString.includes('127.0.0.1');
 
+  // Prefer verified TLS: if a CA cert is supplied (DATABASE_CA_CERT, PEM
+  // contents), validate the server certificate against it. Otherwise fall back
+  // to the permissive mode managed hosts often need — but allow tightening via
+  // DATABASE_SSL_REJECT_UNAUTHORIZED=true without redeploying code.
+  const caCert = process.env.DATABASE_CA_CERT;
+  const rejectUnauthorized =
+    process.env.DATABASE_SSL_REJECT_UNAUTHORIZED === 'true' || Boolean(caCert);
+  const ssl = isRemote
+    ? { rejectUnauthorized, ...(caCert ? { ca: caCert } : {}) }
+    : undefined;
+
   const adapter = new PrismaPg({
     connectionString,
-    ...(isRemote && { ssl: { rejectUnauthorized: false } }),
+    ...(ssl && { ssl }),
   });
 
   return new PrismaClient({ adapter });

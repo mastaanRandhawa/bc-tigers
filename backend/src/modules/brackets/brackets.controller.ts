@@ -1,11 +1,4 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Patch,
-  Param,
-  Body,
-} from '@nestjs/common';
+import { Controller, Get, Post, Patch, Param, Body } from '@nestjs/common';
 import { BracketsService } from './brackets.service';
 import { AdminOnly } from '../auth/admin.decorator';
 
@@ -94,7 +87,12 @@ export class BracketsController {
   @AdminOnly()
   updateNode(
     @Param('nodeId') nodeId: string,
-    @Body() body: { home_team_id?: string | null; away_team_id?: string | null; match_id?: string | null },
+    @Body()
+    body: {
+      home_team_id?: string | null;
+      away_team_id?: string | null;
+      match_id?: string | null;
+    },
   ) {
     return this.service.updateNode(nodeId, body);
   }

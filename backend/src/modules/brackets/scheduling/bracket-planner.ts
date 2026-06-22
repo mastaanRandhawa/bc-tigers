@@ -1,7 +1,13 @@
 import type { BracketStage } from '@prisma/client';
 import type { BracketNodeDraft, BracketPlan, EligibleTeam } from './types';
-import { bracketSizeForTeamCount, byeCountForTeamCount } from './bye-calculator';
-import { validateBracketGeneration, type EligibilityInput } from './team-eligibility';
+import {
+  bracketSizeForTeamCount,
+  byeCountForTeamCount,
+} from './bye-calculator';
+import {
+  validateBracketGeneration,
+  type EligibilityInput,
+} from './team-eligibility';
 
 const STAGE_ORDER: BracketStage[] = [
   'ROUND_OF_16',
@@ -20,14 +26,20 @@ export function firstStageForSize(size: number): BracketStage {
 
 export function stagesForSize(size: number): BracketStage[] {
   const first = firstStageForSize(size);
-  const main = STAGE_ORDER.slice(STAGE_ORDER.indexOf(first), STAGE_ORDER.indexOf('FINAL') + 1);
+  const main = STAGE_ORDER.slice(
+    STAGE_ORDER.indexOf(first),
+    STAGE_ORDER.indexOf('FINAL') + 1,
+  );
   if (size >= 4) {
     return [...main, 'THIRD_PLACE'];
   }
   return main;
 }
 
-export function matchesInStage(bracketSize: number, stage: BracketStage): number {
+export function matchesInStage(
+  bracketSize: number,
+  stage: BracketStage,
+): number {
   if (stage === 'THIRD_PLACE') return bracketSize >= 4 ? 1 : 0;
   const first = firstStageForSize(bracketSize);
   const firstIdx = STAGE_ORDER.indexOf(first);
@@ -105,7 +117,11 @@ export function loserBracketSlot(
   position: number,
 ): { stage: BracketStage; position: number; slot: 'home' | 'away' } | null {
   if (stage !== 'SEMI_FINAL') return null;
-  return { stage: 'THIRD_PLACE', position: 0, slot: position === 0 ? 'home' : 'away' };
+  return {
+    stage: 'THIRD_PLACE',
+    position: 0,
+    slot: position === 0 ? 'home' : 'away',
+  };
 }
 
 export function planToNodeDrafts(plan: BracketPlan): BracketNodeDraft[] {
@@ -183,7 +199,11 @@ export function nextBracketSlot(
         slot: position % 2 === 0 ? 'home' : 'away',
       };
     case 'SEMI_FINAL':
-      return { stage: 'FINAL', position: 0, slot: position === 0 ? 'home' : 'away' };
+      return {
+        stage: 'FINAL',
+        position: 0,
+        slot: position === 0 ? 'home' : 'away',
+      };
     default:
       return null;
   }

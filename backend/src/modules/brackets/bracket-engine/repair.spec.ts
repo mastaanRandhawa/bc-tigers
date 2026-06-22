@@ -13,7 +13,9 @@ function team(id: string): EligibleTeam {
   return { id, name: id, slug: id, division_id: 'div-1', playerCount: 5 };
 }
 
-function draftsToEngine(drafts: ReturnType<typeof planToNodeDrafts>): EngineNode[] {
+function draftsToEngine(
+  drafts: ReturnType<typeof planToNodeDrafts>,
+): EngineNode[] {
   return drafts.map((d) => ({
     id: d.id!,
     division_id: d.division_id,
@@ -81,7 +83,9 @@ describe('bracket repair', () => {
     setWinner(nodes, sf.id, sf.home_team_id!, 'manual');
 
     const third = nodes.find((n) => n.stage === 'THIRD_PLACE');
-    expect(third?.home_team_id === loser || third?.away_team_id === loser).toBe(true);
+    expect(third?.home_team_id === loser || third?.away_team_id === loser).toBe(
+      true,
+    );
 
     for (const node of nodes) {
       node.next_node_id = null;
@@ -98,6 +102,8 @@ describe('bracket repair', () => {
 
     expect(needsProgressionRepair(nodes)).toBe(false);
     const thirdAfter = nodes.find((n) => n.stage === 'THIRD_PLACE');
-    expect(thirdAfter?.home_team_id === loser || thirdAfter?.away_team_id === loser).toBe(true);
+    expect(
+      thirdAfter?.home_team_id === loser || thirdAfter?.away_team_id === loser,
+    ).toBe(true);
   });
 });

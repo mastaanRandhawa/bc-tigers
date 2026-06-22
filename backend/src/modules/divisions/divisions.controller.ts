@@ -37,9 +37,7 @@ export class DivisionsController {
   @Post('divisions')
   @AdminOnly()
   create(@Body() body: Record<string, unknown>) {
-    return this.service.create(
-      body as Parameters<DivisionsService['create']>[0],
-    );
+    return this.service.create(body);
   }
 
   @Patch('divisions/:id')
@@ -67,6 +65,9 @@ export class DivisionsController {
     },
     @Query('force') force?: string,
   ) {
-    return this.service.generateSchedule(id, { ...body, force: force === 'true' });
+    return this.service.generateSchedule(id, {
+      ...body,
+      force: force === 'true',
+    });
   }
 }
