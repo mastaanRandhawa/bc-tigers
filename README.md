@@ -8,6 +8,10 @@ is a public, read-only fan site.
 
 **Stack:** React (Vite) + TypeScript + Tailwind · NestJS + Prisma + PostgreSQL · Socket.IO
 
+> 📖 **Non-technical walkthrough:** see the illustrated
+> [**User Guide**](docs/client-guide/USER-GUIDE.md) for a complete, screenshot-by-screenshot
+> tour of everything the site can do (fan, coach, and admin).
+
 ---
 
 ## Quick start
@@ -231,6 +235,8 @@ bc-tigers/
 ├── backend/           # NestJS API
 │   ├── prisma/        # schema, migrations, seed.ts
 │   └── src/{modules,gateways,common,prisma}
-├── docs/audits/       # engineering audit reports
+├── docs/
+│   ├── client-guide/  # illustrated end-user guide (USER-GUIDE.md + screenshots)
+│   └── audits/        # engineering audit reports
 └── README.md
 ```
