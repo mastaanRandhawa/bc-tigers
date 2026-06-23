@@ -51,6 +51,18 @@ export class BracketEngine {
     return nodes;
   }
 
+  /** Load nodes from DB without link repair or BYE reconciliation. */
+  async loadNodesRaw(divisionId: string): Promise<EngineNode[]> {
+    const rows = await prisma.bracketNode.findMany({
+      where: { division_id: divisionId },
+      include: { match: { select: { status: true } } },
+      orderBy: [{ stage: 'asc' }, { position: 'asc' }],
+    });
+    const nodes = rows.map((r) => toEngineNode(r));
+    this.recomputeAllStatuses(nodes);
+    return nodes;
+  }
+
   async loadDivisionFlags(divisionId: string) {
     const division = await prisma.division.findUniqueOrThrow({
       where: { id: divisionId },

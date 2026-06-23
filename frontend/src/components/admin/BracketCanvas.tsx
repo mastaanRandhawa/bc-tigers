@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useState } from "react";
 import {
   useBracket,
   useGenerateBracket,
@@ -12,11 +12,14 @@ import {
   useSwapBracketMatches,
   useAssignBracketTeams,
   useValidateBracket,
-} from '@/hooks/useBrackets';
-import QueryState from '@/components/shared/QueryState';
-import { BracketGenerateSheet, BracketEmptyState } from '@/components/admin/BracketGenerateSheet';
-import { getApiErrorMessage } from '@/lib/errors';
-import { nowISO } from '@/lib/date';
+} from "@/hooks/useBrackets";
+import QueryState from "@/components/shared/QueryState";
+import {
+  BracketGenerateSheet,
+  BracketEmptyState,
+} from "@/components/admin/BracketGenerateSheet";
+import { getApiErrorMessage } from "@/lib/errors";
+import { nowISO } from "@/lib/date";
 import {
   isStructureLocked,
   isResultsFrozen,
@@ -29,14 +32,15 @@ import {
   readTeamDragId,
   readMatchDragId,
   type BracketSnapshot,
-} from '@/lib/bracket-utils';
-import type { BracketNode, Team } from '@/types';
-import { STAGE_ORDER } from '@/components/admin/bracket/constants';
-import { BracketStatusBanner } from '@/components/admin/bracket/BracketStatusBanner';
-import { BracketTree } from '@/components/admin/bracket/BracketTree';
-import { TeamPool } from '@/components/admin/bracket/TeamPool';
-import { TournamentToolbar } from '@/components/admin/bracket/TournamentToolbar';
-import type { DragState } from '@/components/admin/bracket/types';
+} from "@/lib/bracket-utils";
+import type { BracketNode, Team } from "@/types";
+import { STAGE_ORDER } from "@/components/admin/bracket/constants";
+import { BracketStatusBanner } from "@/components/admin/bracket/BracketStatusBanner";
+import { BracketTree } from "@/components/admin/bracket/BracketTree";
+import { TeamPool } from "@/components/admin/bracket/TeamPool";
+import { TournamentToolbar } from "@/components/admin/bracket/TournamentToolbar";
+import { ConfirmDialog } from "@/components/admin/inline/ConfirmDialog";
+import type { DragState } from "@/components/admin/bracket/types";
 
 interface BracketCanvasProps {
   divisionId: string;
@@ -57,7 +61,12 @@ export function BracketCanvas({
   adminBracketLocked = false,
   adminBracketFinalized = false,
 }: BracketCanvasProps) {
-  const { data: nodes = [], isLoading, isError, refetch } = useBracket(divisionId);
+  const {
+    data: nodes = [],
+    isLoading,
+    isError,
+    refetch,
+  } = useBracket(divisionId);
   const generateMutation = useGenerateBracket();
   const randomizeMutation = useRandomizeBracket();
   const advanceMutation = useAdvanceBracket();
@@ -70,20 +79,38 @@ export function BracketCanvas({
   const assignMutation = useAssignBracketTeams();
 
   const [showGenerate, setShowGenerate] = useState(false);
-  const { data: bracketValidation } = useValidateBracket(showGenerate ? divisionId : undefined);
-  const [dragOver, setDragOver] = useState<{ nodeId: string; slot: 'home' | 'away' } | null>(null);
+  const { data: bracketValidation } = useValidateBracket(
+    showGenerate ? divisionId : undefined,
+  );
+  const [dragOver, setDragOver] = useState<{
+    nodeId: string;
+    slot: "home" | "away";
+  } | null>(null);
   const [dragState, setDragState] = useState<DragState | null>(null);
   const [matchDragId, setMatchDragId] = useState<string | null>(null);
   const [matchDropId, setMatchDropId] = useState<string | null>(null);
-  const [selectedTeam, setSelectedTeam] = useState<{ id: string; name: string } | null>(null);
-  const [selectedTeamIds, setSelectedTeamIds] = useState<Set<string>>(new Set());
-  const [error, setError] = useState('');
+  const [selectedTeam, setSelectedTeam] = useState<{
+    id: string;
+    name: string;
+  } | null>(null);
+  const [selectedTeamIds, setSelectedTeamIds] = useState<Set<string>>(
+    new Set(),
+  );
+  const [error, setError] = useState("");
   const [undoStack, setUndoStack] = useState<BracketSnapshot[]>([]);
   const [redoStack, setRedoStack] = useState<BracketSnapshot[]>([]);
   const [randomizing, setRandomizing] = useState(false);
+  const [advanceConfirm, setAdvanceConfirm] = useState<{
+    node: BracketNode;
+    winnerId: string;
+    teamName: string;
+  } | null>(null);
 
   const playedMatches = hasPlayedMatches(nodes);
-  const structureLocked = isStructureLocked(adminBracketLocked, adminBracketFinalized);
+  const structureLocked = isStructureLocked(
+    adminBracketLocked,
+    adminBracketFinalized,
+  );
   const resultsFrozen = isResultsFrozen(adminBracketFinalized);
   const firstStage = earliestStage(nodes, STAGE_ORDER);
 
@@ -93,12 +120,15 @@ export function BracketCanvas({
     if (node.away_team_id) assignedTeamIds.add(node.away_team_id);
   }
 
-  const recordHistory = useCallback((snapshot?: BracketSnapshot) => {
-    const snap = snapshot ?? snapshotFromNodes(nodes);
-    if (snap.length === 0) return;
-    setUndoStack((prev) => [...prev, snap].slice(-40));
-    setRedoStack([]);
-  }, [nodes]);
+  const recordHistory = useCallback(
+    (snapshot?: BracketSnapshot) => {
+      const snap = snapshot ?? snapshotFromNodes(nodes);
+      if (snap.length === 0) return;
+      setUndoStack((prev) => [...prev, snap].slice(-40));
+      setRedoStack([]);
+    },
+    [nodes],
+  );
 
   const applySnapshot = async (snapshot: BracketSnapshot) => {
     await restoreMutation.mutateAsync({ divisionId, snapshot });
@@ -107,34 +137,34 @@ export function BracketCanvas({
   const undo = async () => {
     const prev = undoStack[undoStack.length - 1];
     if (!prev || structureLocked) return;
-    setError('');
+    setError("");
     try {
       const current = snapshotFromNodes(nodes);
       setUndoStack((s) => s.slice(0, -1));
       setRedoStack((s) => [...s, current]);
       await applySnapshot(prev);
     } catch (err) {
-      setError(getApiErrorMessage(err, 'Undo failed'));
+      setError(getApiErrorMessage(err, "Undo failed"));
     }
   };
 
   const redo = async () => {
     const next = redoStack[redoStack.length - 1];
     if (!next || structureLocked) return;
-    setError('');
+    setError("");
     try {
       const current = snapshotFromNodes(nodes);
       setRedoStack((s) => s.slice(0, -1));
       setUndoStack((s) => [...s, current]);
       await applySnapshot(next);
     } catch (err) {
-      setError(getApiErrorMessage(err, 'Redo failed'));
+      setError(getApiErrorMessage(err, "Redo failed"));
     }
   };
 
   const startDrag = (
     team: Team,
-    from?: { nodeId: string; slot: 'home' | 'away' },
+    from?: { nodeId: string; slot: "home" | "away" },
     e?: React.DragEvent,
   ) => {
     if (structureLocked) return;
@@ -149,7 +179,11 @@ export function BracketCanvas({
     setMatchDragId(null);
   };
 
-  const placeTeam = async (nodeId: string, slot: 'home' | 'away', teamId: string) => {
+  const placeTeam = async (
+    nodeId: string,
+    slot: "home" | "away",
+    teamId: string,
+  ) => {
     if (structureLocked) return;
     const targetNode = nodes.find((n) => n.id === nodeId);
     if (!targetNode || !canManuallyPlaceInNode(targetNode, firstStage)) return;
@@ -158,7 +192,7 @@ export function BracketCanvas({
       if (sourceNode && !canManuallyPlaceInNode(sourceNode, firstStage)) return;
     }
     const before = snapshotFromNodes(nodes);
-    setError('');
+    setError("");
     try {
       await placeMutation.mutateAsync({ nodeId, teamId, slot });
       recordHistory(before);
@@ -166,11 +200,15 @@ export function BracketCanvas({
       setDragState(null);
       setDragOver(null);
     } catch (err) {
-      setError(getApiErrorMessage(err, 'Failed to place team'));
+      setError(getApiErrorMessage(err, "Failed to place team"));
     }
   };
 
-  const handleDrop = async (e: React.DragEvent, nodeId: string, slot: 'home' | 'away') => {
+  const handleDrop = async (
+    e: React.DragEvent,
+    nodeId: string,
+    slot: "home" | "away",
+  ) => {
     if (structureLocked || readMatchDragId(e.nativeEvent)) return;
     const targetNode = nodes.find((n) => n.id === nodeId);
     if (!targetNode || !canManuallyPlaceInNode(targetNode, firstStage)) return;
@@ -181,8 +219,13 @@ export function BracketCanvas({
     await placeTeam(nodeId, slot, teamId);
   };
 
-  const handleSlotClick = async (node: BracketNode, slot: 'home' | 'away') => {
-    if (!selectedTeam || structureLocked || !canManuallyPlaceInNode(node, firstStage)) return;
+  const handleSlotClick = async (node: BracketNode, slot: "home" | "away") => {
+    if (
+      !selectedTeam ||
+      structureLocked ||
+      !canManuallyPlaceInNode(node, firstStage)
+    )
+      return;
     if (isByeSlot(node, slot)) return;
     await placeTeam(node.id, slot, selectedTeam.id);
   };
@@ -199,7 +242,9 @@ export function BracketCanvas({
       });
       setSelectedTeam(null);
     } else {
-      setSelectedTeam((prev) => (prev?.id === team.id ? null : { id: team.id, name: team.name }));
+      setSelectedTeam((prev) =>
+        prev?.id === team.id ? null : { id: team.id, name: team.name },
+      );
       setSelectedTeamIds(new Set());
     }
     setDragState(null);
@@ -213,18 +258,24 @@ export function BracketCanvas({
       const node = nodes.find((n) => n.id === s.id)!;
       return {
         ...s,
-        home_team_id: node.home_team_id && removeSet.has(node.home_team_id) ? null : s.home_team_id,
-        away_team_id: node.away_team_id && removeSet.has(node.away_team_id) ? null : s.away_team_id,
+        home_team_id:
+          node.home_team_id && removeSet.has(node.home_team_id)
+            ? null
+            : s.home_team_id,
+        away_team_id:
+          node.away_team_id && removeSet.has(node.away_team_id)
+            ? null
+            : s.away_team_id,
         winner_id: null,
       };
     });
-    setError('');
+    setError("");
     try {
       await restoreMutation.mutateAsync({ divisionId, snapshot: snap });
       recordHistory(before);
       setSelectedTeamIds(new Set());
     } catch (err) {
-      setError(getApiErrorMessage(err, 'Failed to remove teams'));
+      setError(getApiErrorMessage(err, "Failed to remove teams"));
     }
   };
 
@@ -232,13 +283,13 @@ export function BracketCanvas({
     if (structureLocked || teamIds.length === 0) return;
     const before = snapshotFromNodes(nodes);
     setRandomizing(true);
-    setError('');
+    setError("");
     try {
       await assignMutation.mutateAsync({ divisionId, teamIds });
       recordHistory(before);
       setSelectedTeamIds(new Set());
     } catch (err) {
-      setError(getApiErrorMessage(err, 'Failed to assign teams'));
+      setError(getApiErrorMessage(err, "Failed to assign teams"));
     } finally {
       setTimeout(() => setRandomizing(false), 500);
     }
@@ -246,62 +297,65 @@ export function BracketCanvas({
 
   const handleToggleLock = async () => {
     if (resultsFrozen) {
-      setError('Unfinalize the bracket before changing structure lock');
+      setError("Unfinalize the bracket before changing structure lock");
       return;
     }
     if (playedMatches && adminBracketLocked) {
-      setError('Cannot unlock — matches have already started');
+      setError("Cannot unlock — matches have already started");
       return;
     }
-    setError('');
+    setError("");
     try {
-      await lockMutation.mutateAsync({ divisionId, locked: !adminBracketLocked });
+      await lockMutation.mutateAsync({
+        divisionId,
+        locked: !adminBracketLocked,
+      });
     } catch (err) {
-      setError(getApiErrorMessage(err, 'Failed to update bracket lock'));
+      setError(getApiErrorMessage(err, "Failed to update bracket lock"));
     }
   };
 
   const handleFinalize = async () => {
-    setError('');
+    setError("");
     try {
       await finalizeMutation.mutateAsync(divisionId);
     } catch (err) {
-      setError(getApiErrorMessage(err, 'Failed to finalize bracket'));
+      setError(getApiErrorMessage(err, "Failed to finalize bracket"));
     }
   };
 
   const handleUnfinalize = async () => {
-    setError('');
+    setError("");
     try {
       await unfinalizeMutation.mutateAsync(divisionId);
     } catch (err) {
-      setError(getApiErrorMessage(err, 'Failed to unfinalize bracket'));
+      setError(getApiErrorMessage(err, "Failed to unfinalize bracket"));
     }
   };
 
   const handleSwapMatches = async (nodeIdA: string, nodeIdB: string) => {
     if (structureLocked) return;
     const before = snapshotFromNodes(nodes);
-    setError('');
+    setError("");
     try {
       await swapMutation.mutateAsync({ nodeIdA, nodeIdB });
       recordHistory(before);
     } catch (err) {
-      setError(getApiErrorMessage(err, 'Failed to swap matches'));
+      setError(getApiErrorMessage(err, "Failed to swap matches"));
     }
     setMatchDragId(null);
     setMatchDropId(null);
   };
 
-  const handleRemove = async (node: BracketNode, slot: 'home' | 'away') => {
+  const handleRemove = async (node: BracketNode, slot: "home" | "away") => {
     if (structureLocked) return;
     const before = snapshotFromNodes(nodes);
-    setError('');
+    setError("");
     const snap = before.map((s) =>
       s.id === node.id
         ? {
             ...s,
-            [slot === 'home' ? 'home_team_id' : 'away_team_id']: null,
+            [slot === "home" ? "home_team_id" : "away_team_id"]: null,
             winner_id: null,
           }
         : s,
@@ -310,30 +364,43 @@ export function BracketCanvas({
       await restoreMutation.mutateAsync({ divisionId, snapshot: snap });
       recordHistory(before);
     } catch (err) {
-      setError(getApiErrorMessage(err, 'Failed to remove team'));
+      setError(getApiErrorMessage(err, "Failed to remove team"));
     }
   };
 
-  const handleAdvance = async (node: BracketNode, winnerId: string) => {
+  const requestAdvance = (node: BracketNode, winnerId: string) => {
+    const team =
+      winnerId === node.home_team_id ? node.home_team : node.away_team;
+    setAdvanceConfirm({
+      node,
+      winnerId,
+      teamName: team?.name ?? "Team",
+    });
+  };
+
+  const handleAdvanceConfirm = async () => {
+    if (!advanceConfirm) return;
+    const { node, winnerId } = advanceConfirm;
     const before = snapshotFromNodes(nodes);
-    setError('');
+    setError("");
     try {
       await advanceMutation.mutateAsync({ nodeId: node.id, winnerId });
       recordHistory(before);
+      setAdvanceConfirm(null);
     } catch (err) {
-      setError(getApiErrorMessage(err, 'Failed to advance winner'));
+      setError(getApiErrorMessage(err, "Failed to advance winner"));
     }
   };
 
   const handleGenerate = async () => {
-    setError('');
+    setError("");
     try {
       await generateMutation.mutateAsync(divisionId);
       setUndoStack([]);
       setRedoStack([]);
       setShowGenerate(false);
     } catch (err) {
-      setError(getApiErrorMessage(err, 'Failed to generate bracket'));
+      setError(getApiErrorMessage(err, "Failed to generate bracket"));
     }
   };
 
@@ -341,12 +408,12 @@ export function BracketCanvas({
     if (structureLocked) return;
     const before = snapshotFromNodes(nodes);
     setRandomizing(true);
-    setError('');
+    setError("");
     try {
       await randomizeMutation.mutateAsync(divisionId);
       recordHistory(before);
     } catch (err) {
-      setError(getApiErrorMessage(err, 'Random draw failed'));
+      setError(getApiErrorMessage(err, "Random draw failed"));
     } finally {
       setTimeout(() => setRandomizing(false), 600);
     }
@@ -361,9 +428,11 @@ export function BracketCanvas({
       exportedAt: nowISO(),
       nodes: snapshotFromNodes(nodes),
     };
-    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+    const blob = new Blob([JSON.stringify(payload, null, 2)], {
+      type: "application/json",
+    });
     const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
+    const link = document.createElement("a");
     link.href = url;
     link.download = `bracket-${divisionSlug || divisionId}.json`;
     link.click();
@@ -405,16 +474,26 @@ export function BracketCanvas({
         </p>
       )}
 
-      <QueryState isLoading={isLoading} isError={isError} onRetry={() => refetch()} isEmpty={false}>
+      <QueryState
+        isLoading={isLoading}
+        isError={isError}
+        onRetry={() => refetch()}
+        isEmpty={false}
+      >
         {nodes.length === 0 ? (
-          <BracketEmptyState teamCount={teams.length} onCreate={() => setShowGenerate(true)} />
+          <BracketEmptyState
+            teamCount={teams.length}
+            onCreate={() => setShowGenerate(true)}
+          />
         ) : (
           <div className="space-y-8">
             <BracketStatusBanner
               resultsFrozen={resultsFrozen}
               structureLocked={structureLocked}
               adminBracketLocked={adminBracketLocked}
-              unassignedCount={teams.filter((t) => !assignedTeamIds.has(t.id)).length}
+              unassignedCount={
+                teams.filter((t) => !assignedTeamIds.has(t.id)).length
+              }
             />
 
             <TournamentToolbar
@@ -489,11 +568,28 @@ export function BracketCanvas({
               onDrop={handleDrop}
               onSlotClick={handleSlotClick}
               onRemoveSlot={handleRemove}
-              onAdvance={handleAdvance}
+              onAdvance={requestAdvance}
             />
           </div>
         )}
       </QueryState>
+
+      <ConfirmDialog
+        open={!!advanceConfirm}
+        onOpenChange={(open) => {
+          if (!open) setAdvanceConfirm(null);
+        }}
+        title="Confirm match winner"
+        description={
+          advanceConfirm
+            ? `Record ${advanceConfirm.teamName} as the winner? They will advance to the next round but will not be marked as the winner of that match until you confirm it there.`
+            : undefined
+        }
+        confirmLabel="Confirm winner"
+        confirmVariant="default"
+        pendingLabel="Saving…"
+        onConfirm={handleAdvanceConfirm}
+      />
 
       <BracketGenerateSheet
         open={showGenerate}
