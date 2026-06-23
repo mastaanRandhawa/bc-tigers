@@ -1,5 +1,5 @@
-import type { ReactNode } from 'react';
-import { Button } from '@/components/ui/button';
+import type { ReactNode } from "react";
+import { Button } from "@/components/ui/button";
 import {
   GitBranch,
   Shuffle,
@@ -10,8 +10,8 @@ import {
   CheckCircle2,
   RotateCcw,
   Download,
-} from 'lucide-react';
-import { cn } from '@/lib/utils';
+} from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface TournamentToolbarProps {
   structureLocked: boolean;
@@ -55,11 +55,21 @@ export function TournamentToolbar({
       <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <div className="flex flex-wrap items-center gap-2">
           <ToolbarGroup label="History">
-            <Button variant="outline" size="sm" onClick={onUndo} disabled={structureLocked || !canUndo || busy}>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onUndo}
+              disabled={structureLocked || !canUndo || busy}
+            >
               <Undo2 className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">Undo</span>
             </Button>
-            <Button variant="outline" size="sm" onClick={onRedo} disabled={structureLocked || !canRedo || busy}>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={onRedo}
+              disabled={structureLocked || !canRedo || busy}
+            >
               <Redo2 className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">Redo</span>
             </Button>
@@ -73,7 +83,7 @@ export function TournamentToolbar({
               size="sm"
               onClick={onRandomDraw}
               disabled={structureLocked || busy}
-              className={cn(randomizing && 'animate-pulse')}
+              className={cn(randomizing && "animate-pulse")}
             >
               <Shuffle className="h-3.5 w-3.5" />
               Random draw
@@ -98,11 +108,20 @@ export function TournamentToolbar({
               onClick={onToggleLock}
               disabled={resultsFrozen || playedMatches || busy}
             >
-              {adminBracketLocked ? <Unlock className="h-3.5 w-3.5" /> : <Lock className="h-3.5 w-3.5" />}
-              {adminBracketLocked ? 'Unlock' : 'Lock'}
+              {adminBracketLocked ? (
+                <Unlock className="h-3.5 w-3.5" />
+              ) : (
+                <Lock className="h-3.5 w-3.5" />
+              )}
+              {adminBracketLocked ? "Unlock" : "Lock"}
             </Button>
             {resultsFrozen ? (
-              <Button variant="outline" size="sm" onClick={onUnfinalize} disabled={busy}>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={onUnfinalize}
+                disabled={busy}
+              >
                 <RotateCcw className="h-3.5 w-3.5" />
                 Unfinalize
               </Button>
@@ -112,7 +131,12 @@ export function TournamentToolbar({
                 Finalize
               </Button>
             )}
-            <Button variant="ghost" size="sm" onClick={onExport} disabled={busy}>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onExport}
+              disabled={busy}
+            >
               <Download className="h-3.5 w-3.5" />
               Export
             </Button>
@@ -123,7 +147,13 @@ export function TournamentToolbar({
   );
 }
 
-function ToolbarGroup({ label, children }: { label: string; children: ReactNode }) {
+function ToolbarGroup({
+  label,
+  children,
+}: {
+  label: string;
+  children: ReactNode;
+}) {
   return (
     <div className="flex flex-col gap-1.5">
       <span className="px-1 text-[10px] font-semibold uppercase tracking-[0.1em] text-muted-foreground/80">

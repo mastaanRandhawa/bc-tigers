@@ -1,6 +1,22 @@
+import type { BracketStage } from '@prisma/client';
 import type { EngineNode } from './types';
 import { nodeMap } from './types';
 import { computeNodeStatus, isByeNode, soleTeamId } from './status';
+
+const STAGE_ORDER: BracketStage[] = [
+  'ROUND_OF_16',
+  'QUARTER_FINAL',
+  'SEMI_FINAL',
+  'FINAL',
+  'THIRD_PLACE',
+];
+
+function firstStageInBracket(nodes: EngineNode[]): BracketStage | null {
+  for (const stage of STAGE_ORDER) {
+    if (nodes.some((n) => n.stage === stage)) return stage;
+  }
+  return null;
+}
 
 /** Clear all downstream state fed from this node (winners + team slots). */
 export function clearDownstream(nodes: EngineNode[], fromNodeId: string): void {
@@ -155,14 +171,16 @@ export function setWinner(
   return { changed: true, nodes };
 }
 
-/** Multi-round BYE propagation until stable. */
+/** Auto-advance first-round BYEs only; later rounds wait for both feeders. */
 export function propagateByes(nodes: EngineNode[]): boolean {
+  const firstStage = firstStageInBracket(nodes);
   let changed = false;
   let pass = true;
 
   while (pass) {
     pass = false;
     for (const node of [...nodes]) {
+      if (firstStage && node.stage !== firstStage) continue;
       if (node.winner_id) continue;
       if (!node.home_team_id && !node.away_team_id) {
         node.status = 'INVALID';

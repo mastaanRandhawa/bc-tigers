@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -6,8 +6,8 @@ import {
   DialogTitle,
   DialogDescription,
   DialogFooter,
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
 
 interface ConfirmDialogProps {
   open: boolean;
@@ -15,6 +15,8 @@ interface ConfirmDialogProps {
   title: string;
   description?: string;
   confirmLabel?: string;
+  confirmVariant?: "default" | "destructive";
+  pendingLabel?: string;
   onConfirm: () => Promise<void> | void;
 }
 
@@ -23,7 +25,9 @@ export function ConfirmDialog({
   onOpenChange,
   title,
   description,
-  confirmLabel = 'Delete',
+  confirmLabel = "Delete",
+  confirmVariant = "destructive",
+  pendingLabel,
   onConfirm,
 }: ConfirmDialogProps) {
   const [pending, setPending] = useState(false);
@@ -46,15 +50,15 @@ export function ConfirmDialog({
           {description && <DialogDescription>{description}</DialogDescription>}
         </DialogHeader>
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={pending}>
-            Cancel
-          </Button>
           <Button
-            variant="destructive"
-            onClick={handle}
+            variant="outline"
+            onClick={() => onOpenChange(false)}
             disabled={pending}
           >
-            {pending ? 'Deleting…' : confirmLabel}
+            Cancel
+          </Button>
+          <Button variant={confirmVariant} onClick={handle} disabled={pending}>
+            {pending ? (pendingLabel ?? "Deleting…") : confirmLabel}
           </Button>
         </DialogFooter>
       </DialogContent>

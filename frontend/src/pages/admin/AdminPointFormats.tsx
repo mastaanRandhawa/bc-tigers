@@ -36,14 +36,14 @@ export default function AdminPointFormats() {
             <BarChart3 className="w-5 h-5 text-muted-foreground" />
           </div>
           <div>
-            <p className="font-semibold text-foreground flex items-center gap-2">
+            <div className="font-semibold text-foreground flex items-center gap-2">
               {pf.name}
               {pf.is_system && (
                 <Badge variant="secondary" className="text-[10px]">
                   System
                 </Badge>
               )}
-            </p>
+            </div>
             <p className="text-xs text-muted-foreground">{pf.slug}</p>
           </div>
         </div>

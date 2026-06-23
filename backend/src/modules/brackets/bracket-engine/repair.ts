@@ -9,7 +9,7 @@ import {
   setWinner,
   type WinnerSource,
 } from './progression';
-import { computeNodeStatus } from './status';
+import { computeNodeStatus, soleTeamId } from './status';
 import type { EngineNode } from './types';
 import { findNode } from './types';
 
@@ -75,6 +75,43 @@ export function needsProgressionRepair(nodes: EngineNode[]): boolean {
         n.stage === 'ROUND_OF_16') &&
       (!n.next_node_id || (n.stage === 'SEMI_FINAL' && !n.loser_next_node_id)),
   );
+}
+
+/** Rebuild downstream from saved winners without inventing new BYE advances. */
+export function replaySavedWinners(nodes: EngineNode[]): void {
+  const firstStage = firstStageInBracket(nodes);
+  if (!firstStage) return;
+
+  const saved = new Map<
+    string,
+    { winnerId: string; source: WinnerSource }
+  >();
+  for (const node of nodes) {
+    if (!node.winner_id) continue;
+    const sole = soleTeamId(node);
+    const source: WinnerSource =
+      node.auto_advanced || (sole !== null && sole === node.winner_id)
+        ? 'bye'
+        : 'manual';
+    saved.set(node.id, { winnerId: node.winner_id, source });
+  }
+
+  resetDownstreamTeams(nodes, firstStage);
+
+  for (const stage of STAGE_ORDER.filter((s) => s !== 'THIRD_PLACE')) {
+    const stageNodes = nodes
+      .filter((n) => n.stage === stage)
+      .sort((a, b) => a.position - b.position);
+    for (const node of stageNodes) {
+      const outcome = saved.get(node.id);
+      if (!outcome) continue;
+      setWinner(nodes, node.id, outcome.winnerId, outcome.source);
+    }
+  }
+
+  for (const node of nodes) {
+    node.status = computeNodeStatus(node);
+  }
 }
 
 /** Rebuild downstream placements from saved winners after links are repaired. */

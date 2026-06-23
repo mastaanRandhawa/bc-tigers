@@ -3,6 +3,7 @@ import {
   needsProgressionRepair,
   reconcileBracketProgression,
   repairProgressionLinks,
+  replaySavedWinners,
 } from './repair';
 import type { EngineNode } from './types';
 import { planBracket, planToNodeDrafts } from '../scheduling/bracket-planner';
@@ -105,5 +106,80 @@ describe('bracket repair', () => {
     expect(
       thirdAfter?.home_team_id === loser || thirdAfter?.away_team_id === loser,
     ).toBe(true);
+  });
+
+  it('does not auto-advance when a team is removed leaving one slot filled', () => {
+    const teams = Array.from({ length: 8 }, (_, i) => team(`t${i + 1}`));
+    const plan = planBracket({
+      divisionId: 'div-1',
+      teams,
+    });
+    const nodes = draftsToEngine(planToNodeDrafts(plan));
+    const slots = buildFirstRoundSlots(
+      teams.map((t) => t.id),
+      plan.bracketSize,
+    );
+    const firstRound = nodes
+      .filter((n) => n.stage === plan.firstStage)
+      .sort((a, b) => a.position - b.position);
+    for (let i = 0; i < firstRound.length; i++) {
+      firstRound[i].home_team_id = slots[i].homeTeamId;
+      firstRound[i].away_team_id = slots[i].awayTeamId;
+    }
+
+    const qf = nodes.find(
+      (n) =>
+        n.stage === 'QUARTER_FINAL' && n.home_team_id && n.away_team_id,
+    )!;
+    qf.away_team_id = null;
+    qf.winner_id = null;
+    qf.auto_advanced = false;
+
+    replaySavedWinners(nodes);
+
+    expect(qf.winner_id).toBeNull();
+    expect(qf.auto_advanced).toBe(false);
+    expect(qf.status).toBe('PENDING');
+    const sf = nodes.find((n) => n.id === qf.next_node_id);
+    expect(sf?.home_team_id).toBeFalsy();
+    expect(sf?.away_team_id).toBeFalsy();
+    expect(sf?.winner_id).toBeNull();
+  });
+
+  it('replaySavedWinners restores manual winners after downstream reset', () => {
+    const teams = Array.from({ length: 8 }, (_, i) => team(`t${i + 1}`));
+    const plan = planBracket({
+      divisionId: 'div-1',
+      teams,
+    });
+    const nodes = draftsToEngine(planToNodeDrafts(plan));
+    const slots = buildFirstRoundSlots(
+      teams.map((t) => t.id),
+      plan.bracketSize,
+    );
+    const firstRound = nodes
+      .filter((n) => n.stage === plan.firstStage)
+      .sort((a, b) => a.position - b.position);
+    for (let i = 0; i < firstRound.length; i++) {
+      firstRound[i].home_team_id = slots[i].homeTeamId;
+      firstRound[i].away_team_id = slots[i].awayTeamId;
+    }
+
+    const qf = nodes.find(
+      (n) =>
+        n.stage === 'QUARTER_FINAL' && n.home_team_id && n.away_team_id,
+    )!;
+    setWinner(nodes, qf.id, qf.home_team_id!, 'manual');
+
+    replaySavedWinners(nodes);
+
+    const won = nodes.find((n) => n.id === qf.id);
+    expect(won?.winner_id).toBe(qf.home_team_id);
+    const sf = nodes.find((n) => n.id === qf.next_node_id);
+    expect(
+      sf?.home_team_id === qf.home_team_id ||
+        sf?.away_team_id === qf.home_team_id,
+    ).toBe(true);
+    expect(sf?.winner_id).toBeNull();
   });
 });

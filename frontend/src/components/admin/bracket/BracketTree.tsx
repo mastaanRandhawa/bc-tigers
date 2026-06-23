@@ -134,7 +134,7 @@ export function BracketTree({
       <div className="mb-5">
         <h2 className="font-display text-lg font-semibold tracking-tight text-foreground">Knockout bracket</h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          Place teams in the first round, then click winners to advance through the tree.
+          Place teams in the first round, then click and confirm winners to advance through the tree.
         </p>
       </div>
 

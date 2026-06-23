@@ -84,6 +84,23 @@ describe('bracket-engine', () => {
     }
   });
 
+  it('does not auto-advance later rounds when only one feeder has a winner', () => {
+    const { nodes } = buildBracket(8);
+    const qf = nodes.find(
+      (n) => n.stage === 'QUARTER_FINAL' && n.home_team_id && n.away_team_id,
+    )!;
+    const winnerId = qf.home_team_id!;
+    setWinner(nodes, qf.id, winnerId, 'manual');
+
+    const sf = nodes.find((n) => n.id === qf.next_node_id);
+    expect(sf?.home_team_id === winnerId || sf?.away_team_id === winnerId).toBe(
+      true,
+    );
+    expect(sf?.winner_id).toBeNull();
+    expect(sf?.auto_advanced).toBe(false);
+    expect(sf?.status).toBe('PENDING');
+  });
+
   it('propagates winner through quarter to semi to final', () => {
     const { nodes } = buildBracket(8);
     const qf = nodes.filter(

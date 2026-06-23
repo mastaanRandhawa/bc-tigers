@@ -9,6 +9,7 @@ import { AuditLogService } from '../audit-log/audit-log.service';
 import type { BracketStage } from '@prisma/client';
 import prisma from '../../prisma/prisma';
 import { BracketEngine } from './bracket-engine';
+import { replaySavedWinners } from './bracket-engine/repair';
 import type { BracketNodeDetail } from './bracket-engine/bracket-node.types';
 import {
   planBracket,
@@ -375,11 +376,9 @@ export class BracketsService {
       ),
     );
 
-    const nodes = await this.engine.loadNodes(divisionId);
-    const firstStage = this.earliestStageFromEngine(nodes);
-    if (firstStage) {
-      await this.engine.runPropagateByes(divisionId, firstStage);
-    }
+    const nodes = await this.engine.loadNodesRaw(divisionId);
+    replaySavedWinners(nodes);
+    await this.engine.persistNodes(nodes);
 
     const result = await this.getByDivisionId(divisionId);
     this.emitBracketUpdated(divisionId);
