@@ -140,4 +140,30 @@ export class CoachService {
   removePlayer(teamId: string, playerId: string) {
     return this.players.remove(teamId, playerId);
   }
+
+  async findTeamMatches(userId: string) {
+    const teamId = await getCoachTeamId(userId);
+    if (!teamId) return [];
+
+    return prisma.match.findMany({
+      where: {
+        OR: [{ home_team_id: teamId }, { away_team_id: teamId }],
+      },
+      include: {
+        home_team: { select: { id: true, name: true, slug: true, logo: true } },
+        away_team: { select: { id: true, name: true, slug: true, logo: true } },
+        division: {
+          select: {
+            id: true,
+            slug: true,
+            name: true,
+            tournament: { select: { id: true, name: true, slug: true } },
+          },
+        },
+        venue: { select: { id: true, name: true, slug: true } },
+      },
+      orderBy: { scheduled_start: 'desc' },
+      take: 30,
+    });
+  }
 }

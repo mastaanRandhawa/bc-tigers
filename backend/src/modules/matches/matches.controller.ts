@@ -7,9 +7,14 @@ import {
   Param,
   Body,
   Query,
+  Request,
+  UseGuards,
 } from '@nestjs/common';
 import { MatchesService } from './matches.service';
 import { AdminOnly } from '../auth/admin.decorator';
+import { JwtAuthGuard } from '../auth/jwt-auth.guard';
+import { RolesGuard } from '../auth/roles.guard';
+import { Roles } from '../auth/roles.decorator';
 import type { MatchStatus } from '@prisma/client';
 
 @Controller('matches')
@@ -69,31 +74,37 @@ export class MatchesController {
   }
 
   @Post(':matchId/events')
-  @AdminOnly()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN', 'SUPERADMIN', 'COACH')
   addEvent(
     @Param('matchId') matchId: string,
     @Body() body: Record<string, unknown>,
+    @Request() req: { user: { userId: string; role: string } },
   ) {
-    return this.service.addEvent(matchId, body);
+    return this.service.addEvent(matchId, body, req.user);
   }
 
   @Patch(':matchId/events/:eventId')
-  @AdminOnly()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN', 'SUPERADMIN', 'COACH')
   updateEvent(
     @Param('matchId') matchId: string,
     @Param('eventId') eventId: string,
     @Body() body: Record<string, unknown>,
+    @Request() req: { user: { userId: string; role: string } },
   ) {
-    return this.service.updateEvent(matchId, eventId, body);
+    return this.service.updateEvent(matchId, eventId, body, req.user);
   }
 
   @Delete(':matchId/events/:eventId')
-  @AdminOnly()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN', 'SUPERADMIN', 'COACH')
   deleteEvent(
     @Param('matchId') matchId: string,
     @Param('eventId') eventId: string,
+    @Request() req: { user: { userId: string; role: string } },
   ) {
-    return this.service.deleteEvent(matchId, eventId);
+    return this.service.deleteEvent(matchId, eventId, req.user);
   }
 
   @Delete(':id')

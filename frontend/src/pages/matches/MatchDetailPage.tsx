@@ -27,7 +27,7 @@ import { useScoreFlash } from '@/hooks/useScoreFlash';
 import { formatDate, formatTime, cn, getInitials, getMatchStatusBadgeVariant } from '@/lib/utils';
 import { divisionMatchesPath } from '@/lib/division-routes';
 import { useMatch, useDeleteMatchEvent } from '@/hooks/useMatches';
-import { useCanAdminEdit } from '@/hooks/useCanAdminEdit';
+import { useMatchGoalEditAccess, coachCanEditEvent } from '@/hooks/useMatchGoalEditAccess';
 import { AdminContextBar } from '@/components/admin/inline/AdminContextBar';
 import { AdminActionButton } from '@/components/admin/inline/AdminActionButton';
 import { ConfirmDialog } from '@/components/admin/inline/ConfirmDialog';
@@ -172,7 +172,13 @@ export default function MatchDetailPage() {
   const nestedInDivision = !!(tournamentSlug && divisionSlug);
   const { data: match, isLoading, isError, refetch } = useMatch(matchId);
 
-  const canEdit = useCanAdminEdit();
+  const {
+    canEditGoals,
+    canEditAllEvents,
+    canEditScore,
+    coachTeamId,
+    isCoach,
+  } = useMatchGoalEditAccess(match);
   const deleteMutation = useDeleteMatchEvent();
 
   const [scoreOpen, setScoreOpen] = useState(false);
@@ -185,7 +191,7 @@ export default function MatchDetailPage() {
   const isLive = match?.status === 'LIVE';
   const isCompleted = match?.status === 'COMPLETED';
   const showScore = isLive || isCompleted;
-  const showScoreStepper = canEdit && (isLive || isCompleted);
+  const showScoreStepper = canEditScore && (isLive || isCompleted);
 
   const sortedEvents = useMemo(
     () => sortEvents(match?.events ?? []),
@@ -224,7 +230,19 @@ export default function MatchDetailPage() {
           className="relative min-h-full bg-muted/20"
           style={{ '--home-color': homeColor, '--away-color': awayColor } as React.CSSProperties}
         >
-          {canEdit && (
+          {canEditGoals && isCoach && !canEditAllEvents && (
+            <div className="page-container pt-4">
+              <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-md border border-primary/20 bg-primary/5 px-3 py-2 text-xs">
+                <span className="font-medium text-primary">Record goals for your team</span>
+                <Button type="button" size="sm" variant="outline" className="h-7 gap-1.5" onClick={openAddEvent}>
+                  <PlusSquare className="h-3.5 w-3.5" />
+                  Add goal
+                </Button>
+              </div>
+            </div>
+          )}
+
+          {canEditAllEvents && (
             <div className="page-container pt-4">
               <AdminContextBar
                 label="Editing match"
@@ -353,7 +371,7 @@ export default function MatchDetailPage() {
                   <SectionHeading
                     title="Match Timeline"
                     action={
-                      canEdit ? (
+                      canEditGoals ? (
                         <Button
                           type="button"
                           variant="ghost"
@@ -362,7 +380,7 @@ export default function MatchDetailPage() {
                           onClick={openAddEvent}
                         >
                           <PlusSquare className="h-3.5 w-3.5" />
-                          Add event
+                          {isCoach && !canEditAllEvents ? 'Add goal' : 'Add event'}
                         </Button>
                       ) : undefined
                     }
@@ -407,7 +425,7 @@ export default function MatchDetailPage() {
                                 {isHome ? match.home_team?.name : match.away_team?.name}
                               </span>
 
-                              {canEdit && (
+                              {coachCanEditEvent(event, canEditAllEvents, coachTeamId) && (
                                 <div className="flex shrink-0 items-center gap-0.5 opacity-100 sm:opacity-0 sm:transition-opacity sm:group-hover:opacity-100">
                                   <Button
                                     type="button"
@@ -445,7 +463,7 @@ export default function MatchDetailPage() {
                       <p className="mt-1 max-w-xs text-xs text-muted-foreground">
                         Goals, cards, and substitutions will appear here as they are recorded.
                       </p>
-                      {canEdit && (
+                      {canEditGoals && (
                         <Button
                           type="button"
                           variant="outline"
@@ -454,7 +472,7 @@ export default function MatchDetailPage() {
                           onClick={openAddEvent}
                         >
                           <PlusSquare className="h-3.5 w-3.5" />
-                          Record first event
+                          {isCoach && !canEditAllEvents ? 'Record first goal' : 'Record first event'}
                         </Button>
                       )}
                     </SectionCard>
@@ -500,25 +518,29 @@ export default function MatchDetailPage() {
             </div>
           </div>
 
-          {canEdit && (
+          {(canEditGoals || canEditAllEvents) && (
             <>
-              <MatchScoreFormDialog open={scoreOpen} onOpenChange={setScoreOpen} match={match} />
+              {canEditAllEvents && (
+                <MatchScoreFormDialog open={scoreOpen} onOpenChange={setScoreOpen} match={match} />
+              )}
               <MatchEventFormDialog
                 open={eventDialog.open}
                 onOpenChange={(open) => setEventDialog((s) => ({ ...s, open }))}
                 match={match}
                 event={eventDialog.event}
+                goalOnly={!canEditAllEvents}
+                lockedTeamId={coachTeamId ?? undefined}
               />
               <ConfirmDialog
                 open={!!deleteTarget}
                 onOpenChange={(open) => !open && setDeleteTarget(null)}
-                title="Delete event?"
+                title={canEditAllEvents ? 'Delete event?' : 'Delete goal?'}
                 description={
                   deleteTarget
                     ? `Remove this ${deleteTarget.type.replace(/_/g, ' ').toLowerCase()} from the match timeline. The score will be recalculated from remaining goal events.`
                     : undefined
                 }
-                confirmLabel="Delete event"
+                confirmLabel={canEditAllEvents ? 'Delete event' : 'Delete goal'}
                 onConfirm={async () => {
                   if (!deleteTarget) return;
                   await deleteMutation.mutateAsync({

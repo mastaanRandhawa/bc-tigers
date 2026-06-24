@@ -87,6 +87,14 @@ export function useUpdateCoachPlayer() {
   });
 }
 
+export function useCoachMatches(enabled = true) {
+  return useQuery({
+    queryKey: ['coach', 'matches'],
+    queryFn: async () => (await coachService.getMatches()).data,
+    enabled,
+  });
+}
+
 export function useDeleteCoachPlayer() {
   const qc = useQueryClient();
   return useMutation({

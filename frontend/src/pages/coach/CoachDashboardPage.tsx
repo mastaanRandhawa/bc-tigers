@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import CoachRosterPanel from '@/components/coach/CoachRosterPanel';
+import CoachMatchesPanel from '@/components/coach/CoachMatchesPanel';
 import { useAuthStore } from '@/store/authStore';
 import { useCoachTeamData, useUpdateCoachTeam } from '@/hooks/useCoach';
 import { getApiErrorMessage } from '@/lib/errors';
@@ -200,6 +201,8 @@ export default function CoachDashboardPage() {
                     </Button>
                   )}
                 </form>
+
+                <CoachMatchesPanel team={team} />
 
                 <CoachRosterPanel
                   team={team}

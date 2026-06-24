@@ -32,6 +32,10 @@ interface MatchEventFormDialogProps {
   onOpenChange: (open: boolean) => void;
   match: Match | null;
   event?: MatchEvent | null;
+  /** Restrict to goal events only (coach portal). */
+  goalOnly?: boolean;
+  /** Lock team selection to a specific team id. */
+  lockedTeamId?: string;
 }
 
 export default function MatchEventFormDialog({
@@ -39,6 +43,8 @@ export default function MatchEventFormDialog({
   onOpenChange,
   match,
   event,
+  goalOnly = false,
+  lockedTeamId,
 }: MatchEventFormDialogProps) {
   const isEdit = !!event;
   const addMutation = useAddMatchEvent();
@@ -62,22 +68,23 @@ export default function MatchEventFormDialog({
 
   useEffect(() => {
     if (!open || !match) return;
+    const defaultTeamId = lockedTeamId ?? match.home_team_id;
     if (event) {
       form.reset({
-        type: event.type,
+        type: goalOnly ? 'GOAL' : event.type,
         minute: String(event.minute),
-        team_id: event.team_id,
+        team_id: lockedTeamId ?? event.team_id,
         player_id: event.player_id ?? '__none__',
       });
     } else {
       form.reset({
         type: 'GOAL',
         minute: '0',
-        team_id: match.home_team_id,
+        team_id: defaultTeamId,
         player_id: '__none__',
       });
     }
-  }, [open, match, event, form]);
+  }, [open, match, event, form, goalOnly, lockedTeamId]);
 
   const onSubmit = form.handleSubmit(async (values) => {
     if (!match) return;
@@ -85,14 +92,15 @@ export default function MatchEventFormDialog({
       values.player_id && values.player_id !== '__none__' ? values.player_id : undefined;
 
     try {
+      const eventType = goalOnly ? 'GOAL' : values.type;
       if (isEdit && event) {
         await updateMutation.mutateAsync({
           matchId: match.id,
           eventId: event.id,
           data: {
-            type: values.type,
+            type: eventType,
             minute: Number(values.minute),
-            team_id: values.team_id,
+            team_id: lockedTeamId ?? values.team_id,
             player_id: playerId ?? null,
           },
         });
@@ -100,9 +108,9 @@ export default function MatchEventFormDialog({
         await addMutation.mutateAsync({
           matchId: match.id,
           data: {
-            type: values.type,
+            type: eventType,
             minute: Number(values.minute),
-            team_id: values.team_id,
+            team_id: lockedTeamId ?? values.team_id,
             player_id: playerId,
           },
         });
@@ -124,16 +132,20 @@ export default function MatchEventFormDialog({
     <FormDialog
       open={open}
       onOpenChange={onOpenChange}
-      title={isEdit ? 'Edit Match Event' : 'Record Match Event'}
+      title={isEdit ? (goalOnly ? 'Edit Goal' : 'Edit Match Event') : goalOnly ? 'Record Goal' : 'Record Match Event'}
       description={`${match.home_team?.name} vs ${match.away_team?.name}`}
       onSubmit={onSubmit}
       isSubmitting={isSubmitting}
-      submitLabel={isEdit ? 'Save Changes' : 'Add Event'}
+      submitLabel={isEdit ? 'Save Changes' : goalOnly ? 'Add Goal' : 'Add Event'}
     >
       <FormError message={form.formState.errors.root?.message} />
-      <SelectField control={form.control} name="type" label="Event Type" options={EVENT_TYPES} />
+      {!goalOnly && (
+        <SelectField control={form.control} name="type" label="Event Type" options={EVENT_TYPES} />
+      )}
       <TextInputField control={form.control} name="minute" label="Minute" type="number" />
-      <SelectField control={form.control} name="team_id" label="Team" options={teamOptions} />
+      {!lockedTeamId && (
+        <SelectField control={form.control} name="team_id" label="Team" options={teamOptions} />
+      )}
       <SelectField
         control={form.control}
         name="player_id"

@@ -1,5 +1,5 @@
 import apiClient from '@/lib/api-client';
-import type { Player, Team, User } from '@/types';
+import type { Match, Player, Team, User } from '@/types';
 
 export type CoachTeamResponse =
   | (Team & {
@@ -51,4 +51,6 @@ export const coachService = {
 
   deletePlayer: (playerId: string) =>
     apiClient.delete<Player>(`/coach/team/players/${playerId}`),
+
+  getMatches: () => apiClient.get<Match[]>('/coach/team/matches'),
 };

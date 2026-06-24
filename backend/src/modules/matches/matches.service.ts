@@ -12,6 +12,14 @@ import { MatchesGateway } from '../../gateways/matches.gateway';
 import { BracketsService } from '../brackets/brackets.service';
 import { MailService } from '../mail/mail.service';
 import { pickAllowed } from '../../common/pick';
+import {
+  assertCoachCanAddGoalEvent,
+  assertCoachCanDeleteGoalEvent,
+  assertCoachCanUpdateGoalEvent,
+  coachGoalPatchFromUpdate,
+} from '../auth/coach-match-goals';
+
+export type MatchEventActor = { userId: string; role: string };
 
 /** Client-settable scalar fields on a match. Scores are set via the score/events endpoints. */
 const MATCH_FIELDS = [
@@ -189,11 +197,17 @@ export class MatchesService {
     return this.applyScore(id, homeScore, awayScore);
   }
 
-  async addEvent(matchId: string, data: unknown) {
+  async addEvent(matchId: string, data: unknown, actor?: MatchEventActor) {
     const eventData = pickAllowed<Prisma.MatchEventUncheckedCreateInput>(
       data,
       MATCH_EVENT_FIELDS,
     );
+
+    if (actor?.role === 'COACH') {
+      await assertCoachCanAddGoalEvent(actor.userId, matchId, eventData);
+      eventData.type = 'GOAL';
+    }
+
     const event = await prisma.matchEvent.create({
       data: { ...eventData, match_id: matchId },
       include: { player: true, team: true },
@@ -212,7 +226,12 @@ export class MatchesService {
     return event;
   }
 
-  async updateEvent(matchId: string, eventId: string, data: unknown) {
+  async updateEvent(
+    matchId: string,
+    eventId: string,
+    data: unknown,
+    actor?: MatchEventActor,
+  ) {
     const existing = await prisma.matchEvent.findFirst({
       where: { id: eventId, match_id: matchId },
     });
@@ -222,6 +241,17 @@ export class MatchesService {
       data,
       MATCH_EVENT_FIELDS,
     );
+
+    if (actor?.role === 'COACH') {
+      await assertCoachCanUpdateGoalEvent(
+        actor.userId,
+        matchId,
+        existing,
+        coachGoalPatchFromUpdate(patch),
+      );
+      patch.type = 'GOAL';
+    }
+
     const event = await prisma.matchEvent.update({
       where: { id: eventId },
       data: patch,
@@ -241,11 +271,15 @@ export class MatchesService {
     return event;
   }
 
-  async deleteEvent(matchId: string, eventId: string) {
+  async deleteEvent(matchId: string, eventId: string, actor?: MatchEventActor) {
     const existing = await prisma.matchEvent.findFirst({
       where: { id: eventId, match_id: matchId },
     });
     if (!existing) throw new NotFoundException('Match event not found');
+
+    if (actor?.role === 'COACH') {
+      await assertCoachCanDeleteGoalEvent(actor.userId, matchId, existing);
+    }
 
     await prisma.matchEvent.delete({ where: { id: eventId } });
 

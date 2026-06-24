@@ -44,6 +44,12 @@ export class CoachController {
     return this.service.findPlayers(req.coachTeamId);
   }
 
+  @Get('team/matches')
+  @UseGuards(CoachTeamGuard)
+  listMatches(@Request() req: { user: { userId: string } }) {
+    return this.service.findTeamMatches(req.user.userId);
+  }
+
   @Post('team/players')
   @UseGuards(CoachTeamGuard, CoachCanEditGuard)
   createPlayer(
