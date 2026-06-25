@@ -1,3 +1,13 @@
+jest.mock('../../prisma/prisma', () => ({
+  __esModule: true,
+  default: {
+    siteSettings: {
+      findUnique: jest.fn(),
+      update: jest.fn(),
+    },
+  },
+}));
+
 import {
   canViewTeamRoster,
   isAdminRole,
