@@ -311,7 +311,10 @@ export interface SiteSettings {
 export type PublicSiteSettings = Pick<
   SiteSettings,
   'site_name' | 'contact_email' | 'contact_phone' | 'contact_address'
->;
+> & {
+  rosters_public?: boolean;
+  rosters_available_at?: string | null;
+};
 
 export interface AuditLog {
   id: string;

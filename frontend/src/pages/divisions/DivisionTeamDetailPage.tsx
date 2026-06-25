@@ -8,12 +8,14 @@ import SectionHeader from '@/components/shared/SectionHeader';
 import MatchCard from '@/components/MatchCard';
 import TeamHero from '@/components/teams/TeamHero';
 import RosterList from '@/components/teams/RosterList';
+import RosterUnpublishedNotice from '@/components/teams/RosterUnpublishedNotice';
 import MetricCard from '@/components/shared/MetricCard';
 import TeamRosterPanel from '@/components/admin/TeamRosterPanel';
 import TeamFormDialog from '@/components/admin/forms/TeamFormDialog';
 import { AdminContextBar } from '@/components/admin/inline/AdminContextBar';
 import { AdminActionButton } from '@/components/admin/inline/AdminActionButton';
 import { useCanAdminEdit } from '@/hooks/useCanAdminEdit';
+import { useRosterVisibility } from '@/hooks/useRosterVisibility';
 import { useDivisionRoute } from '@/context/DivisionContext';
 import {
   useDivisionTeam,
@@ -37,6 +39,7 @@ export default function DivisionTeamDetailPage() {
   const { data: standings = [] } = useDivisionStandingsResource(tournamentSlug, divisionSlug);
 
   const canEdit = useCanAdminEdit();
+  const { rostersAvailableAt } = useRosterVisibility();
   const [editTeamOpen, setEditTeamOpen] = useState(false);
 
   const roster = useMemo(
@@ -118,7 +121,7 @@ export default function DivisionTeamDetailPage() {
               <SectionHeader title="Roster" />
               <TeamRosterPanel team={team} />
             </Section>
-          ) : (
+          ) : roster.length > 0 ? (
             <div className="space-y-2.5">
               {roster.length > 3 && (
                 <SearchField
@@ -140,6 +143,8 @@ export default function DivisionTeamDetailPage() {
                 />
               )}
             </div>
+          ) : (
+            <RosterUnpublishedNotice rostersAvailableAt={rostersAvailableAt} />
           )}
 
           <Section>

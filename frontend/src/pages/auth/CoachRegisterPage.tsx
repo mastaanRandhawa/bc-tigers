@@ -33,7 +33,7 @@ export default function CoachRegisterPage() {
         last_name: form.last_name,
         email: form.email,
         password: form.password,
-        phone: form.phone || undefined,
+        phone: form.phone.trim(),
         coaching_request: form.coaching_request.trim(),
       });
       setSubmitted(true);
@@ -97,11 +97,13 @@ export default function CoachRegisterPage() {
           />
         </div>
         <div className="space-y-1.5">
-          <Label htmlFor="phone">Phone (optional)</Label>
+          <Label htmlFor="phone">Phone</Label>
           <Input
             id="phone"
+            type="tel"
             value={form.phone}
             onChange={(e) => setForm({ ...form, phone: e.target.value })}
+            required
           />
         </div>
         <div className="space-y-1.5">

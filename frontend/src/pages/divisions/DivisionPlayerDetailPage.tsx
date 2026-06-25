@@ -6,6 +6,9 @@ import { useDivisionTeam } from '@/hooks/useDivisionResources';
 import { matchesPlayerRef } from '@/lib/player-routes';
 import { ChevronLeft, User, Pencil } from 'lucide-react';
 import { useCanAdminEdit } from '@/hooks/useCanAdminEdit';
+import { useRosterVisibility } from '@/hooks/useRosterVisibility';
+import { useAuthStore } from '@/store/authStore';
+import { isCoachRole } from '@/lib/auth-utils';
 import { AdminActionButton } from '@/components/admin/inline/AdminActionButton';
 import PlayerFormDialog from '@/components/admin/forms/PlayerFormDialog';
 import type { Player } from '@/types';
@@ -20,9 +23,13 @@ export default function DivisionPlayerDetailPage() {
   );
 
   const canEdit = useCanAdminEdit();
+  const { user } = useAuthStore();
+  const { rostersPublic, rostersAvailableAt } = useRosterVisibility();
   const [editOpen, setEditOpen] = useState(false);
 
   const player = team?.players?.find((p) => matchesPlayerRef(p, playerId));
+  const isTeamCoach = isCoachRole(user?.role) && team?.coach?.id === user?.id;
+  const rosterUnpublished = !rostersPublic && !canEdit && !isTeamCoach;
   const teamPath = `${basePath}/teams/${teamSlug}`;
 
   return (
@@ -32,7 +39,13 @@ export default function DivisionPlayerDetailPage() {
         isError={isError}
         isEmpty={!player || !team}
         onRetry={() => refetch()}
-        emptyMessage="Player not found on this team."
+        emptyMessage={
+          rosterUnpublished
+            ? rostersAvailableAt
+              ? `Rosters will be published on ${new Date(rostersAvailableAt).toLocaleString()}.`
+              : 'Rosters are not published yet. Check back after registration closes.'
+            : 'Player not found on this team.'
+        }
       >
         {player && team && (
           <>

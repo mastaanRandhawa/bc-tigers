@@ -18,6 +18,11 @@ import {
   assertCoachCanUpdateGoalEvent,
   coachGoalPatchFromUpdate,
 } from '../auth/coach-match-goals';
+import {
+  canViewTeamRoster,
+  getRosterVisibilityContext,
+  stripTeamPlayers,
+} from '../auth/roster-visibility';
 
 export type MatchEventActor = { userId: string; role: string };
 
@@ -130,7 +135,24 @@ export class MatchesService {
       include: MATCH_DETAIL_INCLUDE,
     });
     if (!match) throw new NotFoundException('Match not found');
-    return match;
+
+    const ctx = await getRosterVisibilityContext();
+    const canViewHome = canViewTeamRoster(
+      ctx.actor,
+      match.home_team.coach_user_id,
+      ctx.rostersPublic,
+    );
+    const canViewAway = canViewTeamRoster(
+      ctx.actor,
+      match.away_team.coach_user_id,
+      ctx.rostersPublic,
+    );
+
+    return {
+      ...match,
+      home_team: stripTeamPlayers(match.home_team, canViewHome),
+      away_team: stripTeamPlayers(match.away_team, canViewAway),
+    };
   }
 
   create(data: unknown) {

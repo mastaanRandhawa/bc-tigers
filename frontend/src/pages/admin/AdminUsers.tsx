@@ -100,6 +100,16 @@ export default function AdminUsers() {
       render: (u: User) => statusBadge(u),
     },
     {
+      key: 'phone',
+      label: 'Phone',
+      render: (u: User) =>
+        u.phone ? (
+          <span className="text-xs text-foreground">{u.phone}</span>
+        ) : (
+          <span className="text-xs text-muted-foreground">—</span>
+        ),
+    },
+    {
       key: 'coaching_request',
       label: 'Requested team',
       render: (u: User) =>

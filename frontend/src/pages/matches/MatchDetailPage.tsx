@@ -28,6 +28,7 @@ import { formatDate, formatTime, cn, getInitials, getMatchStatusBadgeVariant } f
 import { divisionMatchesPath } from '@/lib/division-routes';
 import { useMatch, useDeleteMatchEvent } from '@/hooks/useMatches';
 import { useMatchGoalEditAccess, coachCanEditEvent } from '@/hooks/useMatchGoalEditAccess';
+import { useRosterVisibility } from '@/hooks/useRosterVisibility';
 import { AdminContextBar } from '@/components/admin/inline/AdminContextBar';
 import { AdminActionButton } from '@/components/admin/inline/AdminActionButton';
 import { ConfirmDialog } from '@/components/admin/inline/ConfirmDialog';
@@ -178,7 +179,9 @@ export default function MatchDetailPage() {
     canEditScore,
     coachTeamId,
     isCoach,
+    isAdmin,
   } = useMatchGoalEditAccess(match);
+  const { rostersAvailableAt } = useRosterVisibility();
   const deleteMutation = useDeleteMatchEvent();
 
   const [scoreOpen, setScoreOpen] = useState(false);
@@ -211,6 +214,14 @@ export default function MatchDetailPage() {
   const homeColor = match?.home_team?.primary_color ?? '#F48735';
   const awayColor = match?.away_team?.primary_color ?? '#6366F1';
   const scoreFlash = useScoreFlash(match?.home_score ?? 0, match?.away_score ?? 0);
+
+  const homeRosterCount = match?.home_team?.players?.length ?? 0;
+  const awayRosterCount = match?.away_team?.players?.length ?? 0;
+  const showLineups =
+    homeRosterCount > 0 ||
+    awayRosterCount > 0 ||
+    isAdmin ||
+    (isCoach && !!coachTeamId);
 
   const openAddEvent = () => setEventDialog({ open: true, event: null });
   const openEditEvent = (event: MatchEvent) => setEventDialog({ open: true, event });
@@ -482,7 +493,15 @@ export default function MatchDetailPage() {
                 {/* Lineups */}
                 <section>
                   <SectionHeading title="Lineups" />
-                  <MatchRosters homeTeam={match.home_team} awayTeam={match.away_team} />
+                  {showLineups ? (
+                    <MatchRosters homeTeam={match.home_team} awayTeam={match.away_team} />
+                  ) : (
+                    <p className="text-sm text-muted-foreground">
+                      {rostersAvailableAt
+                        ? `Lineups will be published on ${formatDate(rostersAvailableAt)} at ${formatTime(rostersAvailableAt)}.`
+                        : 'Lineups will be published after registration closes.'}
+                    </p>
+                  )}
                 </section>
               </div>
 
