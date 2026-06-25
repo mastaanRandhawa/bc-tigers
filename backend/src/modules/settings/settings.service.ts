@@ -30,11 +30,18 @@ const DEFAULT_SETTINGS = {
 export class SettingsService {
   async getPublic() {
     const settings = await this.getOrCreate();
+    const lockStatus = await getCoachLockStatus();
     return {
       site_name: settings.site_name,
       contact_email: settings.contact_email,
       contact_phone: settings.contact_phone,
       contact_address: settings.contact_address,
+      rosters_public: lockStatus.coach_management_locked,
+      rosters_available_at:
+        lockStatus.coach_lock_scheduled_pending &&
+        settings.coach_lock_scheduled_at
+          ? settings.coach_lock_scheduled_at.toISOString()
+          : null,
     };
   }
 

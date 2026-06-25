@@ -7,6 +7,11 @@ import {
   applyCoachTeamAssignment,
   validateCoachCanBeAssigned,
 } from './coach-team-link';
+import {
+  canViewTeamRoster,
+  getRosterVisibilityContext,
+  stripTeamPlayers,
+} from '../auth/roster-visibility';
 
 const ENTITY = 'Team';
 
@@ -34,8 +39,9 @@ export class TeamsService {
   ) {}
 
   /** Auto-scoped by the soft-delete extension (active/deleted/all via request scope). */
-  findAll(params?: { divisionId?: string }) {
-    return prisma.team.findMany({
+  async findAll(params?: { divisionId?: string }) {
+    const ctx = await getRosterVisibilityContext();
+    const teams = await prisma.team.findMany({
       where: params?.divisionId
         ? { division_id: params.divisionId }
         : undefined,
@@ -52,6 +58,13 @@ export class TeamsService {
         players: { where: { active: true }, orderBy: { last_name: 'asc' } },
       },
     });
+
+    return teams.map((team) =>
+      stripTeamPlayers(
+        team,
+        canViewTeamRoster(ctx.actor, team.coach_user_id, ctx.rostersPublic),
+      ),
+    );
   }
 
   async findOneInDivision(divisionId: string, slug: string) {
@@ -60,12 +73,25 @@ export class TeamsService {
       where: { division_id: divisionId, slug },
       include: {
         division: { include: { tournament: true } },
+        coach: {
+          select: {
+            id: true,
+            first_name: true,
+            last_name: true,
+            email: true,
+          },
+        },
         players: { orderBy: { last_name: 'asc' } },
         standings: true,
       },
     });
     if (!team) throw new NotFoundException('Team not found');
-    return team;
+
+    const ctx = await getRosterVisibilityContext();
+    return stripTeamPlayers(
+      team,
+      canViewTeamRoster(ctx.actor, team.coach_user_id, ctx.rostersPublic),
+    );
   }
 
   async create(data: unknown) {

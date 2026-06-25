@@ -106,6 +106,7 @@ describe('AuthService coach gates', () => {
       last_name: 'Coach',
       email: 'new@test.com',
       password: 'password123',
+      phone: '604-555-0100',
       coaching_request: 'BC Tigers U14',
     });
 
@@ -116,6 +117,7 @@ describe('AuthService coach gates', () => {
           role: 'COACH',
           approved: false,
           active: false,
+          phone: '604-555-0100',
           coaching_request: 'BC Tigers U14',
         }),
       }),

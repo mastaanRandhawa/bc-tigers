@@ -12,6 +12,11 @@ import {
 } from '../../common/player-slug';
 import { getMaxPlayersPerTeam } from '../settings/settings.service';
 import { pickAllowed } from '../../common/pick';
+import {
+  canViewTeamRoster,
+  getRosterVisibilityContext,
+  isAdminRole,
+} from '../auth/roster-visibility';
 
 type PlayerWriteInput = {
   first_name?: string;
@@ -48,6 +53,13 @@ export class TeamPlayersService {
     const team = await prisma.team.findUnique({ where: { id: teamId } });
     if (!team) throw new NotFoundException('Team not found');
 
+    const ctx = await getRosterVisibilityContext();
+    if (
+      !canViewTeamRoster(ctx.actor, team.coach_user_id, ctx.rostersPublic)
+    ) {
+      return [];
+    }
+
     return prisma.player.findMany({
       where: { team_id: teamId },
       orderBy: [
@@ -58,15 +70,34 @@ export class TeamPlayersService {
     });
   }
 
-  findByDivision(divisionId: string) {
-    return prisma.player.findMany({
+  async findByDivision(divisionId: string) {
+    const ctx = await getRosterVisibilityContext();
+    const players = await prisma.player.findMany({
       where: { team: { division_id: divisionId } },
       include: { team: true },
       orderBy: [{ last_name: 'asc' }, { first_name: 'asc' }],
     });
+
+    if (ctx.rostersPublic || (ctx.actor && isAdminRole(ctx.actor.role))) {
+      return players;
+    }
+
+    return players.filter((player) =>
+      canViewTeamRoster(ctx.actor, player.team.coach_user_id, false),
+    );
   }
 
   async findOneOnTeam(teamId: string, playerId: string) {
+    const team = await prisma.team.findUnique({ where: { id: teamId } });
+    if (!team) throw new NotFoundException('Team not found');
+
+    const ctx = await getRosterVisibilityContext();
+    if (
+      !canViewTeamRoster(ctx.actor, team.coach_user_id, ctx.rostersPublic)
+    ) {
+      throw new NotFoundException('Player not found on this team');
+    }
+
     const player = await prisma.player.findFirst({
       where: {
         team_id: teamId,

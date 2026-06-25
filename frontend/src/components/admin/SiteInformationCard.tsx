@@ -120,7 +120,8 @@ export function SiteInformationCard() {
             <div>
               <Label>Lock immediately</Label>
               <p className="text-xs text-muted-foreground mt-0.5">
-                Prevents all coaches from editing team details and rosters right now.
+                Prevents all coaches from editing team details and rosters, and publishes rosters
+                on the public site.
               </p>
             </div>
             <Switch
@@ -154,7 +155,8 @@ export function SiteInformationCard() {
             </div>
             <p className="text-xs text-muted-foreground">
               Coaches will be locked automatically at this date and time (your local timezone).
-              Save settings to apply. When the time passes, the immediate lock turns on automatically.
+              Save settings to apply. When the time passes, the immediate lock turns on automatically
+              and rosters become public.
             </p>
           </div>
 
