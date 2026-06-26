@@ -28,6 +28,7 @@ export const divisionSchema = z.object({
   point_format_id: z.string().min(1, 'Point format is required'),
   primary_color: z.string().optional(),
   accent_color: z.string().optional(),
+  schedule_only: z.boolean().optional(),
 });
 
 const tiebreakerRuleSchema = z.enum([

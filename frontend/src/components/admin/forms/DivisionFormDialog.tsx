@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import FormDialog from '@/components/admin/FormDialog';
@@ -14,6 +14,8 @@ import { useTournaments } from '@/hooks/useTournaments';
 import { usePointFormats } from '@/hooks/usePointFormats';
 import { slugify } from '@/lib/utils';
 import { getApiErrorMessage } from '@/lib/errors';
+import { Label } from '@/components/ui/label';
+import { Switch } from '@/components/ui/switch';
 import type { Division } from '@/types';
 
 const GENDER_OPTIONS = [
@@ -34,6 +36,7 @@ export default function DivisionFormDialog({ open, onOpenChange, division }: Div
   const createMutation = useCreateDivision();
   const updateMutation = useUpdateDivision();
   const isEditing = !!division;
+  const [scheduleOnly, setScheduleOnly] = useState(false);
 
   const defaultFormatId =
     pointFormats.find((pf) => pf.slug === 'standard-soccer-3-point')?.id ??
@@ -71,6 +74,7 @@ export default function DivisionFormDialog({ open, onOpenChange, division }: Div
         primary_color: division.primary_color ?? '#F48735',
         accent_color: division.accent_color ?? '#FEF3EB',
       });
+      setScheduleOnly(division.schedule_only ?? false);
     } else {
       form.reset({
         tournament_id: tournaments[0]?.id ?? '',
@@ -84,6 +88,7 @@ export default function DivisionFormDialog({ open, onOpenChange, division }: Div
         primary_color: '#F48735',
         accent_color: '#FEF3EB',
       });
+      setScheduleOnly(false);
     }
   }, [open, division, form, tournaments, defaultFormatId]);
 
@@ -103,6 +108,7 @@ export default function DivisionFormDialog({ open, onOpenChange, division }: Div
       const payload = {
         ...values,
         max_teams: Number(values.max_teams),
+        schedule_only: scheduleOnly,
       };
       if (isEditing && division) {
         await updateMutation.mutateAsync({ id: division.id, data: payload });
@@ -145,6 +151,15 @@ export default function DivisionFormDialog({ open, onOpenChange, division }: Div
       />
       <TextInputField control={form.control} name="primary_color" label="Primary Color" placeholder="#F48735" />
       <TextInputField control={form.control} name="accent_color" label="Accent Color" placeholder="#FEF3EB" />
+      <div className="flex items-center justify-between rounded-lg border border-border p-3">
+        <div>
+          <Label>Schedule only (kids)</Label>
+          <p className="mt-0.5 text-xs text-muted-foreground">
+            Hides scores, standings, brackets, and stats on the public site. Only the schedule is shown.
+          </p>
+        </div>
+        <Switch checked={scheduleOnly} onCheckedChange={setScheduleOnly} />
+      </div>
     </FormDialog>
   );
 }

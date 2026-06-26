@@ -17,6 +17,7 @@ import { Button } from '@/components/ui/button';
 import { useHomeHub } from '@/hooks/useHomeHub';
 import { formatDate } from '@/lib/date';
 import { pickFeaturedTournament } from '@/lib/featured-tournament';
+import { isScheduleOnlyDivision } from '@/lib/division-display';
 import { ChevronRight, Trophy, Megaphone, Plus, Pencil, Trash2 } from 'lucide-react';
 import { RevealOnScroll } from '@/components/motion/RevealOnScroll';
 import { useCanAdminEdit } from '@/hooks/useCanAdminEdit';
@@ -34,8 +35,12 @@ export default function HomePage() {
   const deleteMutation = useDeleteAnnouncement();
 
   const tournaments = data?.tournaments ?? [];
-  const liveMatches = data?.liveMatches ?? [];
-  const recentMatches = data?.recentMatches ?? [];
+  const liveMatches = (data?.liveMatches ?? []).filter(
+    (match) => !isScheduleOnlyDivision(match.division),
+  );
+  const recentMatches = (data?.recentMatches ?? []).filter(
+    (match) => !isScheduleOnlyDivision(match.division),
+  );
   const upcomingMatches = data?.upcomingMatches ?? [];
   const announcements = data?.announcements ?? [];
 

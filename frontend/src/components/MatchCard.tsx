@@ -9,6 +9,7 @@ import { useScoreFlash } from '@/hooks/useScoreFlash';
 import { cn, getInitials } from '@/lib/utils';
 import { formatDate, formatTime, getMatchStatusBadgeVariant } from '@/lib/utils';
 import { getMatchPath } from '@/lib/division-routes';
+import { isScheduleOnlyDivision } from '@/lib/division-display';
 
 interface MatchCardProps {
   match: Match;
@@ -17,6 +18,8 @@ interface MatchCardProps {
   flat?: boolean;
   /** Show a top divider (for stacked lists) */
   divider?: boolean;
+  /** Override schedule-only score hiding (defaults to match.division.schedule_only) */
+  scheduleOnly?: boolean;
 }
 
 function TeamLogo({ logo, name, size = 'md' }: { logo?: string | null; name?: string; size?: 'sm' | 'md' }) {
@@ -121,10 +124,17 @@ function MatchMeta({ match }: { match: Match }) {
   );
 }
 
-function MatchCard({ match, compact = false, flat = false, divider = false }: MatchCardProps) {
+function MatchCard({
+  match,
+  compact = false,
+  flat = false,
+  divider = false,
+  scheduleOnly: scheduleOnlyProp,
+}: MatchCardProps) {
   const isLive = match.status === 'LIVE';
   const isCompleted = match.status === 'COMPLETED';
-  const showScore = isLive || isCompleted;
+  const scheduleOnly = scheduleOnlyProp ?? isScheduleOnlyDivision(match.division);
+  const showScore = !scheduleOnly && (isLive || isCompleted);
 
   if (compact) {
     return (

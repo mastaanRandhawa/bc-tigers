@@ -171,6 +171,7 @@ model Division {
   accent_color   String?
   bracket_locked    Boolean  @default(false)
   bracket_finalized Boolean  @default(false)
+  schedule_only     Boolean  @default(false)
   created_at        DateTime @default(now())
   updated_at     DateTime @updatedAt
 

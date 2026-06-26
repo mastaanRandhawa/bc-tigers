@@ -22,6 +22,7 @@ const DIVISION_FIELDS = [
   'point_format_id',
   'primary_color',
   'accent_color',
+  'schedule_only',
 ] as const;
 
 const DIVISION_INCLUDE = {
@@ -52,6 +53,9 @@ function buildDivisionUpdateData(
   }
   if (payload.accent_color !== undefined) {
     data.accent_color = payload.accent_color;
+  }
+  if (payload.schedule_only !== undefined) {
+    data.schedule_only = Boolean(payload.schedule_only);
   }
   if (payload.tournament_id) {
     data.tournament = { connect: { id: payload.tournament_id as string } };

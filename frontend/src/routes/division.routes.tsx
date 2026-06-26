@@ -3,6 +3,7 @@ import { LazyPage } from '@/routes/LazyPage';
 import DivisionInnerScheduleRedirect from '@/components/routes/DivisionInnerScheduleRedirect';
 import DivisionStatsSubRedirect from '@/components/routes/DivisionStatsSubRedirect';
 import DivisionBracketAliasRedirect from '@/components/routes/DivisionBracketAliasRedirect';
+import { DivisionCompetitiveRouteGuard } from '@/components/routes/DivisionScheduleOnlyRedirect';
 import {
   DivisionLayout,
   DivisionOverviewPage,
@@ -43,11 +44,11 @@ export function divisionRoutes() {
       <Route path="schedule" element={<DivisionInnerScheduleRedirect />} />
       <Route path="matches" element={<L><DivisionMatchesAndSchedulePage /></L>} />
       <Route path="matches/:matchId" element={<L><DivisionMatchDetailPage /></L>} />
-      <Route path="standings" element={<L><DivisionStandingsPage /></L>} />
-      <Route path="stats" element={<L><DivisionStatsPage /></L>} />
+      <Route path="standings" element={<L><DivisionCompetitiveRouteGuard><DivisionStandingsPage /></DivisionCompetitiveRouteGuard></L>} />
+      <Route path="stats" element={<L><DivisionCompetitiveRouteGuard><DivisionStatsPage /></DivisionCompetitiveRouteGuard></L>} />
       <Route path="stats/:statsSection" element={<DivisionStatsSubRedirect />} />
       <Route path="bracket" element={<DivisionBracketAliasRedirect />} />
-      <Route path="brackets" element={<L><DivisionBracketPage /></L>} />
+      <Route path="brackets" element={<L><DivisionCompetitiveRouteGuard><DivisionBracketPage /></DivisionCompetitiveRouteGuard></L>} />
       <Route path="venues" element={<L><DivisionVenuesPage /></L>} />
       <Route path="venues/:venueSlug" element={<L><DivisionVenueDetailPage /></L>} />
     </Route>

@@ -121,6 +121,7 @@ export interface Division {
   accent_color?: string;
   bracket_locked?: boolean;
   bracket_finalized?: boolean;
+  schedule_only?: boolean;
   teams?: Team[];
 }
 

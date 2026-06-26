@@ -23,6 +23,7 @@ import {
   BreadcrumbSeparator,
 } from '@/components/ui/breadcrumb';
 import { divisionThemeStyle, type DivisionTheme } from '@/lib/division-theme';
+import { isScheduleOnlyDivision } from '@/lib/division-display';
 import type { Division } from '@/types';
 
 export type DivisionNavItem = PillNavItem & { icon: LucideIcon };
@@ -35,16 +36,31 @@ interface DivisionShellProps {
   theme: DivisionTheme;
 }
 
-export function buildDivisionNavItems(basePath: string): DivisionNavItem[] {
-  return [
+export function buildDivisionNavItems(
+  basePath: string,
+  division?: Pick<Division, 'schedule_only'>,
+): DivisionNavItem[] {
+  const scheduleOnly = isScheduleOnlyDivision(division);
+  const items: DivisionNavItem[] = [
     { label: 'Overview', href: basePath, icon: LayoutDashboard, end: true },
     { label: 'Teams', href: `${basePath}/teams`, icon: Users },
-    { label: 'Matches', href: `${basePath}/matches`, icon: Swords },
-    { label: 'Standings', href: `${basePath}/standings`, icon: Trophy },
-    { label: 'Stats', href: `${basePath}/stats`, icon: TrendingUp },
-    { label: 'Brackets', href: `${basePath}/brackets`, icon: GitBranch },
-    { label: 'Venues', href: `${basePath}/venues`, icon: MapPin },
+    {
+      label: scheduleOnly ? 'Schedule' : 'Matches',
+      href: `${basePath}/matches`,
+      icon: Swords,
+    },
   ];
+
+  if (!scheduleOnly) {
+    items.push(
+      { label: 'Standings', href: `${basePath}/standings`, icon: Trophy },
+      { label: 'Stats', href: `${basePath}/stats`, icon: TrendingUp },
+      { label: 'Brackets', href: `${basePath}/brackets`, icon: GitBranch },
+    );
+  }
+
+  items.push({ label: 'Venues', href: `${basePath}/venues`, icon: MapPin });
+  return items;
 }
 
 export function splitDivisionNavItems(items: DivisionNavItem[]) {
@@ -60,7 +76,7 @@ export default function DivisionShell({
   basePath,
   theme,
 }: DivisionShellProps) {
-  const navItems = buildDivisionNavItems(basePath);
+  const navItems = buildDivisionNavItems(basePath, division);
   const { primary: primaryNavItems, more: moreNavItems } = splitDivisionNavItems(navItems);
   const tournament = division.tournament;
 

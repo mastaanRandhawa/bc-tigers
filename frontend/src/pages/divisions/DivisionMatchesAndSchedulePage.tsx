@@ -10,6 +10,7 @@ import { useDivisionMatches } from '@/hooks/useDivisionResources';
 import { useListSearch } from '@/hooks/useListSearch';
 import { matchSearchText } from '@/lib/search-text';
 import { compareDates, formatScheduleDay, scheduleDayKey } from '@/lib/date';
+import { isScheduleOnlyDivision } from '@/lib/division-display';
 import { cn } from '@/lib/utils';
 import { useCanAdminEdit } from '@/hooks/useCanAdminEdit';
 import { AdminContextBar } from '@/components/admin/inline/AdminContextBar';
@@ -22,11 +23,16 @@ import { useQueryClient } from '@tanstack/react-query';
 import { Plus, Pencil, Trash2 } from 'lucide-react';
 import type { Match, MatchStatus } from '@/types';
 
-const filters: { label: string; value: MatchStatus | 'ALL' }[] = [
+const allFilters: { label: string; value: MatchStatus | 'ALL' }[] = [
   { label: 'All', value: 'ALL' },
   { label: 'Live', value: 'LIVE' },
   { label: 'Scheduled', value: 'SCHEDULED' },
   { label: 'Completed', value: 'COMPLETED' },
+];
+
+const scheduleOnlyFilters: { label: string; value: MatchStatus | 'ALL' }[] = [
+  { label: 'All', value: 'ALL' },
+  { label: 'Scheduled', value: 'SCHEDULED' },
 ];
 
 type ViewMode = 'list' | 'calendar';
@@ -36,6 +42,8 @@ export default function DivisionMatchesAndSchedulePage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const view: ViewMode = searchParams.get('view') === 'calendar' ? 'calendar' : 'list';
   const [filter, setFilter] = useState<MatchStatus | 'ALL'>('ALL');
+  const scheduleOnly = isScheduleOnlyDivision(division);
+  const filters = scheduleOnly ? scheduleOnlyFilters : allFilters;
 
   const { data: allMatches = [], isLoading, isError, refetch } = useDivisionMatches(
     tournamentSlug,
@@ -103,7 +111,7 @@ export default function DivisionMatchesAndSchedulePage() {
   const renderMatchRow = (m: Match, index: number) => (
     <div key={m.id} className="group relative flex items-stretch">
       <div className="min-w-0 flex-1">
-        <MatchCard match={m} flat divider={index > 0} />
+        <MatchCard match={m} flat divider={index > 0} scheduleOnly={scheduleOnly} />
       </div>
       {canEdit && (
         <div className="mr-2 flex shrink-0 flex-col items-center justify-center gap-1 border-l border-border/40 pl-2 opacity-0 transition-opacity group-hover:opacity-100">
@@ -131,8 +139,12 @@ export default function DivisionMatchesAndSchedulePage() {
   return (
     <>
       <DivisionPageHeader
-        title="Matches & Schedule"
-        subtitle="Live, upcoming, and completed fixtures"
+        title={scheduleOnly ? 'Schedule' : 'Matches & Schedule'}
+        subtitle={
+          scheduleOnly
+            ? 'Upcoming fixtures and match times'
+            : 'Live, upcoming, and completed fixtures'
+        }
       />
 
       <AdminContextBar

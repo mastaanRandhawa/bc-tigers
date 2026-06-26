@@ -7,6 +7,7 @@ import { ScoreFlash } from "@/components/motion/ScoreFlash";
 import { useScoreFlash } from "@/hooks/useScoreFlash";
 import { cn } from "@/lib/utils";
 import { getMatchPath } from "@/lib/division-routes";
+import { isScheduleOnlyDivision } from "@/lib/division-display";
 
 interface LiveScoreTickerProps {
   embedded?: boolean;
@@ -67,14 +68,17 @@ export default function LiveScoreTicker({
   const { data: liveMatches = [] } = useLiveMatches({ divisionId });
   const reducedMotion = useReducedMotion();
   const light = variant === "light";
+  const visibleMatches = liveMatches.filter(
+    (match) => !isScheduleOnlyDivision(match.division),
+  );
 
-  if (liveMatches.length === 0 && !alwaysShow) return null;
+  if (visibleMatches.length === 0 && !alwaysShow) return null;
 
-  const shouldMarquee = liveMatches.length > 1 && !reducedMotion;
+  const shouldMarquee = visibleMatches.length > 1 && !reducedMotion;
   const tickerMatches = shouldMarquee
-    ? [...liveMatches, ...liveMatches]
-    : liveMatches;
-  const tickerDuration = `${Math.max(liveMatches.length * 7, 14)}s`;
+    ? [...visibleMatches, ...visibleMatches]
+    : visibleMatches;
+  const tickerDuration = `${Math.max(visibleMatches.length * 7, 14)}s`;
 
   return (
     <div
@@ -111,7 +115,7 @@ export default function LiveScoreTicker({
           </span>
         </div>
 
-        {liveMatches.length === 0 ? (
+        {visibleMatches.length === 0 ? (
           <p
             className={cn(
               "text-xs sm:text-sm truncate",

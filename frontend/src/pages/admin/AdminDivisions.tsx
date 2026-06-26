@@ -15,7 +15,8 @@ import type { Division } from '@/types';
 import { getApiErrorMessage } from '@/lib/errors';
 import { getDivisionPublicPath } from '@/lib/division-routes';
 import { getDivisionTheme, themeChipStyle } from '@/lib/division-theme';
-import { ExternalLink, Pencil, Trash2, Calendar, Flag } from 'lucide-react';
+import { ExternalLink, Pencil, Trash2, Calendar, Flag, CalendarDays } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 
@@ -97,6 +98,12 @@ export default function AdminDivisions() {
                     <h3 className="font-semibold" style={{ color: theme.primary }}>
                       {division.name}
                     </h3>
+                    {division.schedule_only && (
+                      <Badge variant="secondary" className="mt-1">
+                        <CalendarDays className="mr-1 h-3 w-3" aria-hidden />
+                        Schedule only
+                      </Badge>
+                    )}
                     <p className="mt-1 text-sm text-muted-foreground">
                       {division.tournament?.name ?? '—'}
                     </p>

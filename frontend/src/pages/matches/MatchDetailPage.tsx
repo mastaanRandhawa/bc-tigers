@@ -26,6 +26,7 @@ import { ScoreFlash } from '@/components/motion/ScoreFlash';
 import { useScoreFlash } from '@/hooks/useScoreFlash';
 import { formatDate, formatTime, cn, getInitials, getMatchStatusBadgeVariant } from '@/lib/utils';
 import { divisionMatchesPath } from '@/lib/division-routes';
+import { isScheduleOnlyDivision } from '@/lib/division-display';
 import { useMatch, useDeleteMatchEvent } from '@/hooks/useMatches';
 import { useMatchGoalEditAccess, coachCanEditEvent } from '@/hooks/useMatchGoalEditAccess';
 import { useRosterVisibility } from '@/hooks/useRosterVisibility';
@@ -193,7 +194,9 @@ export default function MatchDetailPage() {
 
   const isLive = match?.status === 'LIVE';
   const isCompleted = match?.status === 'COMPLETED';
-  const showScore = isLive || isCompleted;
+  const scheduleOnlyPublic =
+    isScheduleOnlyDivision(match?.division) && !canEditAllEvents;
+  const showScore = !scheduleOnlyPublic && (isLive || isCompleted);
   const showScoreStepper = canEditScore && (isLive || isCompleted);
 
   const sortedEvents = useMemo(
@@ -377,7 +380,7 @@ export default function MatchDetailPage() {
             {/* Body */}
             <div className="page-container grid grid-cols-1 gap-8 pb-12 lg:grid-cols-3 lg:gap-10">
               <div className="space-y-8 lg:col-span-2">
-                {/* Timeline */}
+                {(!scheduleOnlyPublic || canEditGoals) && (
                 <section>
                   <SectionHeading
                     title="Match Timeline"
@@ -489,6 +492,7 @@ export default function MatchDetailPage() {
                     </SectionCard>
                   )}
                 </section>
+                )}
 
                 {/* Lineups */}
                 <section>

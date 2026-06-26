@@ -20,14 +20,18 @@ export class DivisionResourcesService {
     private readonly venuesService: VenuesService,
   ) {}
 
+  private async resolveDivision(
+    tournamentSlug: string,
+    divisionSlug: string,
+  ) {
+    return this.divisionsService.resolveDivision(tournamentSlug, divisionSlug);
+  }
+
   private async resolveDivisionId(
     tournamentSlug: string,
     divisionSlug: string,
   ) {
-    const division = await this.divisionsService.resolveDivision(
-      tournamentSlug,
-      divisionSlug,
-    );
+    const division = await this.resolveDivision(tournamentSlug, divisionSlug);
     return division.id;
   }
 
@@ -77,19 +81,15 @@ export class DivisionResourcesService {
   }
 
   async getStandings(tournamentSlug: string, divisionSlug: string) {
-    const divisionId = await this.resolveDivisionId(
-      tournamentSlug,
-      divisionSlug,
-    );
-    return this.standingsService.getByDivision(divisionId);
+    const division = await this.resolveDivision(tournamentSlug, divisionSlug);
+    if (division.schedule_only) return [];
+    return this.standingsService.getByDivision(division.id);
   }
 
   async getBracket(tournamentSlug: string, divisionSlug: string) {
-    const divisionId = await this.resolveDivisionId(
-      tournamentSlug,
-      divisionSlug,
-    );
-    return this.bracketsService.getByDivisionId(divisionId);
+    const division = await this.resolveDivision(tournamentSlug, divisionSlug);
+    if (division.schedule_only) return null;
+    return this.bracketsService.getByDivisionId(division.id);
   }
 
   async getVenues(tournamentSlug: string, divisionSlug: string) {

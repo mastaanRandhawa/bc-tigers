@@ -15,10 +15,11 @@ import { useCanAdminEdit } from '@/hooks/useCanAdminEdit';
 import { AdminActionButton } from '@/components/admin/inline/AdminActionButton';
 import VenueFormDialog from '@/components/admin/forms/VenueFormDialog';
 import type { Venue } from '@/types';
+import { isScheduleOnlyDivision } from '@/lib/division-display';
 
 export default function DivisionVenueDetailPage() {
   const { venueSlug = '' } = useParams();
-  const { tournamentSlug, divisionSlug } = useDivisionRoute();
+  const { tournamentSlug, divisionSlug, division } = useDivisionRoute();
   const { data: venue, isLoading, isError, refetch } = useDivisionVenue(
     tournamentSlug,
     divisionSlug,
@@ -76,7 +77,13 @@ export default function DivisionVenueDetailPage() {
               ) : (
               <div className="overflow-hidden rounded-md border border-border/60 bg-card">
                 {filtered.map((m, index) => (
-                  <MatchCard key={m.id} match={m} flat divider={index > 0} />
+                  <MatchCard
+                    key={m.id}
+                    match={m}
+                    flat
+                    divider={index > 0}
+                    scheduleOnly={isScheduleOnlyDivision(division)}
+                  />
                 ))}
               </div>
               )

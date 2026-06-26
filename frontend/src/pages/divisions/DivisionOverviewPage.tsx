@@ -21,6 +21,7 @@ import { useCanAdminEdit } from '@/hooks/useCanAdminEdit';
 import { AdminActionButton } from '@/components/admin/inline/AdminActionButton';
 import MatchFormDialog from '@/components/admin/forms/MatchFormDialog';
 import { compareDates, getDaysUntil } from '@/lib/date';
+import { isScheduleOnlyDivision } from '@/lib/division-display';
 
 export default function DivisionOverviewPage() {
   const { division, basePath, tournamentSlug, divisionSlug, theme } = useDivisionRoute();
@@ -36,8 +37,11 @@ export default function DivisionOverviewPage() {
     teamsQuery.isError || matchesQuery.isError || standingsQuery.isError;
   const canEdit = useCanAdminEdit();
   const [addMatchOpen, setAddMatchOpen] = useState(false);
+  const scheduleOnly = isScheduleOnlyDivision(division);
 
-  const liveMatches = matches.filter((m) => m.status === 'LIVE');
+  const liveMatches = scheduleOnly
+    ? []
+    : matches.filter((m) => m.status === 'LIVE');
   const upcomingMatches = matches
     .filter((m) => m.status === 'SCHEDULED')
     .sort((a, b) => compareDates(a.scheduled_start, b.scheduled_start));
@@ -58,7 +62,11 @@ export default function DivisionOverviewPage() {
     <div className="space-y-5">
       <DivisionPageHeader
         title="Overview"
-        subtitle="Division snapshot, live action, and standings"
+        subtitle={
+          scheduleOnly
+            ? 'Division snapshot and upcoming fixtures'
+            : 'Division snapshot, live action, and standings'
+        }
       />
 
       <QueryState isLoading={isLoading} isError={isError} variant="skeleton-detail">
@@ -66,17 +74,37 @@ export default function DivisionOverviewPage() {
       <DivisionQuickStats
         stats={[
           { value: teams.length, label: 'Teams' },
-          { value: matches.length > 0 ? matches.length : '—', label: 'Matches' },
-          {
-            value: liveMatches.length > 0 ? liveMatches.length : (countdownDays != null ? `${countdownDays}d` : '—'),
-            label: liveMatches.length > 0 ? 'Live Now' : (countdownDays != null ? 'Until Kickoff' : 'Live Now'),
-            liveIndicator: liveMatches.length > 0,
-          },
-          {
-            value: standings[0]?.points ?? '—',
-            label: 'Leader Pts',
-            sublabel: standings[0]?.team?.name,
-          },
+          { value: matches.length > 0 ? matches.length : '—', label: scheduleOnly ? 'Fixtures' : 'Matches' },
+          ...(scheduleOnly
+            ? [
+                {
+                  value:
+                    countdownDays != null ? `${countdownDays}d` : '—',
+                  label: countdownDays != null ? 'Until Kickoff' : 'Next Match',
+                },
+              ]
+            : [
+                {
+                  value:
+                    liveMatches.length > 0
+                      ? liveMatches.length
+                      : countdownDays != null
+                        ? `${countdownDays}d`
+                        : '—',
+                  label:
+                    liveMatches.length > 0
+                      ? 'Live Now'
+                      : countdownDays != null
+                        ? 'Until Kickoff'
+                        : 'Live Now',
+                  liveIndicator: liveMatches.length > 0,
+                },
+                {
+                  value: standings[0]?.points ?? '—',
+                  label: 'Leader Pts',
+                  sublabel: standings[0]?.team?.name,
+                },
+              ]),
         ]}
       />
 
@@ -134,10 +162,16 @@ export default function DivisionOverviewPage() {
           <div className="flex items-center gap-2">
             <div className="flex-1">
               <SectionHeader
-                title={showLive ? 'Live Matches' : 'Upcoming'}
-                subtitle={showLive ? 'Scores updating in real time' : 'Next fixtures in this division'}
+                title={showLive ? 'Live Matches' : scheduleOnly ? 'Upcoming Fixtures' : 'Upcoming'}
+                subtitle={
+                  showLive
+                    ? 'Scores updating in real time'
+                    : scheduleOnly
+                      ? 'Match times for this division'
+                      : 'Next fixtures in this division'
+                }
                 href={`${basePath}/matches`}
-                linkLabel="All matches"
+                linkLabel={scheduleOnly ? 'Full schedule' : 'All matches'}
               />
             </div>
             {canEdit && (
@@ -154,7 +188,7 @@ export default function DivisionOverviewPage() {
           ) : (
             <div className="mx-auto w-full max-w-3xl overflow-hidden rounded-md border border-border/60 bg-card">
               {displayMatches.map((m, index) => (
-                <MatchCard key={m.id} match={m} flat divider={index > 0} />
+                <MatchCard key={m.id} match={m} flat divider={index > 0} scheduleOnly={scheduleOnly} />
               ))}
             </div>
           )}
@@ -162,6 +196,7 @@ export default function DivisionOverviewPage() {
       )}
 
       {/* Standings — show placeholder when empty */}
+      {!scheduleOnly && (
       <Section>
         <SectionHeader
           title="Standings"
@@ -178,6 +213,7 @@ export default function DivisionOverviewPage() {
           </p>
         )}
       </Section>
+      )}
       </QueryState>
       {canEdit && (
         <MatchFormDialog

@@ -22,6 +22,7 @@ import {
   useDivisionMatches,
   useDivisionStandingsResource,
 } from '@/hooks/useDivisionResources';
+import { isScheduleOnlyDivision } from '@/lib/division-display';
 import { useListSearch } from '@/hooks/useListSearch';
 import { matchSearchText, playerSearchText } from '@/lib/search-text';
 import { Pencil } from 'lucide-react';
@@ -29,7 +30,7 @@ import type { Player } from '@/types';
 
 export default function DivisionTeamDetailPage() {
   const { teamSlug = '' } = useParams();
-  const { tournamentSlug, divisionSlug, theme } = useDivisionRoute();
+  const { tournamentSlug, divisionSlug, theme, division } = useDivisionRoute();
   const { data: team, isLoading, isError, refetch } = useDivisionTeam(
     tournamentSlug,
     divisionSlug,
@@ -98,7 +99,7 @@ export default function DivisionTeamDetailPage() {
 
           <TeamHero team={team} />
 
-          {standing && (
+          {standing && !isScheduleOnlyDivision(division) && (
             <div className="grid grid-cols-2 gap-2.5 sm:grid-cols-4 sm:gap-3">
               <MetricCard value={standing.played} label="Played" theme={theme} />
               <MetricCard value={standing.wins} label="Wins" theme={theme} />
@@ -162,7 +163,7 @@ export default function DivisionTeamDetailPage() {
             ) : filteredMatches.length > 0 ? (
               <div className="overflow-hidden rounded-md border border-border/60 bg-card">
                 {filteredMatches.map((m, index) => (
-                  <MatchCard key={m.id} match={m} flat divider={index > 0} />
+                  <MatchCard key={m.id} match={m} flat divider={index > 0} scheduleOnly={isScheduleOnlyDivision(division)} />
                 ))}
               </div>
             ) : (
