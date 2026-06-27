@@ -202,8 +202,11 @@ export interface Match {
   id: string;
   tournament_id: string;
   division_id: string;
-  home_team_id: string;
-  away_team_id: string;
+  home_team_id?: string | null;
+  away_team_id?: string | null;
+  /** Placeholder text shown when the team isn't known yet (e.g. "Winner of Match 11"). */
+  home_label?: string | null;
+  away_label?: string | null;
   venue_id?: string;
   stage_id?: string;
   scheduled_start: string;
@@ -214,8 +217,8 @@ export interface Match {
   home_score: number;
   away_score: number;
   stream_url?: string;
-  home_team?: Team;
-  away_team?: Team;
+  home_team?: Team | null;
+  away_team?: Team | null;
   venue?: Venue;
   officials?: MatchOfficial[];
   events?: MatchEvent[];

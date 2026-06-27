@@ -67,6 +67,33 @@ export class TeamsService {
     );
   }
 
+  /**
+   * Public, lightweight list of teams that don't yet have a coach — used to
+   * populate the coach-registration picker. Grouped/labelled on the client.
+   */
+  directory() {
+    return prisma.team.findMany({
+      where: { coach_user_id: null },
+      select: {
+        id: true,
+        name: true,
+        division: {
+          select: {
+            id: true,
+            name: true,
+            slug: true,
+            tournament: { select: { name: true, slug: true } },
+          },
+        },
+      },
+      orderBy: [
+        { division: { tournament: { name: 'asc' } } },
+        { division: { name: 'asc' } },
+        { name: 'asc' },
+      ],
+    });
+  }
+
   async findOneInDivision(divisionId: string, slug: string) {
     // findFirst so the soft-delete extension hides deleted teams from the public.
     const team = await prisma.team.findFirst({

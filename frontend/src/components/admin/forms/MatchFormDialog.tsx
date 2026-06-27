@@ -84,8 +84,8 @@ export default function MatchFormDialog({ open, onOpenChange, match, defaultDivi
       form.reset({
         tournament_id: match.tournament_id,
         division_id: match.division_id,
-        home_team_id: match.home_team_id,
-        away_team_id: match.away_team_id,
+        home_team_id: match.home_team_id ?? '',
+        away_team_id: match.away_team_id ?? '',
         venue_id: match.venue_id ?? '__none__',
         scheduled_start: toDatetimeLocalValue(match.scheduled_start),
         status: match.status,

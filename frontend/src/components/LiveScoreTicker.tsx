@@ -5,7 +5,7 @@ import { useReducedMotion } from "motion/react";
 import type { Match } from "@/types";
 import { ScoreFlash } from "@/components/motion/ScoreFlash";
 import { useScoreFlash } from "@/hooks/useScoreFlash";
-import { cn } from "@/lib/utils";
+import { cn, matchSideName } from "@/lib/utils";
 import { getMatchPath } from "@/lib/division-routes";
 import { isScheduleOnlyDivision } from "@/lib/division-display";
 
@@ -38,7 +38,7 @@ function MatchTickerItem({
       )}
     >
       <span className="font-medium max-w-[7rem] sm:max-w-none truncate">
-        {match.home_team?.name ?? "Home"}
+        {matchSideName(match.home_team, match.home_label)}
       </span>
       <ScoreFlash
         active={flash}
@@ -52,7 +52,7 @@ function MatchTickerItem({
         {match.home_score} – {match.away_score}
       </ScoreFlash>
       <span className="font-medium max-w-[7rem] sm:max-w-none truncate">
-        {match.away_team?.name ?? "Away"}
+        {matchSideName(match.away_team, match.away_label)}
       </span>
     </Link>
   );

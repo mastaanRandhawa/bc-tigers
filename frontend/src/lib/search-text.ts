@@ -41,8 +41,8 @@ export function playerSearchText(p: Player) {
 
 export function matchSearchText(m: Match) {
   return joinSearchParts([
-    m.home_team?.name,
-    m.away_team?.name,
+    m.home_team?.name ?? m.home_label,
+    m.away_team?.name ?? m.away_label,
     m.venue?.name,
     m.division?.name,
     m.tournament?.name,

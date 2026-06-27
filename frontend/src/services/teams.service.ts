@@ -1,9 +1,23 @@
 import apiClient from '@/lib/api-client';
 import type { RecordScope, RecordVersion, Team } from '@/types';
 
+export interface TeamDirectoryEntry {
+  id: string;
+  name: string;
+  division: {
+    id: string;
+    name: string;
+    slug: string;
+    tournament: { name: string; slug: string };
+  };
+}
+
 export const teamsService = {
   getAll: (params?: { divisionId?: string; scope?: RecordScope }) =>
     apiClient.get<Team[]>('/teams', { params }),
+
+  /** Public — teams without a coach, for the coach-registration picker. */
+  directory: () => apiClient.get<TeamDirectoryEntry[]>('/teams/directory'),
 
   create: (data: Partial<Team>) => apiClient.post<Team>('/teams', data),
 

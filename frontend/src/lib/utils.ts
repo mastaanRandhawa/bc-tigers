@@ -41,6 +41,17 @@ export function getInitials(name: string): string {
     .slice(0, 2);
 }
 
+/**
+ * Display name for a match side: the registered team's name, otherwise the
+ * placeholder label ("Winner of Match 11", "Pool A 1st"), otherwise "TBD".
+ */
+export function matchSideName(
+  team?: { name: string } | null,
+  label?: string | null,
+): string {
+  return team?.name ?? label ?? 'TBD';
+}
+
 export type MatchStatusBadgeVariant =
   | 'live'
   | 'success'

@@ -162,7 +162,7 @@ export class CoachService {
         },
         venue: { select: { id: true, name: true, slug: true } },
       },
-      orderBy: { scheduled_start: 'desc' },
+      orderBy: { scheduled_start: 'asc' },
       take: 30,
     });
   }

@@ -26,12 +26,22 @@ import {
 
 export type MatchEventActor = { userId: string; role: string };
 
+/** Display name for a match side: the team name, else the placeholder label. */
+function matchSideName(
+  team: { name: string } | null,
+  label: string | null,
+): string {
+  return team?.name ?? label ?? 'TBD';
+}
+
 /** Client-settable scalar fields on a match. Scores are set via the score/events endpoints. */
 const MATCH_FIELDS = [
   'tournament_id',
   'division_id',
   'home_team_id',
   'away_team_id',
+  'home_label',
+  'away_label',
   'venue_id',
   'field_id',
   'scheduled_start',
@@ -109,8 +119,10 @@ export class MatchesService {
     divisionId?: string;
     page?: number;
     limit?: number;
+    /** Kickoff order — defaults to 'asc' (closest/earliest matches first). */
+    order?: 'asc' | 'desc';
   }) {
-    const { page = 1, limit = 20 } = params ?? {};
+    const { page = 1, limit = 20, order = 'asc' } = params ?? {};
     const where: Prisma.MatchWhereInput = {};
     if (params?.statuses?.length) {
       where.status = { in: params.statuses };
@@ -125,7 +137,7 @@ export class MatchesService {
       include: MATCH_LIST_INCLUDE,
       skip: (page - 1) * limit,
       take: limit,
-      orderBy: { scheduled_start: 'desc' },
+      orderBy: { scheduled_start: order },
     });
   }
 
@@ -139,19 +151,24 @@ export class MatchesService {
     const ctx = await getRosterVisibilityContext();
     const canViewHome = canViewTeamRoster(
       ctx.actor,
-      match.home_team.coach_user_id,
+      match.home_team?.coach_user_id ?? null,
       ctx.rostersPublic,
     );
     const canViewAway = canViewTeamRoster(
       ctx.actor,
-      match.away_team.coach_user_id,
+      match.away_team?.coach_user_id ?? null,
       ctx.rostersPublic,
     );
 
     return {
       ...match,
-      home_team: stripTeamPlayers(match.home_team, canViewHome),
-      away_team: stripTeamPlayers(match.away_team, canViewAway),
+      // Slots may be bracket placeholders (no team) — pass those through as null.
+      home_team: match.home_team
+        ? stripTeamPlayers(match.home_team, canViewHome)
+        : null,
+      away_team: match.away_team
+        ? stripTeamPlayers(match.away_team, canViewAway)
+        : null,
     };
   }
 
@@ -197,7 +214,7 @@ export class MatchesService {
       await this.emailAdmins(
         match.tournament_id,
         'Match started',
-        `${match.home_team.name} vs ${match.away_team.name} is now live`,
+        `${matchSideName(match.home_team, match.home_label)} vs ${matchSideName(match.away_team, match.away_label)} is now live`,
       );
     }
 
@@ -206,7 +223,7 @@ export class MatchesService {
       await this.emailAdmins(
         match.tournament_id,
         'Match completed',
-        `Final: ${match.home_team.name} ${match.home_score} – ${match.away_score} ${match.away_team.name}`,
+        `Final: ${matchSideName(match.home_team, match.home_label)} ${match.home_score} – ${match.away_score} ${matchSideName(match.away_team, match.away_label)}`,
       );
       await this.advanceBracketFromMatch(match);
     }
@@ -358,8 +375,8 @@ export class MatchesService {
   private async advanceBracketFromMatch(match: {
     id: string;
     division_id: string;
-    home_team_id: string;
-    away_team_id: string;
+    home_team_id: string | null;
+    away_team_id: string | null;
     home_score: number;
     away_score: number;
   }) {
@@ -379,6 +396,8 @@ export class MatchesService {
       match.home_score > match.away_score
         ? match.home_team_id
         : match.away_team_id;
+    // Bracket-linked matches always have real teams; guard for type-safety.
+    if (!winnerId) return;
 
     try {
       await this.bracketsService.advance(node.id, winnerId, 'match');

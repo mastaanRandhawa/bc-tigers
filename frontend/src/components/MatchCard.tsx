@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { AnimatedNumber } from '@/components/motion/AnimatedNumber';
 import { ScoreFlash } from '@/components/motion/ScoreFlash';
 import { useScoreFlash } from '@/hooks/useScoreFlash';
-import { cn, getInitials } from '@/lib/utils';
+import { cn, getInitials, matchSideName } from '@/lib/utils';
 import { formatDate, formatTime, getMatchStatusBadgeVariant } from '@/lib/utils';
 import { getMatchPath } from '@/lib/division-routes';
 import { isScheduleOnlyDivision } from '@/lib/division-display';
@@ -141,7 +141,7 @@ function MatchCard({
       <Link to={getMatchPath(match)} className="group block min-w-0">
         <div className="grid min-w-0 grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-2 rounded-sm px-1 py-2 transition-colors hover:bg-muted/50">
           <p className="truncate text-right text-sm font-medium text-foreground">
-            {match.home_team?.name ?? 'TBD'}
+            {matchSideName(match.home_team, match.home_label)}
           </p>
           <div className="shrink-0 min-w-[52px] px-1 text-center">
             {showScore ? (
@@ -153,7 +153,7 @@ function MatchCard({
             )}
           </div>
           <p className="truncate text-left text-sm font-medium text-foreground">
-            {match.away_team?.name ?? 'TBD'}
+            {matchSideName(match.away_team, match.away_label)}
           </p>
         </div>
       </Link>
@@ -181,7 +181,7 @@ function MatchCard({
       </div>
 
       <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3 sm:gap-4">
-        <TeamLine name={match.home_team?.name ?? 'TBD'} logo={match.home_team?.logo} align="right" />
+        <TeamLine name={matchSideName(match.home_team, match.home_label)} logo={match.home_team?.logo} align="right" />
         <div className="flex min-w-[72px] shrink-0 flex-col items-center justify-center">
           {showScore ? (
             <ScoreDisplay home={match.home_score} away={match.away_score} isLive={isLive} />
@@ -191,7 +191,7 @@ function MatchCard({
             </span>
           )}
         </div>
-        <TeamLine name={match.away_team?.name ?? 'TBD'} logo={match.away_team?.logo} align="left" />
+        <TeamLine name={matchSideName(match.away_team, match.away_label)} logo={match.away_team?.logo} align="left" />
       </div>
 
       <MatchMeta match={match} />

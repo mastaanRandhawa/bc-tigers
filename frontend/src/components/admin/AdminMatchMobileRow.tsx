@@ -1,7 +1,7 @@
 import type { Match } from '@/types';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { formatDate, formatTime, getMatchStatusBadgeVariant } from '@/lib/utils';
+import { formatDate, formatTime, getMatchStatusBadgeVariant, matchSideName } from '@/lib/utils';
 import { PlusCircle, Zap } from 'lucide-react';
 
 interface AdminMatchMobileRowProps {
@@ -21,8 +21,8 @@ export function AdminMatchMobileRow({
   statusOptions,
   showDivision,
 }: AdminMatchMobileRowProps) {
-  const home = match.home_team?.name ?? 'TBD';
-  const away = match.away_team?.name ?? 'TBD';
+  const home = matchSideName(match.home_team, match.home_label);
+  const away = matchSideName(match.away_team, match.away_label);
   const hasScore = match.status !== 'SCHEDULED';
 
   return (

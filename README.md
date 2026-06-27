@@ -182,10 +182,10 @@ tournament:
 - **7 divisions** — Premier, Div 1 Gold, Div 2 Silver, Div 3 Bronze, Recreational, Over 40, Over 45
 - **Up to 8 teams per division** (`SEED_MAX_TEAMS_PER_DIVISION`, default 8) × **5 players per team**
 - **Newton Athletic Park** with fields, plus sample matches and standings
-- Two staff users — `superadmin@bctigers.ca` and `admin@bctigers.ca`. Local/demo
-  passwords are in `backend/prisma/seed.ts`; in production set
-  `SEED_ADMIN_PASSWORD` / `SEED_SUPERADMIN_PASSWORD` (the seed refuses to run with
-  the demo passwords when `NODE_ENV=production`).
+- Two staff users (one `ADMIN`, one `SUPERADMIN`). **No credentials are hardcoded** —
+  set `SEED_ADMIN_EMAIL` / `SEED_ADMIN_PASSWORD` / `SEED_SUPERADMIN_EMAIL` /
+  `SEED_SUPERADMIN_PASSWORD` in the environment; the seed refuses to run unless all
+  four are provided.
 
 > ⚠️ **The seed is destructive** — it wipes every table before inserting demo
 > data. It refuses to run when `NODE_ENV=production` unless `ALLOW_PROD_SEED=true`.
@@ -205,7 +205,7 @@ tournament:
 | `APP_URL` | Frontend base URL for password-reset links |
 | `SMTP_HOST` / `SMTP_PORT` / `SMTP_SECURE` / `SMTP_USER` / `SMTP_PASS` / `SMTP_FROM` | Password-reset email delivery |
 | `DEV_EXPOSE_RESET_TOKEN` | Dev only — never enable in production |
-| `SEED_ADMIN_PASSWORD` / `SEED_SUPERADMIN_PASSWORD` | Seeded admin passwords — required in production |
+| `SEED_ADMIN_EMAIL` / `SEED_ADMIN_PASSWORD` / `SEED_SUPERADMIN_EMAIL` / `SEED_SUPERADMIN_PASSWORD` | Seeded admin credentials — all required; nothing hardcoded |
 | `ALLOW_PROD_SEED` | Explicit opt-in to run the destructive seed against a prod DB |
 
 **Frontend** (`frontend/.env`, see `frontend/.env.example`):

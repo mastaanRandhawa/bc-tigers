@@ -18,7 +18,7 @@ import { useHomeHub } from '@/hooks/useHomeHub';
 import { formatDate } from '@/lib/date';
 import { pickFeaturedTournament } from '@/lib/featured-tournament';
 import { isScheduleOnlyDivision } from '@/lib/division-display';
-import { ChevronRight, Trophy, Megaphone, Plus, Pencil, Trash2 } from 'lucide-react';
+import { ChevronRight, Trophy, Megaphone, Plus, Pencil, Trash2, FileDown } from 'lucide-react';
 import { RevealOnScroll } from '@/components/motion/RevealOnScroll';
 import { useCanAdminEdit } from '@/hooks/useCanAdminEdit';
 import { AdminActionButton } from '@/components/admin/inline/AdminActionButton';
@@ -90,6 +90,29 @@ export default function HomePage() {
                 All tournaments
                 <ChevronRight className="h-4 w-4" aria-hidden />
               </Link>
+            </Button>
+          </div>
+
+          <div className="mb-6 flex flex-col gap-3 rounded-lg border border-primary/20 bg-primary/5 p-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-start gap-3">
+              <FileDown className="mt-0.5 h-5 w-5 shrink-0 text-primary" aria-hidden />
+              <div>
+                <p className="font-semibold text-foreground">Team roster sign-up template</p>
+                <p className="text-sm text-muted-foreground">
+                  Coaches: download the official BCT 14th Miri Piri roster form, fill it in, and submit it before the deadline.
+                </p>
+              </div>
+            </div>
+            <Button asChild className="shrink-0">
+              <a
+                href={`${import.meta.env.BASE_URL}miri-piri-2026-roster-template.pdf`}
+                target="_blank"
+                rel="noopener noreferrer"
+                download
+              >
+                <FileDown className="h-4 w-4" aria-hidden />
+                Download template
+              </a>
             </Button>
           </div>
 

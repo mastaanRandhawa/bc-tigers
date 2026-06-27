@@ -1,11 +1,12 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import AuthLayout from '@/components/AuthLayout';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
 import { authService } from '@/services/auth.service';
+import { teamsService, type TeamDirectoryEntry } from '@/services/teams.service';
 import { getApiErrorMessage } from '@/lib/errors';
 import { UserPlus, CheckCircle, Eye, EyeOff } from 'lucide-react';
 
@@ -16,16 +17,43 @@ export default function CoachRegisterPage() {
     email: '',
     password: '',
     phone: '',
-    coaching_request: '',
+    team_id: '',
   });
   const [showPassword, setShowPassword] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
+  const { data: directory = [], isLoading: teamsLoading } = useQuery({
+    queryKey: ['team-directory'],
+    queryFn: async () => (await teamsService.directory()).data,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  // Group teams by division (the API already sorts tournament → division → team).
+  const groups = useMemo(() => {
+    const map = new Map<string, { label: string; teams: TeamDirectoryEntry[] }>();
+    for (const t of directory) {
+      const label = `${t.division.name} · ${t.division.tournament.name}`;
+      if (!map.has(t.division.id)) map.set(t.division.id, { label, teams: [] });
+      map.get(t.division.id)!.teams.push(t);
+    }
+    return [...map.values()];
+  }, [directory]);
+
+  const teamById = useMemo(
+    () => new Map(directory.map((t) => [t.id, t])),
+    [directory],
+  );
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    const team = teamById.get(form.team_id);
+    if (!team) {
+      setError('Please select the team you would like to coach.');
+      return;
+    }
     setIsLoading(true);
     try {
       await authService.registerCoach({
@@ -34,7 +62,7 @@ export default function CoachRegisterPage() {
         email: form.email,
         password: form.password,
         phone: form.phone.trim(),
-        coaching_request: form.coaching_request.trim(),
+        coaching_request: `${team.name} (${team.division.name})`,
       });
       setSubmitted(true);
     } catch (err) {
@@ -107,18 +135,30 @@ export default function CoachRegisterPage() {
           />
         </div>
         <div className="space-y-1.5">
-          <Label htmlFor="coaching_request">Team you&apos;d like to coach</Label>
-          <Textarea
-            id="coaching_request"
-            value={form.coaching_request}
-            onChange={(e) => setForm({ ...form, coaching_request: e.target.value })}
-            placeholder="e.g. BC Tigers U14 Boys, Miri Piri FC"
+          <Label htmlFor="team_id">Team you&apos;d like to coach</Label>
+          <select
+            id="team_id"
+            value={form.team_id}
+            onChange={(e) => setForm({ ...form, team_id: e.target.value })}
             required
-            rows={3}
-            className="resize-none"
-          />
+            disabled={teamsLoading}
+            className="h-11 w-full rounded-xl border border-border/80 bg-card px-3 text-sm text-foreground shadow-[var(--shadow-xs)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:opacity-60"
+          >
+            <option value="" disabled>
+              {teamsLoading ? 'Loading teams…' : 'Select a team…'}
+            </option>
+            {groups.map((g) => (
+              <optgroup key={g.label} label={g.label}>
+                {g.teams.map((t) => (
+                  <option key={t.id} value={t.id}>
+                    {t.name}
+                  </option>
+                ))}
+              </optgroup>
+            ))}
+          </select>
           <p className="text-xs text-muted-foreground">
-            Enter the team name you are requesting to manage. An administrator will review and assign you.
+            Pick the team you are requesting to manage. An administrator will review and assign you.
           </p>
         </div>
         <div className="space-y-1.5">

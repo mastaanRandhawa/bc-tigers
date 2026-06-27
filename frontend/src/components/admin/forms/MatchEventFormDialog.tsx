@@ -68,7 +68,7 @@ export default function MatchEventFormDialog({
 
   useEffect(() => {
     if (!open || !match) return;
-    const defaultTeamId = lockedTeamId ?? match.home_team_id;
+    const defaultTeamId = lockedTeamId ?? match.home_team_id ?? '';
     if (event) {
       form.reset({
         type: goalOnly ? 'GOAL' : event.type,
@@ -124,8 +124,8 @@ export default function MatchEventFormDialog({
   if (!match) return null;
 
   const teamOptions = [
-    { value: match.home_team_id, label: match.home_team?.name ?? 'Home' },
-    { value: match.away_team_id, label: match.away_team?.name ?? 'Away' },
+    { value: match.home_team_id ?? '', label: match.home_team?.name ?? 'Home' },
+    { value: match.away_team_id ?? '', label: match.away_team?.name ?? 'Away' },
   ];
 
   return (

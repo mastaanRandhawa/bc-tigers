@@ -27,6 +27,12 @@ export class TeamsController {
     return this.service.findAll({ divisionId });
   }
 
+  /** Public — teams without a coach, for the coach-registration picker. */
+  @Get('directory')
+  directory() {
+    return this.service.directory();
+  }
+
   /** Immutable version + audit history for one team. */
   @Get(':id/history')
   @AdminOnly()

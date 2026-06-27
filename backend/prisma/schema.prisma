@@ -278,8 +278,14 @@ model Match {
   id              String      @id @default(uuid())
   tournament_id   String
   division_id     String
-  home_team_id    String
-  away_team_id    String
+  // Nullable so a fixture slot can be a bracket/pool placeholder (see *_label)
+  // instead of a registered team — e.g. "Winner of Match 11", "Pool A 1st".
+  home_team_id    String?
+  away_team_id    String?
+  // Display text shown when the team is not yet known. Exactly one of
+  // (home_team_id, home_label) is set per slot; same for away.
+  home_label      String?
+  away_label      String?
   venue_id        String?
   field_id        String?
   stage_id        String?
@@ -296,8 +302,8 @@ model Match {
 
   tournament    Tournament      @relation(fields: [tournament_id], references: [id], onDelete: Cascade)
   division      Division        @relation(fields: [division_id], references: [id], onDelete: Cascade)
-  home_team     Team            @relation("HomeTeam", fields: [home_team_id], references: [id])
-  away_team     Team            @relation("AwayTeam", fields: [away_team_id], references: [id])
+  home_team     Team?           @relation("HomeTeam", fields: [home_team_id], references: [id])
+  away_team     Team?           @relation("AwayTeam", fields: [away_team_id], references: [id])
   venue         Venue?          @relation(fields: [venue_id], references: [id])
   field         Field?          @relation(fields: [field_id], references: [id])
   stage         Stage?          @relation(fields: [stage_id], references: [id])

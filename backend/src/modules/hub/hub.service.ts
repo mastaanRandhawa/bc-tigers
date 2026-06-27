@@ -36,6 +36,7 @@ export class HubService {
       this.matchesService.findAll({
         statuses: ['LIVE', 'COMPLETED'],
         limit: 4,
+        order: 'desc', // recent results — most recently played first
       }),
       this.matchesService.findAll({ status: 'SCHEDULED', limit: 4 }),
       prisma.announcement.findMany({

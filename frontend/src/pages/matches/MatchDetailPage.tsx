@@ -24,7 +24,7 @@ import { StaggerItem } from '@/components/motion/StaggerList';
 import { AnimatedNumber } from '@/components/motion/AnimatedNumber';
 import { ScoreFlash } from '@/components/motion/ScoreFlash';
 import { useScoreFlash } from '@/hooks/useScoreFlash';
-import { formatDate, formatTime, cn, getInitials, getMatchStatusBadgeVariant } from '@/lib/utils';
+import { formatDate, formatTime, cn, getInitials, getMatchStatusBadgeVariant, matchSideName } from '@/lib/utils';
 import { divisionMatchesPath } from '@/lib/division-routes';
 import { isScheduleOnlyDivision } from '@/lib/division-display';
 import { useMatch, useDeleteMatchEvent } from '@/hooks/useMatches';
@@ -304,11 +304,11 @@ export default function MatchDetailPage() {
                     <div className="flex min-w-0 flex-1 flex-col items-center gap-2">
                       <TeamCircle
                         logo={match.home_team?.logo}
-                        name={match.home_team?.name ?? 'Home'}
+                        name={matchSideName(match.home_team, match.home_label)}
                         color={homeColor}
                       />
                       <p className="w-full truncate font-display text-sm font-bold text-foreground sm:text-lg">
-                        {match.home_team?.name ?? 'TBD'}
+                        {matchSideName(match.home_team, match.home_label)}
                       </p>
                     </div>
 
@@ -336,11 +336,11 @@ export default function MatchDetailPage() {
                     <div className="flex min-w-0 flex-1 flex-col items-center gap-2">
                       <TeamCircle
                         logo={match.away_team?.logo}
-                        name={match.away_team?.name ?? 'Away'}
+                        name={matchSideName(match.away_team, match.away_label)}
                         color={awayColor}
                       />
                       <p className="w-full truncate font-display text-sm font-bold text-foreground sm:text-lg">
-                        {match.away_team?.name ?? 'TBD'}
+                        {matchSideName(match.away_team, match.away_label)}
                       </p>
                     </div>
                   </div>

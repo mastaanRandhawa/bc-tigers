@@ -52,16 +52,18 @@ export function toTournamentConfig(pointFormat: PointFormat): TournamentConfig {
 }
 
 type PrismaMatchLike = {
-  home_team_id: string;
-  away_team_id: string;
+  // Nullable for placeholder fixtures, but a COMPLETED match always has both
+  // teams (the only matches passed here), so the coalesce below never triggers.
+  home_team_id: string | null;
+  away_team_id: string | null;
   home_score: number;
   away_score: number;
 };
 
 export function mapPrismaMatchToResult(match: PrismaMatchLike): MatchResult {
   return {
-    homeTeamId: match.home_team_id,
-    awayTeamId: match.away_team_id,
+    homeTeamId: match.home_team_id ?? '',
+    awayTeamId: match.away_team_id ?? '',
     homeScore: match.home_score,
     awayScore: match.away_score,
     outcome: 'PLAYED',
