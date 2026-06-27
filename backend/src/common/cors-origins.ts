@@ -7,6 +7,7 @@
 const DEFAULT_ORIGINS = [
   'http://localhost:5173',
   'http://localhost:3001',
+  'https://tournament.bctigers.com',
   'https://mastaanrandhawa.github.io',
 ];
 

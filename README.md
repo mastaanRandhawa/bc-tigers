@@ -221,14 +221,15 @@ tournament:
 
 | | URL |
 |--|-----|
-| **Frontend** | https://mastaanrandhawa.github.io/bc-tigers/ |
+| **Frontend** | https://tournament.bctigers.com |
 | **API** | https://bc-tigers-lag7.onrender.com/api |
 
 - **Render:** backend API + PostgreSQL via `render.yaml`. Set `CORS_ORIGIN` and
   SMTP secrets in the dashboard. Migrations run on deploy (`start:render`).
-- **GitHub Pages:** Settings → Pages → Source: **GitHub Actions**. Push to
-  `main`/`master`; `.github/workflows/deploy-frontend.yml` builds with
-  `GITHUB_PAGES=true` (base `/bc-tigers/`).
+- **GitHub Pages:** Settings → Pages → Source: **GitHub Actions**. DNS CNAME:
+  `tournament.bctigers.com` → `mastaanrandhawa.github.io`. Add the same custom
+  domain under **bc-tigers** repo → Settings → Pages. The build uses base `/`
+  (custom domain root). Enable **Enforce HTTPS** once the certificate is issued.
 - **CI:** `.github/workflows/ci.yml` builds the frontend and runs backend tests
   on every PR.
 

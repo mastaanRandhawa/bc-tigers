@@ -19,10 +19,10 @@ services:
         value: 7d
       # Allowed browser origin(s) for REST + WebSocket CORS (comma-separated).
       - key: CORS_ORIGIN
-        value: https://mastaanrandhawa.github.io
+        value: https://tournament.bctigers.com,https://mastaanrandhawa.github.io
       # Base URL of the deployed frontend — used to build password-reset links.
       - key: APP_URL
-        value: https://mastaanrandhawa.github.io/bc-tigers
+        value: https://tournament.bctigers.com
       # SMTP credentials for password-reset email delivery — set in the Render dashboard.
       - key: SMTP_HOST
         sync: false

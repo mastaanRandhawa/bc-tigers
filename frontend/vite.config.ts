@@ -3,12 +3,14 @@ import react from '@vitejs/plugin-react';
 import tailwindcss from '@tailwindcss/vite';
 import path from 'path';
 
-/** GitHub Pages project site: https://<user>.github.io/bc-tigers/ */
-const githubPagesBase =
-  process.env.GITHUB_PAGES === 'true' ? '/bc-tigers/' : '/';
+/**
+ * Asset base path. Custom domain (tournament.bctigers.com) serves from `/`.
+ * Set VITE_BASE=/bc-tigers/ only if you still need the legacy project-site URL.
+ */
+const deployBase = process.env.VITE_BASE?.trim() || '/';
 
 export default defineConfig({
-  base: githubPagesBase,
+  base: deployBase.endsWith('/') ? deployBase : `${deployBase}/`,
   plugins: [react(), tailwindcss()],
   resolve: {
     alias: {
