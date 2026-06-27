@@ -13,9 +13,9 @@ export function toAppPath(path: string): string {
 
 export const apiBaseUrl: string =
   import.meta.env.VITE_API_URL ??
-  (import.meta.env.DEV ? '/api' : 'https://bc-tigers.onrender.com/api');
+  (import.meta.env.DEV ? '/api' : 'https://bc-tigers-lag7.onrender.com/api');
 
 /** Socket.IO server origin (not the `/api` path). */
 export const socketBaseUrl: string | undefined =
   import.meta.env.VITE_SOCKET_URL ??
-  (import.meta.env.DEV ? undefined : 'https://bc-tigers.onrender.com');
+  (import.meta.env.DEV ? undefined : 'https://bc-tigers-lag7.onrender.com');

@@ -150,6 +150,7 @@ interface DivisionSeed {
   teams: string[];
   seedMatches?: boolean;
   playersPerTeam?: number;
+  schedule_only?: boolean;
 }
 
 function inferCity(teamName: string): string {
@@ -270,6 +271,7 @@ const DIVISIONS: DivisionSeed[] = [
     format: '11-a-side · 3 games minimum',
     prize_note: 'Participation medals for all players',
     seedMatches: true,
+    schedule_only: true,
     playersPerTeam: YOUTH_PLAYERS_PER_TEAM,
     teams: [
       'BCT Tigers U18',
@@ -288,6 +290,7 @@ const DIVISIONS: DivisionSeed[] = [
     format: '9-a-side',
     prize_note: 'Participation medals for all players',
     seedMatches: true,
+    schedule_only: true,
     playersPerTeam: YOUTH_PLAYERS_PER_TEAM,
     teams: [
       'BCT Tigers U15 Girls',
@@ -686,7 +689,31 @@ const PREMIER_FIXTURES: FixturePlan[] = [
   { homeName: 'Mex United FC', awayName: 'BCT Punjab', day: 5, hour: 15, status: 'SCHEDULED', homeScore: 0, awayScore: 0 },
 ];
 
+// Default admin credentials are for local/demo seeding only. In production,
+// provide SEED_ADMIN_PASSWORD / SEED_SUPERADMIN_PASSWORD via env so the seeded
+// accounts don't ship with publicly-known passwords.
+const ADMIN_PASSWORD = process.env.SEED_ADMIN_PASSWORD ?? 'Admin1234!';
+const SUPERADMIN_PASSWORD =
+  process.env.SEED_SUPERADMIN_PASSWORD ?? 'SuperAdmin1234!';
+const usingDefaultAdminPasswords =
+  !process.env.SEED_ADMIN_PASSWORD || !process.env.SEED_SUPERADMIN_PASSWORD;
+
 async function main() {
+  // This seed is destructive — it wipes every table before inserting demo data.
+  // Guard against accidentally running it against a production database.
+  if (process.env.NODE_ENV === 'production' && process.env.ALLOW_PROD_SEED !== 'true') {
+    throw new Error(
+      'Refusing to run destructive seed with NODE_ENV=production. ' +
+        'Set ALLOW_PROD_SEED=true to override (this DELETES all data).',
+    );
+  }
+  if (process.env.NODE_ENV === 'production' && usingDefaultAdminPasswords) {
+    throw new Error(
+      'Refusing to seed default admin passwords in production. ' +
+        'Set SEED_ADMIN_PASSWORD and SEED_SUPERADMIN_PASSWORD to strong values.',
+    );
+  }
+
   console.log('Seeding Miri Piri 2026 tournament data...');
 
   await prisma.passwordResetToken.deleteMany();
@@ -716,7 +743,7 @@ async function main() {
       first_name: 'BC Tigers',
       last_name: 'Admin',
       email: 'admin@bctigers.ca',
-      password_hash: await bcrypt.hash('Admin1234!', 12),
+      password_hash: await bcrypt.hash(ADMIN_PASSWORD, 12),
       role: 'ADMIN',
       approved: true,
       active: true,
@@ -728,7 +755,7 @@ async function main() {
       first_name: 'BC Tigers',
       last_name: 'Super Admin',
       email: 'superadmin@bctigers.ca',
-      password_hash: await bcrypt.hash('SuperAdmin1234!', 12),
+      password_hash: await bcrypt.hash(SUPERADMIN_PASSWORD, 12),
       role: 'SUPERADMIN',
       approved: true,
       active: true,
@@ -811,6 +838,7 @@ async function main() {
           divConfig.slug === 'premier' ? usfaFormat.id : standardFormat.id,
         primary_color: colors.primary,
         accent_color: colors.accent,
+        schedule_only: divConfig.schedule_only ?? false,
       },
     });
 
@@ -927,8 +955,13 @@ async function main() {
 
   console.log('\nSeed complete.');
   console.log('  Hub: /tournaments/miri-piri-2026');
-  console.log('  Admin: admin@bctigers.ca / Admin1234!');
-  console.log('  Super Admin: superadmin@bctigers.ca / SuperAdmin1234!');
+  if (usingDefaultAdminPasswords) {
+    console.log('  Admin: admin@bctigers.ca / Admin1234!');
+    console.log('  Super Admin: superadmin@bctigers.ca / SuperAdmin1234!');
+  } else {
+    console.log('  Admin: admin@bctigers.ca / (from SEED_ADMIN_PASSWORD)');
+    console.log('  Super Admin: superadmin@bctigers.ca / (from SEED_SUPERADMIN_PASSWORD)');
+  }
 }
 
 main()
