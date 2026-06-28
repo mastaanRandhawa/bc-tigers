@@ -6,6 +6,7 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   Request,
   UseGuards,
 } from '@nestjs/common';
@@ -24,9 +25,30 @@ export class CoachController {
     return this.service.getMe(req.user.userId);
   }
 
+  @Get('teams')
+  listTeams(@Request() req: { user: { userId: string } }) {
+    return this.service.listTeams(req.user.userId);
+  }
+
+  @Get('team-requests')
+  listTeamRequests(@Request() req: { user: { userId: string } }) {
+    return this.service.listTeamRequests(req.user.userId);
+  }
+
+  @Post('team-requests')
+  createTeamRequest(
+    @Request() req: { user: { userId: string } },
+    @Body() body: { team_id: string },
+  ) {
+    return this.service.createTeamRequest(req.user.userId, body.team_id);
+  }
+
   @Get('team')
-  getTeam(@Request() req: { user: { userId: string } }) {
-    return this.service.getTeamForCoach(req.user.userId);
+  getTeam(
+    @Request() req: { user: { userId: string } },
+    @Query('team_id') teamId?: string,
+  ) {
+    return this.service.getTeamForCoach(req.user.userId, teamId);
   }
 
   @Patch('team')
@@ -46,8 +68,10 @@ export class CoachController {
 
   @Get('team/matches')
   @UseGuards(CoachTeamGuard)
-  listMatches(@Request() req: { user: { userId: string } }) {
-    return this.service.findTeamMatches(req.user.userId);
+  listMatches(
+    @Request() req: { user: { userId: string }; query?: { team_id?: string } },
+  ) {
+    return this.service.findTeamMatches(req.user.userId, req.query?.team_id);
   }
 
   @Post('team/players')

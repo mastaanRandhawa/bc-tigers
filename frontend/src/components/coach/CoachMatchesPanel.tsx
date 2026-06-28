@@ -9,7 +9,7 @@ interface CoachMatchesPanelProps {
 }
 
 export default function CoachMatchesPanel({ team }: CoachMatchesPanelProps) {
-  const { data: matches = [], isLoading, isError, refetch } = useCoachMatches(!!team.id);
+  const { data: matches = [], isLoading, isError, refetch } = useCoachMatches(team.id, !!team.id);
 
   return (
     <div className="rounded-xl border border-border bg-card p-6 space-y-4">

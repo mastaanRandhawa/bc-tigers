@@ -81,6 +81,12 @@ enum RecordStatus {
   DECOMMISSIONED
 }
 
+enum CoachTeamRequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
 // ─── Models ───────────────────────────────────────────────────────────────────
 
 model User {
@@ -98,7 +104,8 @@ model User {
   created_at    DateTime @default(now())
   updated_at    DateTime @updatedAt
 
-  coached_team          Team?                 @relation("TeamCoach")
+  coached_teams         Team[]                @relation("TeamCoach")
+  team_requests         CoachTeamRequest[]
   audit_logs            AuditLog[]
   record_versions       RecordVersion[]
   password_reset_tokens PasswordResetToken[]
@@ -230,7 +237,7 @@ model Team {
   secondary_color    String?
   contact_email      String?
   contact_phone      String?
-  coach_user_id      String?  @unique
+  coach_user_id      String?
   management_locked  Boolean  @default(false)
   created_by         String?
   created_at         DateTime @default(now())
@@ -253,10 +260,12 @@ model Team {
   bracket_home   BracketNode[] @relation("BracketHomeTeam")
   bracket_away   BracketNode[] @relation("BracketAwayTeam")
   bracket_winner BracketNode[] @relation("BracketWinner")
+  team_requests  CoachTeamRequest[]
 
   @@unique([division_id, slug])
   @@index([is_deleted])
   @@index([group_id])
+  @@index([coach_user_id])
 }
 
 model Player {
@@ -510,6 +519,23 @@ model PasswordResetToken {
   created_at DateTime  @default(now())
 
   user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+}
+
+model CoachTeamRequest {
+  id            String                 @id @default(uuid())
+  coach_user_id String
+  team_id       String
+  status        CoachTeamRequestStatus @default(PENDING)
+  created_at    DateTime               @default(now())
+  updated_at    DateTime               @updatedAt
+
+  coach User @relation(fields: [coach_user_id], references: [id], onDelete: Cascade)
+  team  Team @relation(fields: [team_id], references: [id], onDelete: Cascade)
+
+  @@unique([coach_user_id, team_id])
+  @@index([coach_user_id])
+  @@index([team_id])
+  @@index([status])
 }
 
 model SiteSettings {

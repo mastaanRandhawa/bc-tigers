@@ -3,6 +3,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import FormDialog from '@/components/admin/FormDialog';
 import { TextInputField, FormError } from '@/components/admin/form-fields';
+import CoachTeamsSection from '@/components/admin/CoachTeamsSection';
 import { userRoleSchema, type UserRoleFormValues } from '@/lib/schemas/admin';
 import { useUpdateUser } from '@/hooks/useUsers';
 import { getApiErrorMessage } from '@/lib/errors';
@@ -69,6 +70,7 @@ export default function UserRoleFormDialog({ open, onOpenChange, user }: UserRol
       </div>
       <TextInputField control={form.control} name="email" label="Email" disabled />
       <TextInputField control={form.control} name="phone" label="Phone" />
+      {user.role === 'COACH' && <CoachTeamsSection user={user} />}
     </FormDialog>
   );
 }

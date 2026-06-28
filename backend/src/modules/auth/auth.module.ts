@@ -8,12 +8,14 @@ import { JwtStrategy } from './jwt.strategy';
 import { RolesGuard } from './roles.guard';
 import { MailModule } from '../mail/mail.module';
 import { AuditLogModule } from '../audit-log/audit-log.module';
+import { TeamsModule } from '../teams/teams.module';
 
 @Module({
   imports: [
     PassportModule.register({ defaultStrategy: 'jwt' }),
     MailModule,
     AuditLogModule,
+    TeamsModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],
       inject: [ConfigService],

@@ -12,6 +12,7 @@ interface CoachPlayerFormDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   player?: Player | null;
+  teamId: string;
   onSuccess?: () => void;
 }
 
@@ -19,10 +20,11 @@ export default function CoachPlayerFormDialog({
   open,
   onOpenChange,
   player,
+  teamId,
   onSuccess,
 }: CoachPlayerFormDialogProps) {
-  const createMutation = useCreateCoachPlayer();
-  const updateMutation = useUpdateCoachPlayer();
+  const createMutation = useCreateCoachPlayer(teamId);
+  const updateMutation = useUpdateCoachPlayer(teamId);
   const isEditing = !!player;
   const [apiError, setApiError] = useState('');
 

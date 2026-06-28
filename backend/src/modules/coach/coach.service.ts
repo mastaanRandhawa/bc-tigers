@@ -5,8 +5,12 @@ import {
   isCoachManagementLocked,
   getCoachLockStatus,
 } from '../auth/coach-permissions';
-import { getCoachTeamId } from '../teams/coach-team-link';
+import {
+  getCoachTeamId,
+  getCoachTeamIds,
+} from '../teams/coach-team-link';
 import { TeamPlayersService } from '../teams/team-players.service';
+import { CoachTeamRequestsService } from '../teams/coach-team-requests.service';
 import { getMaxPlayersPerTeam } from '../settings/settings.service';
 
 const COACH_TEAM_FIELDS = [
@@ -36,7 +40,10 @@ const TEAM_INCLUDE = {
 
 @Injectable()
 export class CoachService {
-  constructor(private readonly players: TeamPlayersService) {}
+  constructor(
+    private readonly players: TeamPlayersService,
+    private readonly teamRequests: CoachTeamRequestsService,
+  ) {}
 
   async getMe(userId: string) {
     const user = await prisma.user.findUnique({
@@ -52,7 +59,7 @@ export class CoachService {
         approved: true,
         active: true,
         created_at: true,
-        coached_team: {
+        coached_teams: {
           select: {
             id: true,
             name: true,
@@ -65,31 +72,71 @@ export class CoachService {
     });
     if (!user) throw new NotFoundException('User not found');
 
+    const team_ids = await getCoachTeamIds(userId);
     const lockStatus = await getCoachLockStatus();
     return {
       ...user,
-      team_id: user.coached_team?.id ?? null,
+      team_ids,
+      team_id: team_ids[0] ?? null,
       ...lockStatus,
     };
   }
 
-  async getTeamForCoach(userId: string) {
-    const teamId = await getCoachTeamId(userId);
-    const lockStatus = await getCoachLockStatus();
+  async listTeams(userId: string) {
+    const teamIds = await getCoachTeamIds(userId);
+    if (teamIds.length === 0) return [];
 
-    if (!teamId) {
+    return prisma.team.findMany({
+      where: { id: { in: teamIds } },
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        management_locked: true,
+        division: {
+          select: {
+            id: true,
+            name: true,
+            slug: true,
+            tournament: { select: { id: true, name: true } },
+          },
+        },
+      },
+      orderBy: { name: 'asc' },
+    });
+  }
+
+  listTeamRequests(userId: string) {
+    return this.teamRequests.listForCoach(userId);
+  }
+
+  createTeamRequest(userId: string, teamId: string) {
+    return this.teamRequests.create(userId, teamId);
+  }
+
+  async getTeamForCoach(userId: string, teamId?: string | null) {
+    const resolvedTeamId = await getCoachTeamId(userId, teamId);
+    const lockStatus = await getCoachLockStatus();
+    const teamIds = await getCoachTeamIds(userId);
+
+    if (!resolvedTeamId) {
       return {
         assigned: false,
+        teams: [],
+        team_ids: teamIds,
         ...lockStatus,
         can_edit: false,
       };
     }
 
-    const team = await this.getTeam(teamId);
+    const team = await this.getTeam(resolvedTeamId);
     const max_players_per_team = await getMaxPlayersPerTeam();
     const roster_count = team.players?.length ?? 0;
     return {
       assigned: true,
+      teams: await this.listTeams(userId),
+      team_ids: teamIds,
+      selected_team_id: resolvedTeamId,
       ...team,
       ...lockStatus,
       max_players_per_team,
@@ -141,13 +188,13 @@ export class CoachService {
     return this.players.remove(teamId, playerId);
   }
 
-  async findTeamMatches(userId: string) {
-    const teamId = await getCoachTeamId(userId);
-    if (!teamId) return [];
+  async findTeamMatches(userId: string, teamId?: string | null) {
+    const resolvedTeamId = await getCoachTeamId(userId, teamId);
+    if (!resolvedTeamId) return [];
 
     return prisma.match.findMany({
       where: {
-        OR: [{ home_team_id: teamId }, { away_team_id: teamId }],
+        OR: [{ home_team_id: resolvedTeamId }, { away_team_id: resolvedTeamId }],
       },
       include: {
         home_team: { select: { id: true, name: true, slug: true, logo: true } },

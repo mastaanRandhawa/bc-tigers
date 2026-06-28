@@ -4,26 +4,31 @@ import prisma from '../../prisma/prisma';
 
 type Db = Prisma.TransactionClient | typeof prisma;
 
-/**
- * Resolves a coach's team only when both sides of the relation agree:
- * Team.coach_user_id → User and User.coached_team → Team.
- */
-export async function getCoachTeamId(userId: string): Promise<string | null> {
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-    select: {
-      coached_team: {
-        select: { id: true, coach_user_id: true },
-      },
-    },
+/** All teams assigned to a coach (each team has at most one coach). */
+export async function getCoachTeamIds(userId: string): Promise<string[]> {
+  const teams = await prisma.team.findMany({
+    where: { coach_user_id: userId, is_deleted: false },
+    select: { id: true },
+    orderBy: { name: 'asc' },
   });
-
-  const team = user?.coached_team;
-  if (!team || team.coach_user_id !== userId) return null;
-  return team.id;
+  return teams.map((t) => t.id);
 }
 
-export async function assertBidirectionalCoachTeamLink(
+/**
+ * Resolves the coach's active team. When teamId is provided, verifies ownership.
+ * Otherwise returns the first assigned team (alphabetical).
+ */
+export async function getCoachTeamId(
+  userId: string,
+  teamId?: string | null,
+): Promise<string | null> {
+  const teamIds = await getCoachTeamIds(userId);
+  if (teamIds.length === 0) return null;
+  if (teamId) return teamIds.includes(teamId) ? teamId : null;
+  return teamIds[0];
+}
+
+export async function assertCoachOwnsTeam(
   coachUserId: string,
   teamId: string,
 ): Promise<void> {
@@ -34,57 +39,22 @@ export async function assertBidirectionalCoachTeamLink(
   if (!team?.coach_user_id || team.coach_user_id !== coachUserId) {
     throw new BadRequestException('Coach is not assigned to this team');
   }
-
-  const coach = await prisma.user.findUnique({
-    where: { id: coachUserId },
-    select: { coached_team: { select: { id: true } } },
-  });
-  if (coach?.coached_team?.id !== teamId) {
-    throw new BadRequestException('Coach and team references do not match');
-  }
 }
 
 export async function validateCoachCanBeAssigned(
   coachUserId: string,
-  teamId?: string | null,
 ): Promise<void> {
   const coach = await prisma.user.findUnique({
     where: { id: coachUserId },
-    select: {
-      role: true,
-      coached_team: { select: { id: true, name: true } },
-    },
+    select: { role: true },
   });
 
   if (!coach || coach.role !== 'COACH') {
     throw new BadRequestException('Assigned user must be a coach');
   }
-
-  if (coach.coached_team && coach.coached_team.id !== teamId) {
-    throw new BadRequestException(
-      `Coach is already assigned to ${coach.coached_team.name}. Unassign them first.`,
-    );
-  }
 }
 
-/** One coach per team: clear this coach from any other team before assigning. */
-export async function clearCoachFromOtherTeams(
-  coachUserId: string,
-  exceptTeamId?: string | null,
-  tx: Db = prisma,
-): Promise<void> {
-  await tx.team.updateMany({
-    where: {
-      coach_user_id: coachUserId,
-      ...(exceptTeamId ? { NOT: { id: exceptTeamId } } : {}),
-    },
-    data: { coach_user_id: null },
-  });
-}
-
-/**
- * Assign or unassign a coach on a team, keeping the 1:1 link consistent on both sides.
- */
+/** Assign or unassign a coach on a team (one coach per team; coach may have many teams). */
 export async function applyCoachTeamAssignment(
   teamId: string,
   coachUserId: string | null,
@@ -98,13 +68,10 @@ export async function applyCoachTeamAssignment(
     return;
   }
 
-  await validateCoachCanBeAssigned(coachUserId, teamId);
-  await clearCoachFromOtherTeams(coachUserId, teamId, tx);
+  await validateCoachCanBeAssigned(coachUserId);
 
   await tx.team.update({
     where: { id: teamId },
     data: { coach_user_id: coachUserId },
   });
-
-  await assertBidirectionalCoachTeamLink(coachUserId, teamId);
 }

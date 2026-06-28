@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
+import { useQuery } from '@tanstack/react-query';
 import PageLayout from '@/components/PageLayout';
 import QueryState from '@/components/shared/QueryState';
 import { Input } from '@/components/ui/input';
@@ -9,7 +10,13 @@ import { Badge } from '@/components/ui/badge';
 import CoachRosterPanel from '@/components/coach/CoachRosterPanel';
 import CoachMatchesPanel from '@/components/coach/CoachMatchesPanel';
 import { useAuthStore } from '@/store/authStore';
-import { useCoachTeamData, useUpdateCoachTeam } from '@/hooks/useCoach';
+import {
+  useCoachTeamData,
+  useCoachTeamRequests,
+  useSelectedCoachTeamId,
+  useUpdateCoachTeam,
+} from '@/hooks/useCoach';
+import { teamsService } from '@/services/teams.service';
 import { getApiErrorMessage } from '@/lib/errors';
 import { formatDateTime } from '@/lib/utils';
 import { Lock, LogOut, Save } from 'lucide-react';
@@ -17,8 +24,37 @@ import { toast } from 'sonner';
 
 export default function CoachDashboardPage() {
   const { user, logout } = useAuthStore();
-  const { team, coachData, isLoading, isError, refetch } = useCoachTeamData();
-  const updateTeam = useUpdateCoachTeam();
+  const { data: teamRequests = [], createRequest, refetch: refetchRequests } =
+    useCoachTeamRequests();
+  const [requestTeamId, setRequestTeamId] = useState('');
+
+  const bootstrapQuery = useCoachTeamData();
+  const teamIds = bootstrapQuery.data?.team_ids ?? [];
+  const { selectedTeamId, selectTeam } = useSelectedCoachTeamId(teamIds);
+
+  const { team, coachData, isLoading, isError, refetch } =
+    useCoachTeamData(selectedTeamId);
+  const updateTeam = useUpdateCoachTeam(selectedTeamId);
+
+  const { data: directory = [] } = useQuery({
+    queryKey: ['team-directory'],
+    queryFn: async () => (await teamsService.directory()).data,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const pendingRequests = useMemo(
+    () => teamRequests.filter((r) => r.status === 'PENDING'),
+    [teamRequests],
+  );
+
+  const requestableTeams = useMemo(() => {
+    const blocked = new Set([
+      ...teamIds,
+      ...pendingRequests.map((r) => r.team.id),
+    ]);
+    return directory.filter((t) => !blocked.has(t.id));
+  }, [directory, teamIds, pendingRequests]);
+
   const [form, setForm] = useState({
     city: '',
     logo: '',
@@ -64,6 +100,21 @@ export default function CoachDashboardPage() {
     }
   };
 
+  const handleRequestTeam = async () => {
+    if (!requestTeamId) return;
+    try {
+      await createRequest.mutateAsync(requestTeamId);
+      toast.success('Team request submitted.');
+      setRequestTeamId('');
+      void refetchRequests();
+    } catch (err) {
+      toast.error(getApiErrorMessage(err, 'Failed to submit team request'));
+    }
+  };
+
+  const showTeamManagement = !!team;
+  const showEmptyAssigned = !isLoading && !team && teamIds.length === 0;
+
   return (
     <PageLayout>
       <section className="py-10 px-4 bg-muted min-h-[70vh]">
@@ -84,6 +135,25 @@ export default function CoachDashboardPage() {
               </Button>
             </div>
           </div>
+
+          {teamIds.length > 1 && (
+            <div className="rounded-xl border border-border bg-card p-4 space-y-1.5">
+              <Label htmlFor="coach-team-select">Active team</Label>
+              <select
+                id="coach-team-select"
+                value={selectedTeamId ?? ''}
+                onChange={(e) => selectTeam(e.target.value)}
+                className="h-10 w-full rounded-xl border border-border/80 bg-card px-3 text-sm"
+              >
+                {(coachData?.teams ?? bootstrapQuery.data?.teams ?? []).map((t) => (
+                  <option key={t.id} value={t.id}>
+                    {t.name}
+                    {t.division ? ` · ${t.division.name}` : ''}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
 
           {scheduledPending && scheduledAt && !locked && (
             <div className="flex items-start gap-3 rounded-xl border border-blue-200 bg-blue-50 p-4 text-sm text-blue-900">
@@ -112,12 +182,36 @@ export default function CoachDashboardPage() {
             </div>
           )}
 
-          <QueryState isLoading={isLoading} isError={isError} onRetry={() => refetch()}>
-            {!team ? (
-              <div className="rounded-xl border border-border bg-card p-6 text-sm text-muted-foreground">
-                No team has been assigned to your coach account yet. Contact an administrator.
+          <QueryState
+            isLoading={isLoading || bootstrapQuery.isLoading}
+            isError={isError || bootstrapQuery.isError}
+            onRetry={() => {
+              void refetch();
+              void bootstrapQuery.refetch();
+            }}
+          >
+            {showEmptyAssigned && (
+              <div className="rounded-xl border border-border bg-card p-6 space-y-3 text-sm">
+                <p className="text-muted-foreground">
+                  No team has been assigned to your coach account yet.
+                </p>
+                {pendingRequests.length > 0 && (
+                  <div>
+                    <p className="font-medium text-foreground">Pending requests</p>
+                    <ul className="mt-2 space-y-1 text-muted-foreground">
+                      {pendingRequests.map((r) => (
+                        <li key={r.id}>
+                          {r.team.name}
+                          {r.team.division ? ` · ${r.team.division.name}` : ''}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
               </div>
-            ) : (
+            )}
+
+            {showTeamManagement && team && (
               <>
                 <div className="rounded-xl border border-border bg-card p-6 space-y-3">
                   <div className="flex flex-wrap items-center gap-2">
@@ -212,6 +306,46 @@ export default function CoachDashboardPage() {
               </>
             )}
           </QueryState>
+
+          <div className="rounded-xl border border-border bg-card p-6 space-y-4">
+            <div>
+              <h3 className="font-semibold text-foreground">Request another team</h3>
+              <p className="text-sm text-muted-foreground mt-1">
+                Submit a request for an unassigned team. An administrator must approve it before you can manage the roster.
+              </p>
+            </div>
+            {pendingRequests.length > 0 && (
+              <ul className="text-sm space-y-1 text-muted-foreground">
+                {pendingRequests.map((r) => (
+                  <li key={r.id}>
+                    Pending: {r.team.name}
+                    {r.team.division ? ` · ${r.team.division.name}` : ''}
+                  </li>
+                ))}
+              </ul>
+            )}
+            <div className="flex flex-wrap gap-2">
+              <select
+                value={requestTeamId}
+                onChange={(e) => setRequestTeamId(e.target.value)}
+                className="h-10 min-w-[12rem] flex-1 rounded-xl border border-border/80 bg-card px-3 text-sm"
+              >
+                <option value="">Select a team…</option>
+                {requestableTeams.map((t) => (
+                  <option key={t.id} value={t.id}>
+                    {t.name} · {t.division.name}
+                  </option>
+                ))}
+              </select>
+              <Button
+                type="button"
+                disabled={!requestTeamId || createRequest.isPending}
+                onClick={handleRequestTeam}
+              >
+                {createRequest.isPending ? 'Submitting…' : 'Request team'}
+              </Button>
+            </div>
+          </div>
         </div>
       </section>
     </PageLayout>

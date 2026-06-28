@@ -10,8 +10,9 @@ import * as bcrypt from 'bcrypt';
 import prisma from '../../prisma/prisma';
 import { MailService } from '../mail/mail.service';
 import { AuditLogService } from '../audit-log/audit-log.service';
-import { getCoachTeamId } from './coach-permissions';
+import { getCoachTeamIds } from './coach-permissions';
 import type { RegisterCoachDto } from './dto/register-coach.dto';
+import { CoachTeamRequestsService } from '../teams/coach-team-requests.service';
 
 const COACH_PASSWORD_MESSAGE =
   'Coach password resets are managed by an administrator. Please contact your tournament administrator.';
@@ -39,6 +40,7 @@ export class AuthService {
     private jwt: JwtService,
     private mailService: MailService,
     private audit: AuditLogService,
+    private teamRequests: CoachTeamRequestsService,
   ) {}
 
   async login(email: string, password: string) {
@@ -81,18 +83,26 @@ export class AuthService {
     }
 
     const password_hash = await bcrypt.hash(data.password, 12);
-    await prisma.user.create({
+    const user = await prisma.user.create({
       data: {
         first_name: data.first_name,
         last_name: data.last_name,
         email: data.email,
         password_hash,
         phone: data.phone,
-        coaching_request: data.coaching_request.trim(),
         role: 'COACH',
         approved: false,
         active: false,
       },
+    });
+
+    const summary = await this.teamRequests.createManyForRegistration(
+      user.id,
+      data.team_ids,
+    );
+    await prisma.user.update({
+      where: { id: user.id },
+      data: { coaching_request: data.coaching_request?.trim() || summary },
     });
 
     return { message: COACH_REGISTER_MESSAGE };
@@ -122,13 +132,21 @@ export class AuthService {
         approved: true,
         active: true,
         created_at: true,
-        coached_team: { select: { id: true } },
+        coached_teams: { select: { id: true, name: true } },
+        team_requests: {
+          where: { status: 'PENDING' },
+          select: {
+            id: true,
+            team: { select: { id: true, name: true } },
+          },
+        },
       },
     });
     if (!user) throw new NotFoundException('User not found');
 
-    const team_id =
-      user.role === 'COACH' ? (user.coached_team?.id ?? null) : null;
+    const team_ids =
+      user.role === 'COACH' ? await getCoachTeamIds(userId) : [];
+    const team_id = team_ids[0] ?? null;
     const {
       id,
       first_name,
@@ -152,7 +170,14 @@ export class AuthService {
       approved,
       active,
       created_at,
-      team_id,
+      ...(user.role === 'COACH'
+        ? {
+            team_id,
+            team_ids,
+            coached_teams: user.coached_teams,
+            pending_team_requests: user.team_requests,
+          }
+        : {}),
     };
   }
 
@@ -265,7 +290,9 @@ export class AuthService {
     first_name: string;
     last_name: string;
   }) {
-    const teamId = user.role === 'COACH' ? await getCoachTeamId(user.id) : null;
+    const teamIds =
+      user.role === 'COACH' ? await getCoachTeamIds(user.id) : [];
+    const teamId = teamIds[0] ?? null;
     const payload = {
       sub: user.id,
       email: user.email,
@@ -281,7 +308,9 @@ export class AuthService {
         role: user.role,
         first_name: user.first_name,
         last_name: user.last_name,
-        ...(teamId ? { team_id: teamId } : {}),
+        ...(user.role === 'COACH'
+          ? { team_id: teamId, team_ids: teamIds }
+          : {}),
       },
     };
   }

@@ -31,6 +31,19 @@ export type Gender = 'MALE' | 'FEMALE' | 'MIXED';
 
 export type BracketStage = 'ROUND_OF_16' | 'QUARTER_FINAL' | 'SEMI_FINAL' | 'FINAL' | 'THIRD_PLACE';
 
+export type CoachTeamRequestStatus = 'PENDING' | 'APPROVED' | 'REJECTED';
+
+export interface CoachTeamRequest {
+  id: string;
+  status: CoachTeamRequestStatus;
+  created_at: string;
+  team: {
+    id: string;
+    name: string;
+    division?: { id: string; name: string };
+  };
+}
+
 export interface User {
   id: string;
   first_name: string;
@@ -43,7 +56,10 @@ export interface User {
   active?: boolean;
   coaching_request?: string | null;
   team_id?: string | null;
-  coached_team?: { id: string; name: string } | null;
+  team_ids?: string[];
+  coached_teams?: { id: string; name: string; slug?: string; division?: { id: string; name: string } }[];
+  team_requests?: CoachTeamRequest[];
+  pending_team_requests?: CoachTeamRequest[];
   created_at: string;
   updated_at?: string;
 }

@@ -19,9 +19,9 @@ interface CoachRosterPanelProps {
 }
 
 export default function CoachRosterPanel({ team, canEdit, maxPlayers = 25 }: CoachRosterPanelProps) {
-  const { data: players = [], isLoading, refetch } = useCoachPlayers(!!team.id);
-  const updateMutation = useUpdateCoachPlayer();
-  const deleteMutation = useDeleteCoachPlayer();
+  const { data: players = [], isLoading, refetch } = useCoachPlayers(team.id, !!team.id);
+  const updateMutation = useUpdateCoachPlayer(team.id);
+  const deleteMutation = useDeleteCoachPlayer(team.id);
   const [newPlayerOpen, setNewPlayerOpen] = useState(false);
   const [editingPlayer, setEditingPlayer] = useState<Player | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Player | null>(null);
@@ -131,6 +131,7 @@ export default function CoachRosterPanel({ team, canEdit, maxPlayers = 25 }: Coa
       <CoachPlayerFormDialog
         open={newPlayerOpen}
         onOpenChange={setNewPlayerOpen}
+        teamId={team.id}
         onSuccess={() => refetch()}
       />
 
@@ -138,6 +139,7 @@ export default function CoachRosterPanel({ team, canEdit, maxPlayers = 25 }: Coa
         open={!!editingPlayer}
         onOpenChange={(open) => { if (!open) setEditingPlayer(null); }}
         player={editingPlayer}
+        teamId={team.id}
         onSuccess={() => refetch()}
       />
 

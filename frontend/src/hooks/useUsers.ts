@@ -63,3 +63,46 @@ export function useResetUserPassword() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['users'] }),
   });
 }
+
+export function useAssignCoachTeam() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ userId, teamId }: { userId: string; teamId: string }) =>
+      usersService.assignCoachTeam(userId, teamId),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['users'] });
+      qc.invalidateQueries({ queryKey: ['teams'] });
+    },
+  });
+}
+
+export function useUnassignCoachTeam() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ userId, teamId }: { userId: string; teamId: string }) =>
+      usersService.unassignCoachTeam(userId, teamId),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['users'] });
+      qc.invalidateQueries({ queryKey: ['teams'] });
+    },
+  });
+}
+
+export function useApproveTeamRequest() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (requestId: string) => usersService.approveTeamRequest(requestId),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['users'] });
+      qc.invalidateQueries({ queryKey: ['teams'] });
+    },
+  });
+}
+
+export function useRejectTeamRequest() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (requestId: string) => usersService.rejectTeamRequest(requestId),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['users'] }),
+  });
+}

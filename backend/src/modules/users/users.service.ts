@@ -13,6 +13,8 @@ import {
   canActorManageTarget,
   canActorResetTargetPassword,
 } from '../auth/role-utils';
+import { CoachTeamRequestsService } from '../teams/coach-team-requests.service';
+import { applyCoachTeamAssignment } from '../teams/coach-team-link';
 
 /** Fields an admin may set via PATCH /users/:id. Excludes role, password_hash, id. */
 const USER_UPDATE_FIELDS = [
@@ -37,13 +39,35 @@ const SELECT = {
   coaching_request: true,
   created_at: true,
   updated_at: true,
-  coached_team: {
-    select: { id: true, name: true },
+  coached_teams: {
+    select: {
+      id: true,
+      name: true,
+      slug: true,
+      division: { select: { id: true, name: true } },
+    },
+  },
+  team_requests: {
+    where: { status: 'PENDING' },
+    select: {
+      id: true,
+      status: true,
+      created_at: true,
+      team: {
+        select: {
+          id: true,
+          name: true,
+          division: { select: { id: true, name: true } },
+        },
+      },
+    },
+    orderBy: { created_at: 'desc' as const },
   },
 } satisfies Prisma.UserSelect;
 
 @Injectable()
 export class UsersService {
+  constructor(private readonly teamRequests: CoachTeamRequestsService) {}
   findAll(params?: {
     page?: number;
     limit?: number;
@@ -174,5 +198,33 @@ export class UsersService {
     }
 
     return prisma.user.delete({ where: { id } });
+  }
+
+  async assignCoachTeam(coachUserId: string, teamId: string) {
+    const user = await prisma.user.findUnique({ where: { id: coachUserId } });
+    if (!user || user.role !== 'COACH') {
+      throw new BadRequestException('User must be a coach');
+    }
+
+    const team = await prisma.team.findFirst({
+      where: { id: teamId, is_deleted: false },
+    });
+    if (!team) throw new NotFoundException('Team not found');
+
+    await applyCoachTeamAssignment(teamId, coachUserId);
+    return prisma.user.findUnique({ where: { id: coachUserId }, select: SELECT });
+  }
+
+  async unassignCoachTeam(coachUserId: string, teamId: string) {
+    await this.teamRequests.unassignCoachFromTeam(coachUserId, teamId);
+    return prisma.user.findUnique({ where: { id: coachUserId }, select: SELECT });
+  }
+
+  approveTeamRequest(requestId: string) {
+    return this.teamRequests.approve(requestId);
+  }
+
+  rejectTeamRequest(requestId: string) {
+    return this.teamRequests.reject(requestId);
   }
 }

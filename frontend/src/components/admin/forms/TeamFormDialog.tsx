@@ -83,12 +83,7 @@ export default function TeamFormDialog({ open, onOpenChange, team, defaultDivisi
   }, [name, isEditing, form]);
 
   const coachOptions = coaches
-    .filter(
-      (c) =>
-        c.approved &&
-        c.active &&
-        (!c.coached_team || c.coached_team.id === team?.id),
-    )
+    .filter((c) => c.approved && c.active)
     .map((c) => ({
       value: c.id,
       label: `${c.first_name} ${c.last_name} (${c.email})`,
@@ -147,7 +142,7 @@ export default function TeamFormDialog({ open, onOpenChange, team, defaultDivisi
         options={[{ value: '', label: 'None — assign later' }, ...coachOptions]}
       />
       <p className="text-xs text-muted-foreground -mt-2">
-        Only approved, active coaches without another team appear here. Coaches access their team via Coach Portal after assignment.
+        Approved, active coaches may be assigned to multiple teams. Each team can have only one coach.
       </p>
       {isEditing && (
         <div className="flex items-center justify-between rounded-lg border border-border p-3">

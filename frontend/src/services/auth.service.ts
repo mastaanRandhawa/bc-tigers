@@ -22,6 +22,6 @@ export const authService = {
     email: string;
     password: string;
     phone?: string;
-    coaching_request: string;
+    team_ids: string[];
   }) => apiClient.post<{ message: string }>('/auth/register-coach', data),
 };

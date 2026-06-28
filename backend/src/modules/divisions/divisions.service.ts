@@ -3,7 +3,7 @@ import {
   Injectable,
   NotFoundException,
 } from '@nestjs/common';
-import type { Prisma } from '@prisma/client';
+import { Prisma } from '@prisma/client';
 import prisma from '../../prisma/prisma';
 import { roundRobinPairs } from '../../common/round-robin';
 import { pickAllowed } from '../../common/pick';
@@ -222,12 +222,19 @@ export class DivisionsService {
     if (!existing) throw new NotFoundException('Division not found');
 
     try {
-      await prisma.division.delete({ where: { id } });
+      await prisma.$transaction(async (tx) => {
+        // Matches reference teams with ON DELETE RESTRICT — remove before cascade.
+        await tx.bracketNode.deleteMany({ where: { division_id: id } });
+        await tx.match.deleteMany({ where: { division_id: id } });
+        await tx.division.delete({ where: { id } });
+      });
     } catch (err) {
-      const code = (err as { code?: string })?.code;
-      if (code === 'P2003') {
+      if (
+        err instanceof Prisma.PrismaClientKnownRequestError &&
+        err.code === 'P2003'
+      ) {
         throw new BadRequestException(
-          'Cannot delete this division because related data is still linked. Remove teams, matches, or bracket entries first.',
+          'Cannot delete this division because related data is still linked.',
         );
       }
       throw err;

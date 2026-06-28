@@ -26,6 +26,7 @@ jest.mock('../../prisma/prisma', () => ({
 
 jest.mock('./coach-permissions', () => ({
   getCoachTeamId: jest.fn().mockResolvedValue('team-1'),
+  getCoachTeamIds: jest.fn().mockResolvedValue(['team-1']),
 }));
 
 jest.mock('bcrypt');
@@ -34,6 +35,10 @@ import prisma from '../../prisma/prisma';
 
 const mockPrisma = prisma as jest.Mocked<typeof prisma>;
 const mockBcrypt = bcrypt as jest.Mocked<typeof bcrypt>;
+
+const teamRequests = {
+  createManyForRegistration: jest.fn().mockResolvedValue('Team A (U14)'),
+};
 
 describe('AuthService coach gates', () => {
   let service: AuthService;
@@ -45,7 +50,7 @@ describe('AuthService coach gates', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    service = new AuthService(jwt, mail as never, audit as never);
+    service = new AuthService(jwt, mail as never, audit as never, teamRequests as never);
     mockBcrypt.compare.mockResolvedValue(true as never);
     mockBcrypt.hash.mockResolvedValue('hashed' as never);
   });
@@ -107,7 +112,7 @@ describe('AuthService coach gates', () => {
       email: 'new@test.com',
       password: 'password123',
       phone: '604-555-0100',
-      coaching_request: 'BC Tigers U14',
+      team_ids: ['team-1'],
     });
 
     expect(result.message).toContain('administrator');
@@ -118,9 +123,12 @@ describe('AuthService coach gates', () => {
           approved: false,
           active: false,
           phone: '604-555-0100',
-          coaching_request: 'BC Tigers U14',
         }),
       }),
+    );
+    expect(teamRequests.createManyForRegistration).toHaveBeenCalledWith(
+      'new-coach',
+      ['team-1'],
     );
   });
 });

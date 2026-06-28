@@ -1,4 +1,4 @@
-import { IsEmail, IsString, MinLength } from 'class-validator';
+import { IsArray, IsEmail, IsOptional, IsString, IsUUID, MinLength, ArrayMinSize } from 'class-validator';
 
 export class RegisterCoachDto {
   @IsString()
@@ -20,7 +20,13 @@ export class RegisterCoachDto {
   @MinLength(1)
   phone!: string;
 
+  /** @deprecated Use team_ids — kept for backward compatibility */
+  @IsOptional()
   @IsString()
-  @MinLength(1)
-  coaching_request!: string;
+  coaching_request?: string;
+
+  @IsArray()
+  @ArrayMinSize(1)
+  @IsUUID('4', { each: true })
+  team_ids!: string[];
 }

@@ -123,10 +123,12 @@ export default function AdminUsers() {
     },
     {
       key: 'team',
-      label: 'Assigned team',
+      label: 'Assigned teams',
       render: (u: User) =>
-        u.coached_team ? (
-          <span className="text-xs text-muted-foreground">{u.coached_team.name}</span>
+        u.coached_teams && u.coached_teams.length > 0 ? (
+          <span className="text-xs text-muted-foreground">
+            {u.coached_teams.map((t) => t.name).join(', ')}
+          </span>
         ) : (
           <span className="text-xs text-muted-foreground">—</span>
         ),

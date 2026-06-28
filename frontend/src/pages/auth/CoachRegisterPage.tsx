@@ -17,8 +17,8 @@ export default function CoachRegisterPage() {
     email: '',
     password: '',
     phone: '',
-    team_id: '',
   });
+  const [selectedTeamIds, setSelectedTeamIds] = useState<string[]>([]);
   const [showPassword, setShowPassword] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState('');
@@ -30,7 +30,6 @@ export default function CoachRegisterPage() {
     staleTime: 5 * 60 * 1000,
   });
 
-  // Group teams by division (the API already sorts tournament → division → team).
   const groups = useMemo(() => {
     const map = new Map<string, { label: string; teams: TeamDirectoryEntry[] }>();
     for (const t of directory) {
@@ -41,17 +40,17 @@ export default function CoachRegisterPage() {
     return [...map.values()];
   }, [directory]);
 
-  const teamById = useMemo(
-    () => new Map(directory.map((t) => [t.id, t])),
-    [directory],
-  );
+  const toggleTeam = (teamId: string) => {
+    setSelectedTeamIds((prev) =>
+      prev.includes(teamId) ? prev.filter((id) => id !== teamId) : [...prev, teamId],
+    );
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-    const team = teamById.get(form.team_id);
-    if (!team) {
-      setError('Please select the team you would like to coach.');
+    if (selectedTeamIds.length === 0) {
+      setError('Please select at least one team you would like to coach.');
       return;
     }
     setIsLoading(true);
@@ -62,7 +61,7 @@ export default function CoachRegisterPage() {
         email: form.email,
         password: form.password,
         phone: form.phone.trim(),
-        coaching_request: `${team.name} (${team.division.name})`,
+        team_ids: selectedTeamIds,
       });
       setSubmitted(true);
     } catch (err) {
@@ -78,7 +77,7 @@ export default function CoachRegisterPage() {
         <div className="text-center py-6">
           <CheckCircle className="w-16 h-16 text-green-500 mx-auto mb-4" />
           <p className="text-sm text-muted-foreground">
-            An administrator will review your account. You will be able to sign in once approved.
+            An administrator will review your account and team requests. You will be able to sign in once approved.
           </p>
           <Link to="/login" className="block mt-6 text-sm text-primary font-semibold hover:underline">
             Back to Sign In
@@ -134,31 +133,38 @@ export default function CoachRegisterPage() {
             required
           />
         </div>
-        <div className="space-y-1.5">
-          <Label htmlFor="team_id">Team you&apos;d like to coach</Label>
-          <select
-            id="team_id"
-            value={form.team_id}
-            onChange={(e) => setForm({ ...form, team_id: e.target.value })}
-            required
-            disabled={teamsLoading}
-            className="h-11 w-full rounded-xl border border-border/80 bg-card px-3 text-sm text-foreground shadow-[var(--shadow-xs)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:opacity-60"
-          >
-            <option value="" disabled>
-              {teamsLoading ? 'Loading teams…' : 'Select a team…'}
-            </option>
-            {groups.map((g) => (
-              <optgroup key={g.label} label={g.label}>
-                {g.teams.map((t) => (
-                  <option key={t.id} value={t.id}>
-                    {t.name}
-                  </option>
-                ))}
-              </optgroup>
-            ))}
-          </select>
+        <div className="space-y-2">
+          <Label>Teams you&apos;d like to coach</Label>
+          {teamsLoading ? (
+            <p className="text-sm text-muted-foreground">Loading teams…</p>
+          ) : groups.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No unassigned teams are available right now.</p>
+          ) : (
+            <div className="max-h-56 overflow-y-auto rounded-xl border border-border/80 bg-card p-3 space-y-3">
+              {groups.map((g) => (
+                <div key={g.label}>
+                  <p className="text-xs font-semibold text-muted-foreground mb-1.5">{g.label}</p>
+                  <ul className="space-y-1.5">
+                    {g.teams.map((t) => (
+                      <li key={t.id}>
+                        <label className="flex items-center gap-2 text-sm cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={selectedTeamIds.includes(t.id)}
+                            onChange={() => toggleTeam(t.id)}
+                            className="rounded border-border"
+                          />
+                          {t.name}
+                        </label>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
+          )}
           <p className="text-xs text-muted-foreground">
-            Pick the team you are requesting to manage. An administrator will review and assign you.
+            Select one or more teams. An administrator will review and assign you.
           </p>
         </div>
         <div className="space-y-1.5">
@@ -184,7 +190,7 @@ export default function CoachRegisterPage() {
             </button>
           </div>
         </div>
-        <Button type="submit" className="w-full" size="lg" disabled={isLoading}>
+        <Button type="submit" className="w-full" size="lg" disabled={isLoading || teamsLoading}>
           <UserPlus className="w-4 h-4" />
           {isLoading ? 'Submitting...' : 'Register as Coach'}
         </Button>

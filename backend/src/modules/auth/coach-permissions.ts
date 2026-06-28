@@ -1,9 +1,9 @@
 import { ForbiddenException, NotFoundException } from '@nestjs/common';
 import prisma from '../../prisma/prisma';
-import { getCoachTeamId } from '../teams/coach-team-link';
+import { getCoachTeamId, getCoachTeamIds } from '../teams/coach-team-link';
 import { getCoachLockSettings, isCoachLockEffective } from './coach-lock';
 
-export { getCoachTeamId };
+export { getCoachTeamId, getCoachTeamIds };
 
 export async function assertCoachCanEditTeam(
   userId: string,

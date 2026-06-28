@@ -92,6 +92,74 @@ export class UsersController {
     return user;
   }
 
+  @Post(':id/coach-teams')
+  @AdminOnly()
+  async assignCoachTeam(
+    @Request() req: { user: { userId: string } },
+    @Param('id') id: string,
+    @Body() body: { team_id: string },
+  ) {
+    const user = await this.service.assignCoachTeam(id, body.team_id);
+    await this.auditLog.log({
+      userId: req.user.userId,
+      action: 'ASSIGN_COACH',
+      entity: 'Team',
+      entityId: body.team_id,
+      metadata: { coach_user_id: id },
+    });
+    return user;
+  }
+
+  @Delete(':id/coach-teams/:teamId')
+  @AdminOnly()
+  async unassignCoachTeam(
+    @Request() req: { user: { userId: string } },
+    @Param('id') id: string,
+    @Param('teamId') teamId: string,
+  ) {
+    const user = await this.service.unassignCoachTeam(id, teamId);
+    await this.auditLog.log({
+      userId: req.user.userId,
+      action: 'UNASSIGN_COACH',
+      entity: 'Team',
+      entityId: teamId,
+      metadata: { coach_user_id: id },
+    });
+    return user;
+  }
+
+  @Patch('team-requests/:requestId/approve')
+  @AdminOnly()
+  async approveTeamRequest(
+    @Request() req: { user: { userId: string } },
+    @Param('requestId') requestId: string,
+  ) {
+    const request = await this.service.approveTeamRequest(requestId);
+    await this.auditLog.log({
+      userId: req.user.userId,
+      action: 'APPROVE',
+      entity: 'CoachTeamRequest',
+      entityId: requestId,
+    });
+    return request;
+  }
+
+  @Patch('team-requests/:requestId/reject')
+  @AdminOnly()
+  async rejectTeamRequest(
+    @Request() req: { user: { userId: string } },
+    @Param('requestId') requestId: string,
+  ) {
+    const request = await this.service.rejectTeamRequest(requestId);
+    await this.auditLog.log({
+      userId: req.user.userId,
+      action: 'REJECT',
+      entity: 'CoachTeamRequest',
+      entityId: requestId,
+    });
+    return request;
+  }
+
   @Post(':id/reset-password')
   @AdminOnly()
   async resetPassword(

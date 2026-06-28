@@ -4,7 +4,7 @@ import AdminLayout from '@/components/AdminLayout';
 import AdminTable from '@/components/AdminTable';
 import QueryState from '@/components/shared/QueryState';
 import TeamFormDialog from '@/components/admin/forms/TeamFormDialog';
-import TeamRosterPanel from '@/components/admin/TeamRosterPanel';
+import TeamRosterSheet from '@/components/admin/TeamRosterSheet';
 import MatchFormDialog from '@/components/admin/forms/MatchFormDialog';
 import MatchScoreFormDialog from '@/components/admin/forms/MatchScoreFormDialog';
 import MatchEventFormDialog from '@/components/admin/forms/MatchEventFormDialog';
@@ -25,13 +25,6 @@ import { formatDate, formatTime } from '@/lib/utils';
 import { matchSearchText } from '@/lib/search-text';
 import { getApiErrorMessage } from '@/lib/errors';
 import { toast } from 'sonner';
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetBody,
-} from '@/components/ui/sheet';
 import { Calendar, GitBranch, Pencil, Shield, Users, Zap, PlusCircle, BarChart3 } from 'lucide-react';
 import type { Match, Team } from '@/types';
 
@@ -392,19 +385,10 @@ export default function DivisionWorkspacePage() {
         }}
       />
 
-      {/* Roster drawer */}
-      <Sheet open={!!rosterTeam} onOpenChange={(open) => !open && setRosterTeam(null)}>
-        <SheetContent side="right" className="w-full max-w-md gap-0 p-0">
-          <SheetHeader className="border-b border-border px-5 py-4">
-            <SheetTitle className="truncate">
-              Roster — {rosterTeam?.name ?? ''}
-            </SheetTitle>
-          </SheetHeader>
-          <SheetBody className="px-5 py-4">
-            {rosterTeam && <TeamRosterPanel team={rosterTeam} />}
-          </SheetBody>
-        </SheetContent>
-      </Sheet>
+      <TeamRosterSheet
+        team={rosterTeam}
+        onOpenChange={(open) => !open && setRosterTeam(null)}
+      />
 
       <ConfirmDialog
         open={!!deleteTarget}

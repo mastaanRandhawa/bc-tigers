@@ -1,5 +1,5 @@
 import apiClient from '@/lib/api-client';
-import type { User, UserRole } from '@/types';
+import type { User, UserRole, CoachTeamRequest } from '@/types';
 
 export const usersService = {
   getAll: (params?: {
@@ -27,4 +27,16 @@ export const usersService = {
     apiClient.post<User>(`/users/${id}/reset-password`, { password }),
 
   delete: (id: string) => apiClient.delete<User>(`/users/${id}`),
+
+  assignCoachTeam: (userId: string, teamId: string) =>
+    apiClient.post<User>(`/users/${userId}/coach-teams`, { team_id: teamId }),
+
+  unassignCoachTeam: (userId: string, teamId: string) =>
+    apiClient.delete<User>(`/users/${userId}/coach-teams/${teamId}`),
+
+  approveTeamRequest: (requestId: string) =>
+    apiClient.patch<CoachTeamRequest>(`/users/team-requests/${requestId}/approve`),
+
+  rejectTeamRequest: (requestId: string) =>
+    apiClient.patch<CoachTeamRequest>(`/users/team-requests/${requestId}/reject`),
 };

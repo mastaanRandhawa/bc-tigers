@@ -3,7 +3,7 @@ import AdminLayout from '@/components/AdminLayout';
 import AdminTable from '@/components/AdminTable';
 import QueryState from '@/components/shared/QueryState';
 import TeamFormDialog from '@/components/admin/forms/TeamFormDialog';
-import TeamRosterPanel from '@/components/admin/TeamRosterPanel';
+import TeamRosterSheet from '@/components/admin/TeamRosterSheet';
 import { RecordHistoryDrawer } from '@/components/admin/RecordHistoryDrawer';
 import { ConfirmDialog } from '@/components/admin/inline/ConfirmDialog';
 import { useFormDialog } from '@/hooks/useFormDialog';
@@ -130,14 +130,10 @@ export default function AdminTeams() {
         team={formDialog.editing}
       />
 
-      {rosterTeam && (
-        <div className="mt-6">
-          <TeamRosterPanel team={rosterTeam} />
-          <Button variant="ghost" size="sm" className="mt-2" onClick={() => setRosterTeam(null)}>
-            Close roster panel
-          </Button>
-        </div>
-      )}
+      <TeamRosterSheet
+        team={rosterTeam}
+        onOpenChange={(open) => !open && setRosterTeam(null)}
+      />
 
       <ConfirmDialog
         open={!!deleteTarget}

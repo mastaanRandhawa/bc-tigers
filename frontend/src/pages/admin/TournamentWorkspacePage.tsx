@@ -9,7 +9,7 @@ import MatchFormDialog from '@/components/admin/forms/MatchFormDialog';
 import MatchScoreFormDialog from '@/components/admin/forms/MatchScoreFormDialog';
 import MatchEventFormDialog from '@/components/admin/forms/MatchEventFormDialog';
 import TeamFormDialog from '@/components/admin/forms/TeamFormDialog';
-import TeamRosterPanel from '@/components/admin/TeamRosterPanel';
+import TeamRosterSheet from '@/components/admin/TeamRosterSheet';
 import TournamentFormDialog from '@/components/admin/forms/TournamentFormDialog';
 import { ScheduleGeneratorSheet } from '@/components/admin/ScheduleGeneratorSheet';
 import { ConfirmDialog } from '@/components/admin/inline/ConfirmDialog';
@@ -27,13 +27,6 @@ import { formatDate, formatTime, getMatchStatusBadgeVariant } from '@/lib/utils'
 import { getApiErrorMessage } from '@/lib/errors';
 import { toast } from 'sonner';
 import { matchSearchText } from '@/lib/search-text';
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-  SheetBody,
-} from '@/components/ui/sheet';
 import {
   ArrowLeft,
   Calendar,
@@ -372,18 +365,10 @@ export default function TournamentWorkspacePage() {
         onOpenChange={(open) => !open && setScheduleDiv(null)}
         onSuccess={(created) => toast.success(`Created ${created} matches.`)}
       />
-      <Sheet open={!!rosterTeam} onOpenChange={(open) => !open && setRosterTeam(null)}>
-        <SheetContent side="right" className="w-full max-w-md gap-0 p-0">
-          <SheetHeader className="border-b border-border px-5 py-4">
-            <SheetTitle className="truncate">
-              Roster — {rosterTeam?.name ?? ''}
-            </SheetTitle>
-          </SheetHeader>
-          <SheetBody className="px-5 py-4">
-            {rosterTeam && <TeamRosterPanel team={rosterTeam} />}
-          </SheetBody>
-        </SheetContent>
-      </Sheet>
+      <TeamRosterSheet
+        team={rosterTeam}
+        onOpenChange={(open) => !open && setRosterTeam(null)}
+      />
       <ConfirmDialog
         open={!!deleteId}
         onOpenChange={(open) => !open && setDeleteId(null)}

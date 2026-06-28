@@ -127,7 +127,7 @@ export class TeamsService {
     const payload = pickAllowed(data, TEAM_FIELDS);
     const coachUserId = payload.coach_user_id as string | null | undefined;
     if (coachUserId) {
-      await validateCoachCanBeAssigned(coachUserId, null);
+      await validateCoachCanBeAssigned(coachUserId);
     }
 
     const team = await this.auditable.createAudited(
