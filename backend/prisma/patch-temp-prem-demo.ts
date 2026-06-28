@@ -201,9 +201,13 @@ async function main() {
     (await prisma.field.findFirst({ where: { venue_id: venue?.id } }));
   if (!venue || !field) throw new Error('Venue/field not found');
 
+  const tournamentId = tournament.id;
+  const venueId = venue.id;
+  const fieldId = field.id;
+
   // Drop previous temp division (cascades teams, matches, bracket, standings).
   const existing = await prisma.division.findFirst({
-    where: { tournament_id: tournament.id, slug: TEMP_SLUG },
+    where: { tournament_id: tournamentId, slug: TEMP_SLUG },
   });
   if (existing) {
     await prisma.division.delete({ where: { id: existing.id } });
@@ -212,7 +216,7 @@ async function main() {
 
   const division = await prisma.division.create({
     data: {
-      tournament_id: tournament.id,
+      tournament_id: tournamentId,
       name: TEMP_NAME,
       slug: TEMP_SLUG,
       age_group: 'Adult',
@@ -309,12 +313,12 @@ async function main() {
     const hour = 9 + Math.floor((pi % 8) * 1.5);
     const match = await prisma.match.create({
       data: {
-        tournament_id: tournament.id,
+        tournament_id: tournamentId,
         division_id: division.id,
         home_team_id: homeId,
         away_team_id: awayId,
-        venue_id: venue.id,
-        field_id: field.id,
+        venue_id: venueId,
+        field_id: fieldId,
         scheduled_start: cupDate(day, hour, (pi % 2) * 30),
         scheduled_end: cupDate(day, hour + 1, 45),
         status,
@@ -411,12 +415,12 @@ async function main() {
 
     const match = await prisma.match.create({
       data: {
-        tournament_id: tournament.id,
+        tournament_id: tournamentId,
         division_id: division.id,
         home_team_id: node.home_team_id,
         away_team_id: node.away_team_id,
-        venue_id: venue.id,
-        field_id: field.id,
+        venue_id: venueId,
+        field_id: fieldId,
         scheduled_start: cupDate(day, hour),
         scheduled_end: cupDate(day, hour + 1, 45),
         status,
@@ -482,7 +486,7 @@ async function main() {
 
   // Mark tournament active so live scores / hub reflect demo state.
   await prisma.tournament.update({
-    where: { id: tournament.id },
+    where: { id: tournamentId },
     data: { status: 'ACTIVE' },
   });
 
