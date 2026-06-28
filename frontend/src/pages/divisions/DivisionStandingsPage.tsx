@@ -54,7 +54,7 @@ export default function DivisionStandingsPage() {
         onRetry={() => refetch()}
         emptyMessage="No standings for this division yet."
       >
-        <StandingsQualificationLegend divisionSlug={division?.slug} />
+        <StandingsQualificationLegend division={division} />
         <GroupedStandingsTable standings={standings} division={division} />
       </QueryState>
     </>

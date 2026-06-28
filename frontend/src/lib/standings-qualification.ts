@@ -7,20 +7,46 @@ export interface QualificationRules {
   eliminate: number;
 }
 
-const POOL_DIVISION_SLUGS = new Set(['div-1-gold', 'div-2-silver', 'div-3-bronze']);
-
-const POOL_RULES: QualificationRules = { advance: 2, eliminate: 2 };
-
-/** Premier: top 8 advance, bottom 2 out. Gold/Silver/Bronze: top/bottom 2 per pool. */
-export function qualificationRulesForDivision(slug?: string): QualificationRules | null {
-  if (!slug) return null;
-  if (slug === 'premier') return { advance: 8, eliminate: 2 };
-  if (POOL_DIVISION_SLUGS.has(slug)) return POOL_RULES;
-  return null;
+export interface QualificationDivisionConfig {
+  qualification_zones_enabled?: boolean;
+  qualification_advance?: number;
+  qualification_eliminate?: number;
+  groups_enabled?: boolean;
 }
 
-export function divisionHasQualificationZones(slug?: string): boolean {
-  return qualificationRulesForDivision(slug) !== null;
+/** Resolve qualification rules from division admin settings. */
+export function qualificationRulesForDivision(
+  division?: QualificationDivisionConfig | null,
+): QualificationRules | null {
+  if (!division?.qualification_zones_enabled) return null;
+
+  const advance = division.qualification_advance ?? 2;
+  const eliminate = division.qualification_eliminate ?? 2;
+  if (advance <= 0 && eliminate <= 0) return null;
+
+  return {
+    advance: Math.max(0, advance),
+    eliminate: Math.max(0, eliminate),
+  };
+}
+
+export function divisionHasQualificationZones(
+  division?: QualificationDivisionConfig | null,
+): boolean {
+  return qualificationRulesForDivision(division) !== null;
+}
+
+export function qualificationLegendLabels(
+  division: QualificationDivisionConfig,
+): { advance: string; eliminate: string } | null {
+  const rules = qualificationRulesForDivision(division);
+  if (!rules) return null;
+
+  const poolScope = division.groups_enabled ? ' in pool' : '';
+  return {
+    advance: `Top ${rules.advance}${poolScope} — advance`,
+    eliminate: `Bottom ${rules.eliminate}${poolScope} — out`,
+  };
 }
 
 export function getQualificationZone(

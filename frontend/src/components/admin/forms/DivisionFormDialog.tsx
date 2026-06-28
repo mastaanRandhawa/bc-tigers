@@ -38,6 +38,7 @@ export default function DivisionFormDialog({ open, onOpenChange, division }: Div
   const isEditing = !!division;
   const [scheduleOnly, setScheduleOnly] = useState(false);
   const [groupsEnabled, setGroupsEnabled] = useState(false);
+  const [qualificationZonesEnabled, setQualificationZonesEnabled] = useState(false);
 
   const defaultFormatId =
     pointFormats.find((pf) => pf.slug === 'standard-soccer-3-point')?.id ??
@@ -57,6 +58,8 @@ export default function DivisionFormDialog({ open, onOpenChange, division }: Div
       point_format_id: defaultFormatId,
       primary_color: '#F48735',
       accent_color: '#FEF3EB',
+      qualification_advance: '2',
+      qualification_eliminate: '2',
       display_order: '0',
     },
   });
@@ -75,10 +78,13 @@ export default function DivisionFormDialog({ open, onOpenChange, division }: Div
         point_format_id: division.point_format_id,
         primary_color: division.primary_color ?? '#F48735',
         accent_color: division.accent_color ?? '#FEF3EB',
+        qualification_advance: String(division.qualification_advance ?? 2),
+        qualification_eliminate: String(division.qualification_eliminate ?? 2),
         display_order: String(division.display_order ?? 0),
       });
       setScheduleOnly(division.schedule_only ?? false);
       setGroupsEnabled(division.groups_enabled ?? false);
+      setQualificationZonesEnabled(division.qualification_zones_enabled ?? false);
     } else {
       form.reset({
         tournament_id: tournaments[0]?.id ?? '',
@@ -91,10 +97,13 @@ export default function DivisionFormDialog({ open, onOpenChange, division }: Div
         point_format_id: defaultFormatId,
         primary_color: '#F48735',
         accent_color: '#FEF3EB',
+        qualification_advance: '2',
+        qualification_eliminate: '2',
         display_order: '0',
       });
       setScheduleOnly(false);
       setGroupsEnabled(false);
+      setQualificationZonesEnabled(false);
     }
   }, [open, division, form, tournaments, defaultFormatId]);
 
@@ -115,8 +124,11 @@ export default function DivisionFormDialog({ open, onOpenChange, division }: Div
         ...values,
         max_teams: Number(values.max_teams),
         display_order: Number(values.display_order ?? 0),
+        qualification_advance: Number(values.qualification_advance ?? 2),
+        qualification_eliminate: Number(values.qualification_eliminate ?? 2),
         schedule_only: scheduleOnly,
         groups_enabled: groupsEnabled,
+        qualification_zones_enabled: qualificationZonesEnabled,
       };
       if (isEditing && division) {
         await updateMutation.mutateAsync({ id: division.id, data: payload });
@@ -186,6 +198,37 @@ export default function DivisionFormDialog({ open, onOpenChange, division }: Div
         </div>
         <Switch checked={groupsEnabled} onCheckedChange={setGroupsEnabled} />
       </div>
+      <div className="flex items-center justify-between rounded-lg border border-border p-3">
+        <div>
+          <Label>Qualification zones</Label>
+          <p className="mt-0.5 text-xs text-muted-foreground">
+            Highlights advancing teams in green and eliminated teams in red on the
+            standings table{groupsEnabled ? ' (applied per pool)' : ''}.
+          </p>
+        </div>
+        <Switch
+          checked={qualificationZonesEnabled}
+          onCheckedChange={setQualificationZonesEnabled}
+        />
+      </div>
+      {qualificationZonesEnabled && (
+        <div className="grid gap-3 sm:grid-cols-2">
+          <TextInputField
+            control={form.control}
+            name="qualification_advance"
+            label="Teams advancing"
+            type="number"
+            placeholder="2"
+          />
+          <TextInputField
+            control={form.control}
+            name="qualification_eliminate"
+            label="Teams eliminated"
+            type="number"
+            placeholder="2"
+          />
+        </div>
+      )}
     </FormDialog>
   );
 }

@@ -30,6 +30,9 @@ export const divisionSchema = z.object({
   accent_color: z.string().optional(),
   schedule_only: z.boolean().optional(),
   groups_enabled: z.boolean().optional(),
+  qualification_zones_enabled: z.boolean().optional(),
+  qualification_advance: z.string().optional(),
+  qualification_eliminate: z.string().optional(),
   display_order: z.string().optional(),
 });
 

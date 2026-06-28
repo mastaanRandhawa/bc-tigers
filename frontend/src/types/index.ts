@@ -123,6 +123,12 @@ export interface Division {
   schedule_only?: boolean;
   /** When true, this division is organized into groups (pools). */
   groups_enabled?: boolean;
+  /** When true, standings highlight advancing and eliminated teams. */
+  qualification_zones_enabled?: boolean;
+  /** Top N teams advance (per pool when groups_enabled). */
+  qualification_advance?: number;
+  /** Bottom N teams are eliminated (per pool when groups_enabled). */
+  qualification_eliminate?: number;
   /** Order this division appears in on the public site (ascending). */
   display_order?: number;
   teams?: Team[];

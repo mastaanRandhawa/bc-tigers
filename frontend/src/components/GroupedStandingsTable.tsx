@@ -26,7 +26,7 @@ export default function GroupedStandingsTable({
   compact = false,
   searchable = true,
 }: GroupedStandingsTableProps) {
-  const qualificationRules = qualificationRulesForDivision(division?.slug);
+  const qualificationRules = qualificationRulesForDivision(division);
   const useGroups =
     (division?.groups_enabled ?? false) &&
     standings.some((s) => Boolean(s.group_id));

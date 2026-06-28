@@ -1,18 +1,21 @@
 import {
   divisionHasQualificationZones,
+  qualificationLegendLabels,
   QUALIFICATION_STYLES,
+  type QualificationDivisionConfig,
 } from '@/lib/standings-qualification';
 
 interface StandingsQualificationLegendProps {
-  divisionSlug?: string;
+  division?: QualificationDivisionConfig | null;
 }
 
 export default function StandingsQualificationLegend({
-  divisionSlug,
+  division,
 }: StandingsQualificationLegendProps) {
-  if (!divisionHasQualificationZones(divisionSlug)) return null;
+  if (!divisionHasQualificationZones(division)) return null;
 
-  const isPremier = divisionSlug === 'premier';
+  const labels = qualificationLegendLabels(division!);
+  if (!labels) return null;
 
   return (
     <div className="mb-4 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-muted-foreground">
@@ -21,14 +24,14 @@ export default function StandingsQualificationLegend({
           className={`h-3.5 w-3.5 rounded-sm ${QUALIFICATION_STYLES.qualified.swatch}`}
           aria-hidden
         />
-        {isPremier ? 'Top 8 — advance' : 'Top 2 in pool — advance'}
+        {labels.advance}
       </span>
       <span className="inline-flex items-center gap-2">
         <span
           className={`h-3.5 w-3.5 rounded-sm ${QUALIFICATION_STYLES.eliminated.swatch}`}
           aria-hidden
         />
-        {isPremier ? 'Bottom 2 — out' : 'Bottom 2 in pool — out'}
+        {labels.eliminate}
       </span>
     </div>
   );

@@ -28,6 +28,9 @@ export interface SeedDivision {
   format: string;
   schedule_only: boolean;
   groups_enabled: boolean;
+  qualification_zones_enabled?: boolean;
+  qualification_advance?: number;
+  qualification_eliminate?: number;
   pools: string[];
   teams: SeedTeam[];
   matches: SeedMatch[];
@@ -64,6 +67,9 @@ export const MIRI_PIRI_DIVISIONS: SeedDivision[] = [
     format: '11-a-side · Round Robin + Knockout',
     schedule_only: false,
     groups_enabled: false,
+    qualification_zones_enabled: true,
+    qualification_advance: 8,
+    qualification_eliminate: 2,
     pools: [],
     teams: [
       { name: 'BB5', pool: null },
@@ -99,6 +105,9 @@ export const MIRI_PIRI_DIVISIONS: SeedDivision[] = [
     format: '11-a-side · Pools + Knockout',
     schedule_only: false,
     groups_enabled: true,
+    qualification_zones_enabled: true,
+    qualification_advance: 2,
+    qualification_eliminate: 2,
     pools: ['Pool A', 'Pool B', 'Pool C', 'Pool D'],
     teams: [
       { name: 'AKAL FC', pool: 'Pool C' },
@@ -138,6 +147,9 @@ export const MIRI_PIRI_DIVISIONS: SeedDivision[] = [
     format: '11-a-side · Pools + Knockout',
     schedule_only: false,
     groups_enabled: true,
+    qualification_zones_enabled: true,
+    qualification_advance: 2,
+    qualification_eliminate: 2,
     pools: ['Pool A', 'Pool B', 'Pool C', 'Pool D'],
     teams: [
       { name: 'AC RICHMOND', pool: 'Pool A' },
@@ -177,6 +189,9 @@ export const MIRI_PIRI_DIVISIONS: SeedDivision[] = [
     format: '11-a-side · Pools + Knockout',
     schedule_only: false,
     groups_enabled: true,
+    qualification_zones_enabled: true,
+    qualification_advance: 2,
+    qualification_eliminate: 2,
     pools: ['Pool A', 'Pool B'],
     teams: [
       { name: 'DASMESH UNITED', pool: 'Pool A' },

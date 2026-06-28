@@ -500,6 +500,9 @@ async function main() {
         accent_color: colors.accent,
         schedule_only: div.schedule_only,
         groups_enabled: div.groups_enabled,
+        qualification_zones_enabled: div.qualification_zones_enabled ?? false,
+        qualification_advance: div.qualification_advance ?? 2,
+        qualification_eliminate: div.qualification_eliminate ?? 2,
         display_order: div.order,
       },
     });
