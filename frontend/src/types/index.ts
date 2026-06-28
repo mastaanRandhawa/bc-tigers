@@ -228,6 +228,7 @@ export interface Match {
   home_label?: string | null;
   away_label?: string | null;
   venue_id?: string;
+  field_id?: string | null;
   stage_id?: string;
   scheduled_start: string;
   scheduled_end?: string;
@@ -240,6 +241,7 @@ export interface Match {
   home_team?: Team | null;
   away_team?: Team | null;
   venue?: Venue;
+  field?: Pick<Field, 'id' | 'name'> | null;
   officials?: MatchOfficial[];
   events?: MatchEvent[];
   tournament?: Tournament;

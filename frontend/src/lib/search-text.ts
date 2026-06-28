@@ -44,6 +44,7 @@ export function matchSearchText(m: Match) {
     m.home_team?.name ?? m.home_label,
     m.away_team?.name ?? m.away_label,
     m.venue?.name,
+    m.field?.name,
     m.division?.name,
     m.tournament?.name,
     m.status,

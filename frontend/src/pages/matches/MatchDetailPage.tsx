@@ -350,7 +350,7 @@ export default function MatchDetailPage() {
                       {match.venue && (
                         <span className="inline-flex items-center gap-1.5">
                           <MapPin className="h-3.5 w-3.5" aria-hidden />
-                          {match.venue.name}
+                          {match.field ? `${match.venue.name} · ${match.field.name}` : match.venue.name}
                         </span>
                       )}
                       {officialsLabel && (
@@ -532,6 +532,9 @@ export default function MatchDetailPage() {
                   )}
                   {match.venue && (
                     <InfoRow icon={MapPin} label="Venue" value={match.venue.name} />
+                  )}
+                  {match.field && (
+                    <InfoRow icon={MapPin} label="Field" value={match.field.name} />
                   )}
                   {officialsLabel && (
                     <InfoRow icon={User} label="Officials" value={officialsLabel} />

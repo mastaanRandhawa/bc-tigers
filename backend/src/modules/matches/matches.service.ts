@@ -62,6 +62,7 @@ const MATCH_LIST_INCLUDE = {
   away_team: { select: { id: true, name: true, slug: true, logo: true } },
   group: { select: { id: true, name: true, slug: true, order: true } },
   venue: { select: { id: true, name: true, slug: true } },
+  field: { select: { id: true, name: true } },
   tournament: { select: { id: true, name: true, slug: true } },
   division: {
     select: {
@@ -86,6 +87,7 @@ const MATCH_DETAIL_INCLUDE = {
   home_team: TEAM_WITH_PLAYERS,
   away_team: TEAM_WITH_PLAYERS,
   venue: true,
+  field: { select: { id: true, name: true } },
   officials: true,
   events: {
     include: { player: true, team: true },

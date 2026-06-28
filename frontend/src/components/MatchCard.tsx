@@ -105,7 +105,7 @@ function MatchMeta({ match }: { match: Match }) {
       {match.venue && (
         <span className="inline-flex items-center gap-1">
           <MapPin className="h-3 w-3 shrink-0 opacity-60" aria-hidden />
-          {match.venue.name}
+          {match.field ? `${match.venue.name} · ${match.field.name}` : match.venue.name}
         </span>
       )}
       {match.round !== undefined && (
