@@ -14,7 +14,6 @@ const DEFAULT_TIEBREAKERS: PointFormatFormValues['tiebreakers'] = [
   'GOAL_DIFFERENCE',
   'GOALS_FOR',
   'HEAD_TO_HEAD',
-  'FAIR_PLAY',
   'COIN_TOSS',
 ];
 

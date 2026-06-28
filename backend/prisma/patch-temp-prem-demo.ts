@@ -13,7 +13,6 @@ import { PrismaClient, type MatchStatus } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 import { computeGroupedStandings } from '../src/engine/standings';
 import {
-  buildFairPlayMap,
   mapPrismaMatchToResult,
   toTournamentConfig,
 } from '../src/engine/point-format-mapper';
@@ -83,7 +82,7 @@ function poolScore(homeIdx: number, awayIdx: number, game: number): [number, num
 }
 
 async function recalculateStandings(divisionId: string) {
-  const [matches, division, teams, cardEvents] = await Promise.all([
+  const [matches, division, teams] = await Promise.all([
     prisma.match.findMany({
       where: { division_id: divisionId, status: 'COMPLETED' },
     }),
@@ -95,24 +94,14 @@ async function recalculateStandings(divisionId: string) {
       where: { division_id: divisionId },
       select: { id: true, group_id: true },
     }),
-    prisma.matchEvent.findMany({
-      where: {
-        type: { in: ['YELLOW_CARD', 'RED_CARD'] },
-        match: { division_id: divisionId, status: 'COMPLETED' },
-      },
-      select: { team_id: true, type: true },
-    }),
   ]);
 
-  const teamIds = teams.map((t) => t.id);
-  const fairPlay = buildFairPlayMap(cardEvents, teamIds);
   const results = matches.map(mapPrismaMatchToResult);
   const config = toTournamentConfig(division.point_format);
   const rows = computeGroupedStandings(
     teams.map((t) => ({ id: t.id, groupId: t.group_id })),
     results,
     config,
-    fairPlay,
     division.groups_enabled,
   );
 
@@ -132,7 +121,6 @@ async function recalculateStandings(divisionId: string) {
           goals_against: row.goalsAgainst,
           goal_difference: row.goalDifference,
           points: row.points,
-          fair_play: fairPlay.get(row.teamId) ?? 0,
           rank: row.rank,
         },
         update: {
@@ -145,7 +133,6 @@ async function recalculateStandings(divisionId: string) {
           goals_against: row.goalsAgainst,
           goal_difference: row.goalDifference,
           points: row.points,
-          fair_play: fairPlay.get(row.teamId) ?? 0,
           rank: row.rank,
         },
       }),

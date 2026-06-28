@@ -12,8 +12,6 @@ export interface TieContext {
   rows: Map<string, StandingRow>;
   results: MatchResult[];
   config: TournamentConfig;
-  /** Discipline score per team (higher is better). Used by FAIR_PLAY tiebreaker. */
-  fairPlay?: Map<string, number>;
 }
 
 /** Points each team earned in matches played only among `group`. */
@@ -93,8 +91,6 @@ function tieValue(
       return row.goalDifference;
     case 'WINS':
       return row.wins;
-    case 'FAIR_PLAY':
-      return ctx.fairPlay?.get(teamId) ?? 0;
     case 'PENALTY_KICKS':
       return penaltyKicksFor(teamId, group, ctx.results);
     case 'COIN_TOSS':

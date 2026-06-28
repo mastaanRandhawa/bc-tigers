@@ -6,7 +6,6 @@ interface GroupedStandingsTableProps {
   division?: Division;
   compact?: boolean;
   searchable?: boolean;
-  showFairPlay?: boolean;
 }
 
 interface GroupBucket {
@@ -25,7 +24,6 @@ export default function GroupedStandingsTable({
   division,
   compact = false,
   searchable = true,
-  showFairPlay = false,
 }: GroupedStandingsTableProps) {
   const useGroups =
     (division?.groups_enabled ?? false) &&
@@ -38,7 +36,6 @@ export default function GroupedStandingsTable({
         division={division}
         compact={compact}
         searchable={searchable}
-        showFairPlay={showFairPlay}
       />
     );
   }
@@ -71,7 +68,6 @@ export default function GroupedStandingsTable({
             division={division}
             compact={compact}
             searchable={false}
-            showFairPlay={showFairPlay}
           />
         </div>
       ))}
@@ -85,7 +81,6 @@ export default function GroupedStandingsTable({
             division={division}
             compact={compact}
             searchable={false}
-            showFairPlay={showFairPlay}
           />
         </div>
       )}

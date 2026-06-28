@@ -2,7 +2,6 @@ import { Injectable } from '@nestjs/common';
 import prisma from '../../prisma/prisma';
 import { computeGroupedStandings } from '../../engine/standings';
 import {
-  buildFairPlayMap,
   mapPrismaMatchToResult,
   toTournamentConfig,
 } from '../../engine/point-format-mapper';
@@ -19,7 +18,7 @@ export class StandingsService {
   }
 
   async recalculate(divisionId: string) {
-    const [matches, division, teams, cardEvents] = await Promise.all([
+    const [matches, division, teams] = await Promise.all([
       prisma.match.findMany({
         where: { division_id: divisionId, status: 'COMPLETED' },
       }),
@@ -31,24 +30,14 @@ export class StandingsService {
         where: { division_id: divisionId },
         select: { id: true, group_id: true },
       }),
-      prisma.matchEvent.findMany({
-        where: {
-          type: { in: ['YELLOW_CARD', 'RED_CARD'] },
-          match: { division_id: divisionId, status: 'COMPLETED' },
-        },
-        select: { team_id: true, type: true },
-      }),
     ]);
 
-    const teamIds = teams.map((t) => t.id);
-    const fairPlay = buildFairPlayMap(cardEvents, teamIds);
     const results = matches.map(mapPrismaMatchToResult);
     const config = toTournamentConfig(division.point_format);
     const rows = computeGroupedStandings(
       teams.map((t) => ({ id: t.id, groupId: t.group_id })),
       results,
       config,
-      fairPlay,
       division.groups_enabled,
     );
 
@@ -74,7 +63,6 @@ export class StandingsService {
             goals_against: row.goalsAgainst,
             goal_difference: row.goalDifference,
             points: row.points,
-            fair_play: fairPlay.get(row.teamId) ?? 0,
           },
           update: {
             group_id: row.groupId,
@@ -87,7 +75,6 @@ export class StandingsService {
             goals_against: row.goalsAgainst,
             goal_difference: row.goalDifference,
             points: row.points,
-            fair_play: fairPlay.get(row.teamId) ?? 0,
           },
         }),
       ),

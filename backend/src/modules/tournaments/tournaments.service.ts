@@ -97,7 +97,6 @@ export class TournamentsService {
               { points: 'desc' },
               { goal_difference: 'desc' },
               { goals_for: 'desc' },
-              { fair_play: 'desc' },
             ],
             take: 3,
           })

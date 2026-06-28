@@ -39,7 +39,6 @@ const tiebreakerRuleSchema = z.enum([
   'GOALS_FOR',
   'GOAL_DIFFERENCE',
   'WINS',
-  'FAIR_PLAY',
   'PENALTY_KICKS',
   'COIN_TOSS',
 ]);

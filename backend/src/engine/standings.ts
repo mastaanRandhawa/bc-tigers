@@ -81,10 +81,9 @@ export function computeStandings(
   teamIds: string[],
   results: MatchResult[],
   config: TournamentConfig,
-  fairPlay?: Map<string, number>,
 ): StandingRow[] {
   const rows = aggregateRows(teamIds, results, config);
-  const ctx: TieContext = { rows, results, config, fairPlay };
+  const ctx: TieContext = { rows, results, config };
 
   // Sort by points first, then break ties within each equal-points group.
   const byPoints = [...rows.values()].sort((a, b) => b.points - a.points);
@@ -134,7 +133,6 @@ export function computeGroupedStandings(
   teams: TeamGroupRef[],
   results: MatchResult[],
   config: TournamentConfig,
-  fairPlay: Map<string, number> | undefined,
   groupsEnabled: boolean,
 ): GroupedStandingRow[] {
   if (!groupsEnabled) {
@@ -142,7 +140,6 @@ export function computeGroupedStandings(
       teams.map((t) => t.id),
       results,
       config,
-      fairPlay,
     ).map((row) => ({ ...row, groupId: null }));
   }
 
@@ -160,7 +157,7 @@ export function computeGroupedStandings(
     const scoped = results.filter(
       (r) => members.has(r.homeTeamId) && members.has(r.awayTeamId),
     );
-    const rows = computeStandings(teamIds, scoped, config, fairPlay);
+    const rows = computeStandings(teamIds, scoped, config);
     for (const row of rows) out.push({ ...row, groupId });
   }
   return out;

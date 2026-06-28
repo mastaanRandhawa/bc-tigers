@@ -19,8 +19,6 @@ export default function DivisionStandingsPage() {
   const recalculateMutation = useRecalculateStandings();
   const canEdit = useCanAdminEdit();
 
-  const hasFairPlay = standings.some((s) => (s.fair_play ?? 0) !== 0);
-
   const handleRecalculate = async () => {
     if (!division?.id) return;
     try {
@@ -55,7 +53,7 @@ export default function DivisionStandingsPage() {
         onRetry={() => refetch()}
         emptyMessage="No standings for this division yet."
       >
-        <GroupedStandingsTable standings={standings} division={division} showFairPlay={hasFairPlay} />
+        <GroupedStandingsTable standings={standings} division={division} />
       </QueryState>
     </>
   );

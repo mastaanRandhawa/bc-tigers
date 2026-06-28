@@ -74,7 +74,7 @@ async function ensureUsfaFormat() {
     forfeit_win_score: 2,
     forfeit_loss_score: 0,
     forfeit_award_bonuses: true,
-    tiebreakers: ['HEAD_TO_HEAD', 'GOALS_AGAINST', 'GOALS_FOR', 'FAIR_PLAY', 'COIN_TOSS'],
+    tiebreakers: ['HEAD_TO_HEAD', 'GOALS_AGAINST', 'GOALS_FOR', 'COIN_TOSS'],
   };
   return prisma.pointFormat.upsert({
     where: { slug: 'usfa-10-point' },

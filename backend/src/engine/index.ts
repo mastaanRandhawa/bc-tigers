@@ -31,6 +31,5 @@ export { coinTossOrder, compareCoinToss, seededHash } from './random';
 export {
   toTournamentConfig,
   mapPrismaMatchToResult,
-  buildFairPlayMap,
   parseTiebreakers,
 } from './point-format-mapper';

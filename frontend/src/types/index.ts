@@ -78,7 +78,6 @@ export type TiebreakerRule =
   | 'GOALS_FOR'
   | 'GOAL_DIFFERENCE'
   | 'WINS'
-  | 'FAIR_PLAY'
   | 'PENALTY_KICKS'
   | 'COIN_TOSS';
 
@@ -274,7 +273,6 @@ export interface Standing {
   goals_against: number;
   goal_difference: number;
   points: number;
-  fair_play?: number;
   rank: number;
   team?: Team;
   form?: ('W' | 'D' | 'L')[];

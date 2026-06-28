@@ -31,7 +31,6 @@ function formatRow(overrides: Partial<PointFormat>): PointFormat {
       'GOAL_DIFFERENCE',
       'GOALS_FOR',
       'HEAD_TO_HEAD',
-      'FAIR_PLAY',
       'COIN_TOSS',
     ],
     created_at: new Date(),
@@ -69,7 +68,6 @@ describe('point-format-mapper', () => {
       'GOAL_DIFFERENCE',
       'GOALS_FOR',
       'HEAD_TO_HEAD',
-      'FAIR_PLAY',
       'COIN_TOSS',
     ]);
   });
@@ -91,7 +89,6 @@ describe('point-format-mapper', () => {
         'HEAD_TO_HEAD',
         'GOALS_AGAINST',
         'GOALS_FOR',
-        'FAIR_PLAY',
         'COIN_TOSS',
       ],
     });
@@ -101,7 +98,6 @@ describe('point-format-mapper', () => {
       'HEAD_TO_HEAD',
       'GOALS_AGAINST',
       'GOALS_FOR',
-      'FAIR_PLAY',
       'COIN_TOSS',
     ]);
   });
@@ -124,7 +120,8 @@ describe('point-format-mapper', () => {
   });
 
   it('falls back to default tiebreakers for invalid JSON', () => {
-    expect(parseTiebreakers(null)).toContain('FAIR_PLAY');
-    expect(parseTiebreakers(['INVALID'])).toContain('FAIR_PLAY');
+    expect(parseTiebreakers(null)).toContain('COIN_TOSS');
+    expect(parseTiebreakers(['INVALID'])).toContain('COIN_TOSS');
+    expect(parseTiebreakers(['FAIR_PLAY', 'COIN_TOSS'])).toEqual(['COIN_TOSS']);
   });
 });

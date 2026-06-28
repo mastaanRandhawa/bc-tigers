@@ -4,7 +4,6 @@ jest.mock('../../prisma/prisma', () => ({
     match: { findMany: jest.fn() },
     division: { findUniqueOrThrow: jest.fn() },
     team: { findMany: jest.fn() },
-    matchEvent: { findMany: jest.fn() },
     standing: { upsert: jest.fn() },
     $transaction: jest.fn((ops: unknown[]) =>
       Promise.all(ops as Promise<unknown>[]),
@@ -38,7 +37,6 @@ const standardFormat = {
     'GOAL_DIFFERENCE',
     'GOALS_FOR',
     'HEAD_TO_HEAD',
-    'FAIR_PLAY',
     'COIN_TOSS',
   ],
   created_at: new Date(),
@@ -63,7 +61,6 @@ const usfaFormat = {
     'HEAD_TO_HEAD',
     'GOALS_AGAINST',
     'GOALS_FOR',
-    'FAIR_PLAY',
     'COIN_TOSS',
   ],
 };
@@ -77,7 +74,6 @@ describe('StandingsService', () => {
       { id: 'home' },
       { id: 'away' },
     ] as never);
-    mockPrisma.matchEvent.findMany.mockResolvedValue([]);
     mockPrisma.match.findMany.mockResolvedValue([
       {
         home_team_id: 'home',

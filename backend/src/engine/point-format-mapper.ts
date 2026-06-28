@@ -6,7 +6,6 @@ const DEFAULT_TIEBREAKERS: TiebreakerRule[] = [
   'GOAL_DIFFERENCE',
   'GOALS_FOR',
   'HEAD_TO_HEAD',
-  'FAIR_PLAY',
   'COIN_TOSS',
 ];
 
@@ -18,7 +17,6 @@ export function parseTiebreakers(value: unknown): TiebreakerRule[] {
     'GOALS_FOR',
     'GOAL_DIFFERENCE',
     'WINS',
-    'FAIR_PLAY',
     'PENALTY_KICKS',
     'COIN_TOSS',
   ]);
@@ -68,24 +66,4 @@ export function mapPrismaMatchToResult(match: PrismaMatchLike): MatchResult {
     awayScore: match.away_score,
     outcome: 'PLAYED',
   };
-}
-
-type CardEventLike = { team_id: string; type: string };
-
-export function buildFairPlayMap(
-  cardEvents: CardEventLike[],
-  teamIds: string[],
-): Map<string, number> {
-  const fairPlay = new Map<string, number>();
-  for (const id of teamIds) fairPlay.set(id, 0);
-  for (const event of cardEvents) {
-    if (!fairPlay.has(event.team_id)) continue;
-    if (event.type === 'YELLOW_CARD') {
-      fairPlay.set(event.team_id, (fairPlay.get(event.team_id) ?? 0) - 1);
-    }
-    if (event.type === 'RED_CARD') {
-      fairPlay.set(event.team_id, (fairPlay.get(event.team_id) ?? 0) - 3);
-    }
-  }
-  return fairPlay;
 }
