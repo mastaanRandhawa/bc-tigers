@@ -2,7 +2,8 @@ import type { Match } from '@/types';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { formatDate, formatTime, getMatchStatusBadgeVariant, matchSideName } from '@/lib/utils';
-import { PlusCircle, Zap } from 'lucide-react';
+import { PlusCircle } from 'lucide-react';
+import { SoccerBallIcon } from '@/components/icons/SoccerBallIcon';
 
 interface AdminMatchMobileRowProps {
   match: Match;
@@ -86,7 +87,7 @@ export function AdminMatchMobileRow({
             onClick={() => onScore(match)}
             aria-label="Update score"
           >
-            <Zap className="h-3.5 w-3.5" />
+            <SoccerBallIcon className="h-3.5 w-3.5" />
           </Button>
           <Button
             type="button"

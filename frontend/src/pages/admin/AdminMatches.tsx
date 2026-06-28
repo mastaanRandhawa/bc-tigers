@@ -15,7 +15,8 @@ import { Button } from '@/components/ui/button';
 import { formatDate, formatTime, getMatchStatusBadgeVariant } from '@/lib/utils';
 import { getApiErrorMessage } from '@/lib/errors';
 import { matchSearchText } from '@/lib/search-text';
-import { Zap, PlusCircle } from 'lucide-react';
+import { PlusCircle } from 'lucide-react';
+import { SoccerBallIcon } from '@/components/icons/SoccerBallIcon';
 import { toast } from 'sonner';
 
 const columns = (onScore: (m: Match) => void, onEvent: (m: Match) => void) => [
@@ -62,7 +63,7 @@ const columns = (onScore: (m: Match) => void, onEvent: (m: Match) => void) => [
             onScore(m);
           }}
         >
-          <Zap className="w-3 h-3" />
+          <SoccerBallIcon className="w-3 h-3" />
         </Button>
         <Button
           size="sm"

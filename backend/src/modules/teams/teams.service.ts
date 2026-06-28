@@ -56,16 +56,18 @@ export class TeamsService {
             email: true,
           },
         },
-        players: { where: { active: true }, orderBy: { last_name: 'asc' } },
+        _count: { select: { players: true } },
       },
     });
 
-    return teams.map((team) =>
-      stripTeamPlayers(
-        team,
+    return teams.map((team) => {
+      const { _count, ...rest } = team;
+      const stripped = stripTeamPlayers(
+        rest,
         canViewTeamRoster(ctx.actor, team.coach_user_id, ctx.rostersPublic),
-      ),
-    );
+      );
+      return { ...stripped, roster_count: _count.players };
+    });
   }
 
   /**

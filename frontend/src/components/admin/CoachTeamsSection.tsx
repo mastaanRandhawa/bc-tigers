@@ -3,6 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
+import SearchableTeamPicker from '@/components/admin/SearchableTeamPicker';
 import {
   useAssignCoachTeam,
   useUnassignCoachTeam,
@@ -94,23 +95,18 @@ export default function CoachTeamsSection({ user }: CoachTeamsSectionProps) {
       )}
 
       <div className="space-y-1.5">
-        <Label htmlFor="assign-team">Assign team</Label>
-        <div className="flex gap-2">
-          <select
-            id="assign-team"
+        <Label htmlFor="assign-team-search">Assign team</Label>
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-start">
+          <SearchableTeamPicker
+            id="assign-team-search"
+            teams={addableTeams}
             value={addTeamId}
-            onChange={(e) => setAddTeamId(e.target.value)}
-            className="h-10 flex-1 rounded-xl border border-border/80 bg-card px-3 text-sm"
-          >
-            <option value="">Select unassigned team…</option>
-            {addableTeams.map((t) => (
-              <option key={t.id} value={t.id}>
-                {t.name} · {t.division.name}
-              </option>
-            ))}
-          </select>
+            onChange={setAddTeamId}
+            searchPlaceholder="Search by team, division, or tournament…"
+          />
           <Button
             type="button"
+            className="shrink-0 sm:mt-0"
             disabled={!addTeamId || assignMutation.isPending}
             onClick={async () => {
               try {

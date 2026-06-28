@@ -10,6 +10,7 @@ import MatchScoreFormDialog from '@/components/admin/forms/MatchScoreFormDialog'
 import MatchEventFormDialog from '@/components/admin/forms/MatchEventFormDialog';
 import TeamFormDialog from '@/components/admin/forms/TeamFormDialog';
 import TeamRosterSheet from '@/components/admin/TeamRosterSheet';
+import TeamRosterManageCell from '@/components/admin/TeamRosterManageCell';
 import TournamentFormDialog from '@/components/admin/forms/TournamentFormDialog';
 import { ScheduleGeneratorSheet } from '@/components/admin/ScheduleGeneratorSheet';
 import { ConfirmDialog } from '@/components/admin/inline/ConfirmDialog';
@@ -39,6 +40,7 @@ import {
   Flag,
   Layers,
 } from 'lucide-react';
+import { SoccerBallIcon } from '@/components/icons/SoccerBallIcon';
 import type { Division, Match, Team } from '@/types';
 
 export default function TournamentWorkspacePage() {
@@ -93,10 +95,7 @@ export default function TournamentWorkspacePage() {
       key: 'roster',
       label: 'Roster',
       render: (t: Team) => (
-        <Button variant="outline" size="sm" onClick={() => setRosterTeam(t)}>
-          <Users className="h-3.5 w-3.5 mr-1" />
-          Manage
-        </Button>
+        <TeamRosterManageCell team={t} onManage={setRosterTeam} />
       ),
     },
   ];
@@ -136,7 +135,7 @@ export default function TournamentWorkspacePage() {
             {m.status !== 'SCHEDULED' ? `${m.home_score} – ${m.away_score}` : '–'}
           </span>
           <Button size="sm" variant="outline" className="h-6 w-6 p-0" onClick={(e) => { e.stopPropagation(); setScoreMatch(m); }}>
-            <Zap className="h-3 w-3" />
+            <SoccerBallIcon className="h-3 w-3" />
           </Button>
           <Button size="sm" variant="outline" className="h-6 w-6 p-0" onClick={(e) => { e.stopPropagation(); setEventMatch(m); }}>
             <PlusCircle className="h-3 w-3" />

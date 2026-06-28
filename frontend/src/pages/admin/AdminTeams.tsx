@@ -4,6 +4,7 @@ import AdminTable from '@/components/AdminTable';
 import QueryState from '@/components/shared/QueryState';
 import TeamFormDialog from '@/components/admin/forms/TeamFormDialog';
 import TeamRosterSheet from '@/components/admin/TeamRosterSheet';
+import TeamRosterManageCell from '@/components/admin/TeamRosterManageCell';
 import { RecordHistoryDrawer } from '@/components/admin/RecordHistoryDrawer';
 import { ConfirmDialog } from '@/components/admin/inline/ConfirmDialog';
 import { useFormDialog } from '@/hooks/useFormDialog';
@@ -18,7 +19,6 @@ import type { RecordScope, Team } from '@/types';
 import { getApiErrorMessage } from '@/lib/errors';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Users } from 'lucide-react';
 import { toast } from 'sonner';
 
 const columns = (onRoster: (t: Team) => void) => [
@@ -76,12 +76,7 @@ const columns = (onRoster: (t: Team) => void) => [
   {
     key: 'roster',
     label: 'Roster',
-    render: (t: Team) => (
-      <Button variant="outline" size="sm" onClick={() => onRoster(t)}>
-        <Users className="h-3.5 w-3.5 mr-1" aria-hidden />
-        Manage
-      </Button>
-    ),
+    render: (t: Team) => <TeamRosterManageCell team={t} onManage={onRoster} />,
   },
 ];
 
@@ -121,6 +116,12 @@ export default function AdminTeams() {
           scope={scope}
           onScopeChange={setScope}
           searchKeys={['name', 'city']}
+          getSearchText={(t) =>
+            [t.name, t.city, t.division?.name, t.coach?.first_name, t.coach?.last_name]
+              .filter(Boolean)
+              .join(' ')
+          }
+          searchPlaceholder="Search teams, divisions, coaches…"
         />
       </QueryState>
 

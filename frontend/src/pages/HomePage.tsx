@@ -12,12 +12,12 @@ import MatchCard from '@/components/MatchCard';
 import SectionHeader from '@/components/shared/SectionHeader';
 import Section from '@/components/shared/Section';
 import QueryState from '@/components/shared/QueryState';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { useHomeHub } from '@/hooks/useHomeHub';
 import { formatDate } from '@/lib/date';
 import { pickFeaturedTournament } from '@/lib/featured-tournament';
 import { isScheduleOnlyDivision } from '@/lib/division-display';
+import TournamentCardMedia from '@/components/tournaments/TournamentCardMedia';
 import { ChevronRight, Trophy, Megaphone, Plus, Pencil, Trash2, FileDown } from 'lucide-react';
 import { RevealOnScroll } from '@/components/motion/RevealOnScroll';
 import { useCanAdminEdit } from '@/hooks/useCanAdminEdit';
@@ -264,31 +264,11 @@ export default function HomePage() {
                         tournamentSlug={t.slug}
                         className="group ds-card-hover overflow-hidden"
                       >
-                        <div className="relative flex h-20 items-center justify-center border-b border-border bg-surface-muted">
-                          {t.logo ? (
-                            <img
-                              src={t.logo}
-                              alt=""
-                              className="h-14 w-14 rounded-xl border border-border bg-card object-contain p-1.5 shadow-sm"
-                            />
-                          ) : (
-                            <div className="rounded-xl border border-border bg-card p-2 shadow-sm">
-                              <Trophy className="h-6 w-6 text-primary" aria-hidden />
-                            </div>
-                          )}
-                          <Badge
-                            variant={
-                              t.status === 'ACTIVE'
-                                ? 'success'
-                                : t.status === 'UPCOMING'
-                                  ? 'scheduled'
-                                  : 'default'
-                            }
-                            className="absolute right-2.5 top-2.5 rounded-md"
-                          >
-                            {t.status}
-                          </Badge>
-                        </div>
+                        <TournamentCardMedia
+                          logo={t.logo}
+                          status={t.status}
+                          showStatusBadge
+                        />
                         <div className="p-3.5">
                           <h3 className="font-semibold text-foreground transition-colors group-hover:text-primary">
                             {t.name}

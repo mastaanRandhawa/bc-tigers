@@ -47,7 +47,7 @@ export async function getRosterVisibilityContext() {
   return { rostersPublic, actor };
 }
 
-export function stripTeamPlayers<T extends { players?: unknown[] }>(
+export function stripTeamPlayers<T extends object>(
   team: T,
   canView: boolean,
 ): T {

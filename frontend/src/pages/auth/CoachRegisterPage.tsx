@@ -1,12 +1,13 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useQuery } from '@tanstack/react-query';
 import AuthLayout from '@/components/AuthLayout';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
+import SearchableTeamMultiSelect from '@/components/shared/SearchableTeamMultiSelect';
 import { authService } from '@/services/auth.service';
-import { teamsService, type TeamDirectoryEntry } from '@/services/teams.service';
+import { teamsService } from '@/services/teams.service';
 import { getApiErrorMessage } from '@/lib/errors';
 import { UserPlus, CheckCircle, Eye, EyeOff } from 'lucide-react';
 
@@ -29,16 +30,6 @@ export default function CoachRegisterPage() {
     queryFn: async () => (await teamsService.directory()).data,
     staleTime: 5 * 60 * 1000,
   });
-
-  const groups = useMemo(() => {
-    const map = new Map<string, { label: string; teams: TeamDirectoryEntry[] }>();
-    for (const t of directory) {
-      const label = `${t.division.name} · ${t.division.tournament.name}`;
-      if (!map.has(t.division.id)) map.set(t.division.id, { label, teams: [] });
-      map.get(t.division.id)!.teams.push(t);
-    }
-    return [...map.values()];
-  }, [directory]);
 
   const toggleTeam = (teamId: string) => {
     setSelectedTeamIds((prev) =>
@@ -134,35 +125,14 @@ export default function CoachRegisterPage() {
           />
         </div>
         <div className="space-y-2">
-          <Label>Teams you&apos;d like to coach</Label>
-          {teamsLoading ? (
-            <p className="text-sm text-muted-foreground">Loading teams…</p>
-          ) : groups.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No unassigned teams are available right now.</p>
-          ) : (
-            <div className="max-h-56 overflow-y-auto rounded-xl border border-border/80 bg-card p-3 space-y-3">
-              {groups.map((g) => (
-                <div key={g.label}>
-                  <p className="text-xs font-semibold text-muted-foreground mb-1.5">{g.label}</p>
-                  <ul className="space-y-1.5">
-                    {g.teams.map((t) => (
-                      <li key={t.id}>
-                        <label className="flex items-center gap-2 text-sm cursor-pointer">
-                          <input
-                            type="checkbox"
-                            checked={selectedTeamIds.includes(t.id)}
-                            onChange={() => toggleTeam(t.id)}
-                            className="rounded border-border"
-                          />
-                          {t.name}
-                        </label>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              ))}
-            </div>
-          )}
+          <Label htmlFor="coach-team-search">Teams you&apos;d like to coach</Label>
+          <SearchableTeamMultiSelect
+            teams={directory}
+            selectedIds={selectedTeamIds}
+            onToggle={toggleTeam}
+            searchId="coach-team-search"
+            loading={teamsLoading}
+          />
           <p className="text-xs text-muted-foreground">
             Select one or more teams. An administrator will review and assign you.
           </p>

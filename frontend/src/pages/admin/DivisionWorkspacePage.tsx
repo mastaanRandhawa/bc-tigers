@@ -5,6 +5,7 @@ import AdminTable from '@/components/AdminTable';
 import QueryState from '@/components/shared/QueryState';
 import TeamFormDialog from '@/components/admin/forms/TeamFormDialog';
 import TeamRosterSheet from '@/components/admin/TeamRosterSheet';
+import TeamRosterManageCell from '@/components/admin/TeamRosterManageCell';
 import MatchFormDialog from '@/components/admin/forms/MatchFormDialog';
 import MatchScoreFormDialog from '@/components/admin/forms/MatchScoreFormDialog';
 import MatchEventFormDialog from '@/components/admin/forms/MatchEventFormDialog';
@@ -26,6 +27,7 @@ import { matchSearchText } from '@/lib/search-text';
 import { getApiErrorMessage } from '@/lib/errors';
 import { toast } from 'sonner';
 import { Calendar, GitBranch, Pencil, Shield, Users, Zap, PlusCircle, BarChart3 } from 'lucide-react';
+import { SoccerBallIcon } from '@/components/icons/SoccerBallIcon';
 import type { Match, Team } from '@/types';
 
 const MATCH_STATUS_OPTIONS = [
@@ -88,10 +90,7 @@ export default function DivisionWorkspacePage() {
       key: 'roster',
       label: 'Roster',
       render: (t: Team) => (
-        <Button variant="outline" size="sm" onClick={() => setRosterTeam(t)}>
-          <Users className="h-3.5 w-3.5 mr-1" />
-          Manage
-        </Button>
+        <TeamRosterManageCell team={t} onManage={setRosterTeam} />
       ),
     },
   ];
@@ -144,7 +143,7 @@ export default function DivisionWorkspacePage() {
             {m.status !== 'SCHEDULED' ? `${m.home_score}–${m.away_score}` : '—'}
           </button>
           <Button size="sm" variant="outline" className="h-6 w-6 p-0" onClick={(e) => { e.stopPropagation(); setScoreMatch(m); }}>
-            <Zap className="h-3 w-3" />
+            <SoccerBallIcon className="h-3 w-3" />
           </Button>
           <Button size="sm" variant="outline" className="h-6 w-6 p-0" onClick={(e) => { e.stopPropagation(); setEventMatch(m); }}>
             <PlusCircle className="h-3 w-3" />

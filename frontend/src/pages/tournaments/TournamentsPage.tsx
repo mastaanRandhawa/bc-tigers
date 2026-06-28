@@ -17,6 +17,7 @@ import { toast } from 'sonner';
 import { getApiErrorMessage } from '@/lib/errors';
 import { useListSearch } from '@/hooks/useListSearch';
 import { tournamentSearchText } from '@/lib/search-text';
+import TournamentCardMedia from '@/components/tournaments/TournamentCardMedia';
 import { Trophy, Calendar, MapPin, ChevronRight, Plus, Pencil, Trash2 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { formatDate } from '@/lib/date';
@@ -92,20 +93,7 @@ export default function TournamentsPage() {
                     to={`/tournaments/${t.slug}`}
                     className="ds-card-hover h-full overflow-hidden block"
                   >
-                    {/* Image / icon area — no badges here so admin buttons have clear space */}
-                    <div className="relative flex h-20 items-center justify-center border-b border-border bg-surface-muted">
-                      {t.logo ? (
-                        <img
-                          src={t.logo}
-                          alt=""
-                          className="h-14 w-14 rounded-xl border border-border bg-card object-contain p-1.5 shadow-sm transition-transform duration-200 group-hover:scale-105"
-                        />
-                      ) : (
-                        <div className="rounded-xl border border-border bg-card p-2.5 shadow-sm transition-transform duration-200 group-hover:scale-105">
-                          <Trophy className="h-7 w-7 text-primary" aria-hidden />
-                        </div>
-                      )}
-                    </div>
+                    <TournamentCardMedia logo={t.logo} />
 
                     {/* Text area */}
                     <div className="flex flex-1 flex-col p-3.5">

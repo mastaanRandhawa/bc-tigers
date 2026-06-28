@@ -36,6 +36,7 @@ export function useUpdateTeamPlayer() {
     }) => teamPlayersService.update(teamId, playerId, data),
     onSuccess: (_, { teamId }) => {
       qc.invalidateQueries({ queryKey: ['teams', teamId, 'players'] });
+      qc.invalidateQueries({ queryKey: ['teams'] });
     },
   });
 }
@@ -47,6 +48,7 @@ export function useDeleteTeamPlayer() {
       teamPlayersService.remove(teamId, playerId),
     onSuccess: (_, { teamId }) => {
       qc.invalidateQueries({ queryKey: ['teams', teamId, 'players'] });
+      qc.invalidateQueries({ queryKey: ['teams'] });
     },
   });
 }
