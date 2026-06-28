@@ -7,7 +7,6 @@ import { Button } from '@/components/ui/button';
 import {
   MapPin,
   Clock,
-  User,
   Calendar,
   Goal as GoalIcon,
   RefreshCw,
@@ -204,9 +203,6 @@ export default function MatchDetailPage() {
     [match?.events],
   );
 
-  const officialsLabel = match?.officials?.length
-    ? match.officials.map((o) => o.name).join(', ')
-    : undefined;
 
   const backPath = nestedInDivision
     ? divisionMatchesPath(tournamentSlug!, divisionSlug!)
@@ -345,18 +341,12 @@ export default function MatchDetailPage() {
                     </div>
                   </div>
 
-                  {(match.venue || officialsLabel) && (
+                  {match.venue && (
                     <div className="mt-6 flex flex-wrap items-center justify-center gap-x-5 gap-y-2 border-t border-border/30 pt-5 text-xs text-muted-foreground">
                       {match.venue && (
                         <span className="inline-flex items-center gap-1.5">
                           <MapPin className="h-3.5 w-3.5" aria-hidden />
                           {match.field ? `${match.venue.name} · ${match.field.name}` : match.venue.name}
-                        </span>
-                      )}
-                      {officialsLabel && (
-                        <span className="inline-flex items-center gap-1.5">
-                          <User className="h-3.5 w-3.5" aria-hidden />
-                          {officialsLabel}
                         </span>
                       )}
                     </div>
@@ -535,9 +525,6 @@ export default function MatchDetailPage() {
                   )}
                   {match.field && (
                     <InfoRow icon={MapPin} label="Field" value={match.field.name} />
-                  )}
-                  {officialsLabel && (
-                    <InfoRow icon={User} label="Officials" value={officialsLabel} />
                   )}
                 </SectionCard>
               </aside>

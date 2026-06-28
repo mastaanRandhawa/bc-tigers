@@ -2,6 +2,13 @@ import {
   MIRI_PIRI_DIVISIONS,
   VENUE_FIELDS,
 } from '../prisma/data/miri-piri-2026';
+import {
+  MIRI_PIRI_MINI_DIVISIONS,
+  MINI_VENUE_FIELDS,
+} from '../prisma/data/miri-piri-mini-2026';
+
+const ALL = [...MIRI_PIRI_DIVISIONS, ...MIRI_PIRI_MINI_DIVISIONS];
+const ALL_FIELDS = [...VENUE_FIELDS, ...MINI_VENUE_FIELDS];
 
 // Knockout/pool placeholders should never reach the seed (the generator filters
 // them out so only registered teams remain). This mirrors that contract.
@@ -17,7 +24,7 @@ describe('MIRI_PIRI_DIVISIONS seed data', () => {
 
   it('never lists a placeholder as a team', () => {
     const leaks: string[] = [];
-    for (const d of MIRI_PIRI_DIVISIONS) {
+    for (const d of ALL) {
       for (const t of d.teams) {
         if (PLACEHOLDER.test(t.name)) leaks.push(`${d.name}: ${t.name}`);
       }
@@ -26,7 +33,7 @@ describe('MIRI_PIRI_DIVISIONS seed data', () => {
   });
 
   it('only schedules fixtures between registered teams in the division', () => {
-    for (const d of MIRI_PIRI_DIVISIONS) {
+    for (const d of ALL) {
       const teamSet = new Set(d.teams.map((t) => t.name.toLowerCase()));
       for (const m of d.matches) {
         expect(teamSet.has(m.home.toLowerCase())).toBe(true);
@@ -35,9 +42,14 @@ describe('MIRI_PIRI_DIVISIONS seed data', () => {
     }
   });
 
-  it('keeps display order unique and contiguous from zero', () => {
-    const orders = MIRI_PIRI_DIVISIONS.map((d) => d.order).sort((a, b) => a - b);
+  it('keeps combined display order unique and contiguous from zero', () => {
+    const orders = ALL.map((d) => d.order).sort((a, b) => a - b);
     orders.forEach((o, i) => expect(o).toBe(i));
+  });
+
+  it('uses unique division slugs across main and mini sets', () => {
+    const slugs = ALL.map((d) => d.slug);
+    expect(new Set(slugs).size).toBe(slugs.length);
   });
 
   it('assigns every team to a declared pool when groups are enabled', () => {
@@ -52,8 +64,8 @@ describe('MIRI_PIRI_DIVISIONS seed data', () => {
   });
 
   it('references known venue fields in every fixture that has one', () => {
-    const fieldSet = new Set(VENUE_FIELDS);
-    for (const d of MIRI_PIRI_DIVISIONS) {
+    const fieldSet = new Set(ALL_FIELDS);
+    for (const d of ALL) {
       for (const m of d.matches) {
         if (m.field) expect(fieldSet.has(m.field)).toBe(true);
       }

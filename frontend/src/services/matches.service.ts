@@ -1,5 +1,5 @@
 import apiClient from '@/lib/api-client';
-import type { Match, MatchEvent, MatchEventType, MatchOfficial } from '@/types';
+import type { Match, MatchEvent, MatchEventType } from '@/types';
 
 export const matchesService = {
   getAll: (params?: {
@@ -47,12 +47,4 @@ export const matchesService = {
     apiClient.delete<{ id: string }>(`/matches/${matchId}/events/${eventId}`),
 
   delete: (id: string) => apiClient.delete<Match>(`/matches/${id}`),
-
-  assignOfficial: (
-    matchId: string,
-    data: { name: string; role?: string; email?: string; phone?: string },
-  ) => apiClient.post<MatchOfficial>(`/matches/${matchId}/officials`, data),
-
-  removeOfficial: (matchId: string, officialId: string) =>
-    apiClient.delete(`/matches/${matchId}/officials/${officialId}`),
 };

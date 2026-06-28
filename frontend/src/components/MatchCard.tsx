@@ -1,6 +1,6 @@
 import { memo } from 'react';
 import { Link } from 'react-router-dom';
-import { MapPin, Clock, User } from 'lucide-react';
+import { MapPin, Clock } from 'lucide-react';
 import type { Match } from '@/types';
 import { Badge } from '@/components/ui/badge';
 import { AnimatedNumber } from '@/components/motion/AnimatedNumber';
@@ -97,8 +97,7 @@ function ScoreDisplay({
 }
 
 function MatchMeta({ match }: { match: Match }) {
-  const primaryOfficial = match.officials?.[0];
-  if (!match.venue && match.round === undefined && !primaryOfficial) return null;
+  if (!match.venue && match.round === undefined) return null;
 
   return (
     <p className="mt-2 flex flex-wrap items-center justify-center gap-x-3 gap-y-0.5 text-[11px] text-muted-foreground">
@@ -112,12 +111,6 @@ function MatchMeta({ match }: { match: Match }) {
         <span className="inline-flex items-center gap-1">
           <Clock className="h-3 w-3 shrink-0 opacity-60" aria-hidden />
           Game #{match.round}
-        </span>
-      )}
-      {primaryOfficial && (
-        <span className="inline-flex items-center gap-1">
-          <User className="h-3 w-3 shrink-0 opacity-60" aria-hidden />
-          {primaryOfficial.name}
         </span>
       )}
     </p>

@@ -210,39 +210,6 @@ export function useDeleteMatch() {
   });
 }
 
-export function useAssignMatchOfficial() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: ({
-      matchId,
-      name,
-      role,
-      email,
-      phone,
-    }: {
-      matchId: string;
-      name: string;
-      role?: string;
-      email?: string;
-      phone?: string;
-    }) => matchesService.assignOfficial(matchId, { name, role, email, phone }),
-    onSuccess: (_, { matchId }) => {
-      qc.invalidateQueries({ queryKey: queryKeys.matches.detail(matchId) });
-    },
-  });
-}
-
-export function useRemoveMatchOfficial() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: ({ matchId, officialId }: { matchId: string; officialId: string }) =>
-      matchesService.removeOfficial(matchId, officialId),
-    onSuccess: (_, { matchId }) => {
-      qc.invalidateQueries({ queryKey: queryKeys.matches.detail(matchId) });
-    },
-  });
-}
-
 /** Invalidate caches when standings or brackets change. */
 export function useRealtimeInvalidation() {
   const qc = useQueryClient();

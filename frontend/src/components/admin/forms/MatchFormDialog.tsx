@@ -1,25 +1,16 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import FormDialog from '@/components/admin/FormDialog';
 import { TextInputField, SelectField, FormError } from '@/components/admin/form-fields';
 import { matchSchema, type MatchFormValues } from '@/lib/schemas/admin';
-import {
-  useCreateMatch,
-  useUpdateMatch,
-  useMatch,
-  useAssignMatchOfficial,
-  useRemoveMatchOfficial,
-} from '@/hooks/useMatches';
+import { useCreateMatch, useUpdateMatch } from '@/hooks/useMatches';
 import { useTournaments } from '@/hooks/useTournaments';
 import { useDivisions } from '@/hooks/useDivisions';
 import { useTeams } from '@/hooks/useTeams';
 import { useVenues } from '@/hooks/useVenues';
 import { fromDatetimeLocalValue, toDatetimeLocalValue } from '@/lib/date';
 import { getApiErrorMessage } from '@/lib/errors';
-import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
-import { Input } from '@/components/ui/input';
 import type { Match } from '@/types';
 
 const STATUS_OPTIONS = [
@@ -45,14 +36,7 @@ export default function MatchFormDialog({ open, onOpenChange, match, defaultDivi
   const { data: venues = [] } = useVenues();
   const createMutation = useCreateMatch();
   const updateMutation = useUpdateMatch();
-  const assignOfficial = useAssignMatchOfficial();
-  const removeOfficial = useRemoveMatchOfficial();
   const isEditing = !!match;
-  const { data: matchDetail } = useMatch(isEditing && open ? match?.id : undefined);
-  const [officialName, setOfficialName] = useState('');
-  const [officialError, setOfficialError] = useState('');
-
-  const assignedOfficials = matchDetail?.officials ?? [];
 
   const form = useForm<MatchFormValues>({
     resolver: zodResolver(matchSchema),
@@ -174,76 +158,6 @@ export default function MatchFormDialog({ open, onOpenChange, match, defaultDivi
       <TextInputField control={form.control} name="scheduled_start" label="Kickoff" type="datetime-local" />
       <SelectField control={form.control} name="status" label="Status" options={STATUS_OPTIONS} />
       <TextInputField control={form.control} name="round" label="Game #" type="number" />
-
-      {isEditing && match && (
-        <div className="space-y-3 rounded-lg border border-border p-3">
-          <Label className="text-sm font-medium">Match officials</Label>
-          {assignedOfficials.length === 0 ? (
-            <p className="text-xs text-muted-foreground">No officials assigned yet.</p>
-          ) : (
-            <ul className="space-y-1.5">
-              {assignedOfficials.map((official) => (
-                <li key={official.id} className="flex items-center justify-between gap-2 text-sm">
-                  <span>
-                    {official.name}{' '}
-                    <span className="text-xs text-muted-foreground">({official.role})</span>
-                  </span>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="sm"
-                    className="h-7 text-xs text-destructive"
-                    disabled={removeOfficial.isPending}
-                    onClick={async () => {
-                      try {
-                        await removeOfficial.mutateAsync({
-                          matchId: match.id,
-                          officialId: official.id,
-                        });
-                      } catch (err) {
-                        setOfficialError(getApiErrorMessage(err));
-                      }
-                    }}
-                  >
-                    Remove
-                  </Button>
-                </li>
-              ))}
-            </ul>
-          )}
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-end">
-            <div className="flex-1 space-y-1">
-              <Label className="text-xs text-muted-foreground">Add official</Label>
-              <Input
-                value={officialName}
-                onChange={(e) => setOfficialName(e.target.value)}
-                placeholder="Official name"
-              />
-            </div>
-            <Button
-              type="button"
-              variant="secondary"
-              disabled={!officialName.trim() || assignOfficial.isPending}
-              onClick={async () => {
-                setOfficialError('');
-                try {
-                  await assignOfficial.mutateAsync({
-                    matchId: match.id,
-                    name: officialName.trim(),
-                    role: 'MAIN',
-                  });
-                  setOfficialName('');
-                } catch (err) {
-                  setOfficialError(getApiErrorMessage(err));
-                }
-              }}
-            >
-              Assign
-            </Button>
-          </div>
-          {officialError && <p className="text-xs text-red-600">{officialError}</p>}
-        </div>
-      )}
     </FormDialog>
   );
 }

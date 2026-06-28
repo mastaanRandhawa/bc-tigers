@@ -7,6 +7,20 @@ import {
   VENUE_FIELDS,
   type SeedDivision,
 } from './data/miri-piri-2026';
+import {
+  MIRI_PIRI_MINI_DIVISIONS,
+  MINI_VENUE_FIELDS,
+} from './data/miri-piri-mini-2026';
+
+// Main adult/youth divisions plus the U5–U12 mini (kids) divisions.
+const ALL_DIVISIONS: SeedDivision[] = [
+  ...MIRI_PIRI_DIVISIONS,
+  ...MIRI_PIRI_MINI_DIVISIONS,
+];
+// Union of every field referenced across both schedules (deduped, sorted).
+const ALL_FIELDS: string[] = Array.from(
+  new Set([...VENUE_FIELDS, ...MINI_VENUE_FIELDS]),
+).sort();
 
 const connectionString = process.env.DATABASE_URL!;
 const isRemote =
@@ -433,7 +447,7 @@ async function main() {
 
   const fieldIdByName = new Map<string, string>();
   const venueIdByField = new Map<string, string>();
-  for (const name of VENUE_FIELDS) {
+  for (const name of ALL_FIELDS) {
     const venueId = venueIdBySlug.get(venueForField(name).slug)!;
     const field = await prisma.field.create({
       data: { venue_id: venueId, name, surface: fieldSurface(name), capacity: 500 },
@@ -441,7 +455,7 @@ async function main() {
     fieldIdByName.set(name, field.id);
     venueIdByField.set(name, venueId);
   }
-  console.log(`  ${VENUES.length} venues, ${VENUE_FIELDS.length} fields.`);
+  console.log(`  ${VENUES.length} venues, ${ALL_FIELDS.length} fields.`);
 
   // Tournament has not started yet — everything is scheduled for July 3–5, 2026.
   const tournament = await prisma.tournament.create({
@@ -469,7 +483,7 @@ async function main() {
   let totalGroups = 0;
 
   let divisionIndex = 0;
-  for (const div of MIRI_PIRI_DIVISIONS) {
+  for (const div of ALL_DIVISIONS) {
     const colors = PALETTE[divisionIndex % PALETTE.length];
 
     const division = await prisma.division.create({
@@ -597,7 +611,8 @@ async function main() {
   }
 
   console.log(
-    `  ${MIRI_PIRI_DIVISIONS.length} divisions, ${totalGroups} groups, ${totalTeams} teams, ${totalPlayers} players.`,
+    `  ${ALL_DIVISIONS.length} divisions (${MIRI_PIRI_DIVISIONS.length} main + ${MIRI_PIRI_MINI_DIVISIONS.length} mini), ` +
+      `${totalGroups} groups, ${totalTeams} teams, ${totalPlayers} players.`,
   );
   console.log(`  ${totalMatches} pool fixtures scheduled (all upcoming, no scores).`);
 
