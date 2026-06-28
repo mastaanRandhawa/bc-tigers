@@ -87,14 +87,49 @@ Ajinderpal Mangat (604) 240-9742
 Rakesh Kumar — Youth Coordinator (778) 233-7338
 Vicky Virk — Adult Coordinator (604) 760-3506`;
 
-const VENUE = {
-  name: 'Newton Athletic Park',
-  slug: 'newton-athletic-park',
-  address: '7395 128 St',
-  city: 'Surrey, BC V3W 2M7',
-  parking_info:
-    'Free parking on site (enter from 128 Street). Additional parking across the street at FD Sinclair School.',
-};
+// Each park is its own venue. Only the "NAP …" fields belong to Newton Athletic
+// Park; Hjorth and Strawberry Hill are separate sites.
+const VENUES: Array<{
+  name: string;
+  slug: string;
+  address: string;
+  city: string;
+  parking_info: string;
+  matches: (fieldName: string) => boolean;
+}> = [
+  {
+    name: 'Newton Athletic Park',
+    slug: 'newton-athletic-park',
+    address: '7395 128 St',
+    city: 'Surrey, BC V3W 2M7',
+    parking_info:
+      'Free parking on site (enter from 128 Street). Additional parking across the street at FD Sinclair School.',
+    matches: (f) => f.toUpperCase().startsWith('NAP'),
+  },
+  {
+    name: 'Hjorth Road Park',
+    slug: 'hjorth-road-park',
+    address: '9111 Hjorth Rd',
+    city: 'Surrey, BC',
+    parking_info: 'On-site and street parking available.',
+    matches: (f) => {
+      const u = f.toUpperCase();
+      return u.includes('HJORTH') || u.includes('HORTH');
+    },
+  },
+  {
+    name: 'Strawberry Hill Park',
+    slug: 'strawberry-hill-park',
+    address: '7548 120 St',
+    city: 'Surrey, BC',
+    parking_info: 'On-site parking available.',
+    matches: (f) => f.toUpperCase().includes('STRAWBERRY'),
+  },
+];
+
+function venueForField(fieldName: string) {
+  return VENUES.find((v) => v.matches(fieldName)) ?? VENUES[0];
+}
 
 const REFEREES = [
   { first_name: 'Ajinderpal', last_name: 'Mangat', email: 'ajinderpal@bctigers.ca' },
@@ -333,7 +368,7 @@ async function main() {
   await prisma.user.deleteMany();
   console.log('  Cleared existing data.');
 
-  const { standard: standardFormat, usfa: usfaFormat } = await ensurePointFormats();
+  const { usfa: usfaFormat } = await ensurePointFormats();
   console.log('  Point formats ready.');
 
   const adminUser = await prisma.user.create({
@@ -381,15 +416,32 @@ async function main() {
     },
   });
 
-  const venue = await prisma.venue.create({ data: VENUE });
+  const venueIdBySlug = new Map<string, string>();
+  for (const v of VENUES) {
+    const created = await prisma.venue.create({
+      data: {
+        name: v.name,
+        slug: v.slug,
+        address: v.address,
+        city: v.city,
+        parking_info: v.parking_info,
+      },
+    });
+    venueIdBySlug.set(v.slug, created.id);
+  }
+  const primaryVenueId = venueIdBySlug.get('newton-athletic-park')!;
+
   const fieldIdByName = new Map<string, string>();
+  const venueIdByField = new Map<string, string>();
   for (const name of VENUE_FIELDS) {
+    const venueId = venueIdBySlug.get(venueForField(name).slug)!;
     const field = await prisma.field.create({
-      data: { venue_id: venue.id, name, surface: fieldSurface(name), capacity: 500 },
+      data: { venue_id: venueId, name, surface: fieldSurface(name), capacity: 500 },
     });
     fieldIdByName.set(name, field.id);
+    venueIdByField.set(name, venueId);
   }
-  console.log(`  Venue: ${venue.name} (${VENUE_FIELDS.length} fields)`);
+  console.log(`  ${VENUES.length} venues, ${VENUE_FIELDS.length} fields.`);
 
   // Tournament has not started yet — everything is scheduled for July 3–5, 2026.
   const tournament = await prisma.tournament.create({
@@ -429,7 +481,7 @@ async function main() {
         gender: div.gender,
         max_teams: Math.max(16, div.teams.length),
         format: div.format,
-        point_format_id: div.slug === 'premier' ? usfaFormat.id : standardFormat.id,
+        point_format_id: usfaFormat.id,
         primary_color: colors.primary,
         accent_color: colors.accent,
         schedule_only: div.schedule_only,
@@ -517,7 +569,7 @@ async function main() {
           home_team_id: home.id,
           away_team_id: away.id,
           group_id: groupId,
-          venue_id: venue.id,
+          venue_id: m.field ? venueIdByField.get(m.field) ?? primaryVenueId : primaryVenueId,
           field_id: m.field ? fieldIdByName.get(m.field) ?? null : null,
           scheduled_start: start,
           scheduled_end: end,

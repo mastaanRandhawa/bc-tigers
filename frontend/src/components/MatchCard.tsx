@@ -111,7 +111,7 @@ function MatchMeta({ match }: { match: Match }) {
       {match.round !== undefined && (
         <span className="inline-flex items-center gap-1">
           <Clock className="h-3 w-3 shrink-0 opacity-60" aria-hidden />
-          Round {match.round}
+          Game #{match.round}
         </span>
       )}
       {primaryOfficial && (

@@ -78,7 +78,7 @@ const columns = (onScore: (m: Match) => void, onEvent: (m: Match) => void) => [
       </div>
     ),
   },
-  { key: 'round', label: 'Round', className: 'hidden lg:table-cell whitespace-nowrap', render: (m: Match) => <span>{m.round ?? '—'}</span> },
+  { key: 'round', label: 'Game #', className: 'hidden lg:table-cell whitespace-nowrap', render: (m: Match) => <span>{m.round != null ? `#${m.round}` : '—'}</span> },
 ];
 
 export default function AdminMatches() {

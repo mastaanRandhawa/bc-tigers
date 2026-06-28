@@ -46,7 +46,7 @@ export function AdminMatchMobileRow({
           {match.round != null && (
             <>
               <span aria-hidden>·</span>
-              <span>Round {match.round}</span>
+              <span>Game #{match.round}</span>
             </>
           )}
         </div>
