@@ -1,5 +1,6 @@
 import type { Division, Standing } from '@/types';
 import StandingsTable from './StandingsTable';
+import { qualificationRulesForDivision } from '@/lib/standings-qualification';
 
 interface GroupedStandingsTableProps {
   standings: Standing[];
@@ -25,6 +26,7 @@ export default function GroupedStandingsTable({
   compact = false,
   searchable = true,
 }: GroupedStandingsTableProps) {
+  const qualificationRules = qualificationRulesForDivision(division?.slug);
   const useGroups =
     (division?.groups_enabled ?? false) &&
     standings.some((s) => Boolean(s.group_id));
@@ -36,6 +38,7 @@ export default function GroupedStandingsTable({
         division={division}
         compact={compact}
         searchable={searchable}
+        qualificationRules={qualificationRules}
       />
     );
   }
@@ -54,6 +57,11 @@ export default function GroupedStandingsTable({
     }
   }
 
+  for (const bucket of buckets.values()) {
+    bucket.rows.sort((a, b) => a.rank - b.rank);
+  }
+  ungrouped.sort((a, b) => a.rank - b.rank);
+
   const groups = [...buckets.values()].sort((a, b) => a.order - b.order);
 
   return (
@@ -68,6 +76,7 @@ export default function GroupedStandingsTable({
             division={division}
             compact={compact}
             searchable={false}
+            qualificationRules={qualificationRules}
           />
         </div>
       ))}
@@ -81,6 +90,7 @@ export default function GroupedStandingsTable({
             division={division}
             compact={compact}
             searchable={false}
+            qualificationRules={qualificationRules}
           />
         </div>
       )}

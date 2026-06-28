@@ -1,5 +1,6 @@
 import QueryState from '@/components/shared/QueryState';
 import GroupedStandingsTable from '@/components/GroupedStandingsTable';
+import StandingsQualificationLegend from '@/components/StandingsQualificationLegend';
 import DivisionPageHeader from '@/components/divisions/DivisionPageHeader';
 import { Button } from '@/components/ui/button';
 import { useDivisionRoute } from '@/context/DivisionContext';
@@ -53,6 +54,7 @@ export default function DivisionStandingsPage() {
         onRetry={() => refetch()}
         emptyMessage="No standings for this division yet."
       >
+        <StandingsQualificationLegend divisionSlug={division?.slug} />
         <GroupedStandingsTable standings={standings} division={division} />
       </QueryState>
     </>

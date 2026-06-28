@@ -185,6 +185,7 @@ export const MIRI_PIRI_DIVISIONS: SeedDivision[] = [
       { name: 'NORTH SURREY MUSTANGS', pool: 'Pool B' },
       { name: 'PANTHERS FC', pool: 'Pool A' },
       { name: 'RISE FOOTBALL ACADEMY', pool: 'Pool B' },
+      { name: 'WEST HOUND', pool: 'Pool B' },
     ],
     matches: [
       { game: 66, pool: 'Pool A', day: 4, hour: 9, minute: 0, home: 'LUXE FC', away: 'PANTHERS FC', field: 'NAP 7' },

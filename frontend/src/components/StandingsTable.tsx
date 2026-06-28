@@ -8,6 +8,11 @@ import { useListSearch } from '@/hooks/useListSearch';
 import { standingSearchText } from '@/lib/search-text';
 import { getFormColor, cn } from '@/lib/utils';
 import { getDivisionTeamPath } from '@/lib/division-routes';
+import {
+  getQualificationZone,
+  qualificationRowClass,
+  type QualificationRules,
+} from '@/lib/standings-qualification';
 import { Badge } from '@/components/ui/badge';
 import { Card } from '@/components/ui/card';
 import {
@@ -24,6 +29,7 @@ interface StandingsTableProps {
   compact?: boolean;
   division?: Division;
   searchable?: boolean;
+  qualificationRules?: QualificationRules | null;
 }
 
 export default function StandingsTable({
@@ -31,6 +37,7 @@ export default function StandingsTable({
   compact = false,
   division,
   searchable = true,
+  qualificationRules = null,
 }: StandingsTableProps) {
   const getText = useCallback((s: Standing) => standingSearchText(s), []);
   const { search, setSearch, filtered, debouncedSearch, hasQuery } = useListSearch(
@@ -78,6 +85,8 @@ export default function StandingsTable({
                 idx={idx}
                 compact={compact}
                 division={division}
+                qualificationRules={qualificationRules}
+                tableSize={standings.length}
               />
             ))}
           </TableBody>
@@ -94,20 +103,32 @@ function StandingRow({
   idx,
   compact,
   division,
+  qualificationRules,
+  tableSize,
 }: {
   standing: Standing;
   idx: number;
   compact: boolean;
   division?: Division;
+  qualificationRules?: QualificationRules | null;
+  tableSize: number;
 }) {
   const pointsFlash = useValueFlash(s.points);
+  const qualificationZone = qualificationRules
+    ? getQualificationZone(s.rank, tableSize, qualificationRules)
+    : null;
+  const useQualificationStyle = qualificationZone !== null;
 
   return (
     <TableRow
       className={cn(
         pointsFlash && 'motion-safe:animate-score-flash',
-        idx === 0 && 'bg-surface-muted',
-        idx > 0 && idx < 3 && 'bg-surface-muted/50',
+        useQualificationStyle
+          ? qualificationRowClass(qualificationZone)
+          : cn(
+              idx === 0 && 'bg-surface-muted',
+              idx > 0 && idx < 3 && 'bg-surface-muted/50',
+            ),
       )}
     >
       <TableCell className="text-muted-foreground font-medium">{s.rank}</TableCell>
