@@ -24,6 +24,7 @@ import { useCanAdminEdit } from '@/hooks/useCanAdminEdit';
 import { AdminActionButton } from '@/components/admin/inline/AdminActionButton';
 import { AnnouncementDialog } from '@/components/admin/inline/AnnouncementDialog';
 import { useDeleteAnnouncement } from '@/hooks/useAnnouncements';
+import { toast } from 'sonner';
 import type { Announcement } from '@/types';
 
 export default function HomePage() {
@@ -170,7 +171,22 @@ export default function HomePage() {
                               <AdminActionButton
                                 size="xs"
                                 variant="destructive"
-                                onClick={() => deleteMutation.mutate(a.id, { onSuccess: () => setDeletingId(null) })}
+                                onClick={() =>
+                                  deleteMutation.mutate(a.id, {
+                                    onSuccess: () => {
+                                      setDeletingId(null);
+                                      toast.success('Announcement deleted.');
+                                    },
+                                    onError: (err) => {
+                                      const status = (err as { response?: { status?: number } })?.response?.status;
+                                      toast.error(
+                                        status === 401
+                                          ? 'Your session expired. Please sign in again to delete announcements.'
+                                          : 'Could not delete the announcement. Please try again.',
+                                      );
+                                    },
+                                  })
+                                }
                                 disabled={deleteMutation.isPending}
                               >
                                 {deleteMutation.isPending ? 'Deleting…' : 'Delete'}

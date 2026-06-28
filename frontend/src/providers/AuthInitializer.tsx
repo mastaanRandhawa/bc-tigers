@@ -1,7 +1,7 @@
 import { useEffect, type ReactNode } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '@/store/authStore';
-import { setLogoutCallback } from '@/lib/api-client';
+import { setLogoutCallback, setSessionExpiredCallback } from '@/lib/api-client';
 
 interface AuthInitializerProps {
   children: ReactNode;
@@ -25,6 +25,11 @@ export function AuthInitializer({ children }: AuthInitializerProps) {
     setLogoutCallback(() => {
       useAuthStore.getState().logout();
       navigate('/login', { replace: true });
+    });
+
+    // Public-page 401: drop stale auth so admin controls hide, but stay put.
+    setSessionExpiredCallback(() => {
+      useAuthStore.getState().logout();
     });
 
     initialize();

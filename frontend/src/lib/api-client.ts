@@ -61,6 +61,17 @@ export function setLogoutCallback(fn: () => void): void {
   _logoutCallback = fn;
 }
 
+/**
+ * Clears in-memory auth state without navigating. Used when a 401 happens on a
+ * public page: we don't want to redirect a guest to login, but we do want the
+ * UI to stop treating a now-invalid session as authenticated.
+ */
+let _sessionExpiredCallback: (() => void) | null = null;
+
+export function setSessionExpiredCallback(fn: () => void): void {
+  _sessionExpiredCallback = fn;
+}
+
 apiClient.interceptors.response.use(
   (res) => res,
   (error) => {
@@ -79,6 +90,11 @@ apiClient.interceptors.response.use(
           // Fallback: React hasn't mounted yet, hard-redirect is the only option.
           window.location.href = toAppPath('/login');
         }
+      } else if (_sessionExpiredCallback) {
+        // On public pages we don't redirect, but we must still clear the in-memory
+        // auth store so stale admin controls (Edit/Delete buttons) disappear after
+        // a token becomes invalid (e.g. user deleted, token expired, DB reseed).
+        _sessionExpiredCallback();
       }
     }
     return Promise.reject(error);
