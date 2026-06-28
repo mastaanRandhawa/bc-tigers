@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import type { MatchStatus, Prisma } from '@prisma/client';
 import prisma from '../../prisma/prisma';
 import { pickAllowed } from '../../common/pick';
@@ -168,12 +168,22 @@ export class TournamentsService {
   }
 
   /** Soft delete (decommission) — never removes the row. */
-  remove(id: string) {
-    return this.auditable.softDelete(
-      (tx) => asAuditable(tx.tournament),
-      ENTITY,
-      id,
-    );
+  async remove(id: string) {
+    try {
+      return await this.auditable.softDelete(
+        (tx) => asAuditable(tx.tournament),
+        ENTITY,
+        id,
+      );
+    } catch (err) {
+      const code = (err as { code?: string })?.code;
+      if (code === 'P2003') {
+        throw new BadRequestException(
+          'Cannot delete this tournament because related data could not be decommissioned.',
+        );
+      }
+      throw err;
+    }
   }
 
   restore(id: string) {
@@ -185,8 +195,35 @@ export class TournamentsService {
   }
 
   /** Permanent hard delete — admin only. */
-  purge(id: string) {
-    return this.auditable.purge((tx) => asAuditable(tx.tournament), ENTITY, id);
+  async purge(id: string) {
+    const existing = await prisma.tournament.findUnique({ where: { id } });
+    if (!existing) throw new NotFoundException('Tournament not found');
+
+    try {
+      await prisma.$transaction(async (tx) => {
+        // Matches reference teams without onDelete — remove before divisions/teams cascade.
+        await tx.match.deleteMany({ where: { tournament_id: id } });
+        await tx.division.deleteMany({ where: { tournament_id: id } });
+        await tx.tournament.delete({ where: { id } });
+      });
+    } catch (err) {
+      const code = (err as { code?: string })?.code;
+      if (code === 'P2003') {
+        throw new BadRequestException(
+          'Cannot permanently delete this tournament because related data is still linked.',
+        );
+      }
+      throw err;
+    }
+
+    await this.audit.log({
+      action: 'PURGE',
+      entity: ENTITY,
+      entityId: id,
+      metadata: { name: existing.name, slug: existing.slug },
+    });
+
+    return { id };
   }
 
   history(id: string) {

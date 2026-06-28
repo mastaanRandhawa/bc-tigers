@@ -57,11 +57,16 @@ export function useUpdateTournament() {
   });
 }
 
+function invalidateTournamentQueries(qc: ReturnType<typeof useQueryClient>) {
+  qc.invalidateQueries({ queryKey: ['tournaments'] });
+  qc.invalidateQueries({ queryKey: queryKeys.hub.home });
+}
+
 export function useDeleteTournament() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => tournamentsService.delete(id),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['tournaments'] }),
+    onSuccess: () => invalidateTournamentQueries(qc),
   });
 }
 
@@ -87,7 +92,7 @@ export function usePurgeTournament() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => tournamentsService.purge(id),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['tournaments'] }),
+    onSuccess: () => invalidateTournamentQueries(qc),
   });
 }
 

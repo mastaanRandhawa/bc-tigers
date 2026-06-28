@@ -12,7 +12,9 @@ import { AdminContextBar } from '@/components/admin/inline/AdminContextBar';
 import { AdminActionButton } from '@/components/admin/inline/AdminActionButton';
 import { useCanAdminEdit } from '@/hooks/useCanAdminEdit';
 import { useFormDialog } from '@/hooks/useFormDialog';
-import { useTournaments, useDeleteTournament } from '@/hooks/useTournaments';
+import { useTournaments, usePurgeTournament } from '@/hooks/useTournaments';
+import { toast } from 'sonner';
+import { getApiErrorMessage } from '@/lib/errors';
 import { useListSearch } from '@/hooks/useListSearch';
 import { tournamentSearchText } from '@/lib/search-text';
 import { Trophy, Calendar, MapPin, ChevronRight, Plus, Pencil, Trash2 } from 'lucide-react';
@@ -24,7 +26,7 @@ export default function TournamentsPage() {
   const { data: tournaments = [], isLoading, isError, refetch } = useTournaments();
   const canEdit = useCanAdminEdit();
   const formDialog = useFormDialog<Tournament>();
-  const deleteMutation = useDeleteTournament();
+  const deleteMutation = usePurgeTournament();
   const [deleteTarget, setDeleteTarget] = useState<Tournament | null>(null);
 
   const getText = useCallback((t: (typeof tournaments)[0]) => tournamentSearchText(t), []);
@@ -35,8 +37,16 @@ export default function TournamentsPage() {
 
   const handleDelete = async () => {
     if (!deleteTarget) return;
-    await deleteMutation.mutateAsync(deleteTarget.id);
-    setDeleteTarget(null);
+    try {
+      await deleteMutation.mutateAsync(deleteTarget.id);
+      toast.success('Tournament deleted.');
+      await refetch();
+    } catch (err) {
+      toast.error(getApiErrorMessage(err, 'Failed to delete tournament'));
+      throw err;
+    } finally {
+      setDeleteTarget(null);
+    }
   };
 
   return (
@@ -190,7 +200,8 @@ export default function TournamentsPage() {
         open={!!deleteTarget}
         onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}
         title="Delete tournament?"
-        description={`"${deleteTarget?.name}" and all its data will be permanently removed.`}
+        description={`"${deleteTarget?.name}" and all its divisions, teams, and matches will be permanently removed.`}
+        showErrorToast={false}
         onConfirm={handleDelete}
       />
     </PageLayout>

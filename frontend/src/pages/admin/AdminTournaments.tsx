@@ -19,6 +19,8 @@ import { useNavigate } from 'react-router-dom';
 import { ExternalLink } from 'lucide-react';
 import { ConfirmDialog } from '@/components/admin/inline/ConfirmDialog';
 import { useState } from 'react';
+import { toast } from 'sonner';
+import { getApiErrorMessage } from '@/lib/errors';
 
 export default function AdminTournaments() {
   const navigate = useNavigate();
@@ -133,10 +135,18 @@ export default function AdminTournaments() {
         title={`Delete "${deleteTarget?.name}"?`}
         description="This decommissions the tournament (soft delete). It is hidden from public views but preserved and fully restorable."
         confirmLabel="Delete"
+        showErrorToast={false}
         onConfirm={async () => {
           if (!deleteTarget) return;
-          await deleteMutation.mutateAsync(deleteTarget.id);
-          setDeleteTarget(null);
+          try {
+            await deleteMutation.mutateAsync(deleteTarget.id);
+            toast.success('Tournament decommissioned.');
+            refetch();
+            setDeleteTarget(null);
+          } catch (err) {
+            toast.error(getApiErrorMessage(err, 'Failed to delete tournament'));
+            throw err;
+          }
         }}
       />
 
@@ -146,10 +156,18 @@ export default function AdminTournaments() {
         title={`Permanently purge "${purgeTarget?.name}"?`}
         description="This permanently hard-deletes the record and cannot be undone. Use Restore instead unless you are certain."
         confirmLabel="Purge permanently"
+        showErrorToast={false}
         onConfirm={async () => {
           if (!purgeTarget) return;
-          await purgeMutation.mutateAsync(purgeTarget.id);
-          setPurgeTarget(null);
+          try {
+            await purgeMutation.mutateAsync(purgeTarget.id);
+            toast.success('Tournament permanently deleted.');
+            refetch();
+            setPurgeTarget(null);
+          } catch (err) {
+            toast.error(getApiErrorMessage(err, 'Failed to purge tournament'));
+            throw err;
+          }
         }}
       />
 
