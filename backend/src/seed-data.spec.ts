@@ -1,76 +1,61 @@
 import {
-  isPlaceholderTeam,
-  collectTeams,
-  type ParsedMatch,
-} from '../prisma/data/schedule-utils';
-import { MIRI_PIRI_2026_DIVISIONS } from '../prisma/data/miri-piri-2026';
+  MIRI_PIRI_DIVISIONS,
+  VENUE_FIELDS,
+} from '../prisma/data/miri-piri-2026';
 
-describe('isPlaceholderTeam', () => {
-  it.each([
-    'Winner of Match 11',
-    'Loser of Match 9',
-    'Winner of Pool A',
-    'Pool A 1st',
-    'Pool B 2nd',
-    'Quarter Finals 1',
-    '1st Place',
-    '2nd Place',
-    'TBD',
-  ])('treats "%s" as a placeholder', (label) => {
-    expect(isPlaceholderTeam(label)).toBe(true);
+// Knockout/pool placeholders should never reach the seed (the generator filters
+// them out so only registered teams remain). This mirrors that contract.
+const PLACEHOLDER =
+  /winner|loser|quarter|semi|\bfinal\b|match\s*\d|pool\s*[a-d]\b|\b1st\b|\b2nd\b|\b3rd\b|\btbd\b/i;
+
+describe('MIRI_PIRI_DIVISIONS seed data', () => {
+  it('has the full set of divisions with registered teams', () => {
+    expect(MIRI_PIRI_DIVISIONS.length).toBeGreaterThanOrEqual(20);
+    const totalTeams = MIRI_PIRI_DIVISIONS.reduce((n, d) => n + d.teams.length, 0);
+    expect(totalTeams).toBeGreaterThanOrEqual(100);
   });
 
-  it.each([
-    'BCT Punjab FC',
-    'Van City Pro',
-    'SFC Liverpool', // contains "pool" but is a real team
-    'BC Tigers 2011',
-    'North Surrey Mustangs',
-    'AUSC',
-  ])('treats "%s" as a real team', (name) => {
-    expect(isPlaceholderTeam(name)).toBe(false);
-  });
-});
-
-describe('collectTeams', () => {
-  it('excludes placeholder slots', () => {
-    const matches = [
-      { home: 'BCT Punjab FC', away: 'Van City Pro' },
-      { home: 'Winner of Match 1', away: 'Pool A 1st' },
-      { home: 'Van City Pro', away: '1st Place' },
-    ] as ParsedMatch[];
-    expect(collectTeams(matches)).toEqual(['BCT Punjab FC', 'Van City Pro']);
-  });
-});
-
-describe('MIRI_PIRI_2026 seed data', () => {
   it('never lists a placeholder as a team', () => {
     const leaks: string[] = [];
-    for (const d of MIRI_PIRI_2026_DIVISIONS) {
+    for (const d of MIRI_PIRI_DIVISIONS) {
       for (const t of d.teams) {
-        if (isPlaceholderTeam(t)) leaks.push(`${d.name}: ${t}`);
+        if (PLACEHOLDER.test(t.name)) leaks.push(`${d.name}: ${t.name}`);
       }
     }
     expect(leaks).toEqual([]);
   });
 
-  it('has divisions with real registered teams', () => {
-    expect(MIRI_PIRI_2026_DIVISIONS.length).toBeGreaterThan(30);
-    const totalTeams = MIRI_PIRI_2026_DIVISIONS.reduce(
-      (n, d) => n + d.teams.length,
-      0,
-    );
-    expect(totalTeams).toBeGreaterThan(200);
+  it('only schedules fixtures between registered teams in the division', () => {
+    for (const d of MIRI_PIRI_DIVISIONS) {
+      const teamSet = new Set(d.teams.map((t) => t.name.toLowerCase()));
+      for (const m of d.matches) {
+        expect(teamSet.has(m.home.toLowerCase())).toBe(true);
+        expect(teamSet.has(m.away.toLowerCase())).toBe(true);
+      }
+    }
   });
 
-  it('keeps every match slot resolvable (real team or placeholder)', () => {
-    for (const d of MIRI_PIRI_2026_DIVISIONS) {
-      const teamSet = new Set(d.teams.map((t) => t.toLowerCase()));
+  it('keeps display order unique and contiguous from zero', () => {
+    const orders = MIRI_PIRI_DIVISIONS.map((d) => d.order).sort((a, b) => a - b);
+    orders.forEach((o, i) => expect(o).toBe(i));
+  });
+
+  it('assigns every team to a declared pool when groups are enabled', () => {
+    for (const d of MIRI_PIRI_DIVISIONS) {
+      if (!d.groups_enabled) continue;
+      expect(d.pools.length).toBeGreaterThan(0);
+      for (const t of d.teams) {
+        expect(t.pool).not.toBeNull();
+        expect(d.pools).toContain(t.pool as string);
+      }
+    }
+  });
+
+  it('references known venue fields in every fixture that has one', () => {
+    const fieldSet = new Set(VENUE_FIELDS);
+    for (const d of MIRI_PIRI_DIVISIONS) {
       for (const m of d.matches) {
-        for (const side of [m.home, m.away]) {
-          const ok = isPlaceholderTeam(side) || teamSet.has(side.toLowerCase());
-          expect(ok).toBe(true);
-        }
+        if (m.field) expect(fieldSet.has(m.field)).toBe(true);
       }
     }
   });

@@ -173,7 +173,7 @@ export default function MatchFormDialog({ open, onOpenChange, match, defaultDivi
       />
       <TextInputField control={form.control} name="scheduled_start" label="Kickoff" type="datetime-local" />
       <SelectField control={form.control} name="status" label="Status" options={STATUS_OPTIONS} />
-      <TextInputField control={form.control} name="round" label="Round" type="number" />
+      <TextInputField control={form.control} name="round" label="Game #" type="number" />
 
       {isEditing && match && (
         <div className="space-y-3 rounded-lg border border-border p-3">

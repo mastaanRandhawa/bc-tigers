@@ -328,7 +328,7 @@ export default function MatchDetailPage() {
                       <p className="whitespace-nowrap text-xs text-muted-foreground">
                         {formatTime(match.scheduled_start)}
                         {match.round !== undefined && (
-                          <span className="ml-1.5 font-medium">· Round {match.round}</span>
+                          <span className="ml-1.5 font-medium">· Game #{match.round}</span>
                         )}
                       </p>
                     </div>
@@ -528,7 +528,7 @@ export default function MatchDetailPage() {
                     }
                   />
                   {match.round !== undefined && (
-                    <InfoRow icon={Flag} label="Round" value={String(match.round)} />
+                    <InfoRow icon={Flag} label="Game" value={`#${match.round}`} />
                   )}
                   {match.venue && (
                     <InfoRow icon={MapPin} label="Venue" value={match.venue.name} />

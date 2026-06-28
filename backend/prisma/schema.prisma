@@ -172,6 +172,10 @@ model Division {
   bracket_locked    Boolean  @default(false)
   bracket_finalized Boolean  @default(false)
   schedule_only     Boolean  @default(false)
+  /// When true, teams/fixtures/standings are organized into Groups (pools).
+  groups_enabled    Boolean  @default(false)
+  /// Controls the order divisions are listed on the public site (ascending).
+  display_order     Int      @default(0)
   created_at        DateTime @default(now())
   updated_at     DateTime @updatedAt
 
@@ -182,13 +186,35 @@ model Division {
   standings     Standing[]
   bracket_nodes BracketNode[]
   stages        Stage[]
+  groups        Group[]
 
   @@unique([tournament_id, slug])
+}
+
+/// A group (pool) within a division, e.g. "Pool A". Teams, matches and standings
+/// can be scoped to a group so a single division runs several parallel tables.
+model Group {
+  id          String   @id @default(uuid())
+  division_id String
+  name        String
+  slug        String
+  order       Int      @default(0)
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+
+  division  Division   @relation(fields: [division_id], references: [id], onDelete: Cascade)
+  teams     Team[]
+  matches   Match[]
+  standings Standing[]
+
+  @@unique([division_id, slug])
+  @@index([division_id, order])
 }
 
 model Team {
   id                 String   @id @default(uuid())
   division_id        String
+  group_id           String?
   name               String
   slug               String
   logo               String?
@@ -211,6 +237,7 @@ model Team {
   record_status RecordStatus @default(ACTIVE)
 
   division       Division      @relation(fields: [division_id], references: [id], onDelete: Cascade)
+  group          Group?        @relation(fields: [group_id], references: [id], onDelete: SetNull)
   coach          User?         @relation("TeamCoach", fields: [coach_user_id], references: [id], onDelete: SetNull)
   players        Player[]
   home_matches   Match[]       @relation("HomeTeam")
@@ -223,6 +250,7 @@ model Team {
 
   @@unique([division_id, slug])
   @@index([is_deleted])
+  @@index([group_id])
 }
 
 model Player {
@@ -278,14 +306,9 @@ model Match {
   id              String      @id @default(uuid())
   tournament_id   String
   division_id     String
-  // Nullable so a fixture slot can be a bracket/pool placeholder (see *_label)
-  // instead of a registered team — e.g. "Winner of Match 11", "Pool A 1st".
-  home_team_id    String?
-  away_team_id    String?
-  // Display text shown when the team is not yet known. Exactly one of
-  // (home_team_id, home_label) is set per slot; same for away.
-  home_label      String?
-  away_label      String?
+  home_team_id    String
+  away_team_id    String
+  group_id        String?
   venue_id        String?
   field_id        String?
   stage_id        String?
@@ -302,8 +325,9 @@ model Match {
 
   tournament    Tournament      @relation(fields: [tournament_id], references: [id], onDelete: Cascade)
   division      Division        @relation(fields: [division_id], references: [id], onDelete: Cascade)
-  home_team     Team?           @relation("HomeTeam", fields: [home_team_id], references: [id])
-  away_team     Team?           @relation("AwayTeam", fields: [away_team_id], references: [id])
+  group         Group?          @relation(fields: [group_id], references: [id], onDelete: SetNull)
+  home_team     Team            @relation("HomeTeam", fields: [home_team_id], references: [id])
+  away_team     Team            @relation("AwayTeam", fields: [away_team_id], references: [id])
   venue         Venue?          @relation(fields: [venue_id], references: [id])
   field         Field?          @relation(fields: [field_id], references: [id])
   stage         Stage?          @relation(fields: [stage_id], references: [id])
@@ -314,6 +338,7 @@ model Match {
   @@index([status, scheduled_start])
   @@index([division_id, status])
   @@index([tournament_id, status])
+  @@index([group_id])
 }
 
 model MatchEvent {
@@ -384,6 +409,7 @@ model BracketNode {
 model Standing {
   id              String   @id @default(uuid())
   division_id     String
+  group_id        String?
   team_id         String
   played          Int      @default(0)
   wins            Int      @default(0)
@@ -398,10 +424,12 @@ model Standing {
   updated_at      DateTime @updatedAt
 
   division Division @relation(fields: [division_id], references: [id], onDelete: Cascade)
+  group    Group?   @relation(fields: [group_id], references: [id], onDelete: SetNull)
   team     Team     @relation(fields: [team_id], references: [id], onDelete: Cascade)
 
   @@unique([division_id, team_id])
   @@index([division_id, points])
+  @@index([group_id])
 }
 
 model Announcement {

@@ -39,6 +39,17 @@ export function useUpdateDivision() {
   });
 }
 
+export function useReorderDivisions() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (order: string[]) => divisionsService.reorder(order),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['divisions'] });
+      qc.invalidateQueries({ queryKey: ['tournaments'] });
+    },
+  });
+}
+
 export function useDeleteDivision() {
   const qc = useQueryClient();
   return useMutation({

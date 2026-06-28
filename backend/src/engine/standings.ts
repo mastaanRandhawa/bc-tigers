@@ -106,3 +106,62 @@ export function computeStandings(
   });
   return ranked;
 }
+
+/** A standings row tagged with the group it was ranked within (null = whole division). */
+export interface GroupedStandingRow extends StandingRow {
+  groupId: string | null;
+}
+
+/** Team identity plus the group it belongs to (null when ungrouped). */
+export interface TeamGroupRef {
+  id: string;
+  groupId: string | null;
+}
+
+/**
+ * Compute standings, ranking within each group when `groupsEnabled` is true.
+ *
+ * When grouping is on, every group becomes an independent table: a team is
+ * ranked only against the other members of its group, and only matches played
+ * between two members of the same group count toward that table (so knockout /
+ * cross-group fixtures never pollute a group's record). Teams with no group
+ * assignment are ranked together in a `null` bucket.
+ *
+ * When grouping is off this is identical to {@link computeStandings} with every
+ * row tagged `groupId: null`.
+ */
+export function computeGroupedStandings(
+  teams: TeamGroupRef[],
+  results: MatchResult[],
+  config: TournamentConfig,
+  fairPlay: Map<string, number> | undefined,
+  groupsEnabled: boolean,
+): GroupedStandingRow[] {
+  if (!groupsEnabled) {
+    return computeStandings(
+      teams.map((t) => t.id),
+      results,
+      config,
+      fairPlay,
+    ).map((row) => ({ ...row, groupId: null }));
+  }
+
+  const buckets = new Map<string | null, string[]>();
+  for (const team of teams) {
+    const key = team.groupId ?? null;
+    const bucket = buckets.get(key) ?? [];
+    bucket.push(team.id);
+    buckets.set(key, bucket);
+  }
+
+  const out: GroupedStandingRow[] = [];
+  for (const [groupId, teamIds] of buckets) {
+    const members = new Set(teamIds);
+    const scoped = results.filter(
+      (r) => members.has(r.homeTeamId) && members.has(r.awayTeamId),
+    );
+    const rows = computeStandings(teamIds, scoped, config, fairPlay);
+    for (const row of rows) out.push({ ...row, groupId });
+  }
+  return out;
+}

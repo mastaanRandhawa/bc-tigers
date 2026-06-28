@@ -47,6 +47,7 @@ export class TeamsService {
         : undefined,
       include: {
         division: { include: { tournament: true } },
+        group: { select: { id: true, name: true, slug: true, order: true } },
         coach: {
           select: {
             id: true,
@@ -100,6 +101,7 @@ export class TeamsService {
       where: { division_id: divisionId, slug },
       include: {
         division: { include: { tournament: true } },
+        group: { select: { id: true, name: true, slug: true, order: true } },
         coach: {
           select: {
             id: true,

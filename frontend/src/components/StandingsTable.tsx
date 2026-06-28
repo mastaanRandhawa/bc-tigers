@@ -65,12 +65,8 @@ export default function StandingsTable({
               <TableHead className="text-center">W</TableHead>
               <TableHead className="text-center">D</TableHead>
               <TableHead className="text-center">L</TableHead>
-              {!compact && (
-                <>
-                  <TableHead className="text-center">GF</TableHead>
-                  <TableHead className="text-center">GA</TableHead>
-                </>
-              )}
+              <TableHead className="text-center">GF</TableHead>
+              <TableHead className="text-center">GA</TableHead>
               <TableHead className="text-center">GD</TableHead>
               <TableHead className="text-center">Pts</TableHead>
               {showFairPlay && <TableHead className="text-center">FP</TableHead>}
@@ -152,12 +148,8 @@ function StandingRow({
                 <TableCell className="text-center text-green-600 dark:text-green-400 font-semibold">{s.wins}</TableCell>
                 <TableCell className="text-center text-muted-foreground font-medium">{s.draws}</TableCell>
                 <TableCell className="text-center text-foreground/70 font-medium">{s.losses}</TableCell>
-                {!compact && (
-                  <>
-                    <TableCell className="text-center">{s.goals_for}</TableCell>
-                    <TableCell className="text-center">{s.goals_against}</TableCell>
-                  </>
-                )}
+                <TableCell className="text-center">{s.goals_for}</TableCell>
+                <TableCell className="text-center">{s.goals_against}</TableCell>
                 <TableCell
                   className={cn(
                     'text-center font-semibold',

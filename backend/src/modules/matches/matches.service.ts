@@ -26,12 +26,9 @@ import {
 
 export type MatchEventActor = { userId: string; role: string };
 
-/** Display name for a match side: the team name, else the placeholder label. */
-function matchSideName(
-  team: { name: string } | null,
-  label: string | null,
-): string {
-  return team?.name ?? label ?? 'TBD';
+/** Display name for a match side: the team name, else a TBD placeholder. */
+function matchSideName(team: { name: string } | null): string {
+  return team?.name ?? 'TBD';
 }
 
 /** Client-settable scalar fields on a match. Scores are set via the score/events endpoints. */
@@ -40,8 +37,7 @@ const MATCH_FIELDS = [
   'division_id',
   'home_team_id',
   'away_team_id',
-  'home_label',
-  'away_label',
+  'group_id',
   'venue_id',
   'field_id',
   'scheduled_start',
@@ -64,6 +60,7 @@ const MATCH_EVENT_FIELDS = [
 const MATCH_LIST_INCLUDE = {
   home_team: { select: { id: true, name: true, slug: true, logo: true } },
   away_team: { select: { id: true, name: true, slug: true, logo: true } },
+  group: { select: { id: true, name: true, slug: true, order: true } },
   venue: { select: { id: true, name: true, slug: true } },
   tournament: { select: { id: true, name: true, slug: true } },
   division: {
@@ -214,7 +211,7 @@ export class MatchesService {
       await this.emailAdmins(
         match.tournament_id,
         'Match started',
-        `${matchSideName(match.home_team, match.home_label)} vs ${matchSideName(match.away_team, match.away_label)} is now live`,
+        `${matchSideName(match.home_team)} vs ${matchSideName(match.away_team)} is now live`,
       );
     }
 
@@ -223,7 +220,7 @@ export class MatchesService {
       await this.emailAdmins(
         match.tournament_id,
         'Match completed',
-        `Final: ${matchSideName(match.home_team, match.home_label)} ${match.home_score} – ${match.away_score} ${matchSideName(match.away_team, match.away_label)}`,
+        `Final: ${matchSideName(match.home_team)} ${match.home_score} – ${match.away_score} ${matchSideName(match.away_team)}`,
       );
       await this.advanceBracketFromMatch(match);
     }

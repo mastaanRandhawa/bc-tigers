@@ -37,7 +37,9 @@ export class TournamentsService {
       where: status
         ? { status: status as Prisma.EnumTournamentStatusFilter }
         : undefined,
-      include: { divisions: true },
+      include: {
+        divisions: { orderBy: [{ display_order: 'asc' }, { created_at: 'asc' }] },
+      },
       skip: (page - 1) * limit,
       take: limit,
       orderBy: { start_date: 'desc' },
@@ -59,8 +61,11 @@ export class TournamentsService {
             format: true,
             primary_color: true,
             accent_color: true,
+            groups_enabled: true,
+            display_order: true,
             _count: { select: { teams: true } },
           },
+          orderBy: [{ display_order: 'asc' }, { created_at: 'asc' }],
         },
       },
     });
@@ -134,8 +139,11 @@ export class TournamentsService {
             format: true,
             primary_color: true,
             accent_color: true,
+            groups_enabled: true,
+            display_order: true,
             _count: { select: { teams: true, matches: true } },
           },
+          orderBy: [{ display_order: 'asc' }, { created_at: 'asc' }],
         },
       },
     });

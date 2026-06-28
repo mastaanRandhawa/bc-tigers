@@ -1,20 +1,12 @@
 import 'dotenv/config';
-import { PrismaClient, type Gender, type MatchStatus } from '@prisma/client';
+import { PrismaClient, type Gender } from '@prisma/client';
 import { PrismaPg } from '@prisma/adapter-pg';
 import * as bcrypt from 'bcrypt';
-import { computeStandings } from '../src/engine/standings';
 import {
-  buildFairPlayMap,
-  mapPrismaMatchToResult,
-  toTournamentConfig,
-} from '../src/engine/point-format-mapper';
-import {
-  MIRI_PIRI_2026_DIVISIONS,
-  MIRI_PIRI_2026_FIELDS,
-  assertValidMiriPiri2026Data,
-  type MiriPiriDivisionSeed,
+  MIRI_PIRI_DIVISIONS,
+  VENUE_FIELDS,
+  type SeedDivision,
 } from './data/miri-piri-2026';
-import { isPlaceholderTeam } from './data/schedule-utils';
 
 const connectionString = process.env.DATABASE_URL!;
 const isRemote =
@@ -26,11 +18,6 @@ const prisma = new PrismaClient({
     ...(isRemote && { ssl: { rejectUnauthorized: false } }),
   }),
 });
-
-const ADULT_PLAYERS_PER_TEAM = 15;
-const YOUTH_PLAYERS_PER_TEAM = 12;
-const REC_PLAYERS_PER_TEAM = 10;
-const MINI_PLAYERS_PER_TEAM = 8;
 
 function slugify(s: string) {
   return s
@@ -68,7 +55,7 @@ function teamLogoUrl(name: string, primaryColor: string) {
   return `https://ui-avatars.com/api/?${params.toString()}`;
 }
 
-/** Miri Piri 2026 — July 3–5 (Pacific local) */
+/** Miri Piri 2026 — July 3–5 (Pacific local). `day` is the day-of-month in July. */
 function cupDate(day: number, hour = 10, minute = 0) {
   return new Date(2026, 6, day, hour, minute, 0);
 }
@@ -100,65 +87,14 @@ Ajinderpal Mangat (604) 240-9742
 Rakesh Kumar — Youth Coordinator (778) 233-7338
 Vicky Virk — Adult Coordinator (604) 760-3506`;
 
-// Each field belongs to its real-world park. Only "NAP …" fields are at Newton
-// Athletic Park; Bear Creek, Strawberry Hill, and Hjorth Road are separate venues.
-const VENUES = [
-  {
-    key: 'nap',
-    name: 'Newton Athletic Park',
-    slug: 'newton-athletic-park',
-    address: '7395 128 St',
-    city: 'Surrey, BC V3W 2M7',
-    parking_info: 'Free parking available on site. Enter from 128 Street.',
-  },
-  {
-    key: 'bear-creek',
-    name: 'Bear Creek Park',
-    slug: 'bear-creek-park',
-    address: '13750 88 Ave',
-    city: 'Surrey, BC V3W 3K8',
-    parking_info: 'Free parking on site off 88 Avenue and King George Blvd.',
-  },
-  {
-    key: 'strawberry-hill',
-    name: 'Strawberry Hill Park',
-    slug: 'strawberry-hill-park',
-    address: '12345 75A Ave',
-    city: 'Surrey, BC V3W 0M9',
-    parking_info: 'Free parking on site.',
-  },
-  {
-    key: 'hjorth-road',
-    name: 'Hjorth Road Park',
-    slug: 'hjorth-road-park',
-    address: '9260 Hjorth Rd',
-    city: 'Surrey, BC V3V 1T9',
-    parking_info: 'Free parking on site.',
-  },
-] as const;
-
-type VenueKey = (typeof VENUES)[number]['key'];
-
-/** Resolve which park a field name belongs to. NAP (and anything else) → Newton. */
-function venueKeyForField(name: string): VenueKey {
-  const n = name.toUpperCase();
-  if (n.startsWith('BEAR')) return 'bear-creek';
-  if (n.startsWith('STRAWBERRY')) return 'strawberry-hill';
-  if (n.startsWith('HJORTH') || n.startsWith('HORTH')) return 'hjorth-road';
-  return 'nap';
-}
-
-function fieldSurface(name: string): string {
-  if (name.includes('Mini Turf')) return 'Mini turf';
-  if (name.includes('Turf') || name.includes('HJORTH') || name.includes('Hjorth')) return 'Turf';
-  return 'Natural grass';
-}
-
-const FIELDS = MIRI_PIRI_2026_FIELDS.map((name) => ({
-  name,
-  surface: fieldSurface(name),
-  venueKey: venueKeyForField(name),
-}));
+const VENUE = {
+  name: 'Newton Athletic Park',
+  slug: 'newton-athletic-park',
+  address: '7395 128 St',
+  city: 'Surrey, BC V3W 2M7',
+  parking_info:
+    'Free parking on site (enter from 128 Street). Additional parking across the street at FD Sinclair School.',
+};
 
 const REFEREES = [
   { first_name: 'Ajinderpal', last_name: 'Mangat', email: 'ajinderpal@bctigers.ca' },
@@ -189,8 +125,8 @@ function inferCity(teamName: string): string {
   if (n.includes('CALGARY')) return 'Calgary, AB';
   if (n.includes('RICHMOND')) return 'Richmond, BC';
   if (n.includes('BRAMPTON')) return 'Brampton, ON';
-  if (n.includes('FIJI')) return 'Surrey, BC';
-  if (n.includes('BURUNDI')) return 'Surrey, BC';
+  if (n.includes('BURNABY')) return 'Burnaby, BC';
+  if (n.includes('LANGLEY')) return 'Langley, BC';
   if (n.includes('VANCOUVER') || n.includes('VAN CITY')) return 'Vancouver, BC';
   if (n.includes('CLOVERDALE')) return 'Cloverdale, BC';
   if (n.includes('ABBOTSFORD')) return 'Abbotsford, BC';
@@ -198,11 +134,11 @@ function inferCity(teamName: string): string {
   return 'Surrey, BC';
 }
 
-function buildTeams(names: string[], colorOffset = 0) {
-  return names.map((name, i) => {
-    const colors = PALETTE[(colorOffset + i) % PALETTE.length];
-    return { name, city: inferCity(name), primaryColor: colors.primary };
-  });
+function fieldSurface(name: string): string {
+  const n = name.toUpperCase();
+  if (n.includes('TURF') || n.includes('MINI')) return 'Turf';
+  if (n.includes('STRAWBERRY') || n.includes('HJORTH') || n.includes('HORTH')) return 'Natural grass';
+  return 'Natural grass';
 }
 
 const FIRST_NAMES_M = [
@@ -248,41 +184,40 @@ function firstNamesForGender(gender: Gender) {
   return FIRST_NAMES_M;
 }
 
-function uniqueSeedName(gender: Gender, offset: number) {
+// Names repeat across teams (rosters are demo data); uniqueness is only enforced
+// per-team via the slug, so we simply wrap around the name pool.
+function seededName(gender: Gender, offset: number) {
   const firstNames = firstNamesForGender(gender);
-  const comboCount = firstNames.length * LAST_NAMES.length;
-  const idx = offset % comboCount;
+  const totalCombos = firstNames.length * LAST_NAMES.length;
+  const o = offset % totalCombos;
   return {
-    first_name: firstNames[idx % firstNames.length],
-    last_name: LAST_NAMES[Math.floor(idx / firstNames.length) % LAST_NAMES.length],
+    first_name: firstNames[o % firstNames.length],
+    last_name: LAST_NAMES[Math.floor(o / firstNames.length) % LAST_NAMES.length],
   };
 }
 
 function playerDob(ageGroup: string, index: number): Date {
-  const uMatch = ageGroup.match(/^U(\d+)$/);
-  if (uMatch) {
-    const birthYear = 2026 - parseInt(uMatch[1], 10) - (index % 2);
-    return new Date(birthYear, (index * 3) % 12, 5 + (index % 20));
+  const u = /U(\d+)/.exec(ageGroup);
+  let year: number;
+  if (u) {
+    year = 2026 - Number(u[1]) + (index % 2);
+  } else if (ageGroup === '40+') {
+    year = 1980 - (index % 6);
+  } else if (ageGroup === '45+') {
+    year = 1975 - (index % 6);
+  } else if (ageGroup === '60+') {
+    year = 1962 - (index % 5);
+  } else {
+    year = 1995 - (index % 8);
   }
-  const year =
-    ageGroup === '40+' ? 1978 - (index % 5)
-    : ageGroup === '45+' ? 1973 - (index % 5)
-    : 1995 - (index % 8);
   return new Date(year, (index * 3) % 12, 5 + (index % 20));
-}
-
-function playersPerTeamForDivision(div: MiriPiriDivisionSeed): number {
-  if (div.slug.includes('recreational') || div.name.includes('Recreational')) return REC_PLAYERS_PER_TEAM;
-  if (div.schedule_only && /^u[5-9]|^u1[0-2]/.test(div.slug)) return MINI_PLAYERS_PER_TEAM;
-  if (div.age_group.startsWith('U')) return YOUTH_PLAYERS_PER_TEAM;
-  return ADULT_PLAYERS_PER_TEAM;
 }
 
 function makePlayers(teamSlug: string, count: number, gender: Gender, ageGroup: string) {
   const start = PLAYER_NAME_CURSOR[gender];
   PLAYER_NAME_CURSOR[gender] += count;
   return Array.from({ length: count }, (_, i) => {
-    const { first_name, last_name } = uniqueSeedName(gender, start + i);
+    const { first_name, last_name } = seededName(gender, start + i);
     return {
       first_name,
       last_name,
@@ -294,21 +229,11 @@ function makePlayers(teamSlug: string, count: number, gender: Gender, ageGroup: 
   });
 }
 
-type TeamRecord = { id: string; name: string; slug: string };
-type PlayerRecord = { id: string; team_id: string; preferred_position: string | null };
-
-interface FixturePlan {
-  matchNum: string;
-  homeName: string;
-  awayName: string;
-  day: number;
-  hour: number;
-  minute?: number;
-  fieldName: string;
-  matchType: string;
-  status: MatchStatus;
-  homeScore: number;
-  awayScore: number;
+function playersPerTeamFor(div: SeedDivision): number {
+  if (/U\d+/.test(div.age_group)) return 12; // youth
+  if (div.slug === 'recreational') return 10;
+  if (div.format.toUpperCase().includes('EXHIBITION')) return 14;
+  return 15; // adult
 }
 
 async function ensurePointFormats() {
@@ -361,185 +286,14 @@ async function ensurePointFormats() {
   return { standard, usfa };
 }
 
-async function recalculateStandings(divisionId: string) {
-  const division = await prisma.division.findUniqueOrThrow({
-    where: { id: divisionId },
-    include: { point_format: true },
-  });
-  const [completedMatches, teams, cardEvents] = await Promise.all([
-    prisma.match.findMany({
-      where: { division_id: divisionId, status: 'COMPLETED' },
-    }),
-    prisma.team.findMany({ where: { division_id: divisionId }, select: { id: true } }),
-    prisma.matchEvent.findMany({
-      where: {
-        type: { in: ['YELLOW_CARD', 'RED_CARD'] },
-        match: { division_id: divisionId, status: 'COMPLETED' },
-      },
-      select: { team_id: true, type: true },
-    }),
-  ]);
-
-  const teamIds = teams.map((t) => t.id);
-  const fairPlay = buildFairPlayMap(cardEvents, teamIds);
-  const results = completedMatches.map(mapPrismaMatchToResult);
-  const config = toTournamentConfig(division.point_format);
-  const rows = computeStandings(teamIds, results, config, fairPlay);
-
-  for (const row of rows) {
-    await prisma.standing.updateMany({
-      where: { division_id: divisionId, team_id: row.teamId },
-      data: {
-        played: row.played,
-        wins: row.wins,
-        draws: row.draws,
-        losses: row.losses,
-        goals_for: row.goalsFor,
-        goals_against: row.goalsAgainst,
-        goal_difference: row.goalDifference,
-        points: row.points,
-        fair_play: fairPlay.get(row.teamId) ?? 0,
-        rank: row.rank,
-      },
-    });
-  }
-}
-
-function teamByName(teams: TeamRecord[], name: string) {
-  const team = teams.find((t) => t.name.toLowerCase() === name.toLowerCase());
-  if (!team) throw new Error(`Team not found for fixture: ${name}`);
-  return team;
-}
-
-function pickScorer(players: PlayerRecord[], teamId: string, preferForward = true) {
-  const roster = players.filter((p) => p.team_id === teamId);
-  const forwards = roster.filter((p) => p.preferred_position === 'ST' || p.preferred_position === 'CF');
-  const pool = preferForward && forwards.length > 0 ? forwards : roster;
-  return pool[Math.floor(Math.random() * pool.length)] ?? roster[0];
-}
-
-async function createGoalEvents(
-  matchId: string,
-  homeTeamId: string,
-  awayTeamId: string,
-  homeScore: number,
-  awayScore: number,
-  players: PlayerRecord[],
-) {
-  let minute = 8;
-  for (let g = 0; g < homeScore; g++) {
-    const scorer = pickScorer(players, homeTeamId);
-    await prisma.matchEvent.create({
-      data: {
-        match_id: matchId,
-        team_id: homeTeamId,
-        player_id: scorer?.id,
-        type: 'GOAL',
-        minute: minute + g * 17,
-      },
-    });
-  }
-  minute = 14;
-  for (let g = 0; g < awayScore; g++) {
-    const scorer = pickScorer(players, awayTeamId);
-    await prisma.matchEvent.create({
-      data: {
-        match_id: matchId,
-        team_id: awayTeamId,
-        player_id: scorer?.id,
-        type: 'GOAL',
-        minute: minute + g * 19,
-      },
-    });
-  }
-}
-
-function fixturesFromDivision(div: MiriPiriDivisionSeed): FixturePlan[] {
-  return div.matches.map((m) => ({
-    matchNum: m.num,
-    homeName: m.home,
-    awayName: m.away,
-    day: m.day,
-    hour: m.hour,
-    minute: m.minute,
-    fieldName: m.field,
-    matchType: m.matchType,
-    status: m.status,
-    homeScore: 0,
-    awayScore: 0,
-  }));
-}
-
-async function seedPlannedMatches(
-  tournamentId: string,
-  divisionId: string,
-  teams: TeamRecord[],
-  players: PlayerRecord[],
-  venueIdByKey: Map<VenueKey, string>,
-  fieldByName: Map<string, string>,
-  fixtures: FixturePlan[],
-) {
-  const napVenueId = venueIdByKey.get('nap')!;
-  for (let i = 0; i < fixtures.length; i++) {
-    const fx = fixtures[i];
-    // Bracket/pool placeholders ("Winner of Match 11", "Pool A 1st") are stored
-    // as display labels, not teams — so no placeholder Team rows are created.
-    const home = isPlaceholderTeam(fx.homeName) ? null : teamByName(teams, fx.homeName);
-    const away = isPlaceholderTeam(fx.awayName) ? null : teamByName(teams, fx.awayName);
-    const official = REFEREES[i % REFEREES.length];
-    const fieldId = fieldByName.get(fx.fieldName) ?? fieldByName.values().next().value;
-    // Venue follows the field's park (NAP → Newton, else its own venue).
-    const venueId = venueIdByKey.get(venueKeyForField(fx.fieldName)) ?? napVenueId;
-
-    const match = await prisma.match.create({
-      data: {
-        tournament_id: tournamentId,
-        division_id: divisionId,
-        home_team_id: home?.id ?? null,
-        away_team_id: away?.id ?? null,
-        home_label: home ? null : fx.homeName,
-        away_label: away ? null : fx.awayName,
-        venue_id: venueId,
-        field_id: fieldId,
-        scheduled_start: cupDate(fx.day, fx.hour, fx.minute ?? 0),
-        scheduled_end: cupDate(fx.day, fx.hour + 1, 45),
-        status: fx.status,
-        round: parseInt(fx.matchNum.replace(/\D/g, ''), 10) || i + 1,
-        match_type: fx.matchType,
-        home_score: fx.homeScore,
-        away_score: fx.awayScore,
-      },
-    });
-
-    await prisma.matchOfficial.createMany({
-      data: [
-        {
-          match_id: match.id,
-          name: `${official.first_name} ${official.last_name}`,
-          role: 'MAIN',
-          email: official.email,
-        },
-        {
-          match_id: match.id,
-          name: `${REFEREES[(i + 1) % REFEREES.length].first_name} ${REFEREES[(i + 1) % REFEREES.length].last_name}`,
-          role: 'AR1',
-        },
-      ],
-    });
-
-    if ((fx.status === 'COMPLETED' || fx.status === 'LIVE') && home && away) {
-      await createGoalEvents(match.id, home.id, away.id, fx.homeScore, fx.awayScore, players);
-    }
-  }
-}
-
-// Admin credentials are NOT hardcoded — they must be supplied via environment
-// variables. The seed refuses to run without them, so no account email or
-// password ever ships in source control.
-const ADMIN_EMAIL = process.env.SEED_ADMIN_EMAIL;
-const ADMIN_PASSWORD = process.env.SEED_ADMIN_PASSWORD;
-const SUPERADMIN_EMAIL = process.env.SEED_SUPERADMIN_EMAIL;
-const SUPERADMIN_PASSWORD = process.env.SEED_SUPERADMIN_PASSWORD;
+// Default admin credentials are for local/demo seeding only. In production,
+// provide SEED_ADMIN_PASSWORD / SEED_SUPERADMIN_PASSWORD via env so the seeded
+// accounts don't ship with publicly-known passwords.
+const ADMIN_PASSWORD = process.env.SEED_ADMIN_PASSWORD ?? 'Admin1234!';
+const SUPERADMIN_PASSWORD =
+  process.env.SEED_SUPERADMIN_PASSWORD ?? 'SuperAdmin1234!';
+const usingDefaultAdminPasswords =
+  !process.env.SEED_ADMIN_PASSWORD || !process.env.SEED_SUPERADMIN_PASSWORD;
 
 async function main() {
   // This seed is destructive — it wipes every table before inserting demo data.
@@ -550,16 +304,14 @@ async function main() {
         'Set ALLOW_PROD_SEED=true to override (this DELETES all data).',
     );
   }
-  // Require admin credentials from the environment — none are baked into source.
-  if (!ADMIN_EMAIL || !ADMIN_PASSWORD || !SUPERADMIN_EMAIL || !SUPERADMIN_PASSWORD) {
+  if (process.env.NODE_ENV === 'production' && usingDefaultAdminPasswords) {
     throw new Error(
-      'Missing seed admin credentials. Set SEED_ADMIN_EMAIL, SEED_ADMIN_PASSWORD, ' +
-        'SEED_SUPERADMIN_EMAIL, and SEED_SUPERADMIN_PASSWORD before running the seed.',
+      'Refusing to seed default admin passwords in production. ' +
+        'Set SEED_ADMIN_PASSWORD and SEED_SUPERADMIN_PASSWORD to strong values.',
     );
   }
 
   console.log('Seeding Miri Piri 2026 tournament data...');
-  assertValidMiriPiri2026Data();
 
   await prisma.passwordResetToken.deleteMany();
   await prisma.siteSettings.deleteMany();
@@ -573,6 +325,7 @@ async function main() {
   await prisma.stage.deleteMany();
   await prisma.player.deleteMany();
   await prisma.team.deleteMany();
+  await prisma.group.deleteMany();
   await prisma.division.deleteMany();
   await prisma.tournament.deleteMany();
   await prisma.field.deleteMany();
@@ -580,17 +333,14 @@ async function main() {
   await prisma.user.deleteMany();
   console.log('  Cleared existing data.');
 
-  // The whole Miri Piri tournament runs on the 10-point system, so every
-  // division uses it. (The 3-point standard format is still created so it's
-  // available to pick in the admin point-formats list.)
-  const { usfa: usfaFormat } = await ensurePointFormats();
+  const { standard: standardFormat, usfa: usfaFormat } = await ensurePointFormats();
   console.log('  Point formats ready.');
 
   const adminUser = await prisma.user.create({
     data: {
       first_name: 'BC Tigers',
       last_name: 'Admin',
-      email: ADMIN_EMAIL,
+      email: 'admin@bctigers.ca',
       password_hash: await bcrypt.hash(ADMIN_PASSWORD, 12),
       role: 'ADMIN',
       approved: true,
@@ -602,7 +352,7 @@ async function main() {
     data: {
       first_name: 'BC Tigers',
       last_name: 'Super Admin',
-      email: SUPERADMIN_EMAIL,
+      email: 'superadmin@bctigers.ca',
       password_hash: await bcrypt.hash(SUPERADMIN_PASSWORD, 12),
       role: 'SUPERADMIN',
       approved: true,
@@ -631,37 +381,17 @@ async function main() {
     },
   });
 
-  const venueIdByKey = new Map<VenueKey, string>();
-  for (const v of VENUES) {
-    const created = await prisma.venue.create({
-      data: {
-        name: v.name,
-        slug: v.slug,
-        address: v.address,
-        city: v.city,
-        parking_info: v.parking_info,
-      },
+  const venue = await prisma.venue.create({ data: VENUE });
+  const fieldIdByName = new Map<string, string>();
+  for (const name of VENUE_FIELDS) {
+    const field = await prisma.field.create({
+      data: { venue_id: venue.id, name, surface: fieldSurface(name), capacity: 500 },
     });
-    venueIdByKey.set(v.key, created.id);
+    fieldIdByName.set(name, field.id);
   }
-  const napVenueId = venueIdByKey.get('nap')!;
+  console.log(`  Venue: ${venue.name} (${VENUE_FIELDS.length} fields)`);
 
-  const fields = await Promise.all(
-    FIELDS.map((f) =>
-      prisma.field.create({
-        data: {
-          venue_id: venueIdByKey.get(f.venueKey) ?? napVenueId,
-          name: f.name,
-          surface: f.surface,
-          capacity: 500,
-        },
-      }),
-    ),
-  );
-  const fieldByName = new Map(fields.map((f) => [f.name, f.id]));
-
-  console.log(`  ${VENUES.length} venues, ${fields.length} fields.`);
-
+  // Tournament has not started yet — everything is scheduled for July 3–5, 2026.
   const tournament = await prisma.tournament.create({
     data: {
       name: '14th Annual Miri Piri Soccer Tournament',
@@ -673,7 +403,7 @@ async function main() {
       start_date: cupDate(3, 18),
       end_date: cupDate(5, 20),
       location: 'Newton Athletic Park, Surrey, BC',
-      status: 'ACTIVE',
+      status: 'UPCOMING',
       tournament_type: 'GROUP_STAGE_PLUS_KNOCKOUT',
       rules: TOURNAMENT_RULES,
       created_by: adminUser.id,
@@ -681,97 +411,143 @@ async function main() {
   });
   console.log(`  Tournament: ${tournament.name} (${tournament.status})`);
 
-  let divisionIndex = 0;
   let totalTeams = 0;
   let totalPlayers = 0;
-  let matchDivisions = 0;
+  let totalMatches = 0;
+  let totalGroups = 0;
 
-  for (const divConfig of MIRI_PIRI_2026_DIVISIONS) {
-    const teamDefs = buildTeams(divConfig.teams, divisionIndex * 3);
+  let divisionIndex = 0;
+  for (const div of MIRI_PIRI_DIVISIONS) {
     const colors = PALETTE[divisionIndex % PALETTE.length];
-    const playersPerTeam = playersPerTeamForDivision(divConfig);
 
     const division = await prisma.division.create({
       data: {
         tournament_id: tournament.id,
-        name: divConfig.name,
-        slug: divConfig.slug,
-        age_group: divConfig.age_group,
-        gender: divConfig.gender,
-        max_teams: Math.max(16, teamDefs.length),
-        format: `${divConfig.format} · ${divConfig.prize_note}`,
-        point_format_id: usfaFormat.id,
+        name: div.name,
+        slug: div.slug,
+        age_group: div.age_group,
+        gender: div.gender,
+        max_teams: Math.max(16, div.teams.length),
+        format: div.format,
+        point_format_id: div.slug === 'premier' ? usfaFormat.id : standardFormat.id,
         primary_color: colors.primary,
         accent_color: colors.accent,
-        schedule_only: divConfig.schedule_only,
+        schedule_only: div.schedule_only,
+        groups_enabled: div.groups_enabled,
+        display_order: div.order,
       },
     });
 
-    const teams = await Promise.all(
-      teamDefs.map((t) =>
-        prisma.team.create({
+    // Groups (pools) for this division.
+    const groupIdByName = new Map<string, string>();
+    if (div.groups_enabled) {
+      for (let gi = 0; gi < div.pools.length; gi++) {
+        const poolName = div.pools[gi];
+        const group = await prisma.group.create({
           data: {
             division_id: division.id,
-            name: t.name,
-            slug: slugify(`${divConfig.slug}-${t.name}`),
-            logo: teamLogoUrl(t.name, t.primaryColor),
-            city: t.city,
-            founded_year: 2010 + (divisionIndex % 12),
-            primary_color: t.primaryColor,
-            created_by: adminUser.id,
+            name: poolName,
+            slug: slugify(poolName),
+            order: gi,
           },
-        }),
-      ),
-    );
-    totalTeams += teams.length;
+        });
+        groupIdByName.set(poolName, group.id);
+        totalGroups++;
+      }
+    }
 
-    const allPlayers: PlayerRecord[] = [];
-    for (const team of teams) {
-      const playerDefs = makePlayers(team.slug, playersPerTeam, divConfig.gender, divConfig.age_group);
+    // Teams.
+    const teamIdByName = new Map<string, { id: string; groupId: string | null }>();
+    for (let ti = 0; ti < div.teams.length; ti++) {
+      const t = div.teams[ti];
+      const teamColors = PALETTE[(divisionIndex * 3 + ti) % PALETTE.length];
+      const groupId = t.pool ? groupIdByName.get(t.pool) ?? null : null;
+      const team = await prisma.team.create({
+        data: {
+          division_id: division.id,
+          group_id: groupId,
+          name: t.name,
+          slug: slugify(`${div.slug}-${t.name}`),
+          logo: teamLogoUrl(t.name, teamColors.primary),
+          city: inferCity(t.name),
+          founded_year: 2010 + (divisionIndex % 12),
+          primary_color: teamColors.primary,
+          created_by: adminUser.id,
+        },
+      });
+      teamIdByName.set(t.name, { id: team.id, groupId });
+
+      const playerDefs = makePlayers(
+        team.slug,
+        playersPerTeamFor(div),
+        div.gender,
+        div.age_group,
+      );
       await prisma.player.createMany({
         data: playerDefs.map((p) => ({ ...p, team_id: team.id, active: true })),
       });
-      const created = await prisma.player.findMany({
-        where: { team_id: team.id },
-        select: { id: true, team_id: true, preferred_position: true },
-      });
-      allPlayers.push(...created);
       totalPlayers += playerDefs.length;
     }
+    totalTeams += div.teams.length;
 
-    await Promise.all(
-      teams.map((t) =>
-        prisma.standing.create({
-          data: { division_id: division.id, team_id: t.id, rank: 0 },
-        }),
-      ),
-    );
+    // Zeroed standings (tournament hasn't started).
+    await prisma.standing.createMany({
+      data: Array.from(teamIdByName.values()).map((t) => ({
+        division_id: division.id,
+        group_id: t.groupId,
+        team_id: t.id,
+        rank: 0,
+      })),
+    });
 
-    if (divConfig.seedMatches) {
-      const teamRecords: TeamRecord[] = teams.map((t) => ({ id: t.id, name: t.name, slug: t.slug }));
-      const fixtures = fixturesFromDivision(divConfig);
+    // Pool / round-robin fixtures — all scheduled, no scores.
+    let refIndex = 0;
+    for (const m of div.matches) {
+      const home = teamIdByName.get(m.home);
+      const away = teamIdByName.get(m.away);
+      if (!home || !away) continue;
+      const groupId = m.pool ? groupIdByName.get(m.pool) ?? null : null;
+      const start = cupDate(m.day, m.hour, m.minute);
+      const end = new Date(start.getTime() + 105 * 60 * 1000);
 
-      await seedPlannedMatches(
-        tournament.id,
-        division.id,
-        teamRecords,
-        allPlayers,
-        venueIdByKey,
-        fieldByName,
-        fixtures,
-      );
-      if (!divConfig.schedule_only) {
-        await recalculateStandings(division.id);
-      }
-      matchDivisions++;
+      const match = await prisma.match.create({
+        data: {
+          tournament_id: tournament.id,
+          division_id: division.id,
+          home_team_id: home.id,
+          away_team_id: away.id,
+          group_id: groupId,
+          venue_id: venue.id,
+          field_id: m.field ? fieldIdByName.get(m.field) ?? null : null,
+          scheduled_start: start,
+          scheduled_end: end,
+          status: 'SCHEDULED',
+          round: m.game,
+          match_type: m.pool ? 'Pool play' : 'Round robin',
+          home_score: 0,
+          away_score: 0,
+        },
+      });
+
+      const main = REFEREES[refIndex % REFEREES.length];
+      const ar = REFEREES[(refIndex + 1) % REFEREES.length];
+      await prisma.matchOfficial.createMany({
+        data: [
+          { match_id: match.id, name: `${main.first_name} ${main.last_name}`, role: 'MAIN', email: main.email },
+          { match_id: match.id, name: `${ar.first_name} ${ar.last_name}`, role: 'AR1' },
+        ],
+      });
+      refIndex++;
+      totalMatches++;
     }
 
     divisionIndex++;
   }
 
-  const totalMatches = MIRI_PIRI_2026_DIVISIONS.reduce((n, d) => n + d.matches.length, 0);
-  console.log(`  ${MIRI_PIRI_2026_DIVISIONS.length} divisions, ${totalTeams} teams, ${totalPlayers} players, ${totalMatches} matches.`);
-  console.log(`  Schedules seeded in ${matchDivisions} divisions.`);
+  console.log(
+    `  ${MIRI_PIRI_DIVISIONS.length} divisions, ${totalGroups} groups, ${totalTeams} teams, ${totalPlayers} players.`,
+  );
+  console.log(`  ${totalMatches} pool fixtures scheduled (all upcoming, no scores).`);
 
   await prisma.announcement.createMany({
     data: [
@@ -779,7 +555,7 @@ async function main() {
         tournament_id: tournament.id,
         title: 'Welcome to the 14th Annual Miri Piri Soccer Tournament',
         message:
-          'July 3–5, 2026 at Newton Athletic Park, Surrey. Check-in opens 90 minutes before your first match. ' +
+          'July 3–5, 2026 at Newton Athletic Park, Surrey. Check-in opens 90 minutes before your first game. ' +
           'District team entry deadline was June 15, 2026.',
         type: 'INFO',
       },
@@ -788,23 +564,15 @@ async function main() {
         title: 'Saturday & Sunday lunch provided',
         message:
           'Free appetizers and lunch for all registered teams on Saturday and Sunday. ' +
-          'Head to the BC Tigers FC hospitality tent near Field 1.',
+          'Head to the BC Tigers FC hospitality tent near NAP 1.',
         type: 'INFO',
       },
       {
         tournament_id: tournament.id,
-        title: 'Parking & field assignments',
+        title: 'Parking & schedule',
         message:
-          'Free parking on site via 128 Street. Additional parking across the street at FD Sinclair School. ' +
-          'Check NAP field assignments on your schedule — mini divisions use NAP Mini Turf 1 and NAP 3A–6.',
-        type: 'INFO',
-      },
-      {
-        tournament_id: tournament.id,
-        title: 'Schedules from official grid',
-        message:
-          'All division schedules are seeded from the official Miri Piri 2026 tournament grids. ' +
-          'Please check your schedule 24 hours before each game to confirm any changes.',
+          'Free parking on site via 128 Street, plus overflow parking across the street at FD Sinclair School. ' +
+          'Please check your schedule 24 hours before kickoff to confirm any field or time changes.',
         type: 'INFO',
       },
     ],
@@ -812,9 +580,13 @@ async function main() {
 
   console.log('\nSeed complete.');
   console.log('  Hub: /tournaments/miri-piri-2026');
-  // Don't print credentials — sign in with the SEED_*_EMAIL / SEED_*_PASSWORD
-  // values you provided in the environment.
-  console.log('  Admin + Super Admin created from SEED_* environment variables.');
+  if (usingDefaultAdminPasswords) {
+    console.log('  Admin: admin@bctigers.ca / Admin1234!');
+    console.log('  Super Admin: superadmin@bctigers.ca / SuperAdmin1234!');
+  } else {
+    console.log('  Admin: admin@bctigers.ca / (from SEED_ADMIN_PASSWORD)');
+    console.log('  Super Admin: superadmin@bctigers.ca / (from SEED_SUPERADMIN_PASSWORD)');
+  }
 }
 
 main()

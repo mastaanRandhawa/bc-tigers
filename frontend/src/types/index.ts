@@ -122,13 +122,31 @@ export interface Division {
   bracket_locked?: boolean;
   bracket_finalized?: boolean;
   schedule_only?: boolean;
+  /** When true, this division is organized into groups (pools). */
+  groups_enabled?: boolean;
+  /** Order this division appears in on the public site (ascending). */
+  display_order?: number;
   teams?: Team[];
+  groups?: Group[];
+}
+
+/** A group (pool) within a division, e.g. "Pool A". */
+export interface Group {
+  id: string;
+  division_id: string;
+  name: string;
+  slug: string;
+  order: number;
+  teams?: Pick<Team, 'id' | 'name' | 'slug' | 'logo'>[];
+  _count?: { teams: number; matches: number };
 }
 
 export interface Team {
   id: string;
   division_id: string;
   division?: Division;
+  group_id?: string | null;
+  group?: Pick<Group, 'id' | 'name' | 'slug' | 'order'> | null;
   name: string;
   slug: string;
   logo?: string;
@@ -202,6 +220,8 @@ export interface Match {
   id: string;
   tournament_id: string;
   division_id: string;
+  group_id?: string | null;
+  group?: Pick<Group, 'id' | 'name' | 'slug' | 'order'> | null;
   home_team_id?: string | null;
   away_team_id?: string | null;
   /** Placeholder text shown when the team isn't known yet (e.g. "Winner of Match 11"). */
@@ -241,6 +261,8 @@ export interface MatchEvent {
 export interface Standing {
   id: string;
   division_id: string;
+  group_id?: string | null;
+  group?: Pick<Group, 'id' | 'name' | 'slug' | 'order'> | null;
   team_id: string;
   played: number;
   wins: number;

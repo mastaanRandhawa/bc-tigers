@@ -29,6 +29,8 @@ export const divisionSchema = z.object({
   primary_color: z.string().optional(),
   accent_color: z.string().optional(),
   schedule_only: z.boolean().optional(),
+  groups_enabled: z.boolean().optional(),
+  display_order: z.string().optional(),
 });
 
 const tiebreakerRuleSchema = z.enum([

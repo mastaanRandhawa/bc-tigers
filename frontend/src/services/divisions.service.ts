@@ -12,6 +12,9 @@ export const divisionsService = {
 
   create: (data: Partial<Division>) => apiClient.post<Division>('/divisions', data),
 
+  reorder: (order: string[]) =>
+    apiClient.post<{ ordered: number }>('/divisions/reorder', { order }),
+
   update: (id: string, data: Partial<Division>) =>
     apiClient.patch<Division>(`/divisions/${id}`, data),
 

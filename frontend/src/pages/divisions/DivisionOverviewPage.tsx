@@ -5,7 +5,7 @@ import MatchCard from '@/components/MatchCard';
 import DivisionQuickStats from '@/components/divisions/DivisionQuickStats';
 import SectionHeader from '@/components/shared/SectionHeader';
 import Section from '@/components/shared/Section';
-import StandingsTable from '@/components/StandingsTable';
+import GroupedStandingsTable from '@/components/GroupedStandingsTable';
 import DivisionPageHeader from '@/components/divisions/DivisionPageHeader';
 import QueryState from '@/components/shared/QueryState';
 import { useDivisionRoute } from '@/context/DivisionContext';
@@ -204,7 +204,12 @@ export default function DivisionOverviewPage() {
           linkLabel="Full table"
         />
         {standings.length > 0 ? (
-          <StandingsTable standings={standings.slice(0, 6)} compact division={division} />
+          <GroupedStandingsTable
+            standings={division.groups_enabled ? standings : standings.slice(0, 6)}
+            compact
+            searchable={false}
+            division={division}
+          />
         ) : (
           <p className="py-6 text-center text-sm text-muted-foreground rounded-xl border border-border bg-card">
             {teams.length === 0

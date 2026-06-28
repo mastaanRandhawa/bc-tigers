@@ -23,7 +23,15 @@ const DIVISION_FIELDS = [
   'primary_color',
   'accent_color',
   'schedule_only',
+  'groups_enabled',
+  'display_order',
 ] as const;
+
+/** Stable ordering for public/admin division lists: display_order, then creation. */
+const DIVISION_ORDER_BY = [
+  { display_order: 'asc' as const },
+  { created_at: 'asc' as const },
+];
 
 const DIVISION_INCLUDE = {
   tournament: true,
@@ -57,6 +65,12 @@ function buildDivisionUpdateData(
   if (payload.schedule_only !== undefined) {
     data.schedule_only = Boolean(payload.schedule_only);
   }
+  if (payload.groups_enabled !== undefined) {
+    data.groups_enabled = Boolean(payload.groups_enabled);
+  }
+  if (payload.display_order !== undefined && payload.display_order !== null) {
+    data.display_order = Number(payload.display_order);
+  }
   if (payload.tournament_id) {
     data.tournament = { connect: { id: payload.tournament_id as string } };
   }
@@ -82,6 +96,7 @@ export class DivisionsService {
     return prisma.division.findMany({
       where: { tournament_id: tournament.id },
       include: { teams: true, point_format: true },
+      orderBy: DIVISION_ORDER_BY,
     });
   }
 
@@ -118,7 +133,23 @@ export class DivisionsService {
   }
 
   findAll() {
-    return prisma.division.findMany({ include: DIVISION_INCLUDE });
+    return prisma.division.findMany({
+      include: DIVISION_INCLUDE,
+      orderBy: DIVISION_ORDER_BY,
+    });
+  }
+
+  /** Persist a new display order for a tournament's divisions (admin reorder). */
+  async reorder(orderedIds: string[]) {
+    await prisma.$transaction(
+      orderedIds.map((id, index) =>
+        prisma.division.update({
+          where: { id },
+          data: { display_order: index },
+        }),
+      ),
+    );
+    return { ordered: orderedIds.length };
   }
 
   async findBySlugGlobal(divisionSlug: string) {
@@ -160,7 +191,14 @@ export class DivisionsService {
       include: DIVISION_INCLUDE,
     });
 
-    if (nextPointFormatId && nextPointFormatId !== existing.point_format_id) {
+    const pointFormatChanged =
+      nextPointFormatId && nextPointFormatId !== existing.point_format_id;
+    const groupsToggled =
+      picked.groups_enabled !== undefined &&
+      Boolean(picked.groups_enabled) !== existing.groups_enabled;
+    if (pointFormatChanged || groupsToggled) {
+      // Group membership / point rules changed → standings must be rebuilt
+      // (grouped tables vs a single division table produce different ranks).
       await this.standings.recalculate(id);
     }
 

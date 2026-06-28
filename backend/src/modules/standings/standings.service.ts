@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import prisma from '../../prisma/prisma';
-import { computeStandings } from '../../engine/standings';
+import { computeGroupedStandings } from '../../engine/standings';
 import {
   buildFairPlayMap,
   mapPrismaMatchToResult,
@@ -12,8 +12,9 @@ export class StandingsService {
   getByDivision(divisionId: string) {
     return prisma.standing.findMany({
       where: { division_id: divisionId },
-      include: { team: true },
-      orderBy: { rank: 'asc' },
+      include: { team: true, group: true },
+      // Group first (so grouped tables stay contiguous), then by rank within group.
+      orderBy: [{ group: { order: 'asc' } }, { rank: 'asc' }],
     });
   }
 
@@ -28,7 +29,7 @@ export class StandingsService {
       }),
       prisma.team.findMany({
         where: { division_id: divisionId },
-        select: { id: true },
+        select: { id: true, group_id: true },
       }),
       prisma.matchEvent.findMany({
         where: {
@@ -43,7 +44,13 @@ export class StandingsService {
     const fairPlay = buildFairPlayMap(cardEvents, teamIds);
     const results = matches.map(mapPrismaMatchToResult);
     const config = toTournamentConfig(division.point_format);
-    const rows = computeStandings(teamIds, results, config, fairPlay);
+    const rows = computeGroupedStandings(
+      teams.map((t) => ({ id: t.id, groupId: t.group_id })),
+      results,
+      config,
+      fairPlay,
+      division.groups_enabled,
+    );
 
     await prisma.$transaction(
       rows.map((row) =>
@@ -56,6 +63,7 @@ export class StandingsService {
           },
           create: {
             division_id: divisionId,
+            group_id: row.groupId,
             team_id: row.teamId,
             rank: row.rank,
             played: row.played,
@@ -69,6 +77,7 @@ export class StandingsService {
             fair_play: fairPlay.get(row.teamId) ?? 0,
           },
           update: {
+            group_id: row.groupId,
             rank: row.rank,
             played: row.played,
             wins: row.wins,

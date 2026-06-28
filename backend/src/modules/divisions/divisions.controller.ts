@@ -40,6 +40,12 @@ export class DivisionsController {
     return this.service.create(body);
   }
 
+  @Post('divisions/reorder')
+  @AdminOnly()
+  reorder(@Body() body: { order: string[] }) {
+    return this.service.reorder(body?.order ?? []);
+  }
+
   @Patch('divisions/:id')
   @AdminOnly()
   update(@Param('id') id: string, @Body() body: Record<string, unknown>) {

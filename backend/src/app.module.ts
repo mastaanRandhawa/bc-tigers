@@ -10,6 +10,7 @@ import { RequestContextMiddleware } from './common/request-context.middleware';
 import { AuthModule } from './modules/auth/auth.module';
 import { TournamentsModule } from './modules/tournaments/tournaments.module';
 import { DivisionsModule } from './modules/divisions/divisions.module';
+import { GroupsModule } from './modules/groups/groups.module';
 import { TeamsModule } from './modules/teams/teams.module';
 import { MatchesModule } from './modules/matches/matches.module';
 import { StandingsModule } from './modules/standings/standings.module';
@@ -37,6 +38,7 @@ import { CoachModule } from './modules/coach/coach.module';
     AuthModule,
     TournamentsModule,
     DivisionsModule,
+    GroupsModule,
     TeamsModule,
     MatchesModule,
     StandingsModule,

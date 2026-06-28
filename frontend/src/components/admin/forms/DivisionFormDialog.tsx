@@ -37,6 +37,7 @@ export default function DivisionFormDialog({ open, onOpenChange, division }: Div
   const updateMutation = useUpdateDivision();
   const isEditing = !!division;
   const [scheduleOnly, setScheduleOnly] = useState(false);
+  const [groupsEnabled, setGroupsEnabled] = useState(false);
 
   const defaultFormatId =
     pointFormats.find((pf) => pf.slug === 'standard-soccer-3-point')?.id ??
@@ -56,6 +57,7 @@ export default function DivisionFormDialog({ open, onOpenChange, division }: Div
       point_format_id: defaultFormatId,
       primary_color: '#F48735',
       accent_color: '#FEF3EB',
+      display_order: '0',
     },
   });
 
@@ -73,8 +75,10 @@ export default function DivisionFormDialog({ open, onOpenChange, division }: Div
         point_format_id: division.point_format_id,
         primary_color: division.primary_color ?? '#F48735',
         accent_color: division.accent_color ?? '#FEF3EB',
+        display_order: String(division.display_order ?? 0),
       });
       setScheduleOnly(division.schedule_only ?? false);
+      setGroupsEnabled(division.groups_enabled ?? false);
     } else {
       form.reset({
         tournament_id: tournaments[0]?.id ?? '',
@@ -87,8 +91,10 @@ export default function DivisionFormDialog({ open, onOpenChange, division }: Div
         point_format_id: defaultFormatId,
         primary_color: '#F48735',
         accent_color: '#FEF3EB',
+        display_order: '0',
       });
       setScheduleOnly(false);
+      setGroupsEnabled(false);
     }
   }, [open, division, form, tournaments, defaultFormatId]);
 
@@ -108,7 +114,9 @@ export default function DivisionFormDialog({ open, onOpenChange, division }: Div
       const payload = {
         ...values,
         max_teams: Number(values.max_teams),
+        display_order: Number(values.display_order ?? 0),
         schedule_only: scheduleOnly,
+        groups_enabled: groupsEnabled,
       };
       if (isEditing && division) {
         await updateMutation.mutateAsync({ id: division.id, data: payload });
@@ -151,6 +159,13 @@ export default function DivisionFormDialog({ open, onOpenChange, division }: Div
       />
       <TextInputField control={form.control} name="primary_color" label="Primary Color" placeholder="#F48735" />
       <TextInputField control={form.control} name="accent_color" label="Accent Color" placeholder="#FEF3EB" />
+      <TextInputField
+        control={form.control}
+        name="display_order"
+        label="Display order"
+        type="number"
+        placeholder="0"
+      />
       <div className="flex items-center justify-between rounded-lg border border-border p-3">
         <div>
           <Label>Schedule only (kids)</Label>
@@ -159,6 +174,17 @@ export default function DivisionFormDialog({ open, onOpenChange, division }: Div
           </p>
         </div>
         <Switch checked={scheduleOnly} onCheckedChange={setScheduleOnly} />
+      </div>
+      <div className="flex items-center justify-between rounded-lg border border-border p-3">
+        <div>
+          <Label>Enable groups (pools)</Label>
+          <p className="mt-0.5 text-xs text-muted-foreground">
+            Splits this division into groups so teams, fixtures, and standings are
+            organized into separate pools. Use “Groups” on the division card to
+            create pools and assign teams.
+          </p>
+        </div>
+        <Switch checked={groupsEnabled} onCheckedChange={setGroupsEnabled} />
       </div>
     </FormDialog>
   );

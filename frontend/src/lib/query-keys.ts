@@ -34,6 +34,9 @@ export const queryKeys = {
         ['divisions', tournamentSlug, divisionSlug, 'venues', venueSlug] as const,
     },
   },
+  groups: {
+    byDivision: (divisionId: string) => ['groups', divisionId] as const,
+  },
   teams: {
     all: (params?: object) => ['teams', params ?? {}] as const,
     detail: (slug: string) => ['teams', slug] as const,

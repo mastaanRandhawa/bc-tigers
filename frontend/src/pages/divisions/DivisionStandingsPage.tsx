@@ -1,5 +1,5 @@
 import QueryState from '@/components/shared/QueryState';
-import StandingsTable from '@/components/StandingsTable';
+import GroupedStandingsTable from '@/components/GroupedStandingsTable';
 import DivisionPageHeader from '@/components/divisions/DivisionPageHeader';
 import { Button } from '@/components/ui/button';
 import { useDivisionRoute } from '@/context/DivisionContext';
@@ -55,7 +55,7 @@ export default function DivisionStandingsPage() {
         onRetry={() => refetch()}
         emptyMessage="No standings for this division yet."
       >
-        <StandingsTable standings={standings} division={division} showFairPlay={hasFairPlay} />
+        <GroupedStandingsTable standings={standings} division={division} showFairPlay={hasFairPlay} />
       </QueryState>
     </>
   );

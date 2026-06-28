@@ -17,6 +17,31 @@ import { useQueryClient } from '@tanstack/react-query';
 import { Plus } from 'lucide-react';
 import type { Team } from '@/types';
 
+/** Bucket teams by their group, sorted by group order; unassigned teams last. */
+function groupTeams(teams: Team[]) {
+  const buckets = new Map<
+    string,
+    { key: string; name: string; order: number; teams: Team[] }
+  >();
+  const unassigned: Team[] = [];
+  for (const t of teams) {
+    if (t.group) {
+      const bucket =
+        buckets.get(t.group.id) ??
+        { key: t.group.id, name: t.group.name, order: t.group.order, teams: [] };
+      bucket.teams.push(t);
+      buckets.set(t.group.id, bucket);
+    } else {
+      unassigned.push(t);
+    }
+  }
+  const result = [...buckets.values()].sort((a, b) => a.order - b.order);
+  if (unassigned.length > 0) {
+    result.push({ key: '__unassigned', name: 'Unassigned', order: 999, teams: unassigned });
+  }
+  return result;
+}
+
 export default function DivisionTeamsPage() {
   const { tournamentSlug, divisionSlug, division } = useDivisionRoute();
   const { data: teams = [], isLoading, isError, refetch } = useDivisionTeams(
@@ -70,18 +95,42 @@ export default function DivisionTeamsPage() {
         onRetry={refetch}
         emptyMessage="No teams in this division."
       >
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          {filtered.map((team) => (
-            <TeamCard
-              key={team.id}
-              team={team}
-              tournamentSlug={tournamentSlug}
-              divisionSlug={divisionSlug}
-              onEdit={canEdit ? teamDialog.openEdit : undefined}
-              onDelete={canEdit ? setDeleteTarget : undefined}
-            />
-          ))}
-        </div>
+        {division.groups_enabled && filtered.some((t) => t.group) ? (
+          <div className="space-y-6">
+            {groupTeams(filtered).map(({ key, name, teams: groupedTeams }) => (
+              <div key={key} className="space-y-3">
+                <h3 className="text-sm font-bold uppercase tracking-wide text-muted-foreground">
+                  {name}
+                </h3>
+                <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                  {groupedTeams.map((team) => (
+                    <TeamCard
+                      key={team.id}
+                      team={team}
+                      tournamentSlug={tournamentSlug}
+                      divisionSlug={divisionSlug}
+                      onEdit={canEdit ? teamDialog.openEdit : undefined}
+                      onDelete={canEdit ? setDeleteTarget : undefined}
+                    />
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {filtered.map((team) => (
+              <TeamCard
+                key={team.id}
+                team={team}
+                tournamentSlug={tournamentSlug}
+                divisionSlug={divisionSlug}
+                onEdit={canEdit ? teamDialog.openEdit : undefined}
+                onDelete={canEdit ? setDeleteTarget : undefined}
+              />
+            ))}
+          </div>
+        )}
       </ResourceList>
 
       {/* Dialogs */}
