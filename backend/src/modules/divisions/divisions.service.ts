@@ -217,8 +217,30 @@ export class DivisionsService {
     return division;
   }
 
-  remove(id: string) {
-    return prisma.division.delete({ where: { id } });
+  async remove(id: string) {
+    const existing = await prisma.division.findUnique({ where: { id } });
+    if (!existing) throw new NotFoundException('Division not found');
+
+    try {
+      await prisma.division.delete({ where: { id } });
+    } catch (err) {
+      const code = (err as { code?: string })?.code;
+      if (code === 'P2003') {
+        throw new BadRequestException(
+          'Cannot delete this division because related data is still linked. Remove teams, matches, or bracket entries first.',
+        );
+      }
+      throw err;
+    }
+
+    await this.audit.log({
+      action: 'DELETE',
+      entity: 'Division',
+      entityId: id,
+      metadata: { name: existing.name, slug: existing.slug },
+    });
+
+    return { id };
   }
 
   async generateSchedule(

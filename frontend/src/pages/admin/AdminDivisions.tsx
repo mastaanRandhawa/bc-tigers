@@ -262,11 +262,13 @@ export default function AdminDivisions() {
           try {
             await deleteMutation.mutateAsync(deleteTarget.id);
             toast.success('Division deleted.');
+            setDeleteTarget(null);
           } catch (err) {
             toast.error(getApiErrorMessage(err, 'Failed to delete division'));
+            throw err;
           }
-          setDeleteTarget(null);
         }}
+        showErrorToast={false}
       />
 
       <ConfirmDialog

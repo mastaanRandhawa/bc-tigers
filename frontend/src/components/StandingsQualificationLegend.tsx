@@ -21,14 +21,14 @@ export default function StandingsQualificationLegend({
     <div className="mb-4 flex flex-wrap items-center gap-x-5 gap-y-2 text-sm text-muted-foreground">
       <span className="inline-flex items-center gap-2">
         <span
-          className={`h-3.5 w-3.5 rounded-sm ${QUALIFICATION_STYLES.qualified.swatch}`}
+          className={`h-3.5 w-1 rounded-full ${QUALIFICATION_STYLES.qualified.swatch}`}
           aria-hidden
         />
         {labels.advance}
       </span>
       <span className="inline-flex items-center gap-2">
         <span
-          className={`h-3.5 w-3.5 rounded-sm ${QUALIFICATION_STYLES.eliminated.swatch}`}
+          className={`h-3.5 w-1 rounded-full ${QUALIFICATION_STYLES.eliminated.swatch}`}
           aria-hidden
         />
         {labels.eliminate}

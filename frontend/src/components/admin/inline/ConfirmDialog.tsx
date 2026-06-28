@@ -8,6 +8,8 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { toast } from "sonner";
+import { getApiErrorMessage } from "@/lib/errors";
 
 interface ConfirmDialogProps {
   open: boolean;
@@ -18,6 +20,8 @@ interface ConfirmDialogProps {
   confirmVariant?: "default" | "destructive";
   pendingLabel?: string;
   onConfirm: () => Promise<void> | void;
+  /** When false, callers handle errors inside onConfirm. Default true. */
+  showErrorToast?: boolean;
 }
 
 export function ConfirmDialog({
@@ -29,6 +33,7 @@ export function ConfirmDialog({
   confirmVariant = "destructive",
   pendingLabel,
   onConfirm,
+  showErrorToast = true,
 }: ConfirmDialogProps) {
   const [pending, setPending] = useState(false);
 
@@ -37,13 +42,17 @@ export function ConfirmDialog({
     try {
       await onConfirm();
       onOpenChange(false);
+    } catch (err) {
+      if (showErrorToast) {
+        toast.error(getApiErrorMessage(err, "Action failed"));
+      }
     } finally {
       setPending(false);
     }
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={(next) => !pending && onOpenChange(next)}>
       <DialogContent>
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
@@ -51,13 +60,19 @@ export function ConfirmDialog({
         </DialogHeader>
         <DialogFooter>
           <Button
+            type="button"
             variant="outline"
             onClick={() => onOpenChange(false)}
             disabled={pending}
           >
             Cancel
           </Button>
-          <Button variant={confirmVariant} onClick={handle} disabled={pending}>
+          <Button
+            type="button"
+            variant={confirmVariant}
+            onClick={handle}
+            disabled={pending}
+          >
             {pending ? (pendingLabel ?? "Deleting…") : confirmLabel}
           </Button>
         </DialogFooter>

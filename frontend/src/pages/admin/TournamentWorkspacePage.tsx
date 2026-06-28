@@ -390,12 +390,23 @@ export default function TournamentWorkspacePage() {
         title={`Delete ${deleteId?.type ?? ''}?`}
         description={`"${deleteId?.label}" will be permanently deleted. This cannot be undone.`}
         confirmLabel="Delete"
+        showErrorToast={false}
         onConfirm={async () => {
           if (!deleteId) return;
-          if (deleteId.type === 'division') await deleteDivisionMutation.mutateAsync(deleteId.id);
-          else if (deleteId.type === 'team') await deleteTeamMutation.mutateAsync(deleteId.id);
-          else if (deleteId.type === 'match') await deleteMatchMutation.mutateAsync(deleteId.id);
-          setDeleteId(null);
+          try {
+            if (deleteId.type === 'division') {
+              await deleteDivisionMutation.mutateAsync(deleteId.id);
+            } else if (deleteId.type === 'team') {
+              await deleteTeamMutation.mutateAsync(deleteId.id);
+            } else if (deleteId.type === 'match') {
+              await deleteMatchMutation.mutateAsync(deleteId.id);
+            }
+            toast.success(`${deleteId.type} deleted.`);
+            setDeleteId(null);
+          } catch (err) {
+            toast.error(getApiErrorMessage(err, `Failed to delete ${deleteId.type}`));
+            throw err;
+          }
         }}
       />
     </AdminLayout>

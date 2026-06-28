@@ -19,7 +19,8 @@ import DivisionFormDialog from '@/components/admin/forms/DivisionFormDialog';
 import TournamentFormDialog from '@/components/admin/forms/TournamentFormDialog';
 import { useDeleteDivision } from '@/hooks/useDivisions';
 import { useFormDialog } from '@/hooks/useFormDialog';
-import { useQueryClient } from '@tanstack/react-query';
+import { toast } from 'sonner';
+import { getApiErrorMessage } from '@/lib/errors';
 import type { Division, Tournament } from '@/types';
 
 export default function TournamentDetailPage() {
@@ -28,7 +29,6 @@ export default function TournamentDetailPage() {
   const tournament = overview?.tournament;
   const divisions = tournament?.divisions ?? [];
   const canEdit = useCanAdminEdit();
-  const qc = useQueryClient();
 
   const getDivisionText = useCallback(
     (d: (typeof divisions)[0]) => divisionSearchText(d),
@@ -46,13 +46,6 @@ export default function TournamentDetailPage() {
   const tournamentDialog = useFormDialog<Tournament>();
   const deleteMutation = useDeleteDivision();
   const [deleteTarget, setDeleteTarget] = useState<Division | null>(null);
-
-  const handleDelete = async () => {
-    if (!deleteTarget) return;
-    await deleteMutation.mutateAsync(deleteTarget.id);
-    qc.invalidateQueries({ queryKey: ['tournaments'] });
-    setDeleteTarget(null);
-  };
 
   return (
     <QueryState
@@ -232,7 +225,20 @@ export default function TournamentDetailPage() {
             onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}
             title="Delete division?"
             description={`"${deleteTarget?.name}" and all its data will be permanently removed.`}
-            onConfirm={handleDelete}
+            showErrorToast={false}
+            onConfirm={async () => {
+              if (!deleteTarget) return;
+              try {
+                await deleteMutation.mutateAsync(deleteTarget.id);
+                toast.success('Division deleted.');
+                await refetch();
+              } catch (err) {
+                toast.error(getApiErrorMessage(err, 'Failed to delete division'));
+                throw err;
+              } finally {
+                setDeleteTarget(null);
+              }
+            }}
           />
         </>
       )}

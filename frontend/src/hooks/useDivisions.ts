@@ -54,7 +54,14 @@ export function useDeleteDivision() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (id: string) => divisionsService.delete(id),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['divisions'] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['divisions'] });
+      qc.invalidateQueries({ queryKey: ['tournaments'] });
+      qc.invalidateQueries({ queryKey: ['teams'] });
+      qc.invalidateQueries({ queryKey: ['matches'] });
+      qc.invalidateQueries({ queryKey: ['standings'] });
+      qc.invalidateQueries({ queryKey: ['brackets'] });
+    },
   });
 }
 
