@@ -38,12 +38,24 @@ export function getQualificationZone(
   return null;
 }
 
+/** Shared qualification colors — keep row + legend swatches in sync. */
+export const QUALIFICATION_STYLES = {
+  qualified: {
+    row:
+      'bg-emerald-50 hover:bg-emerald-100/60 dark:bg-emerald-950/30 dark:hover:bg-emerald-900/25',
+    swatch:
+      'border border-emerald-200/90 bg-emerald-100 dark:border-emerald-800/80 dark:bg-emerald-950/55',
+  },
+  eliminated: {
+    row:
+      'bg-rose-50 hover:bg-rose-100/60 dark:bg-rose-950/25 dark:hover:bg-rose-900/20',
+    swatch:
+      'border border-rose-200/90 bg-rose-100 dark:border-rose-900/80 dark:bg-rose-950/50',
+  },
+} as const;
+
 export function qualificationRowClass(zone: QualificationZone | null): string {
-  if (zone === 'qualified') {
-    return 'bg-green-100/90 dark:bg-green-950/40 hover:bg-green-100 dark:hover:bg-green-950/50';
-  }
-  if (zone === 'eliminated') {
-    return 'bg-red-100/90 dark:bg-red-950/40 hover:bg-red-100 dark:hover:bg-red-950/50';
-  }
+  if (zone === 'qualified') return QUALIFICATION_STYLES.qualified.row;
+  if (zone === 'eliminated') return QUALIFICATION_STYLES.eliminated.row;
   return '';
 }
