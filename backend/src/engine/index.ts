@@ -19,7 +19,12 @@ export {
 } from './config';
 export { pointsFor, scoreMatch, resultFor } from './scoring';
 export type { Result, MatchPoints } from './scoring';
-export { aggregateRows, computeStandings } from './standings';
+export {
+  aggregateRows,
+  computeStandings,
+  computeGroupedStandings,
+} from './standings';
+export type { GroupedStandingRow, TeamGroupRef } from './standings';
 export { orderTiedGroup } from './tiebreakers';
 export type { TieContext } from './tiebreakers';
 export { resolveKnockoutMatch, resolveShootout } from './knockout';
