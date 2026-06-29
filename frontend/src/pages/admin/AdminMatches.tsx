@@ -83,7 +83,9 @@ const columns = (onScore: (m: Match) => void, onEvent: (m: Match) => void) => [
 ];
 
 export default function AdminMatches() {
-  const { data: matches = [], isLoading, isError, refetch } = useMatches();
+  // The matches API paginates (default 20). This admin list does its own
+  // search + paging over the full set, so fetch all matches up front.
+  const { data: matches = [], isLoading, isError, refetch } = useMatches({ limit: 1000 });
   const deleteMutation = useDeleteMatch();
   const formDialog = useFormDialog<Match>();
   const [scoreMatch, setScoreMatch] = useState<Match | null>(null);
