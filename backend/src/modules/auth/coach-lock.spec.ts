@@ -11,8 +11,9 @@ jest.mock('../../prisma/prisma', () => ({
 }));
 
 import prisma from '../../prisma/prisma';
+import { asMockedPrisma } from '../../test-utils/prisma-mock';
 
-const mockPrisma = prisma as jest.Mocked<typeof prisma>;
+const mockPrisma = asMockedPrisma(prisma);
 
 describe('coach-lock', () => {
   const now = new Date('2026-06-22T12:00:00.000Z');

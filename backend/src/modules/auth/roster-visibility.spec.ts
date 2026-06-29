@@ -40,13 +40,21 @@ describe('roster-visibility', () => {
 
     it('allows assigned coach before publish', () => {
       expect(
-        canViewTeamRoster({ userId: 'coach-1', role: 'COACH' }, 'coach-1', false),
+        canViewTeamRoster(
+          { userId: 'coach-1', role: 'COACH' },
+          'coach-1',
+          false,
+        ),
       ).toBe(true);
     });
 
     it('denies other coaches before publish', () => {
       expect(
-        canViewTeamRoster({ userId: 'coach-2', role: 'COACH' }, 'coach-1', false),
+        canViewTeamRoster(
+          { userId: 'coach-2', role: 'COACH' },
+          'coach-1',
+          false,
+        ),
       ).toBe(false);
     });
   });

@@ -65,8 +65,7 @@ export class GroupsService {
     const count = await prisma.group.count({
       where: { division_id: divisionId },
     });
-    const order =
-      typeof body.order === 'number' ? body.order : count;
+    const order = typeof body.order === 'number' ? body.order : count;
 
     return prisma.group.create({
       data: { division_id: divisionId, name, slug, order },

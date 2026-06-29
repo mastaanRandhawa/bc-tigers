@@ -86,16 +86,41 @@ export const playerSchema = z.object({
   profile_image: z.string().optional(),
 });
 
-export const matchSchema = z.object({
-  tournament_id: z.string().min(1, 'Tournament is required'),
-  division_id: z.string().min(1, 'Division is required'),
-  home_team_id: z.string().min(1, 'Home team is required'),
-  away_team_id: z.string().min(1, 'Away team is required'),
-  venue_id: z.string().optional(),
-  scheduled_start: z.string().min(1, 'Start time is required'),
-  status: z.enum(['SCHEDULED', 'LIVE', 'HALFTIME', 'COMPLETED', 'DELAYED', 'POSTPONED', 'CANCELLED']),
-  round: z.string().optional(),
-});
+/** A match side is either a real team, or the WINNER/LOSER of another game. */
+const slotMode = z.enum(['team', 'winner', 'loser']);
+
+export const matchSchema = z
+  .object({
+    tournament_id: z.string().min(1, 'Tournament is required'),
+    division_id: z.string().min(1, 'Division is required'),
+    home_mode: slotMode,
+    home_team_id: z.string().optional(),
+    home_source_match_id: z.string().optional(),
+    away_mode: slotMode,
+    away_team_id: z.string().optional(),
+    away_source_match_id: z.string().optional(),
+    venue_id: z.string().optional(),
+    scheduled_start: z.string().min(1, 'Start time is required'),
+    status: z.enum(['SCHEDULED', 'LIVE', 'HALFTIME', 'COMPLETED', 'DELAYED', 'POSTPONED', 'CANCELLED']),
+    round: z.string().optional(),
+  })
+  .superRefine((v, ctx) => {
+    const check = (
+      side: 'home' | 'away',
+      mode: 'team' | 'winner' | 'loser',
+      teamId?: string,
+      sourceId?: string,
+    ) => {
+      if (mode === 'team' && !teamId) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, path: [`${side}_team_id`], message: 'Select a team' });
+      }
+      if (mode !== 'team' && !sourceId) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, path: [`${side}_source_match_id`], message: 'Select a game' });
+      }
+    };
+    check('home', v.home_mode, v.home_team_id, v.home_source_match_id);
+    check('away', v.away_mode, v.away_team_id, v.away_source_match_id);
+  });
 
 export const matchScoreSchema = z.object({
   home_score: z.string().min(1),

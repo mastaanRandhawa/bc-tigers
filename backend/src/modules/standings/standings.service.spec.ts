@@ -12,9 +12,10 @@ jest.mock('../../prisma/prisma', () => ({
 }));
 
 import prisma from '../../prisma/prisma';
+import { asMockedPrisma } from '../../test-utils/prisma-mock';
 import { StandingsService } from './standings.service';
 
-const mockPrisma = prisma as jest.Mocked<typeof prisma>;
+const mockPrisma = asMockedPrisma(prisma);
 
 const standardFormat = {
   id: 'pf-standard',
@@ -33,12 +34,7 @@ const standardFormat = {
   forfeit_win_score: 2,
   forfeit_loss_score: 0,
   forfeit_award_bonuses: false,
-  tiebreakers: [
-    'GOAL_DIFFERENCE',
-    'GOALS_FOR',
-    'HEAD_TO_HEAD',
-    'COIN_TOSS',
-  ],
+  tiebreakers: ['GOAL_DIFFERENCE', 'GOALS_FOR', 'HEAD_TO_HEAD', 'COIN_TOSS'],
   created_at: new Date(),
   updated_at: new Date(),
 };
@@ -57,12 +53,7 @@ const usfaFormat = {
   goal_bonus_cap: 3,
   apply_bonuses_on_loss: true,
   forfeit_award_bonuses: true,
-  tiebreakers: [
-    'HEAD_TO_HEAD',
-    'GOALS_AGAINST',
-    'GOALS_FOR',
-    'COIN_TOSS',
-  ],
+  tiebreakers: ['HEAD_TO_HEAD', 'GOALS_AGAINST', 'GOALS_FOR', 'COIN_TOSS'],
 };
 
 describe('StandingsService', () => {

@@ -50,7 +50,9 @@ async function loadCoachMatchContext(userId: string, matchId: string) {
   const isTeamMatch =
     match.home_team_id === teamId || match.away_team_id === teamId;
   if (!isTeamMatch) {
-    throw new ForbiddenException('You can only record goals for your team’s matches');
+    throw new ForbiddenException(
+      'You can only record goals for your team’s matches',
+    );
   }
 
   return { teamId, match };
@@ -100,7 +102,9 @@ export async function assertCoachCanUpdateGoalEvent(
     throw new ForbiddenException('Coaches can only edit goal events');
   }
   if (existing.team_id !== teamId) {
-    throw new ForbiddenException('You can only edit goals recorded for your team');
+    throw new ForbiddenException(
+      'You can only edit goals recorded for your team',
+    );
   }
   if (patch.type && patch.type !== COACH_GOAL_TYPE) {
     throw new ForbiddenException('Coaches can only record goal events');
@@ -123,6 +127,8 @@ export async function assertCoachCanDeleteGoalEvent(
     throw new ForbiddenException('Coaches can only delete goal events');
   }
   if (existing.team_id !== teamId) {
-    throw new ForbiddenException('You can only delete goals recorded for your team');
+    throw new ForbiddenException(
+      'You can only delete goals recorded for your team',
+    );
   }
 }

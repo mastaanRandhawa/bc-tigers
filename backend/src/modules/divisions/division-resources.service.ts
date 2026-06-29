@@ -20,10 +20,7 @@ export class DivisionResourcesService {
     private readonly venuesService: VenuesService,
   ) {}
 
-  private async resolveDivision(
-    tournamentSlug: string,
-    divisionSlug: string,
-  ) {
+  private async resolveDivision(tournamentSlug: string, divisionSlug: string) {
     return this.divisionsService.resolveDivision(tournamentSlug, divisionSlug);
   }
 

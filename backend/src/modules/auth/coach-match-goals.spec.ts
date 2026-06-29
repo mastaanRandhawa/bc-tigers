@@ -18,9 +18,10 @@ jest.mock('../teams/coach-team-link', () => ({
 }));
 
 import prisma from '../../prisma/prisma';
+import { asMockedPrisma } from '../../test-utils/prisma-mock';
 import { getCoachTeamId } from '../teams/coach-team-link';
 
-const mockPrisma = prisma as jest.Mocked<typeof prisma>;
+const mockPrisma = asMockedPrisma(prisma);
 const mockGetCoachTeamId = getCoachTeamId as jest.MockedFunction<
   typeof getCoachTeamId
 >;
@@ -91,7 +92,7 @@ describe('coach-match-goals', () => {
         'coach-1',
         'match-1',
         { type: 'YELLOW_CARD', team_id: 'team-home' },
-        { minute: 10 },
+        {},
       ),
     ).rejects.toBeInstanceOf(ForbiddenException);
   });

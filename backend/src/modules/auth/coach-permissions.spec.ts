@@ -18,12 +18,13 @@ jest.mock('../../prisma/prisma', () => ({
 }));
 
 import prisma from '../../prisma/prisma';
+import { asMockedPrisma } from '../../test-utils/prisma-mock';
 import {
   assertCoachCanEditTeam,
   isCoachManagementLocked,
 } from './coach-permissions';
 
-const mockPrisma = prisma as jest.Mocked<typeof prisma>;
+const mockPrisma = asMockedPrisma(prisma);
 
 describe('coach-permissions', () => {
   beforeEach(() => jest.clearAllMocks());

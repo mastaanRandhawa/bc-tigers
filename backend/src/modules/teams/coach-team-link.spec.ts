@@ -9,6 +9,7 @@ jest.mock('../../prisma/prisma', () => ({
 }));
 
 import prisma from '../../prisma/prisma';
+import { asMockedPrisma } from '../../test-utils/prisma-mock';
 import {
   assertCoachOwnsTeam,
   getCoachTeamId,
@@ -17,7 +18,7 @@ import {
   applyCoachTeamAssignment,
 } from './coach-team-link';
 
-const mockPrisma = prisma as jest.Mocked<typeof prisma>;
+const mockPrisma = asMockedPrisma(prisma);
 
 describe('coach-team-link', () => {
   beforeEach(() => jest.clearAllMocks());
@@ -38,7 +39,10 @@ describe('coach-team-link', () => {
 
   describe('getCoachTeamId', () => {
     it('returns requested team when coach owns it', async () => {
-      mockPrisma.team.findMany.mockResolvedValue([{ id: 'team-1' }, { id: 'team-2' }] as never);
+      mockPrisma.team.findMany.mockResolvedValue([
+        { id: 'team-1' },
+        { id: 'team-2' },
+      ] as never);
 
       await expect(getCoachTeamId('coach-1', 'team-2')).resolves.toBe('team-2');
     });
@@ -60,7 +64,7 @@ describe('coach-team-link', () => {
     it('passes when team references coach', async () => {
       mockPrisma.team.findUnique.mockResolvedValue({
         coach_user_id: 'coach-1',
-      } as never);
+      });
 
       await expect(
         assertCoachOwnsTeam('coach-1', 'team-1'),
@@ -70,7 +74,7 @@ describe('coach-team-link', () => {
     it('fails when team points to a different coach', async () => {
       mockPrisma.team.findUnique.mockResolvedValue({
         coach_user_id: 'other',
-      } as never);
+      });
 
       await expect(
         assertCoachOwnsTeam('coach-1', 'team-1'),
@@ -80,15 +84,15 @@ describe('coach-team-link', () => {
 
   describe('validateCoachCanBeAssigned', () => {
     it('rejects non-coach users', async () => {
-      mockPrisma.user.findUnique.mockResolvedValue({ role: 'ADMIN' } as never);
+      mockPrisma.user.findUnique.mockResolvedValue({ role: 'ADMIN' });
 
-      await expect(
-        validateCoachCanBeAssigned('user-1'),
-      ).rejects.toBeInstanceOf(BadRequestException);
+      await expect(validateCoachCanBeAssigned('user-1')).rejects.toBeInstanceOf(
+        BadRequestException,
+      );
     });
 
     it('allows coaches with existing teams', async () => {
-      mockPrisma.user.findUnique.mockResolvedValue({ role: 'COACH' } as never);
+      mockPrisma.user.findUnique.mockResolvedValue({ role: 'COACH' });
 
       await expect(
         validateCoachCanBeAssigned('coach-1'),
@@ -98,7 +102,7 @@ describe('coach-team-link', () => {
 
   describe('applyCoachTeamAssignment', () => {
     it('clears coach_user_id when unassigning', async () => {
-      mockPrisma.team.update.mockResolvedValue({} as never);
+      mockPrisma.team.update.mockResolvedValue({});
 
       await applyCoachTeamAssignment('team-1', null);
 

@@ -32,8 +32,9 @@ jest.mock('./coach-permissions', () => ({
 jest.mock('bcrypt');
 
 import prisma from '../../prisma/prisma';
+import { asMockedPrisma } from '../../test-utils/prisma-mock';
 
-const mockPrisma = prisma as jest.Mocked<typeof prisma>;
+const mockPrisma = asMockedPrisma(prisma);
 const mockBcrypt = bcrypt as jest.Mocked<typeof bcrypt>;
 
 const teamRequests = {
@@ -50,7 +51,12 @@ describe('AuthService coach gates', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    service = new AuthService(jwt, mail as never, audit as never, teamRequests as never);
+    service = new AuthService(
+      jwt,
+      mail as never,
+      audit as never,
+      teamRequests as never,
+    );
     mockBcrypt.compare.mockResolvedValue(true as never);
     mockBcrypt.hash.mockResolvedValue('hashed' as never);
   });

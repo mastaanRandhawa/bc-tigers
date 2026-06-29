@@ -72,12 +72,20 @@ function buildDivisionUpdateData(
     data.groups_enabled = Boolean(payload.groups_enabled);
   }
   if (payload.qualification_zones_enabled !== undefined) {
-    data.qualification_zones_enabled = Boolean(payload.qualification_zones_enabled);
+    data.qualification_zones_enabled = Boolean(
+      payload.qualification_zones_enabled,
+    );
   }
-  if (payload.qualification_advance !== undefined && payload.qualification_advance !== null) {
+  if (
+    payload.qualification_advance !== undefined &&
+    payload.qualification_advance !== null
+  ) {
     data.qualification_advance = Number(payload.qualification_advance);
   }
-  if (payload.qualification_eliminate !== undefined && payload.qualification_eliminate !== null) {
+  if (
+    payload.qualification_eliminate !== undefined &&
+    payload.qualification_eliminate !== null
+  ) {
     data.qualification_eliminate = Number(payload.qualification_eliminate);
   }
   if (payload.display_order !== undefined && payload.display_order !== null) {

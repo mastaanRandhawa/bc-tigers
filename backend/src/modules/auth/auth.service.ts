@@ -144,8 +144,7 @@ export class AuthService {
     });
     if (!user) throw new NotFoundException('User not found');
 
-    const team_ids =
-      user.role === 'COACH' ? await getCoachTeamIds(userId) : [];
+    const team_ids = user.role === 'COACH' ? await getCoachTeamIds(userId) : [];
     const team_id = team_ids[0] ?? null;
     const {
       id,
@@ -290,8 +289,7 @@ export class AuthService {
     first_name: string;
     last_name: string;
   }) {
-    const teamIds =
-      user.role === 'COACH' ? await getCoachTeamIds(user.id) : [];
+    const teamIds = user.role === 'COACH' ? await getCoachTeamIds(user.id) : [];
     const teamId = teamIds[0] ?? null;
     const payload = {
       sub: user.id,

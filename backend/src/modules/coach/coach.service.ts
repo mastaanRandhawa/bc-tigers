@@ -5,10 +5,7 @@ import {
   isCoachManagementLocked,
   getCoachLockStatus,
 } from '../auth/coach-permissions';
-import {
-  getCoachTeamId,
-  getCoachTeamIds,
-} from '../teams/coach-team-link';
+import { getCoachTeamId, getCoachTeamIds } from '../teams/coach-team-link';
 import { TeamPlayersService } from '../teams/team-players.service';
 import { CoachTeamRequestsService } from '../teams/coach-team-requests.service';
 import { getMaxPlayersPerTeam } from '../settings/settings.service';
@@ -194,7 +191,10 @@ export class CoachService {
 
     return prisma.match.findMany({
       where: {
-        OR: [{ home_team_id: resolvedTeamId }, { away_team_id: resolvedTeamId }],
+        OR: [
+          { home_team_id: resolvedTeamId },
+          { away_team_id: resolvedTeamId },
+        ],
       },
       include: {
         home_team: { select: { id: true, name: true, slug: true, logo: true } },

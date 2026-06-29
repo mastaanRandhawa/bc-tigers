@@ -64,7 +64,9 @@ export class CoachTeamRequestsService {
       },
     });
     if (existing?.status === 'PENDING') {
-      throw new BadRequestException('You already have a pending request for this team');
+      throw new BadRequestException(
+        'You already have a pending request for this team',
+      );
     }
     if (existing?.status === 'APPROVED') {
       throw new BadRequestException('You are already approved for this team');
@@ -122,13 +124,18 @@ export class CoachTeamRequestsService {
   async approve(requestId: string) {
     const request = await prisma.coachTeamRequest.findUnique({
       where: { id: requestId },
-      include: { team: { select: { id: true, coach_user_id: true, name: true } } },
+      include: {
+        team: { select: { id: true, coach_user_id: true, name: true } },
+      },
     });
     if (!request) throw new NotFoundException('Team request not found');
     if (request.status !== 'PENDING') {
       throw new BadRequestException('Only pending requests can be approved');
     }
-    if (request.team.coach_user_id && request.team.coach_user_id !== request.coach_user_id) {
+    if (
+      request.team.coach_user_id &&
+      request.team.coach_user_id !== request.coach_user_id
+    ) {
       throw new BadRequestException(
         `${request.team.name} already has a different coach assigned`,
       );

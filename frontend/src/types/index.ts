@@ -185,6 +185,7 @@ export interface Team {
   max_players_per_team?: number;
   roster_count?: number;
   players?: Player[];
+  officials?: TeamOfficial[];
   // Soft-delete / lifecycle (admin)
   is_deleted?: boolean;
   record_status?: RecordStatus;
@@ -214,6 +215,17 @@ export interface MatchOfficial {
   email?: string;
   phone?: string;
 }
+
+export interface TeamOfficial {
+  id: string;
+  team_id: string;
+  name: string;
+  role: string;
+  order?: number;
+}
+
+/** Which result of a source match feeds a placeholder slot. */
+export type MatchSlotOutcome = 'WINNER' | 'LOSER';
 
 export interface Venue {
   id: string;
@@ -248,6 +260,11 @@ export interface Match {
   /** Placeholder text shown when the team isn't known yet (e.g. "Winner of Match 11"). */
   home_label?: string | null;
   away_label?: string | null;
+  /** Placeholder sources: a slot can point to the WINNER/LOSER of another match. */
+  home_source_match_id?: string | null;
+  home_source_outcome?: MatchSlotOutcome | null;
+  away_source_match_id?: string | null;
+  away_source_outcome?: MatchSlotOutcome | null;
   venue_id?: string;
   field_id?: string | null;
   stage_id?: string;

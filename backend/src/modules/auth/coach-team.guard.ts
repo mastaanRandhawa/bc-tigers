@@ -4,10 +4,7 @@ import {
   ForbiddenException,
   Injectable,
 } from '@nestjs/common';
-import {
-  getCoachTeamId,
-  getCoachTeamIds,
-} from './coach-permissions';
+import { getCoachTeamId, getCoachTeamIds } from './coach-permissions';
 
 @Injectable()
 export class CoachTeamGuard implements CanActivate {

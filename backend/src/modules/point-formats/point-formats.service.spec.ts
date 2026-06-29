@@ -11,9 +11,10 @@ jest.mock('../../prisma/prisma', () => ({
 }));
 
 import prisma from '../../prisma/prisma';
+import { asMockedPrisma } from '../../test-utils/prisma-mock';
 import { PointFormatsService } from './point-formats.service';
 
-const mockPrisma = prisma as jest.Mocked<typeof prisma>;
+const mockPrisma = asMockedPrisma(prisma);
 
 describe('PointFormatsService', () => {
   const service = new PointFormatsService();

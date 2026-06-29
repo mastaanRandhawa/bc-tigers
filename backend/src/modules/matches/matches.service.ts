@@ -6,7 +6,7 @@ import {
   forwardRef,
   Logger,
 } from '@nestjs/common';
-import type { Prisma, MatchStatus } from '@prisma/client';
+import type { Prisma, MatchStatus, MatchSlotOutcome } from '@prisma/client';
 import prisma from '../../prisma/prisma';
 import { MatchesGateway } from '../../gateways/matches.gateway';
 import { BracketsService } from '../brackets/brackets.service';
@@ -46,7 +46,58 @@ const MATCH_FIELDS = [
   'round',
   'match_type',
   'stream_url',
+  'home_source_match_id',
+  'home_source_outcome',
+  'away_source_match_id',
+  'away_source_outcome',
 ] as const;
+
+/** Source match shape used to build a placeholder label like "Winner of Game 5". */
+const SOURCE_SELECT = {
+  select: {
+    id: true,
+    round: true,
+    home_team: { select: { name: true } },
+    away_team: { select: { name: true } },
+  },
+} satisfies Prisma.Match$home_sourceArgs;
+
+/**
+ * Human label for an unresolved placeholder slot, e.g. "Winner of Game 5" or,
+ * when the source has no game number yet, "Winner of TBD". Returns null when the
+ * slot has no source (a real team or a genuinely empty slot).
+ */
+function slotLabel(
+  outcome: MatchSlotOutcome | null,
+  source: { round: number | null } | null,
+): string | null {
+  if (!outcome || !source) return null;
+  const verb = outcome === 'WINNER' ? 'Winner' : 'Loser';
+  const of = source.round != null ? `Game ${source.round}` : 'TBD';
+  return `${verb} of ${of}`;
+}
+
+/** Adds `home_label`/`away_label` placeholder text for unresolved slots. */
+function attachSlotLabels<
+  T extends {
+    home_source_outcome: MatchSlotOutcome | null;
+    away_source_outcome: MatchSlotOutcome | null;
+    home_source?: { round: number | null } | null;
+    away_source?: { round: number | null } | null;
+    home_team?: unknown;
+    away_team?: unknown;
+  },
+>(match: T): T & { home_label: string | null; away_label: string | null } {
+  return {
+    ...match,
+    home_label: match.home_team
+      ? null
+      : slotLabel(match.home_source_outcome, match.home_source ?? null),
+    away_label: match.away_team
+      ? null
+      : slotLabel(match.away_source_outcome, match.away_source ?? null),
+  };
+}
 
 /** Client-settable scalar fields on a match event. `match_id` is set from the route param. */
 const MATCH_EVENT_FIELDS = [
@@ -63,6 +114,8 @@ const MATCH_LIST_INCLUDE = {
   group: { select: { id: true, name: true, slug: true, order: true } },
   venue: { select: { id: true, name: true, slug: true } },
   field: { select: { id: true, name: true } },
+  home_source: SOURCE_SELECT,
+  away_source: SOURCE_SELECT,
   tournament: { select: { id: true, name: true, slug: true } },
   division: {
     select: {
@@ -86,6 +139,8 @@ const TEAM_WITH_PLAYERS = {
 const MATCH_DETAIL_INCLUDE = {
   home_team: TEAM_WITH_PLAYERS,
   away_team: TEAM_WITH_PLAYERS,
+  home_source: SOURCE_SELECT,
+  away_source: SOURCE_SELECT,
   venue: true,
   field: { select: { id: true, name: true } },
   officials: true,
@@ -111,7 +166,7 @@ export class MatchesService {
     private readonly mailService: MailService,
   ) {}
 
-  findAll(params?: {
+  async findAll(params?: {
     status?: MatchStatus;
     statuses?: MatchStatus[];
     tournamentId?: string;
@@ -131,13 +186,14 @@ export class MatchesService {
     if (params?.tournamentId) where.tournament_id = params.tournamentId;
     if (params?.divisionId) where.division_id = params.divisionId;
 
-    return prisma.match.findMany({
+    const matches = await prisma.match.findMany({
       where,
       include: MATCH_LIST_INCLUDE,
       skip: (page - 1) * limit,
       take: limit,
       orderBy: { scheduled_start: order },
     });
+    return matches.map(attachSlotLabels);
   }
 
   async findOne(id: string) {
@@ -159,7 +215,7 @@ export class MatchesService {
       ctx.rostersPublic,
     );
 
-    return {
+    return attachSlotLabels({
       ...match,
       // Slots may be bracket placeholders (no team) — pass those through as null.
       home_team: match.home_team
@@ -168,14 +224,25 @@ export class MatchesService {
       away_team: match.away_team
         ? stripTeamPlayers(match.away_team, canViewAway)
         : null,
-    };
+    });
   }
 
-  create(data: unknown) {
-    return prisma.match.create({
-      data: pickAllowed<Prisma.MatchUncheckedCreateInput>(data, MATCH_FIELDS),
+  async create(data: unknown) {
+    const createData = pickAllowed<Prisma.MatchUncheckedCreateInput>(
+      data,
+      MATCH_FIELDS,
+    );
+    await this.validateSources(createData, createData.division_id);
+
+    const match = await prisma.match.create({
+      data: createData,
       include: MATCH_DETAIL_INCLUDE,
     });
+
+    // If a chosen source match is already completed, fill the slot right away so
+    // a late-added dependent isn't left as a permanent placeholder.
+    await this.resolveSlotsFromCompletedSources(match.id);
+    return this.findOne(match.id);
   }
 
   async update(id: string, data: unknown) {
@@ -185,18 +252,26 @@ export class MatchesService {
       MATCH_FIELDS,
     );
 
-    // A knockout (bracket-linked) match cannot end level — advancement needs a
-    // decisive winner. Reject the completion up front so the admin enters a
-    // result instead of silently stalling the bracket.
+    await this.validateSources(updateData, existing.division_id, id);
+
+    // A knockout (bracket-linked) match, or one feeding a Winner/Loser
+    // placeholder, cannot end level — advancement needs a decisive winner.
+    // Reject the completion up front so the admin enters a result instead of
+    // silently stalling the schedule.
     if (updateData.status === 'COMPLETED' && existing.status !== 'COMPLETED') {
       if (existing.home_score === existing.away_score) {
         const node = await prisma.bracketNode.findFirst({
           where: { match_id: id },
           select: { id: true },
         });
-        if (node) {
+        const dependentCount = await prisma.match.count({
+          where: {
+            OR: [{ home_source_match_id: id }, { away_source_match_id: id }],
+          },
+        });
+        if (node || dependentCount > 0) {
           throw new BadRequestException(
-            'Knockout matches cannot end in a draw — enter a decisive score before completing this match.',
+            'This match feeds a later fixture and cannot end in a draw — enter a decisive score before completing it.',
           );
         }
       }
@@ -225,10 +300,11 @@ export class MatchesService {
         `Final: ${matchSideName(match.home_team)} ${match.home_score} – ${match.away_score} ${matchSideName(match.away_team)}`,
       );
       await this.advanceBracketFromMatch(match);
+      await this.resolveDependentSlots(match);
     }
 
     this.gateway.emitScoreUpdate(id, match.home_score, match.away_score);
-    return match;
+    return attachSlotLabels(match);
   }
 
   async updateScore(id: string, homeScore: number, awayScore: number) {
@@ -407,6 +483,179 @@ export class MatchesService {
       });
     } catch (err) {
       this.logger.error(`Failed to advance bracket for match ${match.id}`, err);
+    }
+  }
+
+  /**
+   * Each side of a match is either a real team OR a placeholder source — never
+   * both — and a source must reference another match in the same division (and
+   * not itself). Throws BadRequestException on a violation. `payload` is the
+   * already-picked create/update data; `selfId` is set on update.
+   */
+  private async validateSources(
+    payload:
+      | Prisma.MatchUncheckedCreateInput
+      | Prisma.MatchUncheckedUpdateInput,
+    divisionId: string,
+    selfId?: string,
+  ) {
+    // pickAllowed copies raw request values, so these are plain scalars at
+    // runtime even though the Prisma update type also permits { set } wrappers.
+    const str = (v: unknown): string | null =>
+      typeof v === 'string' ? v : null;
+    const sides = [
+      {
+        label: 'Home',
+        teamId: str(payload.home_team_id),
+        sourceId: str(payload.home_source_match_id),
+        outcome: str(payload.home_source_outcome) as MatchSlotOutcome | null,
+      },
+      {
+        label: 'Away',
+        teamId: str(payload.away_team_id),
+        sourceId: str(payload.away_source_match_id),
+        outcome: str(payload.away_source_outcome) as MatchSlotOutcome | null,
+      },
+    ];
+
+    for (const side of sides) {
+      if (side.teamId && side.sourceId) {
+        throw new BadRequestException(
+          `${side.label} side cannot be both a team and a placeholder.`,
+        );
+      }
+      if (side.sourceId) {
+        if (!side.outcome) {
+          throw new BadRequestException(
+            `${side.label} placeholder needs a Winner/Loser selection.`,
+          );
+        }
+        if (side.sourceId === selfId) {
+          throw new BadRequestException(
+            `${side.label} placeholder cannot reference its own match.`,
+          );
+        }
+        const source = await prisma.match.findUnique({
+          where: { id: side.sourceId },
+          select: { division_id: true },
+        });
+        if (!source) {
+          throw new BadRequestException(
+            `${side.label} placeholder references a match that no longer exists.`,
+          );
+        }
+        if (source.division_id !== divisionId) {
+          throw new BadRequestException(
+            `${side.label} placeholder must reference a match in the same division.`,
+          );
+        }
+      }
+    }
+  }
+
+  /** Winner/loser team ids of a decisive match, or null when level/no teams. */
+  private decisiveResult(match: {
+    home_team_id: string | null;
+    away_team_id: string | null;
+    home_score: number;
+    away_score: number;
+  }): { winnerId: string; loserId: string } | null {
+    if (match.home_score === match.away_score) return null;
+    const homeWon = match.home_score > match.away_score;
+    const winnerId = homeWon ? match.home_team_id : match.away_team_id;
+    const loserId = homeWon ? match.away_team_id : match.home_team_id;
+    if (!winnerId || !loserId) return null;
+    return { winnerId, loserId };
+  }
+
+  /**
+   * After a source match completes decisively, fill the team slots of every
+   * match that points at it via a Winner/Loser placeholder, then broadcast.
+   */
+  private async resolveDependentSlots(completed: {
+    id: string;
+    division_id: string;
+    home_team_id: string | null;
+    away_team_id: string | null;
+    home_score: number;
+    away_score: number;
+  }) {
+    const result = this.decisiveResult(completed);
+    if (!result) {
+      this.logger.warn(
+        `Match ${completed.id} completed without a decisive result — dependent slots not resolved`,
+      );
+      return;
+    }
+
+    const dependents = await prisma.match.findMany({
+      where: {
+        OR: [
+          { home_source_match_id: completed.id },
+          { away_source_match_id: completed.id },
+        ],
+      },
+      select: {
+        id: true,
+        division_id: true,
+        home_source_match_id: true,
+        home_source_outcome: true,
+        away_source_match_id: true,
+        away_source_outcome: true,
+      },
+    });
+
+    for (const dep of dependents) {
+      const data: Prisma.MatchUncheckedUpdateInput = {};
+      if (dep.home_source_match_id === completed.id) {
+        data.home_team_id =
+          dep.home_source_outcome === 'WINNER'
+            ? result.winnerId
+            : result.loserId;
+      }
+      if (dep.away_source_match_id === completed.id) {
+        data.away_team_id =
+          dep.away_source_outcome === 'WINNER'
+            ? result.winnerId
+            : result.loserId;
+      }
+
+      const updated = await prisma.match.update({
+        where: { id: dep.id },
+        data,
+        include: MATCH_DETAIL_INCLUDE,
+      });
+      this.gateway.emitMatchUpdated(dep.id, dep.division_id, updated);
+    }
+  }
+
+  /**
+   * On create, if a chosen source match is already completed, fill the slot
+   * immediately instead of leaving a permanent placeholder.
+   */
+  private async resolveSlotsFromCompletedSources(matchId: string) {
+    const match = await prisma.match.findUnique({
+      where: { id: matchId },
+      select: {
+        home_source_match_id: true,
+        home_source_outcome: true,
+        away_source_match_id: true,
+        away_source_outcome: true,
+      },
+    });
+    if (!match) return;
+
+    const sourceIds = [
+      match.home_source_match_id,
+      match.away_source_match_id,
+    ].filter((id): id is string => !!id);
+    if (sourceIds.length === 0) return;
+
+    const sources = await prisma.match.findMany({
+      where: { id: { in: sourceIds }, status: 'COMPLETED' },
+    });
+    for (const source of sources) {
+      await this.resolveDependentSlots(source);
     }
   }
 

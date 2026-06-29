@@ -8,6 +8,7 @@ import SectionHeader from '@/components/shared/SectionHeader';
 import MatchCard from '@/components/MatchCard';
 import TeamHero from '@/components/teams/TeamHero';
 import RosterList from '@/components/teams/RosterList';
+import TeamOfficialsList from '@/components/teams/TeamOfficialsList';
 import RosterUnpublishedNotice from '@/components/teams/RosterUnpublishedNotice';
 import MetricCard from '@/components/shared/MetricCard';
 import TeamRosterPanel from '@/components/admin/TeamRosterPanel';
@@ -146,6 +147,14 @@ export default function DivisionTeamDetailPage() {
             </div>
           ) : (
             <RosterUnpublishedNotice rostersAvailableAt={rostersAvailableAt} />
+          )}
+
+          {/* Officials — admins manage these in the roster panel above; public sees a read-only list */}
+          {!canEdit && (team.officials?.length ?? 0) > 0 && (
+            <Section>
+              <SectionHeader title="Team Officials" />
+              <TeamOfficialsList officials={team.officials ?? []} teamColor={team.primary_color} />
+            </Section>
           )}
 
           <Section>

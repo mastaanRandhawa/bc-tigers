@@ -4,14 +4,14 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import FormDialog from '@/components/admin/FormDialog';
 import { TextInputField, SelectField, FormError } from '@/components/admin/form-fields';
 import { matchSchema, type MatchFormValues } from '@/lib/schemas/admin';
-import { useCreateMatch, useUpdateMatch } from '@/hooks/useMatches';
+import { useCreateMatch, useUpdateMatch, useMatches } from '@/hooks/useMatches';
 import { useTournaments } from '@/hooks/useTournaments';
 import { useDivisions } from '@/hooks/useDivisions';
 import { useTeams } from '@/hooks/useTeams';
 import { useVenues } from '@/hooks/useVenues';
 import { fromDatetimeLocalValue, toDatetimeLocalValue } from '@/lib/date';
 import { getApiErrorMessage } from '@/lib/errors';
-import type { Match } from '@/types';
+import type { Match, MatchSlotOutcome } from '@/types';
 
 const STATUS_OPTIONS = [
   { value: 'SCHEDULED', label: 'Scheduled' },
@@ -22,6 +22,20 @@ const STATUS_OPTIONS = [
   { value: 'POSTPONED', label: 'Postponed' },
   { value: 'CANCELLED', label: 'Cancelled' },
 ];
+
+const SLOT_MODE_OPTIONS = [
+  { value: 'team', label: 'Specific team' },
+  { value: 'winner', label: 'Winner of game…' },
+  { value: 'loser', label: 'Loser of game…' },
+];
+
+/** Short label for a source-match option, e.g. "Game 5 — Tigers vs Lions". */
+function matchOptionLabel(m: Match): string {
+  const home = m.home_team?.name ?? m.home_label ?? 'TBD';
+  const away = m.away_team?.name ?? m.away_label ?? 'TBD';
+  const prefix = m.round != null ? `Game ${m.round} — ` : '';
+  return `${prefix}${home} vs ${away}`;
+}
 
 interface MatchFormDialogProps {
   open: boolean;
@@ -43,8 +57,12 @@ export default function MatchFormDialog({ open, onOpenChange, match, defaultDivi
     defaultValues: {
       tournament_id: '',
       division_id: '',
+      home_mode: 'team',
       home_team_id: '',
+      home_source_match_id: '',
+      away_mode: 'team',
       away_team_id: '',
+      away_source_match_id: '',
       venue_id: '',
       scheduled_start: '',
       status: 'SCHEDULED',
@@ -54,6 +72,8 @@ export default function MatchFormDialog({ open, onOpenChange, match, defaultDivi
 
   const tournamentId = form.watch('tournament_id');
   const divisionId = form.watch('division_id');
+  const homeMode = form.watch('home_mode');
+  const awayMode = form.watch('away_mode');
 
   const filteredDivisions = useMemo(
     () => divisions.filter((d) => !tournamentId || d.tournament_id === tournamentId),
@@ -62,14 +82,32 @@ export default function MatchFormDialog({ open, onOpenChange, match, defaultDivi
 
   const { data: teams = [] } = useTeams(divisionId ? { divisionId } : undefined);
 
+  // Other games in the same division are eligible as Winner/Loser sources.
+  const { data: divisionMatches = [] } = useMatches(divisionId ? { divisionId, limit: 200 } : undefined);
+  const sourceOptions = useMemo(
+    () =>
+      divisionMatches
+        .filter((m) => m.id !== match?.id)
+        .map((m) => ({ value: m.id, label: matchOptionLabel(m) })),
+    [divisionMatches, match?.id],
+  );
+
   useEffect(() => {
     if (!open) return;
     if (match) {
       form.reset({
         tournament_id: match.tournament_id,
         division_id: match.division_id,
+        home_mode: match.home_source_match_id
+          ? match.home_source_outcome === 'LOSER' ? 'loser' : 'winner'
+          : 'team',
         home_team_id: match.home_team_id ?? '',
+        home_source_match_id: match.home_source_match_id ?? '',
+        away_mode: match.away_source_match_id
+          ? match.away_source_outcome === 'LOSER' ? 'loser' : 'winner'
+          : 'team',
         away_team_id: match.away_team_id ?? '',
+        away_source_match_id: match.away_source_match_id ?? '',
         venue_id: match.venue_id ?? '__none__',
         scheduled_start: toDatetimeLocalValue(match.scheduled_start),
         status: match.status,
@@ -83,8 +121,12 @@ export default function MatchFormDialog({ open, onOpenChange, match, defaultDivi
       form.reset({
         tournament_id: prefilledTournament,
         division_id: prefilledDivision,
+        home_mode: 'team',
         home_team_id: '',
+        home_source_match_id: '',
+        away_mode: 'team',
         away_team_id: '',
+        away_source_match_id: '',
         venue_id: '__none__',
         scheduled_start: '',
         status: 'SCHEDULED',
@@ -95,10 +137,26 @@ export default function MatchFormDialog({ open, onOpenChange, match, defaultDivi
 
   const onSubmit = form.handleSubmit(async (values) => {
     try {
+      // Each side resolves to EITHER a team or a Winner/Loser source — clear the
+      // unused half so switching modes doesn't leave stale references.
+      const homeIsSource = values.home_mode !== 'team';
+      const awayIsSource = values.away_mode !== 'team';
       const payload = {
-        ...values,
+        tournament_id: values.tournament_id,
+        division_id: values.division_id,
+        home_team_id: homeIsSource ? null : values.home_team_id,
+        home_source_match_id: homeIsSource ? values.home_source_match_id : null,
+        home_source_outcome: homeIsSource
+          ? (values.home_mode.toUpperCase() as MatchSlotOutcome)
+          : null,
+        away_team_id: awayIsSource ? null : values.away_team_id,
+        away_source_match_id: awayIsSource ? values.away_source_match_id : null,
+        away_source_outcome: awayIsSource
+          ? (values.away_mode.toUpperCase() as MatchSlotOutcome)
+          : null,
         scheduled_start: fromDatetimeLocalValue(values.scheduled_start) ?? '',
         venue_id: values.venue_id && values.venue_id !== '__none__' ? values.venue_id : undefined,
+        status: values.status,
         round: values.round ? Number(values.round) : undefined,
       };
 
@@ -136,16 +194,46 @@ export default function MatchFormDialog({ open, onOpenChange, match, defaultDivi
       />
       <SelectField
         control={form.control}
-        name="home_team_id"
-        label="Home Team"
-        options={teams.map((t) => ({ value: t.id, label: t.name }))}
+        name="home_mode"
+        label="Home side"
+        options={SLOT_MODE_OPTIONS}
       />
+      {homeMode === 'team' ? (
+        <SelectField
+          control={form.control}
+          name="home_team_id"
+          label="Home Team"
+          options={teams.map((t) => ({ value: t.id, label: t.name }))}
+        />
+      ) : (
+        <SelectField
+          control={form.control}
+          name="home_source_match_id"
+          label={homeMode === 'loser' ? 'Loser of game' : 'Winner of game'}
+          options={sourceOptions}
+        />
+      )}
       <SelectField
         control={form.control}
-        name="away_team_id"
-        label="Away Team"
-        options={teams.map((t) => ({ value: t.id, label: t.name }))}
+        name="away_mode"
+        label="Away side"
+        options={SLOT_MODE_OPTIONS}
       />
+      {awayMode === 'team' ? (
+        <SelectField
+          control={form.control}
+          name="away_team_id"
+          label="Away Team"
+          options={teams.map((t) => ({ value: t.id, label: t.name }))}
+        />
+      ) : (
+        <SelectField
+          control={form.control}
+          name="away_source_match_id"
+          label={awayMode === 'loser' ? 'Loser of game' : 'Winner of game'}
+          options={sourceOptions}
+        />
+      )}
       <SelectField
         control={form.control}
         name="venue_id"

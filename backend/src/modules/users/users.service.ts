@@ -212,12 +212,18 @@ export class UsersService {
     if (!team) throw new NotFoundException('Team not found');
 
     await applyCoachTeamAssignment(teamId, coachUserId);
-    return prisma.user.findUnique({ where: { id: coachUserId }, select: SELECT });
+    return prisma.user.findUnique({
+      where: { id: coachUserId },
+      select: SELECT,
+    });
   }
 
   async unassignCoachTeam(coachUserId: string, teamId: string) {
     await this.teamRequests.unassignCoachFromTeam(coachUserId, teamId);
-    return prisma.user.findUnique({ where: { id: coachUserId }, select: SELECT });
+    return prisma.user.findUnique({
+      where: { id: coachUserId },
+      select: SELECT,
+    });
   }
 
   approveTeamRequest(requestId: string) {

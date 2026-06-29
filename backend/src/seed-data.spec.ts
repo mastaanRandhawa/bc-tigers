@@ -18,7 +18,10 @@ const PLACEHOLDER =
 describe('MIRI_PIRI_DIVISIONS seed data', () => {
   it('has the full set of divisions with registered teams', () => {
     expect(MIRI_PIRI_DIVISIONS.length).toBeGreaterThanOrEqual(20);
-    const totalTeams = MIRI_PIRI_DIVISIONS.reduce((n, d) => n + d.teams.length, 0);
+    const totalTeams = MIRI_PIRI_DIVISIONS.reduce(
+      (n, d) => n + d.teams.length,
+      0,
+    );
     expect(totalTeams).toBeGreaterThanOrEqual(100);
   });
 

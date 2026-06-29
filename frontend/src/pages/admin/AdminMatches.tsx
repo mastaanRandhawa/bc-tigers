@@ -12,7 +12,7 @@ import { useMatches, useDeleteMatch } from '@/hooks/useMatches';
 import type { Match } from '@/types';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { formatDate, formatTime, getMatchStatusBadgeVariant } from '@/lib/utils';
+import { formatDate, formatTime, getMatchStatusBadgeVariant, matchSideName } from '@/lib/utils';
 import { getApiErrorMessage } from '@/lib/errors';
 import { matchSearchText } from '@/lib/search-text';
 import { PlusCircle } from 'lucide-react';
@@ -27,9 +27,9 @@ const columns = (onScore: (m: Match) => void, onEvent: (m: Match) => void) => [
     render: (m: Match) => (
       <div className="min-w-0">
         <p className="font-semibold text-foreground leading-snug">
-          <span className="whitespace-nowrap">{m.home_team?.name ?? 'TBD'}</span>
+          <span className="whitespace-nowrap">{matchSideName(m.home_team, m.home_label)}</span>
           <span className="mx-1 font-normal text-muted-foreground">vs</span>
-          <span className="whitespace-nowrap">{m.away_team?.name ?? 'TBD'}</span>
+          <span className="whitespace-nowrap">{matchSideName(m.away_team, m.away_label)}</span>
         </p>
         <p className="text-xs text-muted-foreground">
           {formatDate(m.scheduled_start)} · {formatTime(m.scheduled_start)}

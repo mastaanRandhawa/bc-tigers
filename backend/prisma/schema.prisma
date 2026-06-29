@@ -55,6 +55,13 @@ enum Gender {
   MIXED
 }
 
+/// Which result of a source match feeds a placeholder slot on a later match,
+/// e.g. "Winner of Game 5" (WINNER) or "Loser of Game 7" (LOSER).
+enum MatchSlotOutcome {
+  WINNER
+  LOSER
+}
+
 enum BracketStage {
   ROUND_OF_16
   QUARTER_FINAL
@@ -253,6 +260,7 @@ model Team {
   group          Group?        @relation(fields: [group_id], references: [id], onDelete: SetNull)
   coach          User?         @relation("TeamCoach", fields: [coach_user_id], references: [id], onDelete: SetNull)
   players        Player[]
+  officials      TeamOfficial[]
   home_matches   Match[]       @relation("HomeTeam")
   away_matches   Match[]       @relation("AwayTeam")
   standings      Standing[]
@@ -289,6 +297,22 @@ model Player {
   @@index([team_id, last_name])
 }
 
+/// Non-player staff attached to a team (manager, physio, etc.). Capped at 4 per
+/// team in TeamOfficialsService. `role` and `name` are free-form text.
+model TeamOfficial {
+  id         String   @id @default(uuid())
+  team_id    String
+  name       String
+  role       String
+  order      Int      @default(0)
+  created_at DateTime @default(now())
+  updated_at DateTime @updatedAt
+
+  team Team @relation(fields: [team_id], references: [id], onDelete: Cascade)
+
+  @@index([team_id])
+}
+
 model Venue {
   id           String   @id @default(uuid())
   name         String
@@ -321,8 +345,8 @@ model Match {
   id              String      @id @default(uuid())
   tournament_id   String
   division_id     String
-  home_team_id    String
-  away_team_id    String
+  home_team_id    String?
+  away_team_id    String?
   group_id        String?
   venue_id        String?
   field_id        String?
@@ -338,11 +362,24 @@ model Match {
   created_at      DateTime    @default(now())
   updated_at      DateTime    @updatedAt
 
+  // ─── Placeholder sources ───────────────────────────────────────────────────
+  // When a team is not yet known, a slot can point to the WINNER/LOSER of another
+  // match in the same division. The slot's team_id is filled automatically when
+  // the source match completes (see MatchesService.resolveDependentSlots).
+  home_source_match_id String?
+  home_source_outcome  MatchSlotOutcome?
+  away_source_match_id String?
+  away_source_outcome  MatchSlotOutcome?
+
   tournament    Tournament      @relation(fields: [tournament_id], references: [id], onDelete: Cascade)
   division      Division        @relation(fields: [division_id], references: [id], onDelete: Cascade)
   group         Group?          @relation(fields: [group_id], references: [id], onDelete: SetNull)
-  home_team     Team            @relation("HomeTeam", fields: [home_team_id], references: [id])
-  away_team     Team            @relation("AwayTeam", fields: [away_team_id], references: [id])
+  home_team     Team?           @relation("HomeTeam", fields: [home_team_id], references: [id])
+  away_team     Team?           @relation("AwayTeam", fields: [away_team_id], references: [id])
+  home_source   Match?          @relation("MatchHomeSource", fields: [home_source_match_id], references: [id], onDelete: SetNull)
+  away_source   Match?          @relation("MatchAwaySource", fields: [away_source_match_id], references: [id], onDelete: SetNull)
+  home_source_dependents Match[] @relation("MatchHomeSource")
+  away_source_dependents Match[] @relation("MatchAwaySource")
   venue         Venue?          @relation(fields: [venue_id], references: [id])
   field         Field?          @relation(fields: [field_id], references: [id])
   stage         Stage?          @relation(fields: [stage_id], references: [id])
@@ -354,6 +391,8 @@ model Match {
   @@index([division_id, status])
   @@index([tournament_id, status])
   @@index([group_id])
+  @@index([home_source_match_id])
+  @@index([away_source_match_id])
 }
 
 model MatchEvent {

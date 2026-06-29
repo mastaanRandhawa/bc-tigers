@@ -1,4 +1,12 @@
-import { IsArray, IsEmail, IsOptional, IsString, IsUUID, MinLength, ArrayMinSize } from 'class-validator';
+import {
+  IsArray,
+  IsEmail,
+  IsOptional,
+  IsString,
+  IsUUID,
+  MinLength,
+  ArrayMinSize,
+} from 'class-validator';
 
 export class RegisterCoachDto {
   @IsString()

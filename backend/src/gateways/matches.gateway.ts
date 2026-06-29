@@ -98,6 +98,15 @@ export class MatchesGateway
     this.server.emit(SOCKET_EVENTS.MATCH_UPDATED, data);
   }
 
+  /** Generic match-changed broadcast (e.g. a placeholder slot was auto-filled). */
+  emitMatchUpdated(matchId: string, divisionId: string, data: unknown) {
+    this.server.to(`match:${matchId}`).emit(SOCKET_EVENTS.MATCH_UPDATED, data);
+    this.server
+      .to(`division:${divisionId}`)
+      .emit(SOCKET_EVENTS.MATCH_UPDATED, data);
+    this.server.emit(SOCKET_EVENTS.MATCH_UPDATED, data);
+  }
+
   async emitMatchCompleted(matchId: string, divisionId: string, data: unknown) {
     this.server
       .to(`match:${matchId}`)

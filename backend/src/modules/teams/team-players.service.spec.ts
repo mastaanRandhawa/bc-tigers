@@ -24,10 +24,11 @@ jest.mock('../../common/player-slug', () => ({
 }));
 
 import prisma from '../../prisma/prisma';
+import { asMockedPrisma } from '../../test-utils/prisma-mock';
 import { getRosterVisibilityContext } from '../auth/roster-visibility';
 import { TeamPlayersService } from './team-players.service';
 
-const mockPrisma = prisma as jest.Mocked<typeof prisma>;
+const mockPrisma = asMockedPrisma(prisma);
 const mockGetRosterVisibilityContext =
   getRosterVisibilityContext as jest.MockedFunction<
     typeof getRosterVisibilityContext
@@ -48,7 +49,7 @@ describe('TeamPlayersService roster cap', () => {
     mockPrisma.team.findUnique.mockResolvedValue({
       id: 'team-1',
       coach_user_id: 'coach-1',
-    } as never);
+    });
     mockGetRosterVisibilityContext.mockResolvedValue({
       rostersPublic: false,
       actor: undefined,

@@ -82,10 +82,7 @@ export function replaySavedWinners(nodes: EngineNode[]): void {
   const firstStage = firstStageInBracket(nodes);
   if (!firstStage) return;
 
-  const saved = new Map<
-    string,
-    { winnerId: string; source: WinnerSource }
-  >();
+  const saved = new Map<string, { winnerId: string; source: WinnerSource }>();
   for (const node of nodes) {
     if (!node.winner_id) continue;
     const sole = soleTeamId(node);

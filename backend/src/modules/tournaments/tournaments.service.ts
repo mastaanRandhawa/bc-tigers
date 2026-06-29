@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import type { MatchStatus, Prisma } from '@prisma/client';
 import prisma from '../../prisma/prisma';
 import { pickAllowed } from '../../common/pick';
@@ -38,7 +42,9 @@ export class TournamentsService {
         ? { status: status as Prisma.EnumTournamentStatusFilter }
         : undefined,
       include: {
-        divisions: { orderBy: [{ display_order: 'asc' }, { created_at: 'asc' }] },
+        divisions: {
+          orderBy: [{ display_order: 'asc' }, { created_at: 'asc' }],
+        },
       },
       skip: (page - 1) * limit,
       take: limit,

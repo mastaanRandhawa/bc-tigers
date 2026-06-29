@@ -136,6 +136,7 @@ export class TeamsService {
           },
         },
         players: { orderBy: { last_name: 'asc' } },
+        officials: { orderBy: [{ order: 'asc' }, { created_at: 'asc' }] },
         standings: true,
       },
     });

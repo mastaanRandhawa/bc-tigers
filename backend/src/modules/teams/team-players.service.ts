@@ -54,9 +54,7 @@ export class TeamPlayersService {
     if (!team) throw new NotFoundException('Team not found');
 
     const ctx = await getRosterVisibilityContext();
-    if (
-      !canViewTeamRoster(ctx.actor, team.coach_user_id, ctx.rostersPublic)
-    ) {
+    if (!canViewTeamRoster(ctx.actor, team.coach_user_id, ctx.rostersPublic)) {
       return [];
     }
 
@@ -92,9 +90,7 @@ export class TeamPlayersService {
     if (!team) throw new NotFoundException('Team not found');
 
     const ctx = await getRosterVisibilityContext();
-    if (
-      !canViewTeamRoster(ctx.actor, team.coach_user_id, ctx.rostersPublic)
-    ) {
+    if (!canViewTeamRoster(ctx.actor, team.coach_user_id, ctx.rostersPublic)) {
       throw new NotFoundException('Player not found on this team');
     }
 

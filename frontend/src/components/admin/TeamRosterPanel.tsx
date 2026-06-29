@@ -3,6 +3,7 @@ import { useTeamPlayers, useCreateTeamPlayer, useUpdateTeamPlayer, useDeleteTeam
 import QueryState from '@/components/shared/QueryState';
 import { Button } from '@/components/ui/button';
 import PlayerFormDialog from '@/components/admin/forms/PlayerFormDialog';
+import TeamOfficialsPanel from '@/components/admin/TeamOfficialsPanel';
 import { ConfirmDialog } from '@/components/admin/inline/ConfirmDialog';
 import { getApiErrorMessage } from '@/lib/errors';
 import { Pencil, UserPlus } from 'lucide-react';
@@ -51,6 +52,7 @@ export default function TeamRosterPanel({ team }: TeamRosterPanelProps) {
   };
 
   return (
+    <div className="space-y-4">
     <div className="rounded-xl border border-border bg-card p-4">
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
         <h3 className="text-sm font-semibold text-foreground m-0">Roster — {team.name}</h3>
@@ -152,6 +154,9 @@ export default function TeamRosterPanel({ team }: TeamRosterPanelProps) {
         confirmLabel="Remove"
         onConfirm={handleDelete}
       />
+    </div>
+
+    <TeamOfficialsPanel team={team} />
     </div>
   );
 }

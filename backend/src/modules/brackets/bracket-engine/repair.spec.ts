@@ -128,8 +128,7 @@ describe('bracket repair', () => {
     }
 
     const qf = nodes.find(
-      (n) =>
-        n.stage === 'QUARTER_FINAL' && n.home_team_id && n.away_team_id,
+      (n) => n.stage === 'QUARTER_FINAL' && n.home_team_id && n.away_team_id,
     )!;
     qf.away_team_id = null;
     qf.winner_id = null;
@@ -166,8 +165,7 @@ describe('bracket repair', () => {
     }
 
     const qf = nodes.find(
-      (n) =>
-        n.stage === 'QUARTER_FINAL' && n.home_team_id && n.away_team_id,
+      (n) => n.stage === 'QUARTER_FINAL' && n.home_team_id && n.away_team_id,
     )!;
     setWinner(nodes, qf.id, qf.home_team_id!, 'manual');
 
