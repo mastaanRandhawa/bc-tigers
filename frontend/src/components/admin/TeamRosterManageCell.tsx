@@ -1,18 +1,29 @@
 import { Button } from '@/components/ui/button';
+import { useTeamPlayers } from '@/hooks/useTeamPlayers';
 import { Users } from 'lucide-react';
 import type { Team } from '@/types';
 
 interface TeamRosterManageCellProps {
   team: Team;
   onManage: (team: Team) => void;
+  /** When true, show the live roster size from the players query (sheet open). */
+  rosterOpen?: boolean;
 }
 
 export function teamPlayerCount(team: Team): number {
-  return team.roster_count ?? team.players?.length ?? 0;
+  if (typeof team.roster_count === 'number') return team.roster_count;
+  if (Array.isArray(team.players)) return team.players.length;
+  return 0;
 }
 
-export default function TeamRosterManageCell({ team, onManage }: TeamRosterManageCellProps) {
-  const count = teamPlayerCount(team);
+export default function TeamRosterManageCell({
+  team,
+  onManage,
+  rosterOpen = false,
+}: TeamRosterManageCellProps) {
+  const { data: players } = useTeamPlayers(rosterOpen ? team.id : undefined);
+  const count =
+    rosterOpen && players ? players.length : teamPlayerCount(team);
 
   return (
     <div className="flex flex-col items-start gap-1">

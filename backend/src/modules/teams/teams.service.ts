@@ -38,6 +38,21 @@ export class TeamsService {
     private readonly audit: AuditLogService,
   ) {}
 
+  /** Player counts keyed by team id (all roster rows for each team). */
+  private async playerCountsByTeamId(
+    teamIds: string[],
+  ): Promise<Map<string, number>> {
+    if (teamIds.length === 0) return new Map();
+
+    const rows = await prisma.player.groupBy({
+      by: ['team_id'],
+      where: { team_id: { in: teamIds } },
+      _count: { _all: true },
+    });
+
+    return new Map(rows.map((row) => [row.team_id, row._count._all]));
+  }
+
   /** Auto-scoped by the soft-delete extension (active/deleted/all via request scope). */
   async findAll(params?: { divisionId?: string }) {
     const ctx = await getRosterVisibilityContext();
@@ -56,17 +71,19 @@ export class TeamsService {
             email: true,
           },
         },
-        _count: { select: { players: true } },
       },
     });
 
+    const rosterCounts = await this.playerCountsByTeamId(
+      teams.map((team) => team.id),
+    );
+
     return teams.map((team) => {
-      const { _count, ...rest } = team;
       const stripped = stripTeamPlayers(
-        rest,
+        team,
         canViewTeamRoster(ctx.actor, team.coach_user_id, ctx.rostersPublic),
       );
-      return { ...stripped, roster_count: _count.players };
+      return { ...stripped, roster_count: rosterCounts.get(team.id) ?? 0 };
     });
   }
 

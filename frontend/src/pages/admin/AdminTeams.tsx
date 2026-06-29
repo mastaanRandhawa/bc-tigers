@@ -21,7 +21,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 
-const columns = (onRoster: (t: Team) => void) => [
+const columns = (onRoster: (t: Team) => void, rosterTeamId?: string | null) => [
   {
     key: 'name',
     label: 'Team',
@@ -76,7 +76,13 @@ const columns = (onRoster: (t: Team) => void) => [
   {
     key: 'roster',
     label: 'Roster',
-    render: (t: Team) => <TeamRosterManageCell team={t} onManage={onRoster} />,
+    render: (t: Team) => (
+      <TeamRosterManageCell
+        team={t}
+        onManage={onRoster}
+        rosterOpen={rosterTeamId === t.id}
+      />
+    ),
   },
 ];
 
@@ -105,7 +111,7 @@ export default function AdminTeams() {
         <AdminTable
           title="All Teams"
           data={teams}
-          columns={columns(setRosterTeam)}
+          columns={columns(setRosterTeam, rosterTeam?.id)}
           onAdd={formDialog.openCreate}
           onEdit={formDialog.openEdit}
           onDelete={(t) => setDeleteTarget(t)}

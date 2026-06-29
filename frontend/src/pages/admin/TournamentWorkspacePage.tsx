@@ -95,7 +95,11 @@ export default function TournamentWorkspacePage() {
       key: 'roster',
       label: 'Roster',
       render: (t: Team) => (
-        <TeamRosterManageCell team={t} onManage={setRosterTeam} />
+        <TeamRosterManageCell
+          team={t}
+          onManage={setRosterTeam}
+          rosterOpen={rosterTeam?.id === t.id}
+        />
       ),
     },
   ];
