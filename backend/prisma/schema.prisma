@@ -201,7 +201,7 @@ model Division {
 
   tournament    Tournament     @relation(fields: [tournament_id], references: [id], onDelete: Cascade)
   point_format  PointFormat    @relation(fields: [point_format_id], references: [id])
-  teams         Team[]
+  team_memberships TeamDivision[]
   matches       Match[]
   standings     Standing[]
   bracket_nodes BracketNode[]
@@ -209,6 +209,26 @@ model Division {
   groups        Group[]
 
   @@unique([tournament_id, slug])
+}
+
+/// Links a team to a division (many-to-many). Holds division-scoped slug and pool.
+model TeamDivision {
+  id          String   @id @default(uuid())
+  team_id     String
+  division_id String
+  group_id    String?
+  slug        String
+  created_at  DateTime @default(now())
+  updated_at  DateTime @updatedAt
+
+  team     Team     @relation(fields: [team_id], references: [id], onDelete: Cascade)
+  division Division @relation(fields: [division_id], references: [id], onDelete: Cascade)
+  group    Group?   @relation(fields: [group_id], references: [id], onDelete: SetNull)
+
+  @@unique([team_id, division_id])
+  @@unique([division_id, slug])
+  @@index([division_id])
+  @@index([group_id])
 }
 
 /// A group (pool) within a division, e.g. "Pool A". Teams, matches and standings
@@ -222,8 +242,8 @@ model Group {
   created_at  DateTime @default(now())
   updated_at  DateTime @updatedAt
 
-  division  Division   @relation(fields: [division_id], references: [id], onDelete: Cascade)
-  teams     Team[]
+  division  Division       @relation(fields: [division_id], references: [id], onDelete: Cascade)
+  team_memberships TeamDivision[]
   matches   Match[]
   standings Standing[]
 
@@ -233,10 +253,7 @@ model Group {
 
 model Team {
   id                 String   @id @default(uuid())
-  division_id        String
-  group_id           String?
   name               String
-  slug               String
   logo               String?
   city               String?
   founded_year       Int?
@@ -256,8 +273,7 @@ model Team {
   is_deleted    Boolean      @default(false)
   record_status RecordStatus @default(ACTIVE)
 
-  division       Division      @relation(fields: [division_id], references: [id], onDelete: Cascade)
-  group          Group?        @relation(fields: [group_id], references: [id], onDelete: SetNull)
+  divisions      TeamDivision[]
   coach          User?         @relation("TeamCoach", fields: [coach_user_id], references: [id], onDelete: SetNull)
   players        Player[]
   officials      TeamOfficial[]
@@ -270,9 +286,7 @@ model Team {
   bracket_winner BracketNode[] @relation("BracketWinner")
   team_requests  CoachTeamRequest[]
 
-  @@unique([division_id, slug])
   @@index([is_deleted])
-  @@index([group_id])
   @@index([coach_user_id])
 }
 

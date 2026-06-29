@@ -71,7 +71,7 @@ export class TeamPlayersService {
   async findByDivision(divisionId: string) {
     const ctx = await getRosterVisibilityContext();
     const players = await prisma.player.findMany({
-      where: { team: { division_id: divisionId } },
+      where: { team: { divisions: { some: { division_id: divisionId } } } },
       include: { team: true },
       orderBy: [{ last_name: 'asc' }, { first_name: 'asc' }],
     });
@@ -100,7 +100,15 @@ export class TeamPlayersService {
         ...playerLookupWhere(playerId, teamId),
       },
       include: {
-        team: { include: { division: { include: { tournament: true } } } },
+        team: {
+          include: {
+            divisions: {
+              take: 1,
+              orderBy: { created_at: 'asc' },
+              include: { division: { include: { tournament: true } } },
+            },
+          },
+        },
         match_events: {
           where: { team_id: teamId },
           include: { match: true },

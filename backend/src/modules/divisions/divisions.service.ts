@@ -9,6 +9,7 @@ import { roundRobinPairs } from '../../common/round-robin';
 import { pickAllowed } from '../../common/pick';
 import { AuditLogService } from '../audit-log/audit-log.service';
 import { StandingsService } from '../standings/standings.service';
+import { MEMBERSHIP_INCLUDE, teamFromMembership } from '../teams/team-membership';
 
 /** Client-settable scalar fields on a division. `bracket_locked` is managed by the brackets module. */
 const DIVISION_FIELDS = [
@@ -36,10 +37,31 @@ const DIVISION_ORDER_BY = [
   { created_at: 'asc' as const },
 ];
 
+const DIVISION_TEAMS_INCLUDE = {
+  team_memberships: {
+    include: {
+      team: true,
+      ...MEMBERSHIP_INCLUDE,
+    },
+    orderBy: { team: { name: 'asc' as const } },
+  },
+} as const;
+
 const DIVISION_INCLUDE = {
   tournament: true,
   point_format: true,
 } as const;
+
+function mapDivisionTeams(division: {
+  team_memberships?: Array<Parameters<typeof teamFromMembership>[0]>;
+  [key: string]: unknown;
+}) {
+  const { team_memberships = [], ...rest } = division;
+  return {
+    ...rest,
+    teams: team_memberships.map((m) => teamFromMembership(m)),
+  };
+}
 
 /** Prisma update accepts relation connects, not raw FK scalars on this model. */
 function buildDivisionUpdateData(
@@ -113,21 +135,23 @@ export class DivisionsService {
       where: { slug: tournamentSlug },
     });
     if (!tournament) throw new NotFoundException('Tournament not found');
-    return prisma.division.findMany({
+    const divisions = await prisma.division.findMany({
       where: { tournament_id: tournament.id },
-      include: { teams: true, point_format: true },
+      include: { ...DIVISION_TEAMS_INCLUDE, point_format: true },
       orderBy: DIVISION_ORDER_BY,
     });
+    return divisions.map(mapDivisionTeams);
   }
 
   async findOne(tournamentSlug: string, divisionSlug: string) {
-    return this.resolveDivision(tournamentSlug, divisionSlug, {
+    const division = await this.resolveDivision(tournamentSlug, divisionSlug, {
       tournament: true,
       point_format: true,
-      teams: true,
+      ...DIVISION_TEAMS_INCLUDE,
       standings: { include: { team: true }, orderBy: { rank: 'asc' } },
       matches: { include: { home_team: true, away_team: true } },
     });
+    return mapDivisionTeams(division);
   }
 
   async resolveDivision(
@@ -270,7 +294,7 @@ export class DivisionsService {
   ) {
     const division = await prisma.division.findUnique({
       where: { id: divisionId },
-      include: { teams: true, tournament: true },
+      include: { tournament: true },
     });
     if (!division) throw new NotFoundException('Division not found');
 
@@ -287,7 +311,11 @@ export class DivisionsService {
       await prisma.match.deleteMany({ where: { division_id: divisionId } });
     }
 
-    const teamIds = division.teams.map((t) => t.id);
+    const memberships = await prisma.teamDivision.findMany({
+      where: { division_id: divisionId },
+      select: { team_id: true },
+    });
+    const teamIds = memberships.map((m) => m.team_id);
     if (teamIds.length < 2) {
       throw new BadRequestException(
         'At least 2 teams required to generate a schedule',
@@ -325,6 +353,8 @@ export class DivisionsService {
       entityId: divisionId,
       metadata: { created: matches.length },
     });
+
+    await this.standings.recalculate(divisionId);
     return { created: matches.length, matches };
   }
 }

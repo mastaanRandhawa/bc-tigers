@@ -18,6 +18,7 @@ interface FormDialogProps {
   onSubmit: () => void;
   isSubmitting?: boolean;
   submitLabel?: string;
+  submitDisabled?: boolean;
 }
 
 export default function FormDialog({
@@ -29,6 +30,7 @@ export default function FormDialog({
   onSubmit,
   isSubmitting,
   submitLabel = 'Save',
+  submitDisabled,
 }: FormDialogProps) {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -50,7 +52,7 @@ export default function FormDialog({
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>
               Cancel
             </Button>
-            <Button type="submit" disabled={isSubmitting}>
+            <Button type="submit" disabled={isSubmitting || submitDisabled}>
               {isSubmitting ? 'Saving...' : submitLabel}
             </Button>
           </DialogFooter>

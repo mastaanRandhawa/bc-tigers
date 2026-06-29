@@ -37,12 +37,25 @@ export class BracketsService {
     return this.engine.getFullBracket(divisionId);
   }
 
-  private async loadEligibleTeams(divisionId: string): Promise<EligibleTeam[]> {
-    const teams = await prisma.team.findMany({
+  private async loadDivisionTeams(divisionId: string) {
+    const memberships = await prisma.teamDivision.findMany({
       where: { division_id: divisionId },
-      include: { players: { select: { id: true, active: true } } },
-      orderBy: { name: 'asc' },
+      include: {
+        team: {
+          include: { players: { select: { id: true, active: true } } },
+        },
+      },
+      orderBy: { team: { name: 'asc' } },
     });
+    return memberships.map((m) => ({
+      ...m.team,
+      slug: m.slug,
+      division_id: m.division_id,
+    }));
+  }
+
+  private async loadEligibleTeams(divisionId: string): Promise<EligibleTeam[]> {
+    const teams = await this.loadDivisionTeams(divisionId);
 
     const { eligible } = selectEligibleTeams({
       divisionId,
@@ -61,10 +74,7 @@ export class BracketsService {
 
     const flags = await this.engine.loadDivisionFlags(divisionId);
     const structureLocked = this.engine.isStructureLocked(flags);
-    const teams = await prisma.team.findMany({
-      where: { division_id: divisionId },
-      include: { players: { select: { id: true, active: true } } },
-    });
+    const teams = await this.loadDivisionTeams(divisionId);
 
     const { eligible, validation } = selectEligibleTeams({
       divisionId,

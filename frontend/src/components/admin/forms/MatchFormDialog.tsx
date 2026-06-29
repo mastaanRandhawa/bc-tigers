@@ -135,6 +135,15 @@ export default function MatchFormDialog({ open, onOpenChange, match, defaultDivi
     }
   }, [open, match, form, tournaments, divisions, defaultDivisionId]);
 
+  // Changing division invalidates previously selected teams (different roster pool).
+  useEffect(() => {
+    if (!open || isEditing) return;
+    form.setValue('home_team_id', '');
+    form.setValue('away_team_id', '');
+    form.setValue('home_source_match_id', '');
+    form.setValue('away_source_match_id', '');
+  }, [divisionId, open, isEditing, form]);
+
   const onSubmit = form.handleSubmit(async (values) => {
     try {
       // Each side resolves to EITHER a team or a Winner/Loser source — clear the
@@ -155,7 +164,8 @@ export default function MatchFormDialog({ open, onOpenChange, match, defaultDivi
           ? (values.away_mode.toUpperCase() as MatchSlotOutcome)
           : null,
         scheduled_start: fromDatetimeLocalValue(values.scheduled_start) ?? '',
-        venue_id: values.venue_id && values.venue_id !== '__none__' ? values.venue_id : undefined,
+        venue_id:
+          values.venue_id && values.venue_id !== '__none__' ? values.venue_id : null,
         status: values.status,
         round: values.round ? Number(values.round) : undefined,
       };

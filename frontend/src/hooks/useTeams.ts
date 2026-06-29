@@ -23,7 +23,31 @@ function invalidateTeams(qc: ReturnType<typeof useQueryClient>) {
 export function useCreateTeam() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (data: Partial<Team>) => teamsService.create(data),
+    mutationFn: (data: Partial<Team> & { division_ids?: string[] }) =>
+      teamsService.create(data),
+    onSuccess: () => invalidateTeams(qc),
+  });
+}
+
+export function useAddTeamToDivision() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      teamId,
+      data,
+    }: {
+      teamId: string;
+      data: { division_id: string; slug?: string; group_id?: string | null };
+    }) => teamsService.addToDivision(teamId, data),
+    onSuccess: () => invalidateTeams(qc),
+  });
+}
+
+export function useRemoveTeamFromDivision() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ teamId, divisionId }: { teamId: string; divisionId: string }) =>
+      teamsService.removeFromDivision(teamId, divisionId),
     onSuccess: () => invalidateTeams(qc),
   });
 }

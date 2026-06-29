@@ -9,6 +9,11 @@ import { getCoachTeamId, getCoachTeamIds } from '../teams/coach-team-link';
 import { TeamPlayersService } from '../teams/team-players.service';
 import { CoachTeamRequestsService } from '../teams/coach-team-requests.service';
 import { getMaxPlayersPerTeam } from '../settings/settings.service';
+import {
+  enrichMatchesWithTeamSlugs,
+  flattenTeamForDivision,
+  type TeamWithMemberships,
+} from '../teams/team-membership';
 
 const COACH_TEAM_FIELDS = [
   'logo',
@@ -20,7 +25,13 @@ const COACH_TEAM_FIELDS = [
 ] as const;
 
 const TEAM_INCLUDE = {
-  division: { include: { tournament: true } },
+  divisions: {
+    include: {
+      division: { include: { tournament: true } },
+      group: { select: { id: true, name: true, slug: true, order: true } },
+    },
+    orderBy: { created_at: 'asc' as const },
+  },
   coach: {
     select: {
       id: true,
@@ -34,6 +45,12 @@ const TEAM_INCLUDE = {
     orderBy: [{ active: 'desc' as const }, { last_name: 'asc' as const }],
   },
 };
+
+function flattenCoachTeam(team: TeamWithMemberships) {
+  const primary = team.divisions[0];
+  if (!primary) return { ...team, division_id: '', slug: '', division: undefined };
+  return flattenTeamForDivision(team, primary.division_id);
+}
 
 @Injectable()
 export class CoachService {
@@ -60,9 +77,15 @@ export class CoachService {
           select: {
             id: true,
             name: true,
-            slug: true,
             management_locked: true,
-            division: { select: { id: true, name: true, slug: true } },
+            divisions: {
+              take: 1,
+              orderBy: { created_at: 'asc' },
+              select: {
+                slug: true,
+                division: { select: { id: true, name: true, slug: true } },
+              },
+            },
           },
         },
       },
@@ -75,6 +98,16 @@ export class CoachService {
       ...user,
       team_ids,
       team_id: team_ids[0] ?? null,
+      coached_teams: user.coached_teams.map((t) => {
+        const m = t.divisions[0];
+        return {
+          id: t.id,
+          name: t.name,
+          slug: m?.slug ?? '',
+          management_locked: t.management_locked,
+          division: m?.division,
+        };
+      }),
       ...lockStatus,
     };
   }
@@ -83,24 +116,12 @@ export class CoachService {
     const teamIds = await getCoachTeamIds(userId);
     if (teamIds.length === 0) return [];
 
-    return prisma.team.findMany({
+    const teams = await prisma.team.findMany({
       where: { id: { in: teamIds } },
-      select: {
-        id: true,
-        name: true,
-        slug: true,
-        management_locked: true,
-        division: {
-          select: {
-            id: true,
-            name: true,
-            slug: true,
-            tournament: { select: { id: true, name: true } },
-          },
-        },
-      },
+      include: TEAM_INCLUDE,
       orderBy: { name: 'asc' },
     });
+    return teams.map((t) => flattenCoachTeam(t as TeamWithMemberships));
   }
 
   listTeamRequests(userId: string) {
@@ -151,8 +172,11 @@ export class CoachService {
 
     const globalLocked = await isCoachManagementLocked();
     const max_players_per_team = await getMaxPlayersPerTeam();
+    const flat = flattenCoachTeam(team as TeamWithMemberships);
     return {
-      ...team,
+      ...flat,
+      players: team.players,
+      coach: team.coach,
       coach_management_locked: globalLocked,
       max_players_per_team,
       roster_count: team.players.length,
@@ -189,7 +213,7 @@ export class CoachService {
     const resolvedTeamId = await getCoachTeamId(userId, teamId);
     if (!resolvedTeamId) return [];
 
-    return prisma.match.findMany({
+    const matches = await prisma.match.findMany({
       where: {
         OR: [
           { home_team_id: resolvedTeamId },
@@ -197,8 +221,8 @@ export class CoachService {
         ],
       },
       include: {
-        home_team: { select: { id: true, name: true, slug: true, logo: true } },
-        away_team: { select: { id: true, name: true, slug: true, logo: true } },
+        home_team: { select: { id: true, name: true, logo: true } },
+        away_team: { select: { id: true, name: true, logo: true } },
         division: {
           select: {
             id: true,
@@ -212,5 +236,6 @@ export class CoachService {
       orderBy: { scheduled_start: 'asc' },
       take: 30,
     });
+    return enrichMatchesWithTeamSlugs(matches);
   }
 }

@@ -4,6 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import prisma from '../../prisma/prisma';
+import { handlePrismaError } from '../../common/prisma-errors';
 import { StandingsService } from '../standings/standings.service';
 
 function slugify(value: string): string {
@@ -14,23 +15,50 @@ function slugify(value: string): string {
 }
 
 const GROUP_INCLUDE = {
-  teams: {
-    select: { id: true, name: true, slug: true, logo: true },
-    orderBy: { name: 'asc' },
+  team_memberships: {
+    include: {
+      team: { select: { id: true, name: true, logo: true } },
+    },
+    orderBy: { team: { name: 'asc' } },
   },
-  _count: { select: { teams: true, matches: true } },
+  _count: { select: { team_memberships: true, matches: true } },
 } as const;
+
+function mapGroup<
+  T extends {
+    team_memberships: Array<{
+      team: { id: string; name: string; logo: string | null };
+      slug: string;
+    }>;
+    _count?: { team_memberships: number; matches: number };
+  },
+>(group: T) {
+  return {
+    ...group,
+    teams: group.team_memberships.map((m) => ({
+      id: m.team.id,
+      name: m.team.name,
+      logo: m.team.logo,
+      slug: m.slug,
+    })),
+    _count: group._count
+      ? { teams: group._count.team_memberships, matches: group._count.matches }
+      : undefined,
+  };
+}
 
 @Injectable()
 export class GroupsService {
   constructor(private readonly standings: StandingsService) {}
 
   listByDivision(divisionId: string) {
-    return prisma.group.findMany({
-      where: { division_id: divisionId },
-      include: GROUP_INCLUDE,
-      orderBy: { order: 'asc' },
-    });
+    return prisma.group
+      .findMany({
+        where: { division_id: divisionId },
+        include: GROUP_INCLUDE,
+        orderBy: { order: 'asc' },
+      })
+      .then((groups) => groups.map(mapGroup));
   }
 
   private async ensureDivision(divisionId: string) {
@@ -67,10 +95,14 @@ export class GroupsService {
     });
     const order = typeof body.order === 'number' ? body.order : count;
 
-    return prisma.group.create({
-      data: { division_id: divisionId, name, slug, order },
-      include: GROUP_INCLUDE,
-    });
+    try {
+      return await prisma.group.create({
+        data: { division_id: divisionId, name, slug, order },
+        include: GROUP_INCLUDE,
+      }).then(mapGroup);
+    } catch (err) {
+      handlePrismaError(err, 'Group create');
+    }
   }
 
   async update(id: string, body: Record<string, unknown>) {
@@ -88,11 +120,13 @@ export class GroupsService {
       data.order = body.order;
     }
 
-    return prisma.group.update({
-      where: { id },
-      data,
-      include: GROUP_INCLUDE,
-    });
+    return prisma.group
+      .update({
+        where: { id },
+        data,
+        include: GROUP_INCLUDE,
+      })
+      .then(mapGroup);
   }
 
   async remove(id: string) {
@@ -132,17 +166,17 @@ export class GroupsService {
       throw new BadRequestException('assignments must be an array');
     }
 
-    const [divisionTeams, divisionGroups] = await Promise.all([
-      prisma.team.findMany({
+    const [memberships, divisionGroups] = await Promise.all([
+      prisma.teamDivision.findMany({
         where: { division_id: divisionId },
-        select: { id: true },
+        select: { team_id: true },
       }),
       prisma.group.findMany({
         where: { division_id: divisionId },
         select: { id: true },
       }),
     ]);
-    const teamIds = new Set(divisionTeams.map((t) => t.id));
+    const teamIds = new Set(memberships.map((t) => t.team_id));
     const groupIds = new Set(divisionGroups.map((g) => g.id));
 
     for (const a of assignments) {
@@ -160,12 +194,11 @@ export class GroupsService {
 
     await prisma.$transaction([
       ...assignments.map((a) =>
-        prisma.team.update({
-          where: { id: a.team_id },
+        prisma.teamDivision.updateMany({
+          where: { division_id: divisionId, team_id: a.team_id },
           data: { group_id: a.group_id },
         }),
       ),
-      // Keep each team's existing standings row pointed at the same group.
       ...assignments.map((a) =>
         prisma.standing.updateMany({
           where: { division_id: divisionId, team_id: a.team_id },

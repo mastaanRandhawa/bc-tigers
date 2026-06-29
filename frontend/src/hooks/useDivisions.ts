@@ -26,7 +26,10 @@ export function useCreateDivision() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (data: Partial<Division>) => divisionsService.create(data),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['divisions'] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['divisions'] });
+      qc.invalidateQueries({ queryKey: ['tournaments'] });
+    },
   });
 }
 

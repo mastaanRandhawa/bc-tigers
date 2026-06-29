@@ -52,6 +52,27 @@ export class TeamsController {
     return this.service.update(id, body);
   }
 
+  @Post(':id/divisions')
+  @AdminOnly()
+  addToDivision(
+    @Param('id') id: string,
+    @Body() body: { division_id: string; slug?: string; group_id?: string | null },
+  ) {
+    return this.service.addToDivision(id, body.division_id, {
+      slug: body.slug,
+      group_id: body.group_id,
+    });
+  }
+
+  @Delete(':id/divisions/:divisionId')
+  @AdminOnly()
+  removeFromDivision(
+    @Param('id') id: string,
+    @Param('divisionId') divisionId: string,
+  ) {
+    return this.service.removeFromDivision(id, divisionId);
+  }
+
   @Post(':id/restore')
   @AdminOnly()
   restore(@Param('id') id: string) {

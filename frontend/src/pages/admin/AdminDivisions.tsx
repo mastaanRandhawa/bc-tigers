@@ -37,7 +37,7 @@ import { toast } from 'sonner';
 export default function AdminDivisions() {
   const { data: divisions = [], isLoading, isError, refetch } = useDivisions();
   const { data: teams = [] } = useTeams();
-  const { data: matches = [] } = useMatches();
+  const { data: matches = [] } = useMatches({ limit: 1000 });
   const deleteMutation = useDeleteDivision();
   const reorderMutation = useReorderDivisions();
   const formDialog = useFormDialog<Division>();

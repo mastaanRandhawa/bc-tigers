@@ -18,6 +18,7 @@ import {
   assertCoachCanUpdateGoalEvent,
   coachGoalPatchFromUpdate,
 } from '../auth/coach-match-goals';
+import { assertTeamsInDivision, enrichMatchesWithTeamSlugs, enrichMatchWithTeamSlugs } from '../teams/team-membership';
 import {
   canViewTeamRoster,
   getRosterVisibilityContext,
@@ -109,8 +110,8 @@ const MATCH_EVENT_FIELDS = [
 ] as const;
 
 const MATCH_LIST_INCLUDE = {
-  home_team: { select: { id: true, name: true, slug: true, logo: true } },
-  away_team: { select: { id: true, name: true, slug: true, logo: true } },
+  home_team: { select: { id: true, name: true, logo: true } },
+  away_team: { select: { id: true, name: true, logo: true } },
   group: { select: { id: true, name: true, slug: true, order: true } },
   venue: { select: { id: true, name: true, slug: true } },
   field: { select: { id: true, name: true } },
@@ -193,7 +194,8 @@ export class MatchesService {
       take: limit,
       orderBy: { scheduled_start: order },
     });
-    return matches.map(attachSlotLabels);
+    const withSlugs = await enrichMatchesWithTeamSlugs(matches);
+    return withSlugs.map(attachSlotLabels);
   }
 
   async findOne(id: string) {
@@ -215,16 +217,18 @@ export class MatchesService {
       ctx.rostersPublic,
     );
 
-    return attachSlotLabels({
-      ...match,
-      // Slots may be bracket placeholders (no team) — pass those through as null.
-      home_team: match.home_team
-        ? stripTeamPlayers(match.home_team, canViewHome)
-        : null,
-      away_team: match.away_team
-        ? stripTeamPlayers(match.away_team, canViewAway)
-        : null,
-    });
+    const enriched = await enrichMatchWithTeamSlugs(
+      attachSlotLabels({
+        ...match,
+        home_team: match.home_team
+          ? stripTeamPlayers(match.home_team, canViewHome)
+          : null,
+        away_team: match.away_team
+          ? stripTeamPlayers(match.away_team, canViewAway)
+          : null,
+      }),
+    );
+    return enriched;
   }
 
   async create(data: unknown) {
@@ -233,6 +237,10 @@ export class MatchesService {
       MATCH_FIELDS,
     );
     await this.validateSources(createData, createData.division_id);
+    await assertTeamsInDivision(String(createData.division_id), [
+      createData.home_team_id,
+      createData.away_team_id,
+    ]);
 
     const match = await prisma.match.create({
       data: createData,
@@ -253,6 +261,10 @@ export class MatchesService {
     );
 
     await this.validateSources(updateData, existing.division_id, id);
+    await assertTeamsInDivision(existing.division_id, [
+      updateData.home_team_id as string | null | undefined,
+      updateData.away_team_id as string | null | undefined,
+    ]);
 
     // A knockout (bracket-linked) match, or one feeding a Winner/Loser
     // placeholder, cannot end level — advancement needs a decisive winner.
@@ -680,8 +692,22 @@ export class MatchesService {
     );
   }
 
-  remove(id: string) {
-    return prisma.match.delete({ where: { id } });
+  async remove(id: string) {
+    await prisma.bracketNode.updateMany({
+      where: { match_id: id },
+      data: { match_id: null },
+    });
+    try {
+      return await prisma.match.delete({ where: { id } });
+    } catch (err) {
+      const code = (err as { code?: string })?.code;
+      if (code === 'P2003') {
+        throw new BadRequestException(
+          'Cannot delete this match because related data is still linked',
+        );
+      }
+      throw err;
+    }
   }
 
   async assignOfficial(

@@ -11,6 +11,29 @@ import { AuditableService, asAuditable } from '../audit-log/auditable.service';
 
 const ENTITY = 'Tournament';
 
+function mapDivisionCounts<T extends {
+  _count?: { team_memberships?: number; matches?: number };
+}>(division: T) {
+  if (!division._count) return division;
+  const { team_memberships, matches } = division._count;
+  return {
+    ...division,
+    _count: {
+      teams: team_memberships ?? 0,
+      matches: matches ?? 0,
+    },
+  };
+}
+
+function mapTournamentDivisions<T extends { divisions: Array<Parameters<typeof mapDivisionCounts>[0]> }>(
+  tournament: T,
+) {
+  return {
+    ...tournament,
+    divisions: tournament.divisions.map(mapDivisionCounts),
+  };
+}
+
 const TOURNAMENT_FIELDS = [
   'name',
   'slug',
@@ -69,14 +92,14 @@ export class TournamentsService {
             accent_color: true,
             groups_enabled: true,
             display_order: true,
-            _count: { select: { teams: true } },
+            _count: { select: { team_memberships: true } },
           },
           orderBy: [{ display_order: 'asc' }, { created_at: 'asc' }],
         },
       },
     });
     if (!t) throw new NotFoundException('Tournament not found');
-    return t;
+    return mapTournamentDivisions(t);
   }
 
   async getOverview(slug: string) {
@@ -146,14 +169,14 @@ export class TournamentsService {
             accent_color: true,
             groups_enabled: true,
             display_order: true,
-            _count: { select: { teams: true, matches: true } },
+            _count: { select: { team_memberships: true, matches: true } },
           },
           orderBy: [{ display_order: 'asc' }, { created_at: 'asc' }],
         },
       },
     });
     if (!t) throw new NotFoundException('Tournament not found');
-    return t;
+    return mapTournamentDivisions(t);
   }
 
   create(data: unknown) {

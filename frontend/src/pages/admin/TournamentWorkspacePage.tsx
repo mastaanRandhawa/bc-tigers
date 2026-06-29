@@ -47,7 +47,7 @@ export default function TournamentWorkspacePage() {
   const { data: tournament, isLoading, isError, refetch } = useTournamentById(id);
   const { data: divisions = [] } = useDivisions();
   const { data: allTeams = [] } = useTeams();
-  const { data: matches = [] } = useMatches({ tournamentId: id });
+  const { data: matches = [] } = useMatches({ tournamentId: id, limit: 1000 });
 
   const deleteDivisionMutation = useDeleteDivision();
   const deleteTeamMutation = useDeleteTeam();

@@ -8,19 +8,26 @@ import {
   applyCoachTeamAssignment,
   validateCoachCanBeAssigned,
 } from '../teams/coach-team-link';
+import { mapCoachTeamRequest } from './team-membership';
 
 const REQUEST_INCLUDE = {
   team: {
     select: {
       id: true,
       name: true,
-      slug: true,
       coach_user_id: true,
-      division: {
+      divisions: {
+        take: 1,
+        orderBy: { created_at: 'asc' as const },
         select: {
-          id: true,
-          name: true,
-          tournament: { select: { id: true, name: true } },
+          slug: true,
+          division: {
+            select: {
+              id: true,
+              name: true,
+              tournament: { select: { id: true, name: true } },
+            },
+          },
         },
       },
     },
@@ -29,20 +36,28 @@ const REQUEST_INCLUDE = {
 
 @Injectable()
 export class CoachTeamRequestsService {
-  listForCoach(coachUserId: string) {
-    return prisma.coachTeamRequest.findMany({
+  private mapRequest<T extends Parameters<typeof mapCoachTeamRequest>[0]>(
+    request: T,
+  ) {
+    return mapCoachTeamRequest(request);
+  }
+
+  async listForCoach(coachUserId: string) {
+    const rows = await prisma.coachTeamRequest.findMany({
       where: { coach_user_id: coachUserId },
       include: REQUEST_INCLUDE,
       orderBy: { created_at: 'desc' },
     });
+    return rows.map((r) => this.mapRequest(r));
   }
 
-  listPendingForCoach(coachUserId: string) {
-    return prisma.coachTeamRequest.findMany({
+  async listPendingForCoach(coachUserId: string) {
+    const rows = await prisma.coachTeamRequest.findMany({
       where: { coach_user_id: coachUserId, status: 'PENDING' },
       include: REQUEST_INCLUDE,
       orderBy: { created_at: 'desc' },
     });
+    return rows.map((r) => this.mapRequest(r));
   }
 
   async create(coachUserId: string, teamId: string) {
@@ -73,24 +88,34 @@ export class CoachTeamRequestsService {
     }
 
     if (existing) {
-      return prisma.coachTeamRequest.update({
+      const updated = await prisma.coachTeamRequest.update({
         where: { id: existing.id },
         data: { status: 'PENDING' },
         include: REQUEST_INCLUDE,
       });
+      return this.mapRequest(updated);
     }
 
-    return prisma.coachTeamRequest.create({
+    const created = await prisma.coachTeamRequest.create({
       data: { coach_user_id: coachUserId, team_id: teamId },
       include: REQUEST_INCLUDE,
     });
+    return this.mapRequest(created);
   }
 
   async createManyForRegistration(coachUserId: string, teamIds: string[]) {
     const uniqueIds = [...new Set(teamIds)];
     const teams = await prisma.team.findMany({
       where: { id: { in: uniqueIds }, is_deleted: false, coach_user_id: null },
-      select: { id: true, name: true, division: { select: { name: true } } },
+      select: {
+        id: true,
+        name: true,
+        divisions: {
+          take: 1,
+          orderBy: { created_at: 'asc' },
+          select: { division: { select: { name: true } } },
+        },
+      },
     });
     if (teams.length === 0) {
       throw new BadRequestException('No valid unassigned teams selected');
@@ -116,7 +141,10 @@ export class CoachTeamRequestsService {
     );
 
     const summary = teams
-      .map((t) => `${t.name} (${t.division.name})`)
+      .map((t) => {
+        const divisionName = t.divisions[0]?.division?.name ?? 'Unknown division';
+        return `${t.name} (${divisionName})`;
+      })
       .join(', ');
     return summary;
   }
@@ -153,10 +181,11 @@ export class CoachTeamRequestsService {
       });
     });
 
-    return prisma.coachTeamRequest.findUnique({
+    const row = await prisma.coachTeamRequest.findUnique({
       where: { id: requestId },
       include: REQUEST_INCLUDE,
     });
+    return row ? this.mapRequest(row) : null;
   }
 
   async reject(requestId: string) {
@@ -168,11 +197,12 @@ export class CoachTeamRequestsService {
       throw new BadRequestException('Only pending requests can be rejected');
     }
 
-    return prisma.coachTeamRequest.update({
+    const updated = await prisma.coachTeamRequest.update({
       where: { id: requestId },
       data: { status: 'REJECTED' },
       include: REQUEST_INCLUDE,
     });
+    return this.mapRequest(updated);
   }
 
   async unassignCoachFromTeam(coachUserId: string, teamId: string) {

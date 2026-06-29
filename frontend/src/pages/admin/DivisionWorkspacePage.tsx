@@ -41,7 +41,9 @@ export default function DivisionWorkspacePage() {
   const division = divisions.find((d) => d.id === divisionId);
 
   const { data: teams = [] } = useTeams(divisionId ? { divisionId } : undefined);
-  const { data: matches = [] } = useMatches(divisionId ? { divisionId } : undefined);
+  const { data: matches = [] } = useMatches(
+    divisionId ? { divisionId, limit: 1000 } : undefined,
+  );
 
   const deleteTeamMutation = useDeleteTeam();
   const deleteMatchMutation = useDeleteMatch();

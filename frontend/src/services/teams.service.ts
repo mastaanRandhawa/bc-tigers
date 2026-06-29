@@ -19,10 +19,21 @@ export const teamsService = {
   /** Public — teams without a coach, for the coach-registration picker. */
   directory: () => apiClient.get<TeamDirectoryEntry[]>('/teams/directory'),
 
-  create: (data: Partial<Team>) => apiClient.post<Team>('/teams', data),
+  create: (data: Partial<Team> & { division_ids?: string[] }) =>
+    apiClient.post<Team>('/teams', data),
 
   update: (id: string, data: Partial<Team>) =>
     apiClient.patch<Team>(`/teams/${id}`, data),
+
+  addToDivision: (
+    id: string,
+    data: { division_id: string; slug?: string; group_id?: string | null },
+  ) => apiClient.post<Team>(`/teams/${id}/divisions`, data),
+
+  removeFromDivision: (id: string, divisionId: string) =>
+    apiClient.delete<{ team_id: string; division_id: string }>(
+      `/teams/${id}/divisions/${divisionId}`,
+    ),
 
   /** Soft delete (decommission). */
   delete: (id: string) => apiClient.delete<Team>(`/teams/${id}`),

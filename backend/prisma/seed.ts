@@ -531,12 +531,10 @@ async function main() {
       const t = div.teams[ti];
       const teamColors = PALETTE[(divisionIndex * 3 + ti) % PALETTE.length];
       const groupId = t.pool ? groupIdByName.get(t.pool) ?? null : null;
+      const teamSlug = slugify(`${div.slug}-${t.name}`);
       const team = await prisma.team.create({
         data: {
-          division_id: division.id,
-          group_id: groupId,
           name: t.name,
-          slug: slugify(`${div.slug}-${t.name}`),
           logo: teamLogoUrl(t.name, teamColors.primary),
           city: inferCity(t.name),
           founded_year: 2010 + (divisionIndex % 12),
@@ -544,10 +542,18 @@ async function main() {
           created_by: adminUser.id,
         },
       });
+      await prisma.teamDivision.create({
+        data: {
+          team_id: team.id,
+          division_id: division.id,
+          group_id: groupId,
+          slug: teamSlug,
+        },
+      });
       teamIdByName.set(t.name, { id: team.id, groupId });
 
       const playerDefs = makePlayers(
-        team.slug,
+        teamSlug,
         playersPerTeamFor(div),
         div.gender,
         div.age_group,

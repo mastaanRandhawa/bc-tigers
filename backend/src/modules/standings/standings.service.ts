@@ -8,13 +8,30 @@ import {
 
 @Injectable()
 export class StandingsService {
-  getByDivision(divisionId: string) {
-    return prisma.standing.findMany({
+  async getByDivision(divisionId: string) {
+    const rows = await prisma.standing.findMany({
       where: { division_id: divisionId },
       include: { team: true, group: true },
-      // Group first (so grouped tables stay contiguous), then by rank within group.
       orderBy: [{ group: { order: 'asc' } }, { rank: 'asc' }],
     });
+
+    const memberships = await prisma.teamDivision.findMany({
+      where: { division_id: divisionId },
+      select: { team_id: true, slug: true, group_id: true },
+    });
+    const slugByTeam = new Map(memberships.map((m) => [m.team_id, m.slug]));
+
+    return rows.map((row) => ({
+      ...row,
+      team: row.team
+        ? {
+            ...row.team,
+            slug: slugByTeam.get(row.team_id) ?? '',
+            division_id: divisionId,
+            group_id: row.group_id,
+          }
+        : row.team,
+    }));
   }
 
   async recalculate(divisionId: string) {
@@ -26,16 +43,16 @@ export class StandingsService {
         where: { id: divisionId },
         include: { point_format: true },
       }),
-      prisma.team.findMany({
+      prisma.teamDivision.findMany({
         where: { division_id: divisionId },
-        select: { id: true, group_id: true },
+        select: { team_id: true, group_id: true },
       }),
     ]);
 
     const results = matches.map(mapPrismaMatchToResult);
     const config = toTournamentConfig(division.point_format);
     const rows = computeGroupedStandings(
-      teams.map((t) => ({ id: t.id, groupId: t.group_id })),
+      teams.map((t) => ({ id: t.team_id, groupId: t.group_id })),
       results,
       config,
       division.groups_enabled,

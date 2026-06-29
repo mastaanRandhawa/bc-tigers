@@ -141,7 +141,7 @@ export default function DivisionTeamDetailPage() {
                   tournamentSlug={tournamentSlug}
                   divisionSlug={divisionSlug}
                   teamSlug={teamSlug}
-                  teamColor={team.primary_color}
+                  teamColor={team.primary_color ?? undefined}
                 />
               )}
             </div>
@@ -153,7 +153,7 @@ export default function DivisionTeamDetailPage() {
           {!canEdit && (team.officials?.length ?? 0) > 0 && (
             <Section>
               <SectionHeader title="Team Officials" />
-              <TeamOfficialsList officials={team.officials ?? []} teamColor={team.primary_color} />
+              <TeamOfficialsList officials={team.officials ?? []} teamColor={team.primary_color ?? undefined} />
             </Section>
           )}
 

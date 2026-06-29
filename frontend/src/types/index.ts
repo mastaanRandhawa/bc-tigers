@@ -162,23 +162,38 @@ export interface Group {
   _count?: { teams: number; matches: number };
 }
 
+/** A team's registration in a specific division (pool slug, group, etc.). */
+export interface TeamDivisionMembership {
+  id?: string;
+  team_id: string;
+  division_id: string;
+  group_id?: string | null;
+  slug: string;
+  division?: Pick<Division, 'id' | 'name' | 'slug' | 'tournament_id'>;
+  group?: Pick<Group, 'id' | 'name' | 'slug' | 'order'> | null;
+}
+
 export interface Team {
   id: string;
+  /** Primary / context division when listed in a division scope. */
   division_id: string;
+  /** All divisions this team is registered in. */
+  division_ids?: string[];
+  divisions?: TeamDivisionMembership[];
   division?: Division;
   group_id?: string | null;
   group?: Pick<Group, 'id' | 'name' | 'slug' | 'order'> | null;
   name: string;
   slug: string;
-  logo?: string;
-  city?: string;
+  logo?: string | null;
+  city?: string | null;
   founded_year?: number;
-  primary_color?: string;
-  secondary_color?: string;
+  primary_color?: string | null;
+  secondary_color?: string | null;
   coach_user_id?: string | null;
   management_locked?: boolean;
-  contact_email?: string;
-  contact_phone?: string;
+  contact_email?: string | null;
+  contact_phone?: string | null;
   coach?: Pick<User, 'id' | 'first_name' | 'last_name' | 'email'> | null;
   coach_management_locked?: boolean;
   can_edit?: boolean;
@@ -265,7 +280,7 @@ export interface Match {
   home_source_outcome?: MatchSlotOutcome | null;
   away_source_match_id?: string | null;
   away_source_outcome?: MatchSlotOutcome | null;
-  venue_id?: string;
+  venue_id?: string | null;
   field_id?: string | null;
   stage_id?: string;
   scheduled_start: string;

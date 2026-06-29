@@ -102,15 +102,16 @@ export class HubService {
         take: 8,
         include: { tournament: { select: { slug: true, name: true } } },
       }),
-      prisma.team.findMany({
+      prisma.teamDivision.findMany({
         where: {
           OR: [
-            { name: { contains: q, mode: 'insensitive' } },
-            { city: { contains: q, mode: 'insensitive' } },
+            { team: { name: { contains: q, mode: 'insensitive' } } },
+            { team: { city: { contains: q, mode: 'insensitive' } } },
           ],
         },
         take: 12,
         include: {
+          team: { select: { id: true, name: true, city: true } },
           division: {
             include: { tournament: { select: { slug: true, name: true } } },
           },
@@ -127,13 +128,13 @@ export class HubService {
         tournament_slug: d.tournament.slug,
         tournament_name: d.tournament.name,
       })),
-      teams: teams.map((t) => ({
-        id: t.id,
-        name: t.name,
-        slug: t.slug,
-        city: t.city,
-        division_slug: t.division.slug,
-        tournament_slug: t.division.tournament.slug,
+      teams: teams.map((m) => ({
+        id: m.team.id,
+        name: m.team.name,
+        slug: m.slug,
+        city: m.team.city,
+        division_slug: m.division.slug,
+        tournament_slug: m.division.tournament.slug,
       })),
     };
   }

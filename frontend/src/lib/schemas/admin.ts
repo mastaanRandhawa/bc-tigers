@@ -66,6 +66,7 @@ export const pointFormatSchema = z.object({
 
 export const teamSchema = z.object({
   division_id: z.string().min(1, 'Division is required'),
+  division_ids: z.array(z.string()).optional(),
   name: z.string().min(2, 'Name is required'),
   slug: z.string().min(2, 'Slug is required'),
   city: z.string().optional(),

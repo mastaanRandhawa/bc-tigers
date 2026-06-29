@@ -15,6 +15,7 @@ import {
 } from '../auth/role-utils';
 import { CoachTeamRequestsService } from '../teams/coach-team-requests.service';
 import { applyCoachTeamAssignment } from '../teams/coach-team-link';
+import { mapCoachTeamRequest, mapTeamPrimaryMembership } from '../teams/team-membership';
 
 /** Fields an admin may set via PATCH /users/:id. Excludes role, password_hash, id. */
 const USER_UPDATE_FIELDS = [
@@ -43,8 +44,14 @@ const SELECT = {
     select: {
       id: true,
       name: true,
-      slug: true,
-      division: { select: { id: true, name: true } },
+      divisions: {
+        take: 1,
+        orderBy: { created_at: 'asc' as const },
+        select: {
+          slug: true,
+          division: { select: { id: true, name: true } },
+        },
+      },
     },
   },
   team_requests: {
@@ -57,7 +64,14 @@ const SELECT = {
         select: {
           id: true,
           name: true,
-          division: { select: { id: true, name: true } },
+          divisions: {
+            take: 1,
+            orderBy: { created_at: 'asc' as const },
+            select: {
+              slug: true,
+              division: { select: { id: true, name: true } },
+            },
+          },
         },
       },
     },
@@ -65,10 +79,26 @@ const SELECT = {
   },
 } satisfies Prisma.UserSelect;
 
+type UserRow = Prisma.UserGetPayload<{ select: typeof SELECT }>;
+
+function mapUser(user: UserRow) {
+  return {
+    ...user,
+    coached_teams: user.coached_teams.map((t) => mapTeamPrimaryMembership(t)),
+    team_requests: user.team_requests.map((r) => mapCoachTeamRequest(r)),
+  };
+}
+
 @Injectable()
 export class UsersService {
   constructor(private readonly teamRequests: CoachTeamRequestsService) {}
-  findAll(params?: {
+
+  private async loadUser(id: string) {
+    const user = await prisma.user.findUnique({ where: { id }, select: SELECT });
+    return user ? mapUser(user) : null;
+  }
+
+  async findAll(params?: {
     page?: number;
     limit?: number;
     role?: UserRole;
@@ -79,13 +109,14 @@ export class UsersService {
     if (role) where.role = role;
     if (approved !== undefined) where.approved = approved;
 
-    return prisma.user.findMany({
+    const rows = await prisma.user.findMany({
       where,
       select: SELECT,
       skip: (page - 1) * limit,
       take: limit,
       orderBy: { created_at: 'desc' },
     });
+    return rows.map((u) => mapUser(u));
   }
 
   async create(
@@ -113,7 +144,7 @@ export class UsersService {
 
     const isStaff = role === 'ADMIN' || role === 'SUPERADMIN';
     const password_hash = await bcrypt.hash(data.password, 12);
-    return prisma.user.create({
+    const user = await prisma.user.create({
       data: {
         first_name: data.first_name,
         last_name: data.last_name,
@@ -126,6 +157,7 @@ export class UsersService {
       },
       select: SELECT,
     });
+    return mapUser(user);
   }
 
   async update(actorRole: UserRole, id: string, data: unknown) {
@@ -139,11 +171,12 @@ export class UsersService {
     }
 
     const input = pickAllowed<Prisma.UserUpdateInput>(data, USER_UPDATE_FIELDS);
-    return prisma.user.update({
+    const user = await prisma.user.update({
       where: { id },
       data: input,
       select: SELECT,
     });
+    return mapUser(user);
   }
 
   async approve(id: string) {
@@ -153,34 +186,36 @@ export class UsersService {
       throw new BadRequestException('Only coach accounts can be approved');
     }
 
-    return prisma.user.update({
+    const updated = await prisma.user.update({
       where: { id },
       data: { approved: true, active: true },
       select: SELECT,
     });
+    return mapUser(updated);
   }
 
   async resetPassword(actorId: string, targetId: string, password: string) {
     const actor = await prisma.user.findUnique({ where: { id: actorId } });
     if (!actor) throw new NotFoundException('Actor not found');
 
-    const user = await prisma.user.findUnique({ where: { id: targetId } });
-    if (!user) throw new NotFoundException('User not found');
+    const target = await prisma.user.findUnique({ where: { id: targetId } });
+    if (!target) throw new NotFoundException('User not found');
 
-    if (!canActorResetTargetPassword(actor.role, user.role)) {
+    if (!canActorResetTargetPassword(actor.role, target.role)) {
       throw new ForbiddenException(
-        user.role === 'ADMIN' || user.role === 'SUPERADMIN'
+        target.role === 'ADMIN' || target.role === 'SUPERADMIN'
           ? 'Only a super administrator can reset administrator passwords.'
           : "You cannot reset this user's password.",
       );
     }
 
     const password_hash = await bcrypt.hash(password, 12);
-    return prisma.user.update({
+    const updated = await prisma.user.update({
       where: { id: targetId },
       data: { password_hash },
       select: SELECT,
     });
+    return mapUser(updated);
   }
 
   async remove(actorId: string, actorRole: UserRole, id: string) {
@@ -212,18 +247,12 @@ export class UsersService {
     if (!team) throw new NotFoundException('Team not found');
 
     await applyCoachTeamAssignment(teamId, coachUserId);
-    return prisma.user.findUnique({
-      where: { id: coachUserId },
-      select: SELECT,
-    });
+    return this.loadUser(coachUserId);
   }
 
   async unassignCoachTeam(coachUserId: string, teamId: string) {
     await this.teamRequests.unassignCoachFromTeam(coachUserId, teamId);
-    return prisma.user.findUnique({
-      where: { id: coachUserId },
-      select: SELECT,
-    });
+    return this.loadUser(coachUserId);
   }
 
   approveTeamRequest(requestId: string) {

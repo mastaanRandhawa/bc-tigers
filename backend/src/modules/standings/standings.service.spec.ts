@@ -4,6 +4,7 @@ jest.mock('../../prisma/prisma', () => ({
     match: { findMany: jest.fn() },
     division: { findUniqueOrThrow: jest.fn() },
     team: { findMany: jest.fn() },
+    teamDivision: { findMany: jest.fn() },
     standing: { upsert: jest.fn() },
     $transaction: jest.fn((ops: unknown[]) =>
       Promise.all(ops as Promise<unknown>[]),
@@ -61,9 +62,9 @@ describe('StandingsService', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    mockPrisma.team.findMany.mockResolvedValue([
-      { id: 'home' },
-      { id: 'away' },
+    mockPrisma.teamDivision.findMany.mockResolvedValue([
+      { team_id: 'home', group_id: null },
+      { team_id: 'away', group_id: null },
     ] as never);
     mockPrisma.match.findMany.mockResolvedValue([
       {
