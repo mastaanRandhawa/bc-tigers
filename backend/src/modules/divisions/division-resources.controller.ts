@@ -1,7 +1,9 @@
-import { Controller, Get, Param, Query } from '@nestjs/common';
+import { Controller, Get, Param, Query, UseGuards } from '@nestjs/common';
 import { DivisionResourcesService } from './division-resources.service';
+import { OptionalJwtAuthGuard } from '../auth/optional-jwt-auth.guard';
 
 @Controller('tournaments/:tournamentSlug/divisions/:divisionSlug')
+@UseGuards(OptionalJwtAuthGuard)
 export class DivisionResourcesController {
   constructor(private readonly service: DivisionResourcesService) {}
 

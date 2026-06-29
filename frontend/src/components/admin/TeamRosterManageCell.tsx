@@ -12,7 +12,6 @@ interface TeamRosterManageCellProps {
 
 export function teamPlayerCount(team: Team): number {
   if (typeof team.roster_count === 'number') return team.roster_count;
-  if (Array.isArray(team.players)) return team.players.length;
   return 0;
 }
 

@@ -79,11 +79,17 @@ export class TeamsService {
     );
 
     return teams.map((team) => {
-      const stripped = stripTeamPlayers(
-        team,
-        canViewTeamRoster(ctx.actor, team.coach_user_id, ctx.rostersPublic),
+      const canView = canViewTeamRoster(
+        ctx.actor,
+        team.coach_user_id,
+        ctx.rostersPublic,
       );
-      return { ...stripped, roster_count: rosterCounts.get(team.id) ?? 0 };
+      const stripped = stripTeamPlayers(team, canView);
+      const count = rosterCounts.get(team.id) ?? 0;
+      return {
+        ...stripped,
+        ...(canView ? { roster_count: count } : {}),
+      };
     });
   }
 
