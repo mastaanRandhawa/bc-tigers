@@ -12,7 +12,6 @@ import { useFormDialog } from '@/hooks/useFormDialog';
 import {
   useDivisions,
   useDeleteDivision,
-  useGenerateSchedule,
   useReorderDivisions,
 } from '@/hooks/useDivisions';
 import { useTeams } from '@/hooks/useTeams';
@@ -25,7 +24,6 @@ import {
   ExternalLink,
   Pencil,
   Trash2,
-  Calendar,
   Flag,
   CalendarDays,
   Layers,
@@ -41,39 +39,15 @@ export default function AdminDivisions() {
   const { data: teams = [] } = useTeams();
   const { data: matches = [] } = useMatches();
   const deleteMutation = useDeleteDivision();
-  const generateMutation = useGenerateSchedule();
   const reorderMutation = useReorderDivisions();
   const formDialog = useFormDialog<Division>();
   const [deleteTarget, setDeleteTarget] = useState<Division | null>(null);
   const [groupTarget, setGroupTarget] = useState<Division | null>(null);
-  const [generateTarget, setGenerateTarget] = useState<{ division: Division; matchCount: number } | null>(null);
   const getText = useCallback((d: Division) => divisionSearchText(d), []);
   const { search, setSearch, filtered, debouncedSearch, hasQuery } = useListSearch(
     divisions,
     getText,
   );
-
-  const runGenerateSchedule = async (d: Division, existingMatches: number) => {
-    try {
-      const res = await generateMutation.mutateAsync({
-        id: d.id,
-        body: { matchIntervalMinutes: 90 },
-        force: existingMatches > 0,
-      });
-      toast.success(`Created ${res.data.created} matches.`);
-      refetch();
-    } catch (err) {
-      toast.error(getApiErrorMessage(err, 'Failed to generate schedule'));
-    }
-  };
-
-  const requestGenerateSchedule = (d: Division, matchCount: number) => {
-    if (matchCount > 0) {
-      setGenerateTarget({ division: d, matchCount });
-      return;
-    }
-    void runGenerateSchedule(d, matchCount);
-  };
 
   // Reorder a division within its tournament (display order on the public site).
   const moveDivision = async (division: Division, dir: 'up' | 'down') => {
@@ -174,23 +148,17 @@ export default function AdminDivisions() {
                       View public
                     </a>
                   )}
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => requestGenerateSchedule(division, matchCount)}
-                    disabled={teamCount < 2 || generateMutation.isPending}
-                  >
-                    <Calendar className="mr-1 h-3.5 w-3.5" aria-hidden />
-                    Schedule
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setGroupTarget(division)}
-                  >
-                    <Layers className="mr-1 h-3.5 w-3.5" aria-hidden />
-                    Groups
-                  </Button>
+                  {division.groups_enabled && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setGroupTarget(division)}
+                      title="Manage pools and assign teams"
+                    >
+                      <Layers className="mr-1 h-3.5 w-3.5" aria-hidden />
+                      Groups
+                    </Button>
+                  )}
                   <Button variant="outline" size="sm" onClick={() => formDialog.openEdit(division)}>
                     <Pencil className="mr-1 h-3.5 w-3.5" aria-hidden />
                     Edit
@@ -271,18 +239,6 @@ export default function AdminDivisions() {
         showErrorToast={false}
       />
 
-      <ConfirmDialog
-        open={!!generateTarget}
-        onOpenChange={(open) => !open && setGenerateTarget(null)}
-        title="Replace existing matches?"
-        description="This division already has matches. Generating a new schedule will replace them."
-        confirmLabel="Replace matches"
-        onConfirm={async () => {
-          if (!generateTarget) return;
-          await runGenerateSchedule(generateTarget.division, generateTarget.matchCount);
-          setGenerateTarget(null);
-        }}
-      />
     </AdminLayout>
   );
 }

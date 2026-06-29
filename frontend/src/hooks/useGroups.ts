@@ -17,6 +17,7 @@ function useInvalidateGroups(divisionId?: string) {
       qc.invalidateQueries({ queryKey: queryKeys.groups.byDivision(divisionId) });
     }
     qc.invalidateQueries({ queryKey: ['divisions'] });
+    qc.invalidateQueries({ queryKey: ['teams'] });
     qc.invalidateQueries({ queryKey: ['standings'] });
   };
 }

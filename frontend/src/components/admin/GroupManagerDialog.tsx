@@ -99,13 +99,6 @@ export default function GroupManagerDialog({
           </DialogDescription>
         </DialogHeader>
 
-        {!division?.groups_enabled && (
-          <p className="rounded-md border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-800 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-200">
-            Groups are currently disabled for this division. Enable “groups
-            (pools)” in the division settings for them to show on the public site.
-          </p>
-        )}
-
         <div className="space-y-4 py-2">
           <div>
             <h4 className="mb-2 text-sm font-semibold">Groups</h4>

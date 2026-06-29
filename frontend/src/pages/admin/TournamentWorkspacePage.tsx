@@ -12,7 +12,6 @@ import TeamFormDialog from '@/components/admin/forms/TeamFormDialog';
 import TeamRosterSheet from '@/components/admin/TeamRosterSheet';
 import TeamRosterManageCell from '@/components/admin/TeamRosterManageCell';
 import TournamentFormDialog from '@/components/admin/forms/TournamentFormDialog';
-import { ScheduleGeneratorSheet } from '@/components/admin/ScheduleGeneratorSheet';
 import { ConfirmDialog } from '@/components/admin/inline/ConfirmDialog';
 import { AdminMatchMobileRow } from '@/components/admin/AdminMatchMobileRow';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
@@ -58,7 +57,6 @@ export default function TournamentWorkspacePage() {
   const teamDialog = useFormDialog<Team>();
   const matchDialog = useFormDialog<Match>();
   const [editTournament, setEditTournament] = useState(false);
-  const [scheduleDiv, setScheduleDiv] = useState<Division | null>(null);
   const [rosterTeam, setRosterTeam] = useState<Team | null>(null);
   const [scoreMatch, setScoreMatch] = useState<Match | null>(null);
   const [eventMatch, setEventMatch] = useState<Match | null>(null);
@@ -250,16 +248,6 @@ export default function TournamentWorkspacePage() {
                               <ExternalLink className="h-3 w-3" />
                               Open Workspace
                             </Link>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => setScheduleDiv(division)}
-                              disabled={teamCount < 2}
-                              title={teamCount < 2 ? 'Need at least 2 teams' : 'Generate schedule'}
-                            >
-                              <Calendar className="h-3 w-3 mr-1" />
-                              Schedule
-                            </Button>
                             <Button variant="outline" size="sm" onClick={() => divisionDialog.openEdit(division)}>
                               <Pencil className="h-3 w-3 mr-1" />
                               Edit
@@ -360,13 +348,6 @@ export default function TournamentWorkspacePage() {
         open={editTournament}
         onOpenChange={setEditTournament}
         tournament={tournament}
-      />
-      <ScheduleGeneratorSheet
-        division={scheduleDiv}
-        existingMatchCount={scheduleDiv ? matches.filter((m) => m.division_id === scheduleDiv.id).length : 0}
-        open={!!scheduleDiv}
-        onOpenChange={(open) => !open && setScheduleDiv(null)}
-        onSuccess={(created) => toast.success(`Created ${created} matches.`)}
       />
       <TeamRosterSheet
         team={rosterTeam}
