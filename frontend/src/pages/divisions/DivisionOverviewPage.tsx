@@ -6,6 +6,7 @@ import DivisionQuickStats from '@/components/divisions/DivisionQuickStats';
 import SectionHeader from '@/components/shared/SectionHeader';
 import Section from '@/components/shared/Section';
 import GroupedStandingsTable from '@/components/GroupedStandingsTable';
+import StandingsQualificationLegend from '@/components/StandingsQualificationLegend';
 import DivisionPageHeader from '@/components/divisions/DivisionPageHeader';
 import QueryState from '@/components/shared/QueryState';
 import { useDivisionRoute } from '@/context/DivisionContext';
@@ -204,12 +205,16 @@ export default function DivisionOverviewPage() {
           linkLabel="Full table"
         />
         {standings.length > 0 ? (
-          <GroupedStandingsTable
-            standings={division.groups_enabled ? standings : standings.slice(0, 6)}
-            compact
-            searchable={false}
-            division={division}
-          />
+          <>
+            <StandingsQualificationLegend division={division} />
+            <GroupedStandingsTable
+              standings={division.groups_enabled ? standings : standings.slice(0, 6)}
+              compact
+              searchable={false}
+              division={division}
+              qualificationPoolSize={standings.length}
+            />
+          </>
         ) : (
           <p className="py-6 text-center text-sm text-muted-foreground rounded-xl border border-border bg-card">
             {teams.length === 0

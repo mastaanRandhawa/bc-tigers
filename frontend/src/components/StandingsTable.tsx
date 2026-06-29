@@ -30,6 +30,8 @@ interface StandingsTableProps {
   division?: Division;
   searchable?: boolean;
   qualificationRules?: QualificationRules | null;
+  /** Full pool size for zone math when displaying a partial table (e.g. overview preview). */
+  qualificationPoolSize?: number;
 }
 
 export default function StandingsTable({
@@ -38,7 +40,9 @@ export default function StandingsTable({
   division,
   searchable = true,
   qualificationRules = null,
+  qualificationPoolSize,
 }: StandingsTableProps) {
+  const poolSize = qualificationPoolSize ?? standings.length;
   const getText = useCallback((s: Standing) => standingSearchText(s), []);
   const { search, setSearch, filtered, debouncedSearch, hasQuery } = useListSearch(
     standings,
@@ -86,7 +90,7 @@ export default function StandingsTable({
                 compact={compact}
                 division={division}
                 qualificationRules={qualificationRules}
-                tableSize={standings.length}
+                tableSize={poolSize}
               />
             ))}
           </TableBody>
@@ -118,6 +122,7 @@ function StandingRow({
     ? getQualificationZone(s.rank, tableSize, qualificationRules)
     : null;
   const useQualificationStyle = qualificationZone !== null;
+  const hasQualificationRules = qualificationRules != null;
 
   return (
     <TableRow
@@ -125,10 +130,12 @@ function StandingRow({
         pointsFlash && 'motion-safe:animate-score-flash',
         useQualificationStyle
           ? qualificationRowClass(qualificationZone)
-          : cn(
-              idx === 0 && 'bg-surface-muted',
-              idx > 0 && idx < 3 && 'bg-surface-muted/50',
-            ),
+          : hasQualificationRules
+            ? undefined
+            : cn(
+                idx === 0 && 'bg-surface-muted',
+                idx > 0 && idx < 3 && 'bg-surface-muted/50',
+              ),
       )}
     >
       <TableCell className="text-muted-foreground font-medium">{s.rank}</TableCell>

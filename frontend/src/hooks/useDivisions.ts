@@ -35,7 +35,10 @@ export function useUpdateDivision() {
   return useMutation({
     mutationFn: ({ id, data }: { id: string; data: Partial<Division> }) =>
       divisionsService.update(id, data),
-    onSuccess: () => qc.invalidateQueries({ queryKey: ['divisions'] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['divisions'] });
+      qc.invalidateQueries({ queryKey: ['standings'] });
+    },
   });
 }
 

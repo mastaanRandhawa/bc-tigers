@@ -68,12 +68,12 @@ export function getQualificationZone(
 export const QUALIFICATION_STYLES = {
   qualified: {
     row:
-      'shadow-[inset_3px_0_0_0_rgb(5_150_105)] hover:bg-emerald-500/[0.04] dark:shadow-[inset_3px_0_0_0_rgb(52_211_153)] dark:hover:bg-emerald-400/[0.06]',
+      'bg-emerald-50 hover:!bg-emerald-100/70 dark:bg-emerald-950/35 dark:hover:!bg-emerald-900/30 shadow-[inset_3px_0_0_0_rgb(5_150_105)] dark:shadow-[inset_3px_0_0_0_rgb(52_211_153)]',
     swatch: 'bg-emerald-600 dark:bg-emerald-400',
   },
   eliminated: {
     row:
-      'shadow-[inset_3px_0_0_0_rgb(220_38_38)] hover:bg-red-500/[0.04] dark:shadow-[inset_3px_0_0_0_rgb(248_113_113)] dark:hover:bg-red-400/[0.06]',
+      'bg-red-50 hover:!bg-red-100/70 dark:bg-red-950/30 dark:hover:!bg-red-900/25 shadow-[inset_3px_0_0_0_rgb(220_38_38)] dark:shadow-[inset_3px_0_0_0_rgb(248_113_113)]',
     swatch: 'bg-red-600 dark:bg-red-400',
   },
 } as const;

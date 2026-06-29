@@ -7,6 +7,8 @@ interface GroupedStandingsTableProps {
   division?: Division;
   compact?: boolean;
   searchable?: boolean;
+  /** Full pool size for zone math when displaying a partial single-table preview. */
+  qualificationPoolSize?: number;
 }
 
 interface GroupBucket {
@@ -25,6 +27,7 @@ export default function GroupedStandingsTable({
   division,
   compact = false,
   searchable = true,
+  qualificationPoolSize,
 }: GroupedStandingsTableProps) {
   const qualificationRules = qualificationRulesForDivision(division);
   const useGroups =
@@ -39,6 +42,7 @@ export default function GroupedStandingsTable({
         compact={compact}
         searchable={searchable}
         qualificationRules={qualificationRules}
+        qualificationPoolSize={qualificationPoolSize}
       />
     );
   }
@@ -46,10 +50,19 @@ export default function GroupedStandingsTable({
   const buckets = new Map<string, GroupBucket>();
   const ungrouped: Standing[] = [];
   for (const s of standings) {
-    if (s.group_id && s.group) {
+    if (s.group_id) {
       const bucket =
         buckets.get(s.group_id) ??
-        ({ id: s.group_id, name: s.group.name, order: s.group.order, rows: [] } as GroupBucket);
+        ({
+          id: s.group_id,
+          name: s.group?.name ?? 'Pool',
+          order: s.group?.order ?? 0,
+          rows: [],
+        } as GroupBucket);
+      if (s.group) {
+        bucket.name = s.group.name;
+        bucket.order = s.group.order;
+      }
       bucket.rows.push(s);
       buckets.set(s.group_id, bucket);
     } else {
