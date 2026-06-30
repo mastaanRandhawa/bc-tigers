@@ -118,8 +118,12 @@ function StandingRow({
   tableSize: number;
 }) {
   const pointsFlash = useValueFlash(s.points);
+  // Display the row's position in the (server-sorted) table rather than the stored
+  // `rank`, which is only refreshed when a match completes and can be stale or
+  // duplicated (e.g. all-zero pre-tournament tables, or after teams are added).
+  const position = idx + 1;
   const qualificationZone = qualificationRules
-    ? getQualificationZone(s.rank, tableSize, qualificationRules)
+    ? getQualificationZone(position, tableSize, qualificationRules)
     : null;
   const useQualificationStyle = qualificationZone !== null;
   const hasQualificationRules = qualificationRules != null;
@@ -138,7 +142,7 @@ function StandingRow({
               ),
       )}
     >
-      <TableCell className="text-muted-foreground font-medium">{s.rank}</TableCell>
+      <TableCell className="text-muted-foreground font-medium">{position}</TableCell>
       <TableCell>
         {s.team ? (() => {
           const div = s.team.division ?? division;

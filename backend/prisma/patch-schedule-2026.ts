@@ -74,6 +74,7 @@ function poolNameFromType(raw: string | null): string | null {
 }
 
 const report = {
+  orphansRemoved: [] as string[],
   divisionsCreated: [] as string[],
   teamsCreated: [] as string[],
   matchesCreated: [] as string[],
@@ -132,7 +133,7 @@ async function main() {
         primary_color: true,
         groups: { select: { id: true, name: true } },
         team_memberships: {
-          select: { team: { select: { id: true, name: true } } },
+          select: { slug: true, team: { select: { id: true } } },
         },
       },
     });
@@ -141,15 +142,44 @@ async function main() {
       id: division.id,
       primaryColor: division.primary_color,
       groups: new Map(division.groups.map((g) => [g.name, g.id])),
+      // Keyed by the division membership slug (e.g. "div-1-gold-akal-fc"), which
+      // is the actual unique key. Display names carry intentional disambiguation
+      // suffixes ("AKAL FC D1") that don't match the spreadsheet's clean names,
+      // so we never match (or rename) by display name.
       teams: new Map(
-        division.team_memberships.map((m) => [
-          m.team.name.toUpperCase(),
-          m.team.id,
-        ]),
+        division.team_memberships.map((m) => [m.slug, m.team.id]),
       ),
     };
     divCache.set(slug, entry);
     return entry;
+  }
+
+  /** Division-scoped membership slug for a spreadsheet team name. */
+  const memSlug = (divSlug: string, name: string) =>
+    slugify(`${divSlug}-${name}`);
+
+  // ── Pass -1: remove fully-dangling teams left by a previously failed run ──
+  // (no division membership, matches, standings, players, events, or bracket
+  // links — i.e. genuinely disconnected rows, safe to delete).
+  const orphans = await prisma.team.findMany({
+    where: {
+      divisions: { none: {} },
+      home_matches: { none: {} },
+      away_matches: { none: {} },
+      standings: { none: {} },
+      players: { none: {} },
+      match_events: { none: {} },
+      bracket_home: { none: {} },
+      bracket_away: { none: {} },
+      bracket_winner: { none: {} },
+    },
+    select: { id: true, name: true },
+  });
+  if (orphans.length > 0) {
+    await prisma.team.deleteMany({
+      where: { id: { in: orphans.map((o) => o.id) } },
+    });
+    report.orphansRemoved.push(...orphans.map((o) => o.name));
   }
 
   // ── Pass 0: create any missing (mini) divisions ───────────────────────────
@@ -199,33 +229,34 @@ async function main() {
       continue;
     }
     for (const t of teams) {
-      if (div.teams.has(t.name.toUpperCase())) continue;
+      const key = memSlug(slug, t.name);
+      if (div.teams.has(key)) continue;
       const groupId = t.pool ? div.groups.get(t.pool) ?? null : null;
-      const team = await prisma.team.create({
-        data: {
-          name: t.name,
-          city: 'Surrey, BC',
-          primary_color: div.primaryColor ?? '#CA8A04',
-          created_by: admin?.id,
-        },
+      // Team + membership + standing in one transaction so a failure can't leave
+      // an orphan Team behind.
+      const team = await prisma.$transaction(async (tx) => {
+        const created = await tx.team.create({
+          data: {
+            name: t.name,
+            city: 'Surrey, BC',
+            primary_color: div.primaryColor ?? '#CA8A04',
+            created_by: admin?.id,
+          },
+        });
+        await tx.teamDivision.create({
+          data: {
+            team_id: created.id,
+            division_id: div.id,
+            group_id: groupId,
+            slug: key,
+          },
+        });
+        await tx.standing.create({
+          data: { division_id: div.id, group_id: groupId, team_id: created.id, rank: 0 },
+        });
+        return created;
       });
-      await prisma.teamDivision.create({
-        data: {
-          team_id: team.id,
-          division_id: div.id,
-          group_id: groupId,
-          slug: slugify(`${slug}-${t.name}`),
-        },
-      });
-      await prisma.standing.create({
-        data: {
-          division_id: div.id,
-          group_id: groupId,
-          team_id: team.id,
-          rank: 0,
-        },
-      });
-      div.teams.set(t.name.toUpperCase(), team.id);
+      div.teams.set(key, team.id);
       report.teamsCreated.push(`${t.name} → ${slug}${t.pool ? ` · ${t.pool}` : ''}`);
     }
   }
@@ -238,7 +269,9 @@ async function main() {
       continue;
     }
     const teamId = (side: SideSpec) =>
-      side.kind === 'team' ? div.teams.get(side.name!.toUpperCase()) ?? null : null;
+      side.kind === 'team'
+        ? div.teams.get(memSlug(fx.div, side.name!)) ?? null
+        : null;
     const start = cupDate(fx.day, fx.hour, fx.minute);
     const poolName = poolNameFromType(fx.matchType);
     const data = {
@@ -334,6 +367,7 @@ async function main() {
     for (const i of items) console.log(`  • ${i}`);
   };
   console.log('Schedule reconciliation — Miri Piri 2026 (tournament + mini)');
+  line('ORPHAN TEAMS REMOVED', report.orphansRemoved);
   line('DIVISIONS CREATED', report.divisionsCreated);
   line('TEAMS CREATED', report.teamsCreated);
   line('MATCH ROWS CREATED', report.matchesCreated);

@@ -100,6 +100,47 @@ describe('AuthService coach gates', () => {
     ).rejects.toBeInstanceOf(ForbiddenException);
   });
 
+  const adminUser = {
+    ...baseUser,
+    id: 'admin-1',
+    email: 'admin@test.com',
+    role: 'ADMIN' as const,
+  };
+
+  it.each(['ADMIN', 'SUPERADMIN'] as const)(
+    'lets %s change their own password with the correct current password',
+    async (role) => {
+      mockPrisma.user.findUnique.mockResolvedValue({ ...adminUser, role });
+      mockBcrypt.compare.mockResolvedValue(true as never);
+
+      const result = await service.changePassword(
+        'admin-1',
+        'oldpass',
+        'newpassword',
+      );
+
+      expect(result.message).toContain('updated');
+      expect(mockBcrypt.hash).toHaveBeenCalledWith('newpassword', 12);
+      expect(mockPrisma.user.update).toHaveBeenCalledWith({
+        where: { id: 'admin-1' },
+        data: { password_hash: 'hashed' },
+      });
+      expect(audit.log).toHaveBeenCalledWith(
+        expect.objectContaining({ action: 'PASSWORD_CHANGE', userId: 'admin-1' }),
+      );
+    },
+  );
+
+  it('rejects an admin password change when the current password is wrong', async () => {
+    mockPrisma.user.findUnique.mockResolvedValue(adminUser);
+    mockBcrypt.compare.mockResolvedValue(false as never);
+
+    await expect(
+      service.changePassword('admin-1', 'wrong', 'newpassword'),
+    ).rejects.toBeInstanceOf(UnauthorizedException);
+    expect(mockPrisma.user.update).not.toHaveBeenCalled();
+  });
+
   it('returns admin-contact message for coach forgot password', async () => {
     mockPrisma.user.findUnique.mockResolvedValue(baseUser);
 

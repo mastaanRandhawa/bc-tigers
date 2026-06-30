@@ -53,6 +53,7 @@ export class AuthController {
     return this.authService.updateProfile(req.user.userId, body);
   }
 
+  @Throttle({ default: { limit: 5, ttl: 60_000 } })
   @Post('change-password')
   @UseGuards(JwtAuthGuard)
   changePassword(

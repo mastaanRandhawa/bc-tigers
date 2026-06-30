@@ -212,14 +212,10 @@ export class AuthService {
   ) {
     const user = await prisma.user.findUnique({ where: { id: userId } });
     if (!user) throw new NotFoundException('User not found');
+    // Coaches remain admin-managed; staff (ADMIN/SUPERADMIN) may change their own
+    // password after confirming their current one.
     if (user.role === 'COACH') {
       throw new ForbiddenException(COACH_PASSWORD_MESSAGE);
-    }
-    if (user.role === 'ADMIN') {
-      throw new ForbiddenException(ADMIN_PASSWORD_MESSAGE);
-    }
-    if (user.role === 'SUPERADMIN') {
-      throw new ForbiddenException(SUPERADMIN_PASSWORD_MESSAGE);
     }
 
     const valid = await bcrypt.compare(currentPassword, user.password_hash);
@@ -230,6 +226,12 @@ export class AuthService {
     await prisma.user.update({
       where: { id: userId },
       data: { password_hash },
+    });
+    await this.audit.log({
+      action: 'PASSWORD_CHANGE',
+      entity: 'User',
+      entityId: userId,
+      userId,
     });
     return { message: 'Password updated successfully.' };
   }
