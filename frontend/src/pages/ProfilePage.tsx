@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import PageLayout from '@/components/PageLayout';
 import { Input } from '@/components/ui/input';
+import { PasswordInput } from '@/components/ui/password-input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { useAuthStore } from '@/store/authStore';
@@ -139,8 +140,7 @@ export default function ProfilePage() {
               {pwError && <div className="p-3 rounded-xl bg-red-50 text-red-700 text-sm">{pwError}</div>}
               <div className="space-y-1.5">
                 <Label>Current Password</Label>
-                <Input
-                  type="password"
+                <PasswordInput
                   autoComplete="current-password"
                   value={pw.current}
                   onChange={(e) => setPw({ ...pw, current: e.target.value })}
@@ -150,8 +150,7 @@ export default function ProfilePage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-1.5">
                   <Label>New Password</Label>
-                  <Input
-                    type="password"
+                  <PasswordInput
                     autoComplete="new-password"
                     value={pw.next}
                     onChange={(e) => setPw({ ...pw, next: e.target.value })}
@@ -161,8 +160,7 @@ export default function ProfilePage() {
                 </div>
                 <div className="space-y-1.5">
                   <Label>Confirm New Password</Label>
-                  <Input
-                    type="password"
+                  <PasswordInput
                     autoComplete="new-password"
                     value={pw.confirm}
                     onChange={(e) => setPw({ ...pw, confirm: e.target.value })}

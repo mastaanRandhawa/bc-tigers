@@ -3,6 +3,7 @@ import type { Control, FieldPath, FieldValues } from 'react-hook-form';
 import { Controller } from 'react-hook-form';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
+import { PasswordInput } from '@/components/ui/password-input';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
@@ -29,6 +30,8 @@ export function TextInputField<T extends FieldValues>({
   className,
   disabled,
 }: TextInputFieldProps<T>) {
+  const InputComponent = type === 'password' ? PasswordInput : Input;
+
   return (
     <Controller
       control={control}
@@ -36,7 +39,14 @@ export function TextInputField<T extends FieldValues>({
       render={({ field, fieldState }) => (
         <div className={cn('space-y-1.5', className)}>
           <Label htmlFor={name}>{label}</Label>
-          <Input id={name} type={type} placeholder={placeholder} disabled={disabled} {...field} value={field.value ?? ''} />
+          <InputComponent
+            id={name}
+            {...(type === 'password' ? {} : { type })}
+            placeholder={placeholder}
+            disabled={disabled}
+            {...field}
+            value={field.value ?? ''}
+          />
           {fieldState.error && <p className="text-xs text-red-500">{fieldState.error.message}</p>}
         </div>
       )}
