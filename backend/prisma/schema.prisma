@@ -245,6 +245,8 @@ model Group {
   division  Division       @relation(fields: [division_id], references: [id], onDelete: Cascade)
   team_memberships TeamDivision[]
   matches   Match[]
+  home_source_dependents Match[] @relation("MatchHomeSourceGroup")
+  away_source_dependents Match[] @relation("MatchAwaySourceGroup")
   standings Standing[]
 
   @@unique([division_id, slug])
@@ -385,6 +387,15 @@ model Match {
   away_source_match_id String?
   away_source_outcome  MatchSlotOutcome?
 
+  // ─── Positional placeholder sources ────────────────────────────────────────
+  // A slot can instead reference a standings position: "Pool A 1st" (group set)
+  // or a whole-division "1st" (group null + rank set). Filled automatically once
+  // the referenced pool / division round-robin is complete (resolvePositionalSlots).
+  home_source_group_id String?
+  home_source_rank     Int?
+  away_source_group_id String?
+  away_source_rank     Int?
+
   tournament    Tournament      @relation(fields: [tournament_id], references: [id], onDelete: Cascade)
   division      Division        @relation(fields: [division_id], references: [id], onDelete: Cascade)
   group         Group?          @relation(fields: [group_id], references: [id], onDelete: SetNull)
@@ -394,6 +405,8 @@ model Match {
   away_source   Match?          @relation("MatchAwaySource", fields: [away_source_match_id], references: [id], onDelete: SetNull)
   home_source_dependents Match[] @relation("MatchHomeSource")
   away_source_dependents Match[] @relation("MatchAwaySource")
+  home_source_group Group?      @relation("MatchHomeSourceGroup", fields: [home_source_group_id], references: [id], onDelete: SetNull)
+  away_source_group Group?      @relation("MatchAwaySourceGroup", fields: [away_source_group_id], references: [id], onDelete: SetNull)
   venue         Venue?          @relation(fields: [venue_id], references: [id])
   field         Field?          @relation(fields: [field_id], references: [id])
   stage         Stage?          @relation(fields: [stage_id], references: [id])

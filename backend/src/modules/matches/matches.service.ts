@@ -24,6 +24,7 @@ import {
   getRosterVisibilityContext,
   stripTeamPlayers,
 } from '../auth/roster-visibility';
+import { attachSlotLabels } from './slot-labels';
 
 export type MatchEventActor = { userId: string; role: string };
 
@@ -51,6 +52,10 @@ const MATCH_FIELDS = [
   'home_source_outcome',
   'away_source_match_id',
   'away_source_outcome',
+  'home_source_group_id',
+  'home_source_rank',
+  'away_source_group_id',
+  'away_source_rank',
 ] as const;
 
 /** Source match shape used to build a placeholder label like "Winner of Game 5". */
@@ -62,43 +67,6 @@ const SOURCE_SELECT = {
     away_team: { select: { name: true } },
   },
 } satisfies Prisma.Match$home_sourceArgs;
-
-/**
- * Human label for an unresolved placeholder slot, e.g. "Winner of Game 5" or,
- * when the source has no game number yet, "Winner of TBD". Returns null when the
- * slot has no source (a real team or a genuinely empty slot).
- */
-function slotLabel(
-  outcome: MatchSlotOutcome | null,
-  source: { round: number | null } | null,
-): string | null {
-  if (!outcome || !source) return null;
-  const verb = outcome === 'WINNER' ? 'Winner' : 'Loser';
-  const of = source.round != null ? `Game ${source.round}` : 'TBD';
-  return `${verb} of ${of}`;
-}
-
-/** Adds `home_label`/`away_label` placeholder text for unresolved slots. */
-function attachSlotLabels<
-  T extends {
-    home_source_outcome: MatchSlotOutcome | null;
-    away_source_outcome: MatchSlotOutcome | null;
-    home_source?: { round: number | null } | null;
-    away_source?: { round: number | null } | null;
-    home_team?: unknown;
-    away_team?: unknown;
-  },
->(match: T): T & { home_label: string | null; away_label: string | null } {
-  return {
-    ...match,
-    home_label: match.home_team
-      ? null
-      : slotLabel(match.home_source_outcome, match.home_source ?? null),
-    away_label: match.away_team
-      ? null
-      : slotLabel(match.away_source_outcome, match.away_source ?? null),
-  };
-}
 
 /** Client-settable scalar fields on a match event. `match_id` is set from the route param. */
 const MATCH_EVENT_FIELDS = [
@@ -117,6 +85,8 @@ const MATCH_LIST_INCLUDE = {
   field: { select: { id: true, name: true } },
   home_source: SOURCE_SELECT,
   away_source: SOURCE_SELECT,
+  home_source_group: { select: { id: true, name: true } },
+  away_source_group: { select: { id: true, name: true } },
   tournament: { select: { id: true, name: true, slug: true } },
   division: {
     select: {
@@ -142,6 +112,8 @@ const MATCH_DETAIL_INCLUDE = {
   away_team: TEAM_WITH_PLAYERS,
   home_source: SOURCE_SELECT,
   away_source: SOURCE_SELECT,
+  home_source_group: { select: { id: true, name: true } },
+  away_source_group: { select: { id: true, name: true } },
   venue: true,
   field: { select: { id: true, name: true } },
   officials: true,
@@ -313,6 +285,7 @@ export class MatchesService {
       );
       await this.advanceBracketFromMatch(match);
       await this.resolveDependentSlots(match);
+      await this.resolvePositionalSlots(match.division_id);
     }
 
     this.gateway.emitScoreUpdate(id, match.home_score, match.away_score);
@@ -452,6 +425,7 @@ export class MatchesService {
     // standings table in sync — the completion event won't fire again.
     if (match.status === 'COMPLETED') {
       await this.gateway.refreshStandings(match.division_id);
+      await this.resolvePositionalSlots(match.division_id);
     }
 
     // Note: no per-score email — admins follow live scores over the socket.
@@ -515,26 +489,55 @@ export class MatchesService {
     // runtime even though the Prisma update type also permits { set } wrappers.
     const str = (v: unknown): string | null =>
       typeof v === 'string' ? v : null;
+    const num = (v: unknown): number | null =>
+      typeof v === 'number' ? v : null;
     const sides = [
       {
         label: 'Home',
         teamId: str(payload.home_team_id),
         sourceId: str(payload.home_source_match_id),
         outcome: str(payload.home_source_outcome) as MatchSlotOutcome | null,
+        groupId: str(payload.home_source_group_id),
+        rank: num(payload.home_source_rank),
       },
       {
         label: 'Away',
         teamId: str(payload.away_team_id),
         sourceId: str(payload.away_source_match_id),
         outcome: str(payload.away_source_outcome) as MatchSlotOutcome | null,
+        groupId: str(payload.away_source_group_id),
+        rank: num(payload.away_source_rank),
       },
     ];
 
     for (const side of sides) {
-      if (side.teamId && side.sourceId) {
+      // A side may be at most one kind of thing: a team, a match-source
+      // placeholder, or a standings-position placeholder.
+      const kinds = [side.teamId, side.sourceId, side.rank != null].filter(
+        Boolean,
+      ).length;
+      if (kinds > 1) {
         throw new BadRequestException(
-          `${side.label} side cannot be both a team and a placeholder.`,
+          `${side.label} side can only be a team, a match placeholder, or a position — not more than one.`,
         );
+      }
+      if (side.rank != null) {
+        if (side.rank < 1) {
+          throw new BadRequestException(
+            `${side.label} position rank must be 1 or greater.`,
+          );
+        }
+        if (side.groupId) {
+          const group = await prisma.group.findUnique({
+            where: { id: side.groupId },
+            select: { division_id: true },
+          });
+          if (!group || group.division_id !== divisionId) {
+            throw new BadRequestException(
+              `${side.label} position must reference a pool in the same division.`,
+            );
+          }
+        }
       }
       if (side.sourceId) {
         if (!side.outcome) {
@@ -639,6 +642,97 @@ export class MatchesService {
       });
       this.gateway.emitMatchUpdated(dep.id, dep.division_id, updated);
     }
+  }
+
+  /**
+   * Fill positional placeholder slots ("Pool A 1st", whole-division "1st") in a
+   * division once the pool / division they draw from has finished its
+   * round-robin. Runs after standings have been recalculated, so the `Standing`
+   * ranks it reads are current. A slot is only filled when every real fixture in
+   * its scope is COMPLETED — ranks are not yet final before then.
+   */
+  private async resolvePositionalSlots(divisionId: string) {
+    const pending = await prisma.match.findMany({
+      where: {
+        division_id: divisionId,
+        OR: [
+          { home_team_id: null, home_source_rank: { not: null } },
+          { away_team_id: null, away_source_rank: { not: null } },
+        ],
+      },
+      select: {
+        id: true,
+        division_id: true,
+        home_team_id: true,
+        away_team_id: true,
+        home_source_group_id: true,
+        home_source_rank: true,
+        away_source_group_id: true,
+        away_source_rank: true,
+      },
+    });
+    if (pending.length === 0) return;
+
+    for (const m of pending) {
+      const data: Prisma.MatchUncheckedUpdateInput = {};
+      if (m.home_team_id == null && m.home_source_rank != null) {
+        const teamId = await this.resolvePosition(
+          divisionId,
+          m.home_source_group_id,
+          m.home_source_rank,
+        );
+        if (teamId) data.home_team_id = teamId;
+      }
+      if (m.away_team_id == null && m.away_source_rank != null) {
+        const teamId = await this.resolvePosition(
+          divisionId,
+          m.away_source_group_id,
+          m.away_source_rank,
+        );
+        if (teamId) data.away_team_id = teamId;
+      }
+      if (Object.keys(data).length === 0) continue;
+
+      const updated = await prisma.match.update({
+        where: { id: m.id },
+        data,
+        include: MATCH_DETAIL_INCLUDE,
+      });
+      this.gateway.emitMatchUpdated(
+        m.id,
+        divisionId,
+        attachSlotLabels(updated),
+      );
+    }
+  }
+
+  /**
+   * Team currently holding a standings position, or null when the position is
+   * not yet decided (the relevant round-robin still has unplayed real fixtures).
+   * `groupId` null means a whole-division position.
+   */
+  private async resolvePosition(
+    divisionId: string,
+    groupId: string | null,
+    rank: number,
+  ): Promise<string | null> {
+    const remaining = await prisma.match.count({
+      where: {
+        division_id: divisionId,
+        ...(groupId ? { group_id: groupId } : {}),
+        // Only count decisive round-robin fixtures (both teams known).
+        home_team_id: { not: null },
+        away_team_id: { not: null },
+        status: { not: 'COMPLETED' },
+      },
+    });
+    if (remaining > 0) return null;
+
+    const standing = await prisma.standing.findFirst({
+      where: { division_id: divisionId, group_id: groupId ?? null, rank },
+      select: { team_id: true },
+    });
+    return standing?.team_id ?? null;
   }
 
   /**
