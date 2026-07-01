@@ -3,7 +3,7 @@ import { useParams } from 'react-router-dom';
 import SearchField from '@/components/shared/SearchField';
 import SearchEmpty from '@/components/shared/SearchEmpty';
 import { useListSearch } from '@/hooks/useListSearch';
-import { divisionSearchText, teamSearchText, textIncludes } from '@/lib/search-text';
+import { divisionSearchText, textIncludes } from '@/lib/search-text';
 import PageContent from '@/components/shared/PageContent';
 import QueryState from '@/components/shared/QueryState';
 import DivisionDirectoryCard from '@/components/shared/DivisionDirectoryCard';
@@ -49,8 +49,9 @@ export default function TournamentDetailPage() {
 
   const visibleDivisions = useMemo(() => {
     if (!trimmedTeamSearch) return filteredDivisions;
+    // Match when the search word appears anywhere in a team's name (substring).
     return filteredDivisions.filter((d) =>
-      (d.teams ?? []).some((t) => textIncludes(teamSearchText(t), trimmedTeamSearch)),
+      (d.teams ?? []).some((t) => textIncludes(t.name, trimmedTeamSearch)),
     );
   }, [filteredDivisions, trimmedTeamSearch]);
 
