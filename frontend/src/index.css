@@ -411,6 +411,12 @@
     display: none;
   }
 
+  /* Hide the browser's native search clear button — SearchField renders its own. */
+  .no-search-cancel::-webkit-search-cancel-button {
+    -webkit-appearance: none;
+    appearance: none;
+  }
+
   .safe-x {
     padding-left: max(1rem, env(safe-area-inset-left));
     padding-right: max(1rem, env(safe-area-inset-right));

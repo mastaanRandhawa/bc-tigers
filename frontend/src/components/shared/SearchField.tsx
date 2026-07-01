@@ -33,7 +33,7 @@ export default function SearchField({
         placeholder={placeholder}
         value={value}
         onChange={(e) => onChange(e.target.value)}
-        className="pr-10 pl-10"
+        className="no-search-cancel pr-10 pl-10"
       />
       {value.length > 0 && (
         <button

@@ -11,15 +11,27 @@ interface DivisionDirectoryCardProps {
    */
   variant?: 'card' | 'row';
   description?: string;
+  /**
+   * When set, the card links to this division's teams page pre-filtered by
+   * the query (?q=…) instead of the division overview — used to search teams
+   * across divisions from the tournament page.
+   */
+  teamQuery?: string;
 }
 
 export default function DivisionDirectoryCard({
   division,
   variant = 'card',
   description,
+  teamQuery,
 }: DivisionDirectoryCardProps) {
-  const href = getDivisionBasePath(division);
-  if (!href) return null;
+  const basePath = getDivisionBasePath(division);
+  if (!basePath) return null;
+
+  const trimmedTeamQuery = teamQuery?.trim();
+  const href = trimmedTeamQuery
+    ? `${basePath}/teams?q=${encodeURIComponent(trimmedTeamQuery)}`
+    : basePath;
 
   const theme = getDivisionTheme(division);
 

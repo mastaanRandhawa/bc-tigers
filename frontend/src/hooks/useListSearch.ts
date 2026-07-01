@@ -5,9 +5,10 @@ import { useDebouncedValue } from '@/hooks/useDebouncedValue';
 export function useListSearch<T>(
   items: T[],
   getSearchText: (item: T) => string,
+  initialSearch = '',
   debounceMs = 250,
 ) {
-  const [search, setSearch] = useState('');
+  const [search, setSearch] = useState(initialSearch);
   const debouncedSearch = useDebouncedValue(search, debounceMs);
 
   const filtered = useMemo(() => {

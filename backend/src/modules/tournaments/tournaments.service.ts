@@ -11,16 +11,23 @@ import { AuditableService, asAuditable } from '../audit-log/auditable.service';
 
 const ENTITY = 'Tournament';
 
+type MembershipTeam = { id: string; name: string; city: string | null };
+
 function mapDivisionCounts<T extends {
   _count?: { team_memberships?: number; matches?: number };
+  team_memberships?: Array<{ team: MembershipTeam | null }>;
 }>(division: T) {
-  if (!division._count) return division;
-  const { team_memberships, matches } = division._count;
+  const { team_memberships, _count, ...rest } = division;
+  // Flatten memberships → a lightweight `teams` array (names) for search/listing.
+  const withTeams = team_memberships
+    ? { ...rest, teams: team_memberships.map((tm) => tm.team).filter(Boolean) }
+    : rest;
+  if (!_count) return withTeams;
   return {
-    ...division,
+    ...withTeams,
     _count: {
-      teams: team_memberships ?? 0,
-      matches: matches ?? 0,
+      teams: _count.team_memberships ?? 0,
+      matches: _count.matches ?? 0,
     },
   };
 }
@@ -93,6 +100,12 @@ export class TournamentsService {
             groups_enabled: true,
             display_order: true,
             _count: { select: { team_memberships: true } },
+            team_memberships: {
+              where: { team: { is_deleted: false } },
+              select: {
+                team: { select: { id: true, name: true, city: true } },
+              },
+            },
           },
           orderBy: [{ display_order: 'asc' }, { created_at: 'asc' }],
         },

@@ -1,4 +1,5 @@
 import { useCallback, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import TeamCard from '@/components/teams/TeamCard';
 import DivisionPageHeader from '@/components/divisions/DivisionPageHeader';
 import ResourceList from '@/components/shared/ResourceList';
@@ -44,6 +45,7 @@ function groupTeams(teams: Team[]) {
 
 export default function DivisionTeamsPage() {
   const { tournamentSlug, divisionSlug, division } = useDivisionRoute();
+  const [searchParams] = useSearchParams();
   const { data: teams = [], isLoading, isError, refetch } = useDivisionTeams(
     tournamentSlug,
     divisionSlug,
@@ -56,7 +58,11 @@ export default function DivisionTeamsPage() {
   const qc = useQueryClient();
 
   const getText = useCallback((t: (typeof teams)[0]) => teamSearchText(t), []);
-  const { search, setSearch, filtered, debouncedSearch, hasQuery } = useListSearch(teams, getText);
+  const { search, setSearch, filtered, debouncedSearch, hasQuery } = useListSearch(
+    teams,
+    getText,
+    searchParams.get('q') ?? '',
+  );
 
   const handleDelete = async () => {
     if (!deleteTarget) return;

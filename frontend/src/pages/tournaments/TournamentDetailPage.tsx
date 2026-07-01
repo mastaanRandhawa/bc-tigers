@@ -1,9 +1,9 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import SearchField from '@/components/shared/SearchField';
 import SearchEmpty from '@/components/shared/SearchEmpty';
 import { useListSearch } from '@/hooks/useListSearch';
-import { divisionSearchText } from '@/lib/search-text';
+import { divisionSearchText, teamSearchText, textIncludes } from '@/lib/search-text';
 import PageContent from '@/components/shared/PageContent';
 import QueryState from '@/components/shared/QueryState';
 import DivisionDirectoryCard from '@/components/shared/DivisionDirectoryCard';
@@ -41,6 +41,21 @@ export default function TournamentDetailPage() {
     debouncedSearch: debouncedDivisionSearch,
     hasQuery: hasDivisionQuery,
   } = useListSearch(divisions, getDivisionText);
+
+  // Team search filters divisions down to those containing a matching team,
+  // and carries the query into each surviving division's teams page (?q=…).
+  const [teamSearch, setTeamSearch] = useState('');
+  const trimmedTeamSearch = teamSearch.trim();
+
+  const visibleDivisions = useMemo(() => {
+    if (!trimmedTeamSearch) return filteredDivisions;
+    return filteredDivisions.filter((d) =>
+      (d.teams ?? []).some((t) => textIncludes(teamSearchText(t), trimmedTeamSearch)),
+    );
+  }, [filteredDivisions, trimmedTeamSearch]);
+
+  const noTeamMatch = !!trimmedTeamSearch && visibleDivisions.length === 0;
+  const noDivisionMatch = hasDivisionQuery && filteredDivisions.length === 0;
 
   const divisionDialog = useFormDialog<Division>();
   const tournamentDialog = useFormDialog<Tournament>();
@@ -142,10 +157,12 @@ export default function TournamentDetailPage() {
                     Divisions
                   </p>
                   <p className="text-xs text-muted-foreground">
-                    {divisions.length} {divisions.length === 1 ? 'division' : 'divisions'} in this tournament
+                    {hasDivisionQuery || trimmedTeamSearch
+                      ? `${visibleDivisions.length} of ${divisions.length} ${divisions.length === 1 ? 'division' : 'divisions'}`
+                      : `${divisions.length} ${divisions.length === 1 ? 'division' : 'divisions'} in this tournament`}
                   </p>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center justify-end gap-2">
                   {canEdit && (
                     <AdminActionButton onClick={divisionDialog.openCreate} size="xs">
                       <Plus className="h-3 w-3" />
@@ -153,25 +170,49 @@ export default function TournamentDetailPage() {
                     </AdminActionButton>
                   )}
                   {divisions.length > 3 && (
-                    <SearchField
-                      value={divisionSearch}
-                      onChange={setDivisionSearch}
-                      placeholder="Search divisions…"
-                      className="w-48 sm:w-64"
-                      aria-label="Search divisions"
-                    />
+                    <>
+                      <SearchField
+                        value={divisionSearch}
+                        onChange={setDivisionSearch}
+                        placeholder="Search divisions…"
+                        className="w-44 sm:w-56"
+                        aria-label="Search divisions"
+                      />
+                      <SearchField
+                        value={teamSearch}
+                        onChange={setTeamSearch}
+                        placeholder="Search teams…"
+                        className="w-44 sm:w-56"
+                        aria-label="Search teams across divisions"
+                      />
+                    </>
                   )}
                 </div>
               </div>
 
+              {trimmedTeamSearch && (
+                <div className="border-t border-border/60 bg-secondary/30 px-5 py-2.5">
+                  <p className="text-xs text-muted-foreground">
+                    Open a division to see its teams for{' '}
+                    <span className="font-medium text-foreground">“{trimmedTeamSearch}”</span>.
+                  </p>
+                </div>
+              )}
+
               {/* Divisions list */}
-              {hasDivisionQuery && filteredDivisions.length === 0 ? (
+              {noDivisionMatch ? (
                 <div className="border-t border-border/60 px-5 py-8">
                   <SearchEmpty query={debouncedDivisionSearch} entityLabel="divisions" />
                 </div>
+              ) : noTeamMatch ? (
+                <div className="border-t border-border/60 px-5 py-8">
+                  <p className="text-center text-sm text-muted-foreground">
+                    No team named &ldquo;{trimmedTeamSearch}&rdquo; in this tournament.
+                  </p>
+                </div>
               ) : (
                 <div className="divide-y divide-border/60 border-t border-border/60">
-                  {filteredDivisions.map((div) => {
+                  {visibleDivisions.map((div) => {
                     const divisionWithTournament = { ...div, tournament };
                     return (
                       <div key={div.id} className="group relative flex items-center">
@@ -179,6 +220,7 @@ export default function TournamentDetailPage() {
                           <DivisionDirectoryCard
                             variant="row"
                             division={divisionWithTournament}
+                            teamQuery={trimmedTeamSearch || undefined}
                           />
                         </div>
                         {canEdit && (
