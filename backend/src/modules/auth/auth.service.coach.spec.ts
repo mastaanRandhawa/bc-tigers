@@ -92,13 +92,34 @@ describe('AuthService coach gates', () => {
     expect(result.user.role).toBe('COACH');
   });
 
-  it('rejects coach change password', async () => {
-    mockPrisma.user.findUnique.mockResolvedValue(baseUser);
+  it.each(['ADMIN', 'SUPERADMIN', 'COACH'] as const)(
+    'lets %s change their own password with the correct current password',
+    async (role) => {
+      mockPrisma.user.findUnique.mockResolvedValue({
+        ...baseUser,
+        id: role === 'COACH' ? 'user-1' : 'admin-1',
+        role,
+      });
+      mockBcrypt.compare.mockResolvedValue(true as never);
 
-    await expect(
-      service.changePassword('user-1', 'old', 'newpassword'),
-    ).rejects.toBeInstanceOf(ForbiddenException);
-  });
+      const userId = role === 'COACH' ? 'user-1' : 'admin-1';
+      const result = await service.changePassword(
+        userId,
+        'oldpass',
+        'newpassword',
+      );
+
+      expect(result.message).toContain('updated');
+      expect(mockBcrypt.hash).toHaveBeenCalledWith('newpassword', 12);
+      expect(mockPrisma.user.update).toHaveBeenCalledWith({
+        where: { id: userId },
+        data: { password_hash: 'hashed' },
+      });
+      expect(audit.log).toHaveBeenCalledWith(
+        expect.objectContaining({ action: 'PASSWORD_CHANGE', userId }),
+      );
+    },
+  );
 
   const adminUser = {
     ...baseUser,
@@ -107,31 +128,7 @@ describe('AuthService coach gates', () => {
     role: 'ADMIN' as const,
   };
 
-  it.each(['ADMIN', 'SUPERADMIN'] as const)(
-    'lets %s change their own password with the correct current password',
-    async (role) => {
-      mockPrisma.user.findUnique.mockResolvedValue({ ...adminUser, role });
-      mockBcrypt.compare.mockResolvedValue(true as never);
-
-      const result = await service.changePassword(
-        'admin-1',
-        'oldpass',
-        'newpassword',
-      );
-
-      expect(result.message).toContain('updated');
-      expect(mockBcrypt.hash).toHaveBeenCalledWith('newpassword', 12);
-      expect(mockPrisma.user.update).toHaveBeenCalledWith({
-        where: { id: 'admin-1' },
-        data: { password_hash: 'hashed' },
-      });
-      expect(audit.log).toHaveBeenCalledWith(
-        expect.objectContaining({ action: 'PASSWORD_CHANGE', userId: 'admin-1' }),
-      );
-    },
-  );
-
-  it('rejects an admin password change when the current password is wrong', async () => {
+  it('rejects a password change when the current password is wrong', async () => {
     mockPrisma.user.findUnique.mockResolvedValue(adminUser);
     mockBcrypt.compare.mockResolvedValue(false as never);
 

@@ -22,7 +22,7 @@ import { useTeams, useDeleteTeam } from '@/hooks/useTeams';
 import { useMatches, useDeleteMatch, useUpdateMatch } from '@/hooks/useMatches';
 import { useFormDialog } from '@/hooks/useFormDialog';
 import { getDivisionTheme } from '@/lib/division-theme';
-import { formatDate, formatTime } from '@/lib/utils';
+import { formatDate, formatTime, matchVenueLabel } from '@/lib/utils';
 import { matchSearchText } from '@/lib/search-text';
 import { getApiErrorMessage } from '@/lib/errors';
 import { toast } from 'sonner';
@@ -117,6 +117,14 @@ export default function DivisionWorkspacePage() {
             {formatDate(m.scheduled_start)} · {formatTime(m.scheduled_start)}
           </p>
         </div>
+      ),
+    },
+    {
+      key: 'location',
+      label: 'Venue',
+      className: 'hidden md:table-cell min-w-[8rem]',
+      render: (m: Match) => (
+        <span className="text-xs text-muted-foreground">{matchVenueLabel(m) ?? '—'}</span>
       ),
     },
     {

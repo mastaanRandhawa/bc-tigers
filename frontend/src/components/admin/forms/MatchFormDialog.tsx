@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import FormDialog from '@/components/admin/FormDialog';
@@ -9,8 +9,12 @@ import { useTournaments } from '@/hooks/useTournaments';
 import { useDivisions } from '@/hooks/useDivisions';
 import { useTeams } from '@/hooks/useTeams';
 import { useVenues } from '@/hooks/useVenues';
+import { useFields } from '@/hooks/useFields';
+import { FieldFormDialog } from '@/components/admin/forms/FieldFormDialog';
 import { fromDatetimeLocalValue, toDatetimeLocalValue } from '@/lib/date';
 import { getApiErrorMessage } from '@/lib/errors';
+import { Button } from '@/components/ui/button';
+import { Plus } from 'lucide-react';
 import type { Match, MatchSlotOutcome } from '@/types';
 
 const STATUS_OPTIONS = [
@@ -51,6 +55,8 @@ export default function MatchFormDialog({ open, onOpenChange, match, defaultDivi
   const createMutation = useCreateMatch();
   const updateMutation = useUpdateMatch();
   const isEditing = !!match;
+  const [addFieldOpen, setAddFieldOpen] = useState(false);
+  const prevVenueRef = useRef<string | undefined | null>(null);
 
   const form = useForm<MatchFormValues>({
     resolver: zodResolver(matchSchema),
@@ -64,6 +70,7 @@ export default function MatchFormDialog({ open, onOpenChange, match, defaultDivi
       away_team_id: '',
       away_source_match_id: '',
       venue_id: '',
+      field_id: '',
       scheduled_start: '',
       status: 'SCHEDULED',
       round: undefined,
@@ -72,8 +79,12 @@ export default function MatchFormDialog({ open, onOpenChange, match, defaultDivi
 
   const tournamentId = form.watch('tournament_id');
   const divisionId = form.watch('division_id');
+  const venueId = form.watch('venue_id');
   const homeMode = form.watch('home_mode');
   const awayMode = form.watch('away_mode');
+
+  const selectedVenueId = venueId && venueId !== '__none__' ? venueId : undefined;
+  const { data: fields = [] } = useFields(selectedVenueId);
 
   const filteredDivisions = useMemo(
     () => divisions.filter((d) => !tournamentId || d.tournament_id === tournamentId),
@@ -109,6 +120,7 @@ export default function MatchFormDialog({ open, onOpenChange, match, defaultDivi
         away_team_id: match.away_team_id ?? '',
         away_source_match_id: match.away_source_match_id ?? '',
         venue_id: match.venue_id ?? '__none__',
+        field_id: match.field_id ?? '__none__',
         scheduled_start: toDatetimeLocalValue(match.scheduled_start),
         status: match.status,
         round: match.round != null ? String(match.round) : '',
@@ -128,12 +140,29 @@ export default function MatchFormDialog({ open, onOpenChange, match, defaultDivi
         away_team_id: '',
         away_source_match_id: '',
         venue_id: '__none__',
+        field_id: '__none__',
         scheduled_start: '',
         status: 'SCHEDULED',
         round: '',
       });
     }
   }, [open, match, form, tournaments, divisions, defaultDivisionId]);
+
+  // Clear field when the admin picks a different venue (not on initial form load).
+  useEffect(() => {
+    if (!open) {
+      prevVenueRef.current = null;
+      return;
+    }
+    if (prevVenueRef.current === null) {
+      prevVenueRef.current = venueId;
+      return;
+    }
+    if (prevVenueRef.current !== venueId) {
+      form.setValue('field_id', '__none__');
+      prevVenueRef.current = venueId;
+    }
+  }, [venueId, open, form]);
 
   // Changing division invalidates previously selected teams (different roster pool).
   useEffect(() => {
@@ -166,6 +195,8 @@ export default function MatchFormDialog({ open, onOpenChange, match, defaultDivi
         scheduled_start: fromDatetimeLocalValue(values.scheduled_start) ?? '',
         venue_id:
           values.venue_id && values.venue_id !== '__none__' ? values.venue_id : null,
+        field_id:
+          values.field_id && values.field_id !== '__none__' ? values.field_id : null,
         status: values.status,
         round: values.round ? Number(values.round) : undefined,
       };
@@ -182,6 +213,7 @@ export default function MatchFormDialog({ open, onOpenChange, match, defaultDivi
   });
 
   return (
+    <>
     <FormDialog
       open={open}
       onOpenChange={onOpenChange}
@@ -253,9 +285,55 @@ export default function MatchFormDialog({ open, onOpenChange, match, defaultDivi
           ...venues.map((v) => ({ value: v.id, label: v.name })),
         ]}
       />
+      {selectedVenueId && (
+        <div className="space-y-1.5">
+          <div className="flex items-end justify-between gap-2">
+            <SelectField
+              control={form.control}
+              name="field_id"
+              label="Field"
+              className="flex-1"
+              options={[
+                { value: '__none__', label: 'None' },
+                ...fields.map((f) => ({
+                  value: f.id,
+                  label: f.surface ? `${f.name} — ${f.surface}` : f.name,
+                })),
+              ]}
+            />
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="mb-0.5 shrink-0"
+              onClick={() => setAddFieldOpen(true)}
+            >
+              <Plus className="h-3.5 w-3.5 mr-1" />
+              Add field
+            </Button>
+          </div>
+          {fields.length === 0 && (
+            <p className="text-xs text-muted-foreground">
+              No fields for this venue yet. Add one to assign a pitch or court.
+            </p>
+          )}
+        </div>
+      )}
       <TextInputField control={form.control} name="scheduled_start" label="Kickoff" type="datetime-local" />
       <SelectField control={form.control} name="status" label="Status" options={STATUS_OPTIONS} />
       <TextInputField control={form.control} name="round" label="Game #" type="number" />
     </FormDialog>
+
+    {selectedVenueId && (
+      <FieldFormDialog
+        venueId={selectedVenueId}
+        open={addFieldOpen}
+        onOpenChange={setAddFieldOpen}
+        onSuccess={(field) => {
+          if (field) form.setValue('field_id', field.id);
+        }}
+      />
+    )}
+  </>
   );
 }

@@ -52,6 +52,16 @@ export function matchSideName(
   return team?.name ?? label ?? 'TBD';
 }
 
+/** Venue and field label for schedules, e.g. "Main Park · Field 1". */
+export function matchVenueLabel(match: {
+  venue?: { name: string } | null;
+  field?: { name: string } | null;
+}): string | null {
+  if (!match.venue && !match.field) return null;
+  if (match.venue && match.field) return `${match.venue.name} · ${match.field.name}`;
+  return match.venue?.name ?? match.field?.name ?? null;
+}
+
 export type MatchStatusBadgeVariant =
   | 'live'
   | 'success'

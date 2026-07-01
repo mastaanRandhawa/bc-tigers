@@ -101,6 +101,7 @@ export const matchSchema = z
     away_team_id: z.string().optional(),
     away_source_match_id: z.string().optional(),
     venue_id: z.string().optional(),
+    field_id: z.string().optional(),
     scheduled_start: z.string().min(1, 'Start time is required'),
     status: z.enum(['SCHEDULED', 'LIVE', 'HALFTIME', 'COMPLETED', 'DELAYED', 'POSTPONED', 'CANCELLED']),
     round: z.string().optional(),

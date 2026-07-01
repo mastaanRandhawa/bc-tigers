@@ -6,7 +6,7 @@ import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { useAuthStore } from '@/store/authStore';
 import { authService } from '@/services/auth.service';
-import { getRoleLabel, isCoachRole, isStaffRole, COACH_PASSWORD_MESSAGE } from '@/lib/auth-utils';
+import { getRoleLabel } from '@/lib/auth-utils';
 import { isAxiosError } from 'axios';
 import { Save, KeyRound } from 'lucide-react';
 import PageLoader from '@/components/shared/PageLoader';
@@ -126,54 +126,45 @@ export default function ProfilePage() {
             </Button>
           </form>
 
-          {isCoachRole(user.role) && (
-            <div className="rounded-lg border border-border bg-card shadow-sm p-6 space-y-2">
-              <h2 className="font-semibold text-foreground">Password</h2>
-              <p className="text-sm text-muted-foreground">{COACH_PASSWORD_MESSAGE}</p>
+          <form onSubmit={handlePasswordChange} className="rounded-lg border border-border bg-card shadow-sm p-6 space-y-4">
+            <h2 className="font-semibold text-foreground">Change Password</h2>
+            {pwMessage && <div className="p-3 rounded-xl bg-green-50 text-green-700 text-sm">{pwMessage}</div>}
+            {pwError && <div className="p-3 rounded-xl bg-red-50 text-red-700 text-sm">{pwError}</div>}
+            <div className="space-y-1.5">
+              <Label>Current Password</Label>
+              <PasswordInput
+                autoComplete="current-password"
+                value={pw.current}
+                onChange={(e) => setPw({ ...pw, current: e.target.value })}
+                required
+              />
             </div>
-          )}
-
-          {isStaffRole(user.role) && (
-            <form onSubmit={handlePasswordChange} className="rounded-lg border border-border bg-card shadow-sm p-6 space-y-4">
-              <h2 className="font-semibold text-foreground">Change Password</h2>
-              {pwMessage && <div className="p-3 rounded-xl bg-green-50 text-green-700 text-sm">{pwMessage}</div>}
-              {pwError && <div className="p-3 rounded-xl bg-red-50 text-red-700 text-sm">{pwError}</div>}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-1.5">
-                <Label>Current Password</Label>
+                <Label>New Password</Label>
                 <PasswordInput
-                  autoComplete="current-password"
-                  value={pw.current}
-                  onChange={(e) => setPw({ ...pw, current: e.target.value })}
+                  autoComplete="new-password"
+                  value={pw.next}
+                  onChange={(e) => setPw({ ...pw, next: e.target.value })}
                   required
+                  minLength={6}
                 />
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <Label>New Password</Label>
-                  <PasswordInput
-                    autoComplete="new-password"
-                    value={pw.next}
-                    onChange={(e) => setPw({ ...pw, next: e.target.value })}
-                    required
-                    minLength={6}
-                  />
-                </div>
-                <div className="space-y-1.5">
-                  <Label>Confirm New Password</Label>
-                  <PasswordInput
-                    autoComplete="new-password"
-                    value={pw.confirm}
-                    onChange={(e) => setPw({ ...pw, confirm: e.target.value })}
-                    required
-                    minLength={6}
-                  />
-                </div>
+              <div className="space-y-1.5">
+                <Label>Confirm New Password</Label>
+                <PasswordInput
+                  autoComplete="new-password"
+                  value={pw.confirm}
+                  onChange={(e) => setPw({ ...pw, confirm: e.target.value })}
+                  required
+                  minLength={6}
+                />
               </div>
-              <Button type="submit" disabled={changingPw}>
-                <KeyRound className="w-4 h-4" /> {changingPw ? 'Updating…' : 'Update Password'}
-              </Button>
-            </form>
-          )}
+            </div>
+            <Button type="submit" disabled={changingPw}>
+              <KeyRound className="w-4 h-4" /> {changingPw ? 'Updating…' : 'Update Password'}
+            </Button>
+          </form>
         </div>
       </section>
     </PageLayout>

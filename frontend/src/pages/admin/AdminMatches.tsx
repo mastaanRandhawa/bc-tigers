@@ -12,7 +12,7 @@ import { useMatches, useDeleteMatch } from '@/hooks/useMatches';
 import type { Match } from '@/types';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { formatDate, formatTime, getMatchStatusBadgeVariant, matchSideName } from '@/lib/utils';
+import { formatDate, formatTime, getMatchStatusBadgeVariant, matchSideName, matchVenueLabel } from '@/lib/utils';
 import { getApiErrorMessage } from '@/lib/errors';
 import { matchSearchText } from '@/lib/search-text';
 import { PlusCircle } from 'lucide-react';
@@ -36,6 +36,17 @@ const columns = (onScore: (m: Match) => void, onEvent: (m: Match) => void) => [
         </p>
       </div>
     ),
+  },
+  {
+    key: 'location',
+    label: 'Venue',
+    className: 'hidden md:table-cell min-w-[8rem]',
+    render: (m: Match) => {
+      const label = matchVenueLabel(m);
+      return (
+        <span className="text-sm text-muted-foreground">{label ?? '—'}</span>
+      );
+    },
   },
   {
     key: 'status',

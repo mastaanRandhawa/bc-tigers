@@ -21,7 +21,7 @@ interface FieldFormDialogProps {
   field?: Field | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onSuccess?: () => void;
+  onSuccess?: (field?: Field) => void;
 }
 
 export function FieldFormDialog({
@@ -62,10 +62,11 @@ export function FieldFormDialog({
       };
       if (isEditing && field) {
         await updateMutation.mutateAsync({ id: field.id, data: payload });
+        onSuccess?.();
       } else {
-        await createMutation.mutateAsync(payload);
+        const res = await createMutation.mutateAsync(payload);
+        onSuccess?.(res.data);
       }
-      onSuccess?.();
       onOpenChange(false);
     } catch (err) {
       form.setError('root', { message: getApiErrorMessage(err) });

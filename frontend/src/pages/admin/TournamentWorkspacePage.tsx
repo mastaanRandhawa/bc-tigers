@@ -23,7 +23,7 @@ import { useTeams, useDeleteTeam } from '@/hooks/useTeams';
 import { useMatches, useDeleteMatch } from '@/hooks/useMatches';
 import { useFormDialog } from '@/hooks/useFormDialog';
 import { getDivisionTheme, themeChipStyle } from '@/lib/division-theme';
-import { formatDate, formatTime, getMatchStatusBadgeVariant } from '@/lib/utils';
+import { formatDate, formatTime, getMatchStatusBadgeVariant, matchVenueLabel } from '@/lib/utils';
 import { getApiErrorMessage } from '@/lib/errors';
 import { toast } from 'sonner';
 import { matchSearchText } from '@/lib/search-text';
@@ -119,6 +119,14 @@ export default function TournamentWorkspacePage() {
           </p>
           <p className="text-xs text-muted-foreground">{m.division?.name}</p>
         </div>
+      ),
+    },
+    {
+      key: 'location',
+      label: 'Venue',
+      className: 'hidden md:table-cell min-w-[8rem]',
+      render: (m: Match) => (
+        <span className="text-xs text-muted-foreground">{matchVenueLabel(m) ?? '—'}</span>
       ),
     },
     {

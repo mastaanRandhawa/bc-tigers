@@ -1,7 +1,7 @@
 import type { Match } from '@/types';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { formatDate, formatTime, getMatchStatusBadgeVariant, matchSideName } from '@/lib/utils';
+import { formatDate, formatTime, getMatchStatusBadgeVariant, matchSideName, matchVenueLabel } from '@/lib/utils';
 import { PlusCircle } from 'lucide-react';
 import { SoccerBallIcon } from '@/components/icons/SoccerBallIcon';
 
@@ -25,6 +25,7 @@ export function AdminMatchMobileRow({
   const home = matchSideName(match.home_team, match.home_label);
   const away = matchSideName(match.away_team, match.away_label);
   const hasScore = match.status !== 'SCHEDULED';
+  const venueLabel = matchVenueLabel(match);
 
   return (
     <div className="space-y-2.5">
@@ -48,6 +49,12 @@ export function AdminMatchMobileRow({
             <>
               <span aria-hidden>·</span>
               <span>Game #{match.round}</span>
+            </>
+          )}
+          {venueLabel && (
+            <>
+              <span aria-hidden>·</span>
+              <span>{venueLabel}</span>
             </>
           )}
         </div>
