@@ -613,6 +613,8 @@ model SiteSettings {
   timezone                String   @default("America/Vancouver")
   coach_management_locked Boolean  @default(false)
   coach_lock_scheduled_at DateTime?
+  rosters_public              Boolean   @default(false)
+  rosters_public_scheduled_at DateTime?
   max_players_per_team    Int      @default(25)
   updated_at              DateTime @updatedAt
 }

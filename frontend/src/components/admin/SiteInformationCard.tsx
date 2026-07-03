@@ -14,11 +14,15 @@ export function SiteInformationCard() {
   const updateSettings = useUpdateSettings();
   const [form, setForm] = useState<Partial<SiteSettings>>({});
   const [scheduledLocal, setScheduledLocal] = useState('');
+  const [publicScheduledLocal, setPublicScheduledLocal] = useState('');
 
   useEffect(() => {
     if (settings) {
       setForm(settings);
       setScheduledLocal(toDatetimeLocalValue(settings.coach_lock_scheduled_at));
+      setPublicScheduledLocal(
+        toDatetimeLocalValue(settings.rosters_public_scheduled_at),
+      );
     }
   }, [settings]);
 
@@ -27,6 +31,8 @@ export function SiteInformationCard() {
       await updateSettings.mutateAsync({
         ...form,
         coach_lock_scheduled_at: fromDatetimeLocalValue(scheduledLocal),
+        rosters_public_scheduled_at:
+          fromDatetimeLocalValue(publicScheduledLocal),
       });
       toast.success('Site information saved.');
     } catch {
@@ -45,6 +51,19 @@ export function SiteInformationCard() {
   const effectiveLocked =
     (form.coach_management_locked ?? false) ||
     (settings?.coach_lock_effective ?? false);
+
+  const publicScheduleDirty =
+    publicScheduledLocal !==
+    toDatetimeLocalValue(settings?.rosters_public_scheduled_at);
+  const publicScheduledPending = publicScheduleDirty
+    ? false
+    : (settings?.rosters_public_scheduled_pending ?? false);
+  const publicScheduledActive = publicScheduleDirty
+    ? false
+    : (settings?.rosters_public_scheduled_active ?? false);
+  const effectivePublic =
+    (form.rosters_public ?? false) ||
+    (settings?.rosters_public_effective ?? false);
 
   if (isLoading) {
     return (
@@ -120,8 +139,8 @@ export function SiteInformationCard() {
             <div>
               <Label>Lock immediately</Label>
               <p className="text-xs text-muted-foreground mt-0.5">
-                Prevents all coaches from editing team details and rosters, and publishes rosters
-                on the public site.
+                Prevents all coaches from editing team details and rosters. Does not change
+                whether rosters are shown publicly.
               </p>
             </div>
             <Switch
@@ -155,8 +174,7 @@ export function SiteInformationCard() {
             </div>
             <p className="text-xs text-muted-foreground">
               Coaches will be locked automatically at this date and time (your local timezone).
-              Save settings to apply. When the time passes, the immediate lock turns on automatically
-              and rosters become public.
+              Save settings to apply. When the time passes, the lock turns on automatically.
             </p>
           </div>
 
@@ -177,6 +195,77 @@ export function SiteInformationCard() {
               )}
               {scheduledActive && !form.coach_management_locked && (
                 <p>Scheduled lock is active — coaches cannot edit until you turn off the lock.</p>
+              )}
+            </div>
+          )}
+        </div>
+
+        <div className="rounded-lg border border-border p-4 space-y-4">
+          <div className="flex items-center gap-2">
+            <Globe className="h-4 w-4 text-primary" aria-hidden />
+            <h3 className="text-sm font-semibold text-foreground m-0">Roster public display</h3>
+          </div>
+
+          <div className="flex items-center justify-between gap-4">
+            <div>
+              <Label>Show rosters publicly</Label>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Makes team rosters visible to everyone on the public site. Independent of the
+                coach lock — coaches can still be locked or unlocked separately.
+              </p>
+            </div>
+            <Switch
+              checked={form.rosters_public ?? false}
+              onCheckedChange={(checked) =>
+                setForm({ ...form, rosters_public: checked })
+              }
+            />
+          </div>
+
+          <div className="space-y-1.5">
+            <Label htmlFor="rosters_public_scheduled_at">Schedule publish date &amp; time</Label>
+            <div className="flex flex-wrap gap-2">
+              <Input
+                id="rosters_public_scheduled_at"
+                type="datetime-local"
+                value={publicScheduledLocal}
+                onChange={(e) => setPublicScheduledLocal(e.target.value)}
+                className="max-w-xs"
+              />
+              {publicScheduledLocal && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setPublicScheduledLocal('')}
+                >
+                  Clear schedule
+                </Button>
+              )}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Rosters will be published automatically at this date and time (your local timezone).
+              Save settings to apply.
+            </p>
+          </div>
+
+          {publicScheduleDirty && publicScheduledLocal && (
+            <div className="rounded-md border border-blue-200 bg-blue-50 px-3 py-2 text-xs text-blue-900">
+              <p>Schedule changed — click Save to apply the new publish time.</p>
+            </div>
+          )}
+
+          {(effectivePublic || publicScheduledPending) && !publicScheduleDirty && (
+            <div className="rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs text-emerald-900">
+              {form.rosters_public && <p>Rosters are public now.</p>}
+              {publicScheduledPending && settings?.rosters_public_scheduled_at && (
+                <p>
+                  Rosters become public on{' '}
+                  {formatDateTime(settings.rosters_public_scheduled_at)}.
+                </p>
+              )}
+              {publicScheduledActive && !form.rosters_public && (
+                <p>Scheduled publish is active — rosters are public until you turn this off.</p>
               )}
             </div>
           )}

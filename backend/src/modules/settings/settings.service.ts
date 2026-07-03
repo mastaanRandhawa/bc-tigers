@@ -4,6 +4,7 @@ import prisma from '../../prisma/prisma';
 import { pickAllowed } from '../../common/pick';
 import { DEFAULT_MAX_PLAYERS_PER_TEAM } from '../../common/roster-limits';
 import { getCoachLockStatus } from '../auth/coach-lock';
+import { getRosterPublicStatus } from '../auth/public-lock';
 
 const SETTINGS_FIELDS = [
   'site_name',
@@ -13,6 +14,8 @@ const SETTINGS_FIELDS = [
   'timezone',
   'coach_management_locked',
   'coach_lock_scheduled_at',
+  'rosters_public',
+  'rosters_public_scheduled_at',
   'max_players_per_team',
 ] as const;
 
@@ -30,17 +33,17 @@ const DEFAULT_SETTINGS = {
 export class SettingsService {
   async getPublic() {
     const settings = await this.getOrCreate();
-    const lockStatus = await getCoachLockStatus();
+    const publicStatus = await getRosterPublicStatus();
     return {
       site_name: settings.site_name,
       contact_email: settings.contact_email,
       contact_phone: settings.contact_phone,
       contact_address: settings.contact_address,
-      rosters_public: lockStatus.coach_management_locked,
+      rosters_public: publicStatus.rosters_public,
       rosters_available_at:
-        lockStatus.coach_lock_scheduled_pending &&
-        settings.coach_lock_scheduled_at
-          ? settings.coach_lock_scheduled_at.toISOString()
+        publicStatus.rosters_public_scheduled_pending &&
+        settings.rosters_public_scheduled_at
+          ? settings.rosters_public_scheduled_at.toISOString()
           : null,
     };
   }
@@ -48,6 +51,7 @@ export class SettingsService {
   async getAdmin() {
     const settings = await this.getOrCreate();
     const lockStatus = await getCoachLockStatus();
+    const publicStatus = await getRosterPublicStatus();
     return {
       ...settings,
       coach_lock_scheduled_at:
@@ -56,6 +60,14 @@ export class SettingsService {
       coach_lock_scheduled_pending: lockStatus.coach_lock_scheduled_pending,
       coach_lock_scheduled_active: lockStatus.coach_lock_scheduled_active,
       coach_lock_effective: lockStatus.coach_management_locked,
+      rosters_public_scheduled_at:
+        settings.rosters_public_scheduled_at?.toISOString() ?? null,
+      rosters_public_manual: settings.rosters_public,
+      rosters_public_scheduled_pending:
+        publicStatus.rosters_public_scheduled_pending,
+      rosters_public_scheduled_active:
+        publicStatus.rosters_public_scheduled_active,
+      rosters_public_effective: publicStatus.rosters_public,
     };
   }
 
@@ -72,6 +84,20 @@ export class SettingsService {
     ) {
       const raw = source.coach_lock_scheduled_at;
       payload.coach_lock_scheduled_at =
+        raw === null || raw === ''
+          ? null
+          : raw instanceof Date
+            ? raw
+            : typeof raw === 'string' || typeof raw === 'number'
+              ? new Date(raw)
+              : null;
+    }
+
+    if (
+      Object.prototype.hasOwnProperty.call(source, 'rosters_public_scheduled_at')
+    ) {
+      const raw = source.rosters_public_scheduled_at;
+      payload.rosters_public_scheduled_at =
         raw === null || raw === ''
           ? null
           : raw instanceof Date

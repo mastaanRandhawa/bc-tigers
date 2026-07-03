@@ -385,6 +385,12 @@ export interface SiteSettings {
   coach_lock_scheduled_pending?: boolean;
   coach_lock_scheduled_active?: boolean;
   coach_lock_effective?: boolean;
+  rosters_public?: boolean;
+  rosters_public_scheduled_at?: string | null;
+  rosters_public_manual?: boolean;
+  rosters_public_scheduled_pending?: boolean;
+  rosters_public_scheduled_active?: boolean;
+  rosters_public_effective?: boolean;
   max_players_per_team?: number;
 }
 

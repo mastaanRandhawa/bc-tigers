@@ -1,5 +1,5 @@
 import { getRequestContext } from '../../common/request-context';
-import { getCoachLockStatus } from './coach-lock';
+import { getRosterPublicStatus } from './public-lock';
 
 export type RequestActor = {
   userId: string;
@@ -19,8 +19,8 @@ export function isAdminRole(role: string): boolean {
 }
 
 export async function areRostersPublic(): Promise<boolean> {
-  const status = await getCoachLockStatus();
-  return status.coach_management_locked;
+  const status = await getRosterPublicStatus();
+  return status.rosters_public;
 }
 
 export function canViewTeamRoster(
