@@ -12,10 +12,11 @@ import { AdminContextBar } from '@/components/admin/inline/AdminContextBar';
 import { AdminActionButton } from '@/components/admin/inline/AdminActionButton';
 import { ConfirmDialog } from '@/components/admin/inline/ConfirmDialog';
 import TeamFormDialog from '@/components/admin/forms/TeamFormDialog';
-import { useDeleteTeam } from '@/hooks/useTeams';
+import { useRemoveTeamFromDivision } from '@/hooks/useTeams';
 import { useFormDialog } from '@/hooks/useFormDialog';
 import { useQueryClient } from '@tanstack/react-query';
 import { Plus } from 'lucide-react';
+import { toast } from 'sonner';
 import type { Team } from '@/types';
 
 /** Bucket teams by their group, sorted by group order; unassigned teams last. */
@@ -53,7 +54,7 @@ export default function DivisionTeamsPage() {
 
   const canEdit = useCanAdminEdit();
   const teamDialog = useFormDialog<Team>();
-  const deleteMutation = useDeleteTeam();
+  const removeMutation = useRemoveTeamFromDivision();
   const [deleteTarget, setDeleteTarget] = useState<Team | null>(null);
   const qc = useQueryClient();
 
@@ -65,10 +66,20 @@ export default function DivisionTeamsPage() {
   );
 
   const handleDelete = async () => {
-    if (!deleteTarget) return;
-    await deleteMutation.mutateAsync(deleteTarget.id);
-    qc.invalidateQueries({ queryKey: ['division-resources'] });
-    setDeleteTarget(null);
+    if (!deleteTarget || !division?.id) return;
+    try {
+      await removeMutation.mutateAsync({
+        teamId: deleteTarget.id,
+        divisionId: division.id,
+      });
+      qc.invalidateQueries({ queryKey: ['division-resources'] });
+      setDeleteTarget(null);
+    } catch (err) {
+      const message =
+        (err as { response?: { data?: { message?: string } } })?.response?.data
+          ?.message ?? 'Failed to remove team from division.';
+      toast.error(message);
+    }
   };
 
   return (
@@ -149,8 +160,8 @@ export default function DivisionTeamsPage() {
       <ConfirmDialog
         open={!!deleteTarget}
         onOpenChange={(open) => { if (!open) setDeleteTarget(null); }}
-        title="Delete team?"
-        description={`"${deleteTarget?.name}" will be permanently removed from this division.`}
+        title="Remove team from division?"
+        description={`"${deleteTarget?.name}" will be removed from this division. The team itself is not deleted and can be re-added.`}
         onConfirm={handleDelete}
       />
     </>
