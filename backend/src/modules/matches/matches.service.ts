@@ -18,7 +18,11 @@ import {
   assertCoachCanUpdateGoalEvent,
   coachGoalPatchFromUpdate,
 } from '../auth/coach-match-goals';
-import { assertTeamsInDivision, enrichMatchesWithTeamSlugs, enrichMatchWithTeamSlugs } from '../teams/team-membership';
+import {
+  assertTeamsInDivision,
+  enrichMatchesWithTeamSlugs,
+  enrichMatchWithTeamSlugs,
+} from '../teams/team-membership';
 import {
   canViewTeamRoster,
   getRosterVisibilityContext,
@@ -179,16 +183,16 @@ export class MatchesService {
     return this.withEliminationFlags(labeled);
   }
 
-  private async withEliminationFlag<T extends { id: string; division_id: string }>(
-    match: T,
-  ): Promise<T & { is_elimination: boolean }> {
+  private async withEliminationFlag<
+    T extends { id: string; division_id: string },
+  >(match: T): Promise<T & { is_elimination: boolean }> {
     const elimination = await isEliminationMatch(match.id);
     return { ...match, is_elimination: elimination };
   }
 
-  private async withEliminationFlags<T extends { id: string; division_id: string }>(
-    matches: T[],
-  ): Promise<(T & { is_elimination: boolean })[]> {
+  private async withEliminationFlags<
+    T extends { id: string; division_id: string },
+  >(matches: T[]): Promise<(T & { is_elimination: boolean })[]> {
     if (matches.length === 0) return [];
 
     const byDivision = new Map<string, T[]>();
@@ -535,7 +539,9 @@ export class MatchesService {
     return this.withEliminationFlag(attachSlotLabels(match));
   }
 
-  private async advanceBracketFromMatch(match: MatchOutcomeFields & { division_id: string }) {
+  private async advanceBracketFromMatch(
+    match: MatchOutcomeFields & { division_id: string },
+  ) {
     const node = await prisma.bracketNode.findFirst({
       where: { match_id: match.id },
     });
@@ -656,7 +662,9 @@ export class MatchesService {
    * After a source match completes decisively, fill the team slots of every
    * match that points at it via a Winner/Loser placeholder, then broadcast.
    */
-  private async resolveDependentSlots(completed: MatchOutcomeFields & { division_id: string }) {
+  private async resolveDependentSlots(
+    completed: MatchOutcomeFields & { division_id: string },
+  ) {
     const result = resolveAdvancingTeams(completed);
     if (!result) return;
 

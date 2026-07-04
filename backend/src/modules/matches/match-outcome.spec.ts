@@ -15,7 +15,9 @@ describe('match-outcome (pure)', () => {
 
   describe('resolveAdvancingTeams', () => {
     it('returns winner/loser on regulation win', () => {
-      expect(resolveAdvancingTeams({ ...base, home_score: 2, away_score: 1 })).toEqual({
+      expect(
+        resolveAdvancingTeams({ ...base, home_score: 2, away_score: 1 }),
+      ).toEqual({
         winnerId: 'home',
         loserId: 'away',
       });
