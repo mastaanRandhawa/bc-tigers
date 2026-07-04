@@ -30,13 +30,12 @@ import {
 } from '../auth/roster-visibility';
 import { attachSlotLabels } from './slot-labels';
 import {
-  isEliminationMatch,
-  eliminationMatchIdsForDivision,
   resolveAdvancingTeams,
-  getEliminationCompletionError,
+  getTiedCompletionError,
   formatMatchResultLine,
   type MatchOutcomeFields,
 } from './match-outcome';
+import type { TieResolution } from '@prisma/client';
 
 export type MatchEventActor = { userId: string; role: string };
 
@@ -179,60 +178,19 @@ export class MatchesService {
       orderBy: { scheduled_start: order },
     });
     const withSlugs = await enrichMatchesWithTeamSlugs(matches);
-    const labeled = withSlugs.map(attachSlotLabels);
-    return this.withEliminationFlags(labeled);
+    return withSlugs.map(attachSlotLabels);
   }
 
-  private async withEliminationFlag<
-    T extends { id: string; division_id: string },
-  >(match: T): Promise<T & { is_elimination: boolean }> {
-    const elimination = await isEliminationMatch(match.id);
-    return { ...match, is_elimination: elimination };
-  }
-
-  private async withEliminationFlags<
-    T extends { id: string; division_id: string },
-  >(matches: T[]): Promise<(T & { is_elimination: boolean })[]> {
-    if (matches.length === 0) return [];
-
-    const byDivision = new Map<string, T[]>();
-    for (const m of matches) {
-      const bucket = byDivision.get(m.division_id) ?? [];
-      bucket.push(m);
-      byDivision.set(m.division_id, bucket);
-    }
-
-    const eliminationByDivision = new Map<string, Set<string>>();
-    await Promise.all(
-      [...byDivision.keys()].map(async (divisionId) => {
-        eliminationByDivision.set(
-          divisionId,
-          await eliminationMatchIdsForDivision(divisionId),
-        );
-      }),
-    );
-
-    return matches.map((m) => ({
-      ...m,
-      is_elimination:
-        eliminationByDivision.get(m.division_id)?.has(m.id) ?? false,
-    }));
-  }
-
-  private async assertResultValidForCompletion(
-    match: MatchOutcomeFields,
-    isElimination: boolean,
-  ): Promise<void> {
-    const error = getEliminationCompletionError(match, isElimination);
+  private assertResultValidForCompletion(match: MatchOutcomeFields): void {
+    const error = getTiedCompletionError(match);
     if (error) throw new BadRequestException(error);
   }
 
-  private async assertResultValidIfCompleted(
+  private assertResultValidIfCompleted(
     match: MatchOutcomeFields & { status: string },
-    isElimination: boolean,
-  ): Promise<void> {
+  ): void {
     if (match.status !== 'COMPLETED') return;
-    await this.assertResultValidForCompletion(match, isElimination);
+    this.assertResultValidForCompletion(match);
   }
 
   async findOne(id: string) {
@@ -265,7 +223,7 @@ export class MatchesService {
           : null,
       }),
     );
-    return this.withEliminationFlag(enriched);
+    return enriched;
   }
 
   async create(data: unknown) {
@@ -304,10 +262,7 @@ export class MatchesService {
     ]);
 
     if (updateData.status === 'COMPLETED' && existing.status !== 'COMPLETED') {
-      await this.assertResultValidForCompletion(
-        existing,
-        existing.is_elimination,
-      );
+      this.assertResultValidForCompletion(existing);
     }
 
     const match = await prisma.match.update({
@@ -332,6 +287,7 @@ export class MatchesService {
         match.away_score,
         match.home_penalties,
         match.away_penalties,
+        match.tie_resolution,
       );
       await this.emailAdmins(
         match.tournament_id,
@@ -344,19 +300,20 @@ export class MatchesService {
     }
 
     this.gateway.emitScoreUpdate(id, match.home_score, match.away_score);
-    return this.withEliminationFlag(attachSlotLabels(match));
+    return attachSlotLabels(match);
   }
 
   async updateScore(
     id: string,
     homeScore: number,
     awayScore: number,
-    penalties?: {
+    options?: {
       home_penalties?: number | null;
       away_penalties?: number | null;
+      tie_resolution?: TieResolution | null;
     },
   ) {
-    return this.applyResult(id, homeScore, awayScore, penalties);
+    return this.applyResult(id, homeScore, awayScore, options);
   }
 
   async addEvent(matchId: string, data: unknown, actor?: MatchEventActor) {
@@ -479,15 +436,15 @@ export class MatchesService {
     id: string,
     homeScore: number,
     awayScore: number,
-    penalties?: {
+    options?: {
       home_penalties?: number | null;
       away_penalties?: number | null;
+      tie_resolution?: TieResolution | null;
     },
   ) {
     const existing = await prisma.match.findUnique({ where: { id } });
     if (!existing) throw new NotFoundException('Match not found');
 
-    const isElimination = await isEliminationMatch(id);
     const tied = homeScore === awayScore;
     const data: Prisma.MatchUncheckedUpdateInput = {
       home_score: homeScore,
@@ -495,31 +452,65 @@ export class MatchesService {
     };
 
     if (tied) {
-      if (penalties !== undefined) {
-        data.home_penalties = penalties.home_penalties ?? null;
-        data.away_penalties = penalties.away_penalties ?? null;
+      if (options?.tie_resolution !== undefined) {
+        data.tie_resolution = options.tie_resolution;
+      }
+      const resolution =
+        (data.tie_resolution as TieResolution | null | undefined) ??
+        existing.tie_resolution;
+
+      if (resolution === 'DRAW') {
+        data.home_penalties = null;
+        data.away_penalties = null;
+      } else if (resolution === 'PENALTIES') {
+        if (options?.home_penalties !== undefined) {
+          data.home_penalties = options.home_penalties;
+        }
+        if (options?.away_penalties !== undefined) {
+          data.away_penalties = options.away_penalties;
+        }
+      } else if (options?.home_penalties !== undefined) {
+        data.home_penalties = options.home_penalties;
+        data.away_penalties = options.away_penalties ?? null;
       }
     } else {
       data.home_penalties = null;
       data.away_penalties = null;
+      data.tie_resolution = null;
     }
 
-    const candidate = {
+    const effectiveResolution = tied
+      ? ((data.tie_resolution as TieResolution | null | undefined) ??
+        existing.tie_resolution)
+      : null;
+
+    let effectiveHomePenalties: number | null = null;
+    let effectiveAwayPenalties: number | null = null;
+    if (tied) {
+      if (effectiveResolution === 'DRAW') {
+        effectiveHomePenalties = null;
+        effectiveAwayPenalties = null;
+      } else {
+        effectiveHomePenalties =
+          (data.home_penalties as number | null | undefined) ??
+          existing.home_penalties;
+        effectiveAwayPenalties =
+          (data.away_penalties as number | null | undefined) ??
+          existing.away_penalties;
+      }
+    }
+
+    const candidate: MatchOutcomeFields & { status: string } = {
       ...existing,
       home_score: homeScore,
       away_score: awayScore,
-      home_penalties: tied
-        ? ((data.home_penalties as number | null) ?? existing.home_penalties)
-        : null,
-      away_penalties: tied
-        ? ((data.away_penalties as number | null) ?? existing.away_penalties)
-        : null,
+      home_penalties: effectiveHomePenalties,
+      away_penalties: effectiveAwayPenalties,
+      tie_resolution: effectiveResolution,
+      status: existing.status,
     };
 
-    await this.assertResultValidIfCompleted(
-      { ...candidate, status: existing.status },
-      isElimination,
-    );
+    this.assertResultValidIfCompleted(candidate);
 
     const match = await prisma.match.update({
       where: { id },
@@ -536,7 +527,7 @@ export class MatchesService {
       await this.resolveDependentSlots(match);
     }
 
-    return this.withEliminationFlag(attachSlotLabels(match));
+    return attachSlotLabels(match);
   }
 
   private async advanceBracketFromMatch(

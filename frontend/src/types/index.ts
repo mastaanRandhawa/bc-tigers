@@ -292,8 +292,7 @@ export interface Match {
   away_score: number;
   home_penalties?: number | null;
   away_penalties?: number | null;
-  /** Bracket-linked or feeding a Winner/Loser placeholder slot. */
-  is_elimination?: boolean;
+  tie_resolution?: 'DRAW' | 'PENALTIES' | null;
   stream_url?: string;
   home_team?: Team | null;
   away_team?: Team | null;

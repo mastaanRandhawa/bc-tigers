@@ -2,6 +2,7 @@ import prisma from '../../prisma/prisma';
 import { resolveKnockoutMatch } from '../../engine/knockout';
 import { USFA_TOURNAMENT_CONFIG } from '../../engine/config';
 import type { MatchResult } from '../../engine/types';
+import type { TieResolution } from '@prisma/client';
 
 export type MatchOutcomeFields = {
   id: string;
@@ -11,9 +12,10 @@ export type MatchOutcomeFields = {
   away_score: number;
   home_penalties?: number | null;
   away_penalties?: number | null;
+  tie_resolution?: TieResolution | null;
 };
 
-/** Bracket-linked or feeding a Winner/Loser placeholder slot. */
+/** Bracket-linked or feeding a Winner/Loser placeholder slot (standings filter only). */
 export async function isEliminationMatch(matchId: string): Promise<boolean> {
   const [node, dependentCount] = await Promise.all([
     prisma.bracketNode.findFirst({
@@ -32,7 +34,7 @@ export async function isEliminationMatch(matchId: string): Promise<boolean> {
   return !!node || dependentCount > 0;
 }
 
-/** All elimination match ids in a division (for standings + list enrichment). */
+/** All elimination match ids in a division (for standings exclusion). */
 export async function eliminationMatchIdsForDivision(
   divisionId: string,
 ): Promise<Set<string>> {
@@ -65,22 +67,33 @@ export async function eliminationMatchIdsForDivision(
 }
 
 export function toEngineMatchResult(match: MatchOutcomeFields): MatchResult {
+  const usePenalties = match.tie_resolution === 'PENALTIES';
   return {
     homeTeamId: match.home_team_id ?? '',
     awayTeamId: match.away_team_id ?? '',
     homeScore: match.home_score,
     awayScore: match.away_score,
     outcome: 'PLAYED',
-    homePenalties: match.home_penalties ?? null,
-    awayPenalties: match.away_penalties ?? null,
+    homePenalties: usePenalties ? (match.home_penalties ?? null) : null,
+    awayPenalties: usePenalties ? (match.away_penalties ?? null) : null,
   };
 }
 
-/** Winner/loser when a match has a decisive result; null when still level. */
+/** Winner/loser for bracket/placeholder advancement; null when undecided or a draw. */
 export function resolveAdvancingTeams(
   match: MatchOutcomeFields,
 ): { winnerId: string; loserId: string } | null {
   if (!match.home_team_id || !match.away_team_id) return null;
+
+  if (match.home_score !== match.away_score) {
+    const homeWon = match.home_score > match.away_score;
+    return {
+      winnerId: homeWon ? match.home_team_id : match.away_team_id,
+      loserId: homeWon ? match.away_team_id : match.home_team_id,
+    };
+  }
+
+  if (match.tie_resolution !== 'PENALTIES') return null;
 
   const resolution = resolveKnockoutMatch(
     toEngineMatchResult(match),
@@ -99,16 +112,24 @@ export function hasDecisivePenaltyShootout(match: MatchOutcomeFields): boolean {
   return hp != null && ap != null && hp !== ap;
 }
 
-/** Error message when an elimination match cannot be finalized; null when valid. */
-export function getEliminationCompletionError(
-  match: MatchOutcomeFields,
-  isElimination: boolean,
-): string | null {
-  if (!isElimination) return null;
+/** Error when a tied match cannot be completed; null when valid. */
+export function getTiedCompletionError(match: MatchOutcomeFields): string | null {
   if (match.home_score !== match.away_score) return null;
-  if (hasDecisivePenaltyShootout(match)) return null;
 
-  return 'This knockout match ended level — enter penalty shootout results (unequal totals) before completing it.';
+  if (!match.tie_resolution) {
+    return 'Regulation ended level — choose whether to record a draw or break the tie with a penalty shootout.';
+  }
+
+  if (match.tie_resolution === 'DRAW') return null;
+
+  if (match.tie_resolution === 'PENALTIES') {
+    if (!hasDecisivePenaltyShootout(match)) {
+      return 'Enter unequal penalty shootout totals before completing.';
+    }
+    return null;
+  }
+
+  return null;
 }
 
 /** Format score line for emails/display, including pens when applicable. */
@@ -117,9 +138,11 @@ export function formatMatchResultLine(
   awayScore: number,
   homePenalties?: number | null,
   awayPenalties?: number | null,
+  tieResolution?: TieResolution | null,
 ): string {
   const base = `${homeScore} – ${awayScore}`;
   if (
+    tieResolution === 'PENALTIES' &&
     homeScore === awayScore &&
     homePenalties != null &&
     awayPenalties != null &&

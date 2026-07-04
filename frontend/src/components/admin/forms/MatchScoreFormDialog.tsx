@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { useForm, useWatch } from "react-hook-form";
+import { useForm, useWatch, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import FormDialog from "@/components/admin/FormDialog";
 import {
@@ -13,6 +13,7 @@ import {
 } from "@/lib/schemas/admin";
 import { useUpdateMatchScore, useUpdateMatch } from "@/hooks/useMatches";
 import { getApiErrorMessage } from "@/lib/errors";
+import { cn } from "@/lib/utils";
 import type { Match } from "@/types";
 
 const STATUS_OPTIONS = [
@@ -21,6 +22,19 @@ const STATUS_OPTIONS = [
   { value: "COMPLETED", label: "Completed" },
   { value: "POSTPONED", label: "Postponed" },
   { value: "CANCELLED", label: "Cancelled" },
+];
+
+const TIE_OPTIONS = [
+  {
+    value: "DRAW" as const,
+    label: "Record as a Draw",
+    description: "Both teams share the points. No penalty shootout.",
+  },
+  {
+    value: "PENALTIES" as const,
+    label: "Break Tie with Penalty Shootout",
+    description: "Regulation score stays level; enter shootout kicks to decide the winner.",
+  },
 ];
 
 interface MatchScoreFormDialogProps {
@@ -33,6 +47,18 @@ function parseOptionalPenalty(value: string | undefined): number | null {
   if (value == null || value.trim() === "") return null;
   const n = Number(value);
   return Number.isFinite(n) && n >= 0 ? n : null;
+}
+
+function inferTieResolution(match: Match): "DRAW" | "PENALTIES" | undefined {
+  if (match.tie_resolution) return match.tie_resolution;
+  if (
+    match.home_score === match.away_score &&
+    match.home_penalties != null &&
+    match.away_penalties != null
+  ) {
+    return "PENALTIES";
+  }
+  return undefined;
 }
 
 export default function MatchScoreFormDialog({
@@ -50,6 +76,7 @@ export default function MatchScoreFormDialog({
       away_score: "0",
       home_penalties: "",
       away_penalties: "",
+      tie_resolution: undefined,
       status: "LIVE",
     },
   });
@@ -57,12 +84,16 @@ export default function MatchScoreFormDialog({
   const watchedHome = useWatch({ control: form.control, name: "home_score" });
   const watchedAway = useWatch({ control: form.control, name: "away_score" });
   const watchedStatus = useWatch({ control: form.control, name: "status" });
+  const watchedTieResolution = useWatch({
+    control: form.control,
+    name: "tie_resolution",
+  });
 
   const regulationTied =
     watchedHome !== undefined &&
     watchedAway !== undefined &&
     Number(watchedHome) === Number(watchedAway);
-  const showPenalties = !!match?.is_elimination && regulationTied;
+  const showPenalties = regulationTied && watchedTieResolution === "PENALTIES";
 
   useEffect(() => {
     if (!open || !match) return;
@@ -73,29 +104,46 @@ export default function MatchScoreFormDialog({
         match.home_penalties != null ? String(match.home_penalties) : "",
       away_penalties:
         match.away_penalties != null ? String(match.away_penalties) : "",
+      tie_resolution: inferTieResolution(match),
       status: match.status,
     });
   }, [open, match, form]);
+
+  useEffect(() => {
+    if (!regulationTied && watchedTieResolution) {
+      form.setValue("tie_resolution", undefined);
+      form.setValue("home_penalties", "");
+      form.setValue("away_penalties", "");
+    }
+  }, [regulationTied, watchedTieResolution, form]);
 
   const onSubmit = form.handleSubmit(async (values) => {
     if (!match) return;
 
     const home = Number(values.home_score);
     const away = Number(values.away_score);
+    const tied = home === away;
+    const tieResolution = tied ? values.tie_resolution : null;
     const homePenalties = parseOptionalPenalty(values.home_penalties);
     const awayPenalties = parseOptionalPenalty(values.away_penalties);
 
+    if (tied && values.status === "COMPLETED" && !tieResolution) {
+      form.setError("tie_resolution", {
+        message: "Choose how to handle the tied score before completing the match.",
+      });
+      return;
+    }
+
     if (
-      match.is_elimination &&
-      home === away &&
+      tied &&
+      tieResolution === "PENALTIES" &&
       values.status === "COMPLETED" &&
       (homePenalties == null ||
         awayPenalties == null ||
         homePenalties === awayPenalties)
     ) {
       form.setError("home_penalties", {
-        message:
-          "Enter unequal penalty shootout totals before completing this knockout match.",
+        message: "Enter unequal penalty shootout totals before completing.",
       });
       return;
     }
@@ -105,8 +153,11 @@ export default function MatchScoreFormDialog({
         id: match.id,
         home,
         away,
-        home_penalties: home === away ? homePenalties : null,
-        away_penalties: home === away ? awayPenalties : null,
+        tie_resolution: tied ? (tieResolution ?? null) : null,
+        home_penalties:
+          tied && tieResolution === "PENALTIES" ? homePenalties : null,
+        away_penalties:
+          tied && tieResolution === "PENALTIES" ? awayPenalties : null,
       });
       if (values.status && values.status !== match.status) {
         await updateMutation.mutateAsync({
@@ -147,15 +198,73 @@ export default function MatchScoreFormDialog({
           type="number"
         />
       </div>
+
+      {regulationTied && (
+        <div className="space-y-3 rounded-lg border border-border/60 bg-muted/30 p-3">
+          <div>
+            <p className="text-sm font-medium text-foreground">Tied score</p>
+            <p className="text-xs text-muted-foreground">
+              Regulation ended level. Choose how this result should be recorded.
+            </p>
+          </div>
+          <Controller
+            control={form.control}
+            name="tie_resolution"
+            render={({ field }) => (
+              <fieldset className="space-y-2">
+                <legend className="sr-only">Tied score resolution</legend>
+                {TIE_OPTIONS.map((option) => {
+                  const selected = field.value === option.value;
+                  return (
+                    <label
+                      key={option.value}
+                      className={cn(
+                        "flex cursor-pointer gap-3 rounded-md border p-3 transition-colors",
+                        selected
+                          ? "border-primary bg-primary/5 ring-1 ring-primary/30"
+                          : "border-border/60 hover:bg-muted/50",
+                      )}
+                    >
+                      <input
+                        type="radio"
+                        name="tie_resolution"
+                        value={option.value}
+                        checked={selected}
+                        onChange={() => {
+                          field.onChange(option.value);
+                          if (option.value === "DRAW") {
+                            form.setValue("home_penalties", "");
+                            form.setValue("away_penalties", "");
+                            form.clearErrors("home_penalties");
+                          }
+                        }}
+                        className="mt-0.5"
+                      />
+                      <span>
+                        <span className="block text-sm font-medium text-foreground">
+                          {option.label}
+                        </span>
+                        <span className="block text-xs text-muted-foreground">
+                          {option.description}
+                        </span>
+                      </span>
+                    </label>
+                  );
+                })}
+              </fieldset>
+            )}
+          />
+          {form.formState.errors.tie_resolution?.message && (
+            <p className="text-xs text-destructive">
+              {form.formState.errors.tie_resolution.message}
+            </p>
+          )}
+        </div>
+      )}
+
       {showPenalties && (
         <div className="space-y-2 rounded-lg border border-border/60 bg-muted/30 p-3">
-          <p className="text-sm font-medium text-foreground">
-            Penalty shootout
-          </p>
-          <p className="text-xs text-muted-foreground">
-            Regulation ended level. Enter successful kicks for each team before
-            marking completed.
-          </p>
+          <p className="text-sm font-medium text-foreground">Penalty shootout</p>
           <div className="grid grid-cols-2 gap-3">
             <TextInputField
               control={form.control}
@@ -177,14 +286,13 @@ export default function MatchScoreFormDialog({
           )}
         </div>
       )}
-      {match.is_elimination &&
-        regulationTied &&
-        watchedStatus !== "COMPLETED" && (
-          <p className="text-xs text-muted-foreground">
-            Penalty shootout results are required when completing a tied
-            knockout match.
-          </p>
-        )}
+
+      {regulationTied && watchedStatus === "COMPLETED" && !watchedTieResolution && (
+        <p className="text-xs text-muted-foreground">
+          Select draw or penalty shootout before marking this match completed.
+        </p>
+      )}
+
       <SelectField
         control={form.control}
         name="status"

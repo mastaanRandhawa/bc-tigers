@@ -21,12 +21,16 @@ export const matchesService = {
     id: string,
     home_score: number,
     away_score: number,
-    penalties?: { home_penalties?: number | null; away_penalties?: number | null },
+    options?: {
+      home_penalties?: number | null;
+      away_penalties?: number | null;
+      tie_resolution?: 'DRAW' | 'PENALTIES' | null;
+    },
   ) =>
     apiClient.patch<Match>(`/matches/${id}/score`, {
       home_score,
       away_score,
-      ...penalties,
+      ...options,
     }),
 
   addEvent: (

@@ -9,7 +9,7 @@ jest.mock('../../prisma/prisma', () => ({
 import {
   resolveAdvancingTeams,
   hasDecisivePenaltyShootout,
-  getEliminationCompletionError,
+  getTiedCompletionError,
   formatMatchResultLine,
   toEngineMatchResult,
 } from './match-outcome';
@@ -31,18 +31,30 @@ describe('match-outcome (pure)', () => {
       });
     });
 
-    it('returns null on regulation draw without penalties', () => {
-      expect(
-        resolveAdvancingTeams({ ...base, home_score: 2, away_score: 2 }),
-      ).toBeNull();
-    });
-
-    it('returns PK winner on regulation draw with decisive penalties', () => {
+    it('returns null on regulation draw recorded as DRAW', () => {
       expect(
         resolveAdvancingTeams({
           ...base,
           home_score: 2,
           away_score: 2,
+          tie_resolution: 'DRAW',
+        }),
+      ).toBeNull();
+    });
+
+    it('returns null on tied score without a resolution', () => {
+      expect(
+        resolveAdvancingTeams({ ...base, home_score: 2, away_score: 2 }),
+      ).toBeNull();
+    });
+
+    it('returns PK winner when tie_resolution is PENALTIES', () => {
+      expect(
+        resolveAdvancingTeams({
+          ...base,
+          home_score: 2,
+          away_score: 2,
+          tie_resolution: 'PENALTIES',
           home_penalties: 4,
           away_penalties: 5,
         }),
@@ -55,6 +67,7 @@ describe('match-outcome (pure)', () => {
           ...base,
           home_score: 1,
           away_score: 1,
+          tie_resolution: 'PENALTIES',
           home_penalties: 3,
           away_penalties: 3,
         }),
@@ -88,64 +101,99 @@ describe('match-outcome (pure)', () => {
     });
   });
 
-  describe('getEliminationCompletionError', () => {
-    it('allows league draw', () => {
+  describe('getTiedCompletionError', () => {
+    it('allows non-tied scores', () => {
       expect(
-        getEliminationCompletionError(
-          { ...base, home_score: 0, away_score: 0 },
-          false,
-        ),
+        getTiedCompletionError({ ...base, home_score: 1, away_score: 0 }),
       ).toBeNull();
     });
 
-    it('rejects elimination draw without PK', () => {
+    it('requires an explicit choice when tied', () => {
       expect(
-        getEliminationCompletionError(
-          { ...base, home_score: 2, away_score: 2 },
-          true,
-        ),
+        getTiedCompletionError({ ...base, home_score: 0, away_score: 0 }),
+      ).toMatch(/choose whether to record a draw/i);
+    });
+
+    it('allows a recorded draw', () => {
+      expect(
+        getTiedCompletionError({
+          ...base,
+          home_score: 2,
+          away_score: 2,
+          tie_resolution: 'DRAW',
+        }),
+      ).toBeNull();
+    });
+
+    it('requires decisive penalties when shootout is selected', () => {
+      expect(
+        getTiedCompletionError({
+          ...base,
+          home_score: 2,
+          away_score: 2,
+          tie_resolution: 'PENALTIES',
+        }),
       ).toMatch(/penalty shootout/i);
     });
 
-    it('allows elimination draw with decisive PK', () => {
+    it('allows shootout when penalties are decisive', () => {
       expect(
-        getEliminationCompletionError(
-          {
-            ...base,
-            home_score: 2,
-            away_score: 2,
-            home_penalties: 5,
-            away_penalties: 4,
-          },
-          true,
-        ),
+        getTiedCompletionError({
+          ...base,
+          home_score: 2,
+          away_score: 2,
+          tie_resolution: 'PENALTIES',
+          home_penalties: 5,
+          away_penalties: 4,
+        }),
       ).toBeNull();
     });
   });
 
   describe('formatMatchResultLine', () => {
-    it('includes pens suffix for tied knockout', () => {
-      expect(formatMatchResultLine(2, 2, 5, 4)).toBe('2 – 2 (5–4 pens)');
+    it('includes pens suffix when tie was broken on penalties', () => {
+      expect(formatMatchResultLine(2, 2, 5, 4, 'PENALTIES')).toBe(
+        '2 – 2 (5–4 pens)',
+      );
+    });
+
+    it('omits pens for a recorded draw', () => {
+      expect(formatMatchResultLine(2, 2, 5, 4, 'DRAW')).toBe('2 – 2');
     });
 
     it('omits pens for regulation win', () => {
-      expect(formatMatchResultLine(2, 1, 5, 4)).toBe('2 – 1');
+      expect(formatMatchResultLine(2, 1, 5, 4, 'PENALTIES')).toBe('2 – 1');
     });
   });
 
   describe('toEngineMatchResult', () => {
-    it('maps penalty fields', () => {
+    it('maps penalty fields only when tie_resolution is PENALTIES', () => {
       expect(
         toEngineMatchResult({
           ...base,
           home_score: 1,
           away_score: 1,
+          tie_resolution: 'PENALTIES',
           home_penalties: 3,
           away_penalties: 4,
         }),
       ).toMatchObject({
         homePenalties: 3,
         awayPenalties: 4,
+      });
+
+      expect(
+        toEngineMatchResult({
+          ...base,
+          home_score: 1,
+          away_score: 1,
+          tie_resolution: 'DRAW',
+          home_penalties: 3,
+          away_penalties: 4,
+        }),
+      ).toMatchObject({
+        homePenalties: null,
+        awayPenalties: null,
       });
     });
   });

@@ -129,6 +129,7 @@ export const matchScoreSchema = z.object({
   away_score: z.string().min(1),
   home_penalties: z.string().optional(),
   away_penalties: z.string().optional(),
+  tie_resolution: z.enum(['DRAW', 'PENALTIES']).optional(),
   status: z.enum(['SCHEDULED', 'LIVE', 'HALFTIME', 'COMPLETED', 'DELAYED', 'POSTPONED', 'CANCELLED']).optional(),
 });
 

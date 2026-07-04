@@ -110,16 +110,19 @@ export function useUpdateMatchScore() {
       away,
       home_penalties,
       away_penalties,
+      tie_resolution,
     }: {
       id: string;
       home: number;
       away: number;
       home_penalties?: number | null;
       away_penalties?: number | null;
+      tie_resolution?: 'DRAW' | 'PENALTIES' | null;
     }) =>
       matchesService.updateScore(id, home, away, {
         home_penalties,
         away_penalties,
+        tie_resolution,
       }),
     onSuccess: (_, { id }) => {
       qc.invalidateQueries({ queryKey: queryKeys.matches.detail(id) });

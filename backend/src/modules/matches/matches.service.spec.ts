@@ -28,22 +28,12 @@ jest.mock('../teams/team-membership', () => ({
   assertTeamsInDivision: jest.fn(),
 }));
 
-jest.mock('./match-outcome', () => ({
-  ...jest.requireActual('./match-outcome'),
-  isEliminationMatch: jest.fn(),
-  eliminationMatchIdsForDivision: jest.fn().mockResolvedValue(new Set()),
-}));
-
 import { BadRequestException } from '@nestjs/common';
 import prisma from '../../prisma/prisma';
 import { asMockedPrisma } from '../../test-utils/prisma-mock';
 import { MatchesService } from './matches.service';
-import { isEliminationMatch } from './match-outcome';
 
 const mockPrisma = asMockedPrisma(prisma);
-const mockIsElimination = isEliminationMatch as jest.MockedFunction<
-  typeof isEliminationMatch
->;
 
 const baseMatch = {
   id: 'match-1',
@@ -55,6 +45,7 @@ const baseMatch = {
   away_score: 0,
   home_penalties: null,
   away_penalties: null,
+  tie_resolution: null,
   status: 'LIVE' as const,
   scheduled_start: new Date(),
   home_team: { id: 'home', name: 'Home FC', coach_user_id: null, players: [] },
@@ -76,7 +67,7 @@ const baseMatch = {
   },
 };
 
-describe('MatchesService completion + penalties', () => {
+describe('MatchesService tied-score completion', () => {
   const gateway = {
     emitMatchCompleted: jest.fn(),
     emitMatchStarted: jest.fn(),
@@ -95,7 +86,6 @@ describe('MatchesService completion + penalties', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    mockIsElimination.mockResolvedValue(false);
     mockPrisma.bracketNode.findFirst.mockResolvedValue(null);
     mockPrisma.bracketNode.findMany.mockResolvedValue([]);
     mockPrisma.match.findMany.mockResolvedValue([]);
@@ -108,12 +98,12 @@ describe('MatchesService completion + penalties', () => {
   });
 
   describe('update → COMPLETED', () => {
-    it('allows round-robin 0–0 draw completion', async () => {
-      mockIsElimination.mockResolvedValue(false);
+    it('allows 0–0 draw completion when tie_resolution is DRAW', async () => {
       mockPrisma.match.findUnique.mockResolvedValue({
         ...baseMatch,
         home_score: 0,
         away_score: 0,
+        tie_resolution: 'DRAW',
       });
 
       await expect(
@@ -121,16 +111,15 @@ describe('MatchesService completion + penalties', () => {
       ).resolves.toBeDefined();
 
       expect(gateway.emitMatchCompleted).toHaveBeenCalled();
+      expect(bracketsService.advance).not.toHaveBeenCalled();
     });
 
-    it('rejects elimination 2–2 completion without penalty shootout', async () => {
-      mockIsElimination.mockResolvedValue(true);
+    it('rejects tied completion without an explicit tie resolution', async () => {
       mockPrisma.match.findUnique.mockResolvedValue({
         ...baseMatch,
         home_score: 2,
         away_score: 2,
-        home_penalties: null,
-        away_penalties: null,
+        tie_resolution: null,
       });
 
       await expect(
@@ -138,12 +127,12 @@ describe('MatchesService completion + penalties', () => {
       ).rejects.toThrow(BadRequestException);
     });
 
-    it('allows elimination 2–2 completion with decisive penalties', async () => {
-      mockIsElimination.mockResolvedValue(true);
+    it('allows tied completion with decisive penalties', async () => {
       mockPrisma.match.findUnique.mockResolvedValue({
         ...baseMatch,
         home_score: 2,
         away_score: 2,
+        tie_resolution: 'PENALTIES',
         home_penalties: 5,
         away_penalties: 4,
       });
@@ -156,6 +145,7 @@ describe('MatchesService completion + penalties', () => {
         status: 'COMPLETED',
         home_score: 2,
         away_score: 2,
+        tie_resolution: 'PENALTIES',
         home_penalties: 5,
         away_penalties: 4,
       });
@@ -170,32 +160,46 @@ describe('MatchesService completion + penalties', () => {
     });
   });
 
-  describe('updateScore on completed elimination match', () => {
-    it('rejects tied regulation without PK on completed match', async () => {
-      mockIsElimination.mockResolvedValue(true);
-      mockPrisma.match.findUnique.mockResolvedValue({
-        ...baseMatch,
-        status: 'COMPLETED',
-        home_score: 2,
-        away_score: 2,
-        home_penalties: null,
-        away_penalties: null,
-      });
+  describe('updateScore', () => {
+    it('saves a normal draw without penalties', async () => {
+      mockPrisma.match.findUnique.mockResolvedValue(baseMatch);
 
-      await expect(service.updateScore('match-1', 2, 2)).rejects.toThrow(
-        BadRequestException,
+      await service.updateScore('match-1', 1, 1, { tie_resolution: 'DRAW' });
+
+      expect(mockPrisma.match.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            home_score: 1,
+            away_score: 1,
+            tie_resolution: 'DRAW',
+            home_penalties: null,
+            away_penalties: null,
+          }),
+        }),
       );
     });
 
-    it('advances PK winner when penalties saved on completed match', async () => {
-      mockIsElimination.mockResolvedValue(true);
+    it('rejects PENALTIES selection without shootout totals on completed match', async () => {
       mockPrisma.match.findUnique.mockResolvedValue({
         ...baseMatch,
         status: 'COMPLETED',
         home_score: 2,
         away_score: 2,
-        home_penalties: null,
-        away_penalties: null,
+        tie_resolution: 'PENALTIES',
+      });
+
+      await expect(
+        service.updateScore('match-1', 2, 2, { tie_resolution: 'PENALTIES' }),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it('advances PK winner when penalties saved on completed match', async () => {
+      mockPrisma.match.findUnique.mockResolvedValue({
+        ...baseMatch,
+        status: 'COMPLETED',
+        home_score: 2,
+        away_score: 2,
+        tie_resolution: 'PENALTIES',
       });
       mockPrisma.bracketNode.findFirst.mockResolvedValue({
         id: 'node-1',
@@ -206,11 +210,13 @@ describe('MatchesService completion + penalties', () => {
         status: 'COMPLETED',
         home_score: 2,
         away_score: 2,
+        tie_resolution: 'PENALTIES',
         home_penalties: 4,
         away_penalties: 5,
       });
 
       await service.updateScore('match-1', 2, 2, {
+        tie_resolution: 'PENALTIES',
         home_penalties: 4,
         away_penalties: 5,
       });
@@ -219,6 +225,24 @@ describe('MatchesService completion + penalties', () => {
         'node-1',
         'away',
         'match',
+      );
+    });
+
+    it('leaves non-tied match behavior unchanged', async () => {
+      mockPrisma.match.findUnique.mockResolvedValue(baseMatch);
+
+      await service.updateScore('match-1', 3, 1);
+
+      expect(mockPrisma.match.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            home_score: 3,
+            away_score: 1,
+            tie_resolution: null,
+            home_penalties: null,
+            away_penalties: null,
+          }),
+        }),
       );
     });
   });

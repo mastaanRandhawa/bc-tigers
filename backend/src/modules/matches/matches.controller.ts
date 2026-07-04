@@ -74,17 +74,14 @@ export class MatchesController {
       away_score: number;
       home_penalties?: number | null;
       away_penalties?: number | null;
+      tie_resolution?: 'DRAW' | 'PENALTIES' | null;
     },
   ) {
-    return this.service.updateScore(
-      id,
-      body.home_score,
-      body.away_score,
-      {
-        home_penalties: body.home_penalties,
-        away_penalties: body.away_penalties,
-      },
-    );
+    return this.service.updateScore(id, body.home_score, body.away_score, {
+      home_penalties: body.home_penalties,
+      away_penalties: body.away_penalties,
+      tie_resolution: body.tie_resolution,
+    });
   }
 
   @Post(':matchId/events')
