@@ -1,3 +1,11 @@
+jest.mock('../../prisma/prisma', () => ({
+  __esModule: true,
+  default: {
+    bracketNode: { findFirst: jest.fn(), findMany: jest.fn() },
+    match: { findMany: jest.fn(), count: jest.fn() },
+  },
+}));
+
 import {
   resolveAdvancingTeams,
   hasDecisivePenaltyShootout,
