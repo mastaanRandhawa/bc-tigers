@@ -6,12 +6,14 @@ jest.mock('../../prisma/prisma', () => ({
   },
 }));
 
+import prisma from '../../prisma/prisma';
 import {
   resolveAdvancingTeams,
   hasDecisivePenaltyShootout,
   getTiedCompletionError,
   formatMatchResultLine,
   toEngineMatchResult,
+  standingsExcludedMatchIdsForDivision,
 } from './match-outcome';
 
 describe('match-outcome (pure)', () => {
@@ -195,6 +197,23 @@ describe('match-outcome (pure)', () => {
         homePenalties: null,
         awayPenalties: null,
       });
+    });
+  });
+
+  describe('standingsExcludedMatchIdsForDivision', () => {
+    it('only excludes bracket-linked matches, not pool source games', async () => {
+      const mockPrisma = prisma as {
+        bracketNode: { findMany: jest.Mock };
+        match: { findMany: jest.Mock };
+      };
+      mockPrisma.bracketNode.findMany.mockResolvedValue([
+        { match_id: 'ko-final' },
+      ]);
+
+      const ids = await standingsExcludedMatchIdsForDivision('div-1');
+
+      expect(ids).toEqual(new Set(['ko-final']));
+      expect(mockPrisma.match.findMany).not.toHaveBeenCalled();
     });
   });
 });

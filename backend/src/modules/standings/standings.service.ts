@@ -1,11 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import prisma from '../../prisma/prisma';
 import { computeGroupedStandings } from '../../engine/standings';
+import { toTournamentConfig } from '../../engine/point-format-mapper';
 import {
-  mapPrismaMatchToResult,
-  toTournamentConfig,
-} from '../../engine/point-format-mapper';
-import { eliminationMatchIdsForDivision } from '../matches/match-outcome';
+  standingsExcludedMatchIdsForDivision,
+  toEngineMatchResult,
+} from '../matches/match-outcome';
 
 @Injectable()
 export class StandingsService {
@@ -48,11 +48,11 @@ export class StandingsService {
         where: { division_id: divisionId },
         select: { team_id: true, group_id: true },
       }),
-      eliminationMatchIdsForDivision(divisionId),
+      standingsExcludedMatchIdsForDivision(divisionId),
     ]);
 
     const leagueMatches = matches.filter((m) => !eliminationIds.has(m.id));
-    const results = leagueMatches.map(mapPrismaMatchToResult);
+    const results = leagueMatches.map(toEngineMatchResult);
     const config = toTournamentConfig(division.point_format);
     const rows = computeGroupedStandings(
       teams.map((t) => ({ id: t.team_id, groupId: t.group_id })),
@@ -61,8 +61,18 @@ export class StandingsService {
       division.groups_enabled,
     );
 
-    await prisma.$transaction(
-      rows.map((row) =>
+    const activeTeamIds = rows.map((row) => row.teamId);
+
+    await prisma.$transaction([
+      activeTeamIds.length > 0
+        ? prisma.standing.deleteMany({
+            where: {
+              division_id: divisionId,
+              team_id: { notIn: activeTeamIds },
+            },
+          })
+        : prisma.standing.deleteMany({ where: { division_id: divisionId } }),
+      ...rows.map((row) =>
         prisma.standing.upsert({
           where: {
             division_id_team_id: {
@@ -98,7 +108,7 @@ export class StandingsService {
           },
         }),
       ),
-    );
+    ]);
 
     return this.getByDivision(divisionId);
   }

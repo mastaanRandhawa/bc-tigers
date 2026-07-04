@@ -15,55 +15,19 @@ export type MatchOutcomeFields = {
   tie_resolution?: TieResolution | null;
 };
 
-/** Bracket-linked or feeding a Winner/Loser placeholder slot (standings filter only). */
-export async function isEliminationMatch(matchId: string): Promise<boolean> {
-  const [node, dependentCount] = await Promise.all([
-    prisma.bracketNode.findFirst({
-      where: { match_id: matchId },
-      select: { id: true },
-    }),
-    prisma.match.count({
-      where: {
-        OR: [
-          { home_source_match_id: matchId },
-          { away_source_match_id: matchId },
-        ],
-      },
-    }),
-  ]);
-  return !!node || dependentCount > 0;
-}
-
-/** All elimination match ids in a division (for standings exclusion). */
-export async function eliminationMatchIdsForDivision(
+/** Match ids excluded from round-robin / pool standings (bracket knockout fixtures only). */
+export async function standingsExcludedMatchIdsForDivision(
   divisionId: string,
 ): Promise<Set<string>> {
-  const [bracketMatches, sourceRefs] = await Promise.all([
-    prisma.bracketNode.findMany({
-      where: { division_id: divisionId, match_id: { not: null } },
-      select: { match_id: true },
-    }),
-    prisma.match.findMany({
-      where: {
-        division_id: divisionId,
-        OR: [
-          { home_source_match_id: { not: null } },
-          { away_source_match_id: { not: null } },
-        ],
-      },
-      select: { home_source_match_id: true, away_source_match_id: true },
-    }),
-  ]);
-
-  const ids = new Set<string>();
-  for (const n of bracketMatches) {
-    if (n.match_id) ids.add(n.match_id);
-  }
-  for (const m of sourceRefs) {
-    if (m.home_source_match_id) ids.add(m.home_source_match_id);
-    if (m.away_source_match_id) ids.add(m.away_source_match_id);
-  }
-  return ids;
+  const bracketMatches = await prisma.bracketNode.findMany({
+    where: { division_id: divisionId, match_id: { not: null } },
+    select: { match_id: true },
+  });
+  return new Set(
+    bracketMatches
+      .map((n) => n.match_id)
+      .filter((id): id is string => id != null),
+  );
 }
 
 export function toEngineMatchResult(match: MatchOutcomeFields): MatchResult {

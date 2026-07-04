@@ -14,17 +14,17 @@ jest.mock('../../prisma/prisma', () => ({
 }));
 
 jest.mock('../matches/match-outcome', () => ({
-  eliminationMatchIdsForDivision: jest.fn().mockResolvedValue(new Set()),
+  standingsExcludedMatchIdsForDivision: jest.fn().mockResolvedValue(new Set()),
 }));
 
 import prisma from '../../prisma/prisma';
 import { asMockedPrisma } from '../../test-utils/prisma-mock';
 import { StandingsService } from './standings.service';
-import { eliminationMatchIdsForDivision } from '../matches/match-outcome';
+import { standingsExcludedMatchIdsForDivision } from '../matches/match-outcome';
 
 const mockPrisma = asMockedPrisma(prisma);
-const mockEliminationIds = eliminationMatchIdsForDivision as jest.MockedFunction<
-  typeof eliminationMatchIdsForDivision
+const mockExcludedIds = standingsExcludedMatchIdsForDivision as jest.MockedFunction<
+  typeof standingsExcludedMatchIdsForDivision
 >;
 
 const standardFormat = {
@@ -71,7 +71,7 @@ describe('StandingsService', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    mockEliminationIds.mockResolvedValue(new Set());
+    mockExcludedIds.mockResolvedValue(new Set());
     mockPrisma.teamDivision.findMany.mockResolvedValue([
       { team_id: 'home', group_id: null },
       { team_id: 'away', group_id: null },
@@ -112,7 +112,7 @@ describe('StandingsService', () => {
   });
 
   it('excludes elimination matches from standings', async () => {
-    mockEliminationIds.mockResolvedValue(new Set(['ko-1']));
+    mockExcludedIds.mockResolvedValue(new Set(['ko-1']));
     mockPrisma.match.findMany.mockResolvedValue([
       {
         id: 'ko-1',
@@ -138,6 +138,80 @@ describe('StandingsService', () => {
     expect(homeUpsert?.[0].create.points).toBe(0);
     expect(homeUpsert?.[0].create.draws).toBe(0);
     expect(homeUpsert?.[0].create.played).toBe(0);
+  });
+
+  it('counts pool matches for grouped divisions even when knockout placeholders exist', async () => {
+    mockExcludedIds.mockResolvedValue(new Set());
+    mockPrisma.teamDivision.findMany.mockResolvedValue([
+      { team_id: 'home', group_id: 'pool-a' },
+      { team_id: 'away', group_id: 'pool-a' },
+    ] as never);
+    mockPrisma.match.findMany.mockResolvedValue([
+      {
+        id: 'pool-1',
+        home_team_id: 'home',
+        away_team_id: 'away',
+        home_score: 2,
+        away_score: 1,
+        home_penalties: null,
+        away_penalties: null,
+      },
+    ] as never);
+    mockPrisma.division.findUniqueOrThrow.mockResolvedValue({
+      id: 'div-1',
+      groups_enabled: true,
+      point_format: standardFormat,
+    });
+
+    await service.recalculate('div-1');
+
+    const homeUpsert = mockPrisma.standing.upsert.mock.calls.find(
+      ([args]) => args.create.team_id === 'home',
+    );
+    expect(homeUpsert?.[0].create.group_id).toBe('pool-a');
+    expect(homeUpsert?.[0].create.points).toBe(3);
+    expect(homeUpsert?.[0].create.played).toBe(1);
+  });
+
+  it('excludes bracket knockout fixtures from grouped standings', async () => {
+    mockExcludedIds.mockResolvedValue(new Set(['ko-1']));
+    mockPrisma.teamDivision.findMany.mockResolvedValue([
+      { team_id: 'home', group_id: 'pool-a' },
+      { team_id: 'away', group_id: 'pool-a' },
+    ] as never);
+    mockPrisma.match.findMany.mockResolvedValue([
+      {
+        id: 'pool-1',
+        home_team_id: 'home',
+        away_team_id: 'away',
+        home_score: 2,
+        away_score: 1,
+        home_penalties: null,
+        away_penalties: null,
+      },
+      {
+        id: 'ko-1',
+        home_team_id: 'home',
+        away_team_id: 'away',
+        home_score: 1,
+        away_score: 0,
+        home_penalties: null,
+        away_penalties: null,
+      },
+    ] as never);
+    mockPrisma.division.findUniqueOrThrow.mockResolvedValue({
+      id: 'div-1',
+      groups_enabled: true,
+      point_format: standardFormat,
+    });
+
+    await service.recalculate('div-1');
+
+    const homeUpsert = mockPrisma.standing.upsert.mock.calls.find(
+      ([args]) => args.create.team_id === 'home',
+    );
+    expect(homeUpsert?.[0].create.points).toBe(3);
+    expect(homeUpsert?.[0].create.played).toBe(1);
   });
 
   it('awards 3 points for a 3-0 win under Standard Soccer', async () => {
