@@ -290,6 +290,10 @@ export interface Match {
   match_type?: string;
   home_score: number;
   away_score: number;
+  home_penalties?: number | null;
+  away_penalties?: number | null;
+  /** Bracket-linked or feeding a Winner/Loser placeholder slot. */
+  is_elimination?: boolean;
   stream_url?: string;
   home_team?: Team | null;
   away_team?: Team | null;

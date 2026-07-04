@@ -17,8 +17,17 @@ export const matchesService = {
   update: (id: string, data: Partial<Match>) =>
     apiClient.patch<Match>(`/matches/${id}`, data),
 
-  updateScore: (id: string, home_score: number, away_score: number) =>
-    apiClient.patch<Match>(`/matches/${id}/score`, { home_score, away_score }),
+  updateScore: (
+    id: string,
+    home_score: number,
+    away_score: number,
+    penalties?: { home_penalties?: number | null; away_penalties?: number | null },
+  ) =>
+    apiClient.patch<Match>(`/matches/${id}/score`, {
+      home_score,
+      away_score,
+      ...penalties,
+    }),
 
   addEvent: (
     matchId: string,

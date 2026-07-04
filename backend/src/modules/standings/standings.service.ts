@@ -5,6 +5,7 @@ import {
   mapPrismaMatchToResult,
   toTournamentConfig,
 } from '../../engine/point-format-mapper';
+import { eliminationMatchIdsForDivision } from '../matches/match-outcome';
 
 @Injectable()
 export class StandingsService {
@@ -35,7 +36,7 @@ export class StandingsService {
   }
 
   async recalculate(divisionId: string) {
-    const [matches, division, teams] = await Promise.all([
+    const [matches, division, teams, eliminationIds] = await Promise.all([
       prisma.match.findMany({
         where: { division_id: divisionId, status: 'COMPLETED' },
       }),
@@ -47,9 +48,11 @@ export class StandingsService {
         where: { division_id: divisionId },
         select: { team_id: true, group_id: true },
       }),
+      eliminationMatchIdsForDivision(divisionId),
     ]);
 
-    const results = matches.map(mapPrismaMatchToResult);
+    const leagueMatches = matches.filter((m) => !eliminationIds.has(m.id));
+    const results = leagueMatches.map(mapPrismaMatchToResult);
     const config = toTournamentConfig(division.point_format);
     const rows = computeGroupedStandings(
       teams.map((t) => ({ id: t.team_id, groupId: t.group_id })),

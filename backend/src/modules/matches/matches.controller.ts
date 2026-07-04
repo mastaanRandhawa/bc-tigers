@@ -68,9 +68,23 @@ export class MatchesController {
   @AdminOnly()
   updateScore(
     @Param('id') id: string,
-    @Body() body: { home_score: number; away_score: number },
+    @Body()
+    body: {
+      home_score: number;
+      away_score: number;
+      home_penalties?: number | null;
+      away_penalties?: number | null;
+    },
   ) {
-    return this.service.updateScore(id, body.home_score, body.away_score);
+    return this.service.updateScore(
+      id,
+      body.home_score,
+      body.away_score,
+      {
+        home_penalties: body.home_penalties,
+        away_penalties: body.away_penalties,
+      },
+    );
   }
 
   @Post(':matchId/events')

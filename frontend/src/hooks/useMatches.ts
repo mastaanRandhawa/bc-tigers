@@ -104,8 +104,23 @@ export function useUpdateMatch() {
 export function useUpdateMatchScore() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: ({ id, home, away }: { id: string; home: number; away: number }) =>
-      matchesService.updateScore(id, home, away),
+    mutationFn: ({
+      id,
+      home,
+      away,
+      home_penalties,
+      away_penalties,
+    }: {
+      id: string;
+      home: number;
+      away: number;
+      home_penalties?: number | null;
+      away_penalties?: number | null;
+    }) =>
+      matchesService.updateScore(id, home, away, {
+        home_penalties,
+        away_penalties,
+      }),
     onSuccess: (_, { id }) => {
       qc.invalidateQueries({ queryKey: queryKeys.matches.detail(id) });
       invalidateMatchLists(qc);

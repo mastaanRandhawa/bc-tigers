@@ -106,6 +106,8 @@ describe('point-format-mapper', () => {
       homeScore: 3,
       awayScore: 0,
       outcome: 'PLAYED',
+      homePenalties: null,
+      awayPenalties: null,
     });
   });
 

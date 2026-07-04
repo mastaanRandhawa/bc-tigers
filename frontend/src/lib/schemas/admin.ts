@@ -127,6 +127,8 @@ export const matchSchema = z
 export const matchScoreSchema = z.object({
   home_score: z.string().min(1),
   away_score: z.string().min(1),
+  home_penalties: z.string().optional(),
+  away_penalties: z.string().optional(),
   status: z.enum(['SCHEDULED', 'LIVE', 'HALFTIME', 'COMPLETED', 'DELAYED', 'POSTPONED', 'CANCELLED']).optional(),
 });
 

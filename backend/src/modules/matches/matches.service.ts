@@ -25,6 +25,14 @@ import {
   stripTeamPlayers,
 } from '../auth/roster-visibility';
 import { attachSlotLabels } from './slot-labels';
+import {
+  isEliminationMatch,
+  eliminationMatchIdsForDivision,
+  resolveAdvancingTeams,
+  getEliminationCompletionError,
+  formatMatchResultLine,
+  type MatchOutcomeFields,
+} from './match-outcome';
 
 export type MatchEventActor = { userId: string; role: string };
 
@@ -167,7 +175,60 @@ export class MatchesService {
       orderBy: { scheduled_start: order },
     });
     const withSlugs = await enrichMatchesWithTeamSlugs(matches);
-    return withSlugs.map(attachSlotLabels);
+    const labeled = withSlugs.map(attachSlotLabels);
+    return this.withEliminationFlags(labeled);
+  }
+
+  private async withEliminationFlag<T extends { id: string; division_id: string }>(
+    match: T,
+  ): Promise<T & { is_elimination: boolean }> {
+    const elimination = await isEliminationMatch(match.id);
+    return { ...match, is_elimination: elimination };
+  }
+
+  private async withEliminationFlags<T extends { id: string; division_id: string }>(
+    matches: T[],
+  ): Promise<(T & { is_elimination: boolean })[]> {
+    if (matches.length === 0) return [];
+
+    const byDivision = new Map<string, T[]>();
+    for (const m of matches) {
+      const bucket = byDivision.get(m.division_id) ?? [];
+      bucket.push(m);
+      byDivision.set(m.division_id, bucket);
+    }
+
+    const eliminationByDivision = new Map<string, Set<string>>();
+    await Promise.all(
+      [...byDivision.keys()].map(async (divisionId) => {
+        eliminationByDivision.set(
+          divisionId,
+          await eliminationMatchIdsForDivision(divisionId),
+        );
+      }),
+    );
+
+    return matches.map((m) => ({
+      ...m,
+      is_elimination:
+        eliminationByDivision.get(m.division_id)?.has(m.id) ?? false,
+    }));
+  }
+
+  private async assertResultValidForCompletion(
+    match: MatchOutcomeFields,
+    isElimination: boolean,
+  ): Promise<void> {
+    const error = getEliminationCompletionError(match, isElimination);
+    if (error) throw new BadRequestException(error);
+  }
+
+  private async assertResultValidIfCompleted(
+    match: MatchOutcomeFields & { status: string },
+    isElimination: boolean,
+  ): Promise<void> {
+    if (match.status !== 'COMPLETED') return;
+    await this.assertResultValidForCompletion(match, isElimination);
   }
 
   async findOne(id: string) {
@@ -200,7 +261,7 @@ export class MatchesService {
           : null,
       }),
     );
-    return enriched;
+    return this.withEliminationFlag(enriched);
   }
 
   async create(data: unknown) {
@@ -238,27 +299,11 @@ export class MatchesService {
       updateData.away_team_id as string | null | undefined,
     ]);
 
-    // A knockout (bracket-linked) match, or one feeding a Winner/Loser
-    // placeholder, cannot end level — advancement needs a decisive winner.
-    // Reject the completion up front so the admin enters a result instead of
-    // silently stalling the schedule.
     if (updateData.status === 'COMPLETED' && existing.status !== 'COMPLETED') {
-      if (existing.home_score === existing.away_score) {
-        const node = await prisma.bracketNode.findFirst({
-          where: { match_id: id },
-          select: { id: true },
-        });
-        const dependentCount = await prisma.match.count({
-          where: {
-            OR: [{ home_source_match_id: id }, { away_source_match_id: id }],
-          },
-        });
-        if (node || dependentCount > 0) {
-          throw new BadRequestException(
-            'This match feeds a later fixture and cannot end in a draw — enter a decisive score before completing it.',
-          );
-        }
-      }
+      await this.assertResultValidForCompletion(
+        existing,
+        existing.is_elimination,
+      );
     }
 
     const match = await prisma.match.update({
@@ -278,10 +323,16 @@ export class MatchesService {
 
     if (updateData.status === 'COMPLETED' && existing.status !== 'COMPLETED') {
       await this.gateway.emitMatchCompleted(id, match.division_id, match);
+      const scoreLine = formatMatchResultLine(
+        match.home_score,
+        match.away_score,
+        match.home_penalties,
+        match.away_penalties,
+      );
       await this.emailAdmins(
         match.tournament_id,
         'Match completed',
-        `Final: ${matchSideName(match.home_team)} ${match.home_score} – ${match.away_score} ${matchSideName(match.away_team)}`,
+        `Final: ${matchSideName(match.home_team)} ${scoreLine} ${matchSideName(match.away_team)}`,
       );
       await this.advanceBracketFromMatch(match);
       await this.resolveDependentSlots(match);
@@ -289,11 +340,19 @@ export class MatchesService {
     }
 
     this.gateway.emitScoreUpdate(id, match.home_score, match.away_score);
-    return attachSlotLabels(match);
+    return this.withEliminationFlag(attachSlotLabels(match));
   }
 
-  async updateScore(id: string, homeScore: number, awayScore: number) {
-    return this.applyScore(id, homeScore, awayScore);
+  async updateScore(
+    id: string,
+    homeScore: number,
+    awayScore: number,
+    penalties?: {
+      home_penalties?: number | null;
+      away_penalties?: number | null;
+    },
+  ) {
+    return this.applyResult(id, homeScore, awayScore, penalties);
   }
 
   async addEvent(matchId: string, data: unknown, actor?: MatchEventActor) {
@@ -409,63 +468,88 @@ export class MatchesService {
       }
     }
 
-    await this.applyScore(matchId, home, away);
+    await this.applyResult(matchId, home, away);
   }
 
-  private async applyScore(id: string, homeScore: number, awayScore: number) {
+  private async applyResult(
+    id: string,
+    homeScore: number,
+    awayScore: number,
+    penalties?: {
+      home_penalties?: number | null;
+      away_penalties?: number | null;
+    },
+  ) {
+    const existing = await prisma.match.findUnique({ where: { id } });
+    if (!existing) throw new NotFoundException('Match not found');
+
+    const isElimination = await isEliminationMatch(id);
+    const tied = homeScore === awayScore;
+    const data: Prisma.MatchUncheckedUpdateInput = {
+      home_score: homeScore,
+      away_score: awayScore,
+    };
+
+    if (tied) {
+      if (penalties !== undefined) {
+        data.home_penalties = penalties.home_penalties ?? null;
+        data.away_penalties = penalties.away_penalties ?? null;
+      }
+    } else {
+      data.home_penalties = null;
+      data.away_penalties = null;
+    }
+
+    const candidate = {
+      ...existing,
+      home_score: homeScore,
+      away_score: awayScore,
+      home_penalties: tied
+        ? ((data.home_penalties as number | null) ?? existing.home_penalties)
+        : null,
+      away_penalties: tied
+        ? ((data.away_penalties as number | null) ?? existing.away_penalties)
+        : null,
+    };
+
+    await this.assertResultValidIfCompleted(
+      { ...candidate, status: existing.status },
+      isElimination,
+    );
+
     const match = await prisma.match.update({
       where: { id },
-      data: { home_score: homeScore, away_score: awayScore },
+      data,
       include: MATCH_DETAIL_INCLUDE,
     });
 
     this.gateway.emitScoreUpdate(id, homeScore, awayScore);
 
-    // Editing the score/events of an already-completed match must keep the
-    // standings table in sync — the completion event won't fire again.
     if (match.status === 'COMPLETED') {
       await this.gateway.refreshStandings(match.division_id);
       await this.resolvePositionalSlots(match.division_id);
+      await this.advanceBracketFromMatch(match);
+      await this.resolveDependentSlots(match);
     }
 
-    // Note: no per-score email — admins follow live scores over the socket.
-    // Mail is reserved for start/completion transitions (see update()).
-    return match;
+    return this.withEliminationFlag(attachSlotLabels(match));
   }
 
-  private async advanceBracketFromMatch(match: {
-    id: string;
-    division_id: string;
-    home_team_id: string | null;
-    away_team_id: string | null;
-    home_score: number;
-    away_score: number;
-  }) {
+  private async advanceBracketFromMatch(match: MatchOutcomeFields & { division_id: string }) {
     const node = await prisma.bracketNode.findFirst({
       where: { match_id: match.id },
     });
     if (!node) return;
 
-    if (match.home_score === match.away_score) {
-      this.logger.warn(
-        `Match ${match.id} completed as draw — bracket not advanced`,
-      );
-      return;
-    }
-
-    const winnerId =
-      match.home_score > match.away_score
-        ? match.home_team_id
-        : match.away_team_id;
-    // Bracket-linked matches always have real teams; guard for type-safety.
-    if (!winnerId) return;
+    const outcome = resolveAdvancingTeams(match);
+    if (!outcome) return;
 
     try {
-      await this.bracketsService.advance(node.id, winnerId, 'match');
+      await this.bracketsService.advance(node.id, outcome.winnerId, 'match');
       this.gateway.emitBracketUpdated(match.division_id, {
         divisionId: match.division_id,
         nodeId: node.id,
-        winnerId,
+        winnerId: outcome.winnerId,
       });
     } catch (err) {
       this.logger.error(`Failed to advance bracket for match ${match.id}`, err);
@@ -568,40 +652,13 @@ export class MatchesService {
     }
   }
 
-  /** Winner/loser team ids of a decisive match, or null when level/no teams. */
-  private decisiveResult(match: {
-    home_team_id: string | null;
-    away_team_id: string | null;
-    home_score: number;
-    away_score: number;
-  }): { winnerId: string; loserId: string } | null {
-    if (match.home_score === match.away_score) return null;
-    const homeWon = match.home_score > match.away_score;
-    const winnerId = homeWon ? match.home_team_id : match.away_team_id;
-    const loserId = homeWon ? match.away_team_id : match.home_team_id;
-    if (!winnerId || !loserId) return null;
-    return { winnerId, loserId };
-  }
-
   /**
    * After a source match completes decisively, fill the team slots of every
    * match that points at it via a Winner/Loser placeholder, then broadcast.
    */
-  private async resolveDependentSlots(completed: {
-    id: string;
-    division_id: string;
-    home_team_id: string | null;
-    away_team_id: string | null;
-    home_score: number;
-    away_score: number;
-  }) {
-    const result = this.decisiveResult(completed);
-    if (!result) {
-      this.logger.warn(
-        `Match ${completed.id} completed without a decisive result — dependent slots not resolved`,
-      );
-      return;
-    }
+  private async resolveDependentSlots(completed: MatchOutcomeFields & { division_id: string }) {
+    const result = resolveAdvancingTeams(completed);
+    if (!result) return;
 
     const dependents = await prisma.match.findMany({
       where: {

@@ -26,6 +26,7 @@ import { useScoreFlash } from '@/hooks/useScoreFlash';
 import { formatDate, formatTime, cn, getInitials, getMatchStatusBadgeVariant, matchSideName } from '@/lib/utils';
 import { divisionMatchesPath } from '@/lib/division-routes';
 import { isScheduleOnlyDivision } from '@/lib/division-display';
+import { formatPenaltyShootoutSuffix } from '@/lib/match-score';
 import { useMatch, useDeleteMatchEvent } from '@/hooks/useMatches';
 import { useMatchGoalEditAccess, coachCanEditEvent } from '@/hooks/useMatchGoalEditAccess';
 import { useRosterVisibility } from '@/hooks/useRosterVisibility';
@@ -213,6 +214,7 @@ export default function MatchDetailPage() {
   const homeColor = match?.home_team?.primary_color ?? '#F48735';
   const awayColor = match?.away_team?.primary_color ?? '#6366F1';
   const scoreFlash = useScoreFlash(match?.home_score ?? 0, match?.away_score ?? 0);
+  const penaltySuffix = match ? formatPenaltyShootoutSuffix(match) : null;
 
   const homeRosterCount = match?.home_team?.players?.length ?? 0;
   const awayRosterCount = match?.away_team?.players?.length ?? 0;
@@ -310,14 +312,19 @@ export default function MatchDetailPage() {
 
                     <div className="flex shrink-0 flex-col items-center justify-center gap-1 px-1 sm:px-3">
                       {showScore ? (
-                        <ScoreFlash
-                          active={scoreFlash}
-                          className="whitespace-nowrap rounded-lg px-2 font-display text-3xl font-black tabular-nums tracking-tight text-foreground sm:text-5xl"
-                        >
-                          <AnimatedNumber value={match.home_score} />
-                          <span className="mx-1.5 font-light text-muted-foreground/35">—</span>
-                          <AnimatedNumber value={match.away_score} />
-                        </ScoreFlash>
+                        <>
+                          <ScoreFlash
+                            active={scoreFlash}
+                            className="whitespace-nowrap rounded-lg px-2 font-display text-3xl font-black tabular-nums tracking-tight text-foreground sm:text-5xl"
+                          >
+                            <AnimatedNumber value={match.home_score} />
+                            <span className="mx-1.5 font-light text-muted-foreground/35">—</span>
+                            <AnimatedNumber value={match.away_score} />
+                          </ScoreFlash>
+                          {penaltySuffix && (
+                            <p className="text-xs font-medium text-muted-foreground">{penaltySuffix}</p>
+                          )}
+                        </>
                       ) : (
                         <p className="font-display text-2xl font-bold text-muted-foreground/40">vs</p>
                       )}

@@ -10,6 +10,7 @@ import { cn, getInitials, matchSideName } from '@/lib/utils';
 import { formatDate, formatTime, getMatchStatusBadgeVariant } from '@/lib/utils';
 import { getMatchPath } from '@/lib/division-routes';
 import { isScheduleOnlyDivision } from '@/lib/division-display';
+import { formatPenaltyShootoutSuffix } from '@/lib/match-score';
 
 interface MatchCardProps {
   match: Match;
@@ -75,24 +76,31 @@ function ScoreDisplay({
   home,
   away,
   isLive,
+  penaltySuffix,
 }: {
   home: number;
   away: number;
   isLive: boolean;
+  penaltySuffix?: string | null;
 }) {
   const flash = useScoreFlash(home, away);
   return (
-    <ScoreFlash
-      active={flash}
-      className={cn(
-        'inline-flex items-baseline gap-1 font-display text-lg font-bold tabular-nums sm:text-xl',
-        isLive ? 'text-primary' : 'text-foreground',
+    <div className="flex flex-col items-center gap-0.5">
+      <ScoreFlash
+        active={flash}
+        className={cn(
+          'inline-flex items-baseline gap-1 font-display text-lg font-bold tabular-nums sm:text-xl',
+          isLive ? 'text-primary' : 'text-foreground',
+        )}
+      >
+        <AnimatedNumber value={home} />
+        <span className="font-normal text-muted-foreground/40">–</span>
+        <AnimatedNumber value={away} />
+      </ScoreFlash>
+      {penaltySuffix && (
+        <span className="text-[10px] font-medium text-muted-foreground">{penaltySuffix}</span>
       )}
-    >
-      <AnimatedNumber value={home} />
-      <span className="font-normal text-muted-foreground/40">–</span>
-      <AnimatedNumber value={away} />
-    </ScoreFlash>
+    </div>
   );
 }
 
@@ -128,6 +136,7 @@ function MatchCard({
   const isCompleted = match.status === 'COMPLETED';
   const scheduleOnly = scheduleOnlyProp ?? isScheduleOnlyDivision(match.division);
   const showScore = !scheduleOnly && (isLive || isCompleted);
+  const penaltySuffix = showScore ? formatPenaltyShootoutSuffix(match) : null;
 
   if (compact) {
     return (
@@ -138,7 +147,12 @@ function MatchCard({
           </p>
           <div className="shrink-0 min-w-[52px] px-1 text-center">
             {showScore ? (
-              <ScoreDisplay home={match.home_score} away={match.away_score} isLive={isLive} />
+              <ScoreDisplay
+                home={match.home_score}
+                away={match.away_score}
+                isLive={isLive}
+                penaltySuffix={penaltySuffix}
+              />
             ) : (
               <span className="whitespace-nowrap text-xs font-medium text-muted-foreground tabular-nums">
                 {formatTime(match.scheduled_start)}
@@ -177,7 +191,12 @@ function MatchCard({
         <TeamLine name={matchSideName(match.home_team, match.home_label)} logo={match.home_team?.logo} align="right" />
         <div className="flex min-w-[72px] shrink-0 flex-col items-center justify-center">
           {showScore ? (
-            <ScoreDisplay home={match.home_score} away={match.away_score} isLive={isLive} />
+            <ScoreDisplay
+              home={match.home_score}
+              away={match.away_score}
+              isLive={isLive}
+              penaltySuffix={penaltySuffix}
+            />
           ) : (
             <span className="text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground/40">
               vs

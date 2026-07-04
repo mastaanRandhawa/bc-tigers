@@ -56,6 +56,8 @@ type PrismaMatchLike = {
   away_team_id: string | null;
   home_score: number;
   away_score: number;
+  home_penalties?: number | null;
+  away_penalties?: number | null;
 };
 
 export function mapPrismaMatchToResult(match: PrismaMatchLike): MatchResult {
@@ -65,5 +67,7 @@ export function mapPrismaMatchToResult(match: PrismaMatchLike): MatchResult {
     homeScore: match.home_score,
     awayScore: match.away_score,
     outcome: 'PLAYED',
+    homePenalties: match.home_penalties ?? null,
+    awayPenalties: match.away_penalties ?? null,
   };
 }

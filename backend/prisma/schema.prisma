@@ -374,6 +374,8 @@ model Match {
   match_type      String?
   home_score      Int         @default(0)
   away_score      Int         @default(0)
+  home_penalties  Int?
+  away_penalties  Int?
   stream_url      String?
   created_at      DateTime    @default(now())
   updated_at      DateTime    @updatedAt
@@ -613,8 +615,6 @@ model SiteSettings {
   timezone                String   @default("America/Vancouver")
   coach_management_locked Boolean  @default(false)
   coach_lock_scheduled_at DateTime?
-  rosters_public              Boolean   @default(false)
-  rosters_public_scheduled_at DateTime?
   max_players_per_team    Int      @default(25)
   updated_at              DateTime @updatedAt
 }
