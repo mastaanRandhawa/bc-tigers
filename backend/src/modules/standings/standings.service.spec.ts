@@ -5,7 +5,11 @@ jest.mock('../../prisma/prisma', () => ({
     division: { findUniqueOrThrow: jest.fn() },
     team: { findMany: jest.fn() },
     teamDivision: { findMany: jest.fn() },
-    standing: { upsert: jest.fn(), findMany: jest.fn() },
+    standing: {
+      upsert: jest.fn(),
+      findMany: jest.fn(),
+      deleteMany: jest.fn(),
+    },
     bracketNode: { findMany: jest.fn() },
     $transaction: jest.fn((ops: unknown[]) =>
       Promise.all(ops as Promise<unknown>[]),
@@ -13,9 +17,16 @@ jest.mock('../../prisma/prisma', () => ({
   },
 }));
 
-jest.mock('../matches/match-outcome', () => ({
-  standingsExcludedMatchIdsForDivision: jest.fn().mockResolvedValue(new Set()),
-}));
+jest.mock('../matches/match-outcome', () => {
+  const actual =
+    jest.requireActual<typeof import('../matches/match-outcome')>(
+      '../matches/match-outcome',
+    );
+  return {
+    ...actual,
+    standingsExcludedMatchIdsForDivision: jest.fn().mockResolvedValue(new Set()),
+  };
+});
 
 import prisma from '../../prisma/prisma';
 import { asMockedPrisma } from '../../test-utils/prisma-mock';
@@ -77,6 +88,7 @@ describe('StandingsService', () => {
       { team_id: 'away', group_id: null },
     ] as never);
     mockPrisma.standing.upsert.mockResolvedValue({});
+    mockPrisma.standing.deleteMany.mockResolvedValue({ count: 0 });
     mockPrisma.standing.findMany = jest.fn().mockResolvedValue([]);
   });
 
@@ -238,6 +250,69 @@ describe('StandingsService', () => {
       ([args]) => args.create.team_id === 'home',
     );
     expect(homeUpsert?.[0].create.points).toBe(3);
+  });
+
+  it('ignores stale penalty totals when tie_resolution is DRAW', async () => {
+    mockPrisma.match.findMany.mockResolvedValue([
+      {
+        id: 'league-1',
+        home_team_id: 'home',
+        away_team_id: 'away',
+        home_score: 1,
+        away_score: 1,
+        home_penalties: 5,
+        away_penalties: 4,
+        tie_resolution: 'DRAW',
+      },
+    ] as never);
+    mockPrisma.division.findUniqueOrThrow.mockResolvedValue({
+      id: 'div-1',
+      groups_enabled: false,
+      point_format: {
+        ...standardFormat,
+        tiebreakers: ['PENALTY_KICKS', 'COIN_TOSS'],
+      },
+    });
+
+    await service.recalculate('div-1');
+
+    const homeUpsert = mockPrisma.standing.upsert.mock.calls.find(
+      ([args]) => args.create.team_id === 'home',
+    );
+    expect(homeUpsert?.[0].create.points).toBe(1);
+    expect(homeUpsert?.[0].create.draws).toBe(1);
+  });
+
+  it('removes stale standing rows on recalculate', async () => {
+    mockPrisma.teamDivision.findMany.mockResolvedValue([
+      { team_id: 'home', group_id: null },
+    ] as never);
+    mockPrisma.match.findMany.mockResolvedValue([
+      {
+        id: 'league-1',
+        home_team_id: 'home',
+        away_team_id: 'away',
+        home_score: 1,
+        away_score: 0,
+        home_penalties: null,
+        away_penalties: null,
+        tie_resolution: null,
+      },
+    ] as never);
+    mockPrisma.division.findUniqueOrThrow.mockResolvedValue({
+      id: 'div-1',
+      groups_enabled: false,
+      point_format: standardFormat,
+    });
+
+    await service.recalculate('div-1');
+
+    expect(mockPrisma.standing.deleteMany).toHaveBeenCalledWith({
+      where: {
+        division_id: 'div-1',
+        team_id: { notIn: ['home', 'away'] },
+      },
+    });
   });
 
   it('awards 10 points for a 3-0 win under USFA', async () => {

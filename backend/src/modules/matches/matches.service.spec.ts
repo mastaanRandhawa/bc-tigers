@@ -5,11 +5,13 @@ jest.mock('../../prisma/prisma', () => ({
       findUnique: jest.fn(),
       findMany: jest.fn(),
       update: jest.fn(),
+      delete: jest.fn(),
       count: jest.fn(),
     },
-    bracketNode: { findFirst: jest.fn(), findMany: jest.fn() },
+    bracketNode: { findFirst: jest.fn(), findMany: jest.fn(), updateMany: jest.fn() },
     matchEvent: { findMany: jest.fn() },
     user: { findMany: jest.fn().mockResolvedValue([]) },
+    standing: { findFirst: jest.fn() },
   },
 }));
 
@@ -88,6 +90,7 @@ describe('MatchesService tied-score completion', () => {
     jest.clearAllMocks();
     mockPrisma.bracketNode.findFirst.mockResolvedValue(null);
     mockPrisma.bracketNode.findMany.mockResolvedValue([]);
+    mockPrisma.bracketNode.updateMany.mockResolvedValue({ count: 0 });
     mockPrisma.match.findMany.mockResolvedValue([]);
     mockPrisma.match.count.mockResolvedValue(0);
     mockPrisma.match.update.mockImplementation(async ({ data }) => ({
@@ -125,6 +128,25 @@ describe('MatchesService tied-score completion', () => {
       await expect(
         service.update('match-1', { status: 'COMPLETED' }),
       ).rejects.toThrow(BadRequestException);
+    });
+
+    it('rejects draw completion on bracket-linked elimination match', async () => {
+      mockPrisma.match.findUnique.mockResolvedValue({
+        ...baseMatch,
+        home_score: 0,
+        away_score: 0,
+        tie_resolution: 'DRAW',
+      });
+      mockPrisma.bracketNode.findFirst.mockResolvedValue({
+        id: 'node-1',
+        match_id: 'match-1',
+      });
+
+      await expect(
+        service.update('match-1', { status: 'COMPLETED' }),
+      ).rejects.toThrow(BadRequestException);
+
+      expect(gateway.emitMatchCompleted).not.toHaveBeenCalled();
     });
 
     it('allows tied completion with decisive penalties', async () => {
@@ -244,6 +266,32 @@ describe('MatchesService tied-score completion', () => {
           }),
         }),
       );
+    });
+  });
+
+  describe('remove', () => {
+    it('refreshes standings when a completed match is deleted', async () => {
+      mockPrisma.match.findUnique.mockResolvedValue({
+        status: 'COMPLETED',
+        division_id: 'div-1',
+      });
+      mockPrisma.match.delete.mockResolvedValue({ id: 'match-1' });
+
+      await service.remove('match-1');
+
+      expect(gateway.refreshStandings).toHaveBeenCalledWith('div-1');
+    });
+
+    it('does not refresh standings when a scheduled match is deleted', async () => {
+      mockPrisma.match.findUnique.mockResolvedValue({
+        status: 'SCHEDULED',
+        division_id: 'div-1',
+      });
+      mockPrisma.match.delete.mockResolvedValue({ id: 'match-1' });
+
+      await service.remove('match-1');
+
+      expect(gateway.refreshStandings).not.toHaveBeenCalled();
     });
   });
 });

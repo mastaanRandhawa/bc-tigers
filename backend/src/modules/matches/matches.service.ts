@@ -187,11 +187,24 @@ export class MatchesService {
     if (error) throw new BadRequestException(error);
   }
 
-  private assertResultValidIfCompleted(
-    match: MatchOutcomeFields & { status: string },
-  ): void {
-    if (match.status !== 'COMPLETED') return;
+  private async assertCompletionAllowed(
+    match: MatchOutcomeFields & { status?: string },
+  ): Promise<void> {
     this.assertResultValidForCompletion(match);
+    if (
+      match.home_score === match.away_score &&
+      match.tie_resolution === 'DRAW'
+    ) {
+      const node = await prisma.bracketNode.findFirst({
+        where: { match_id: match.id },
+        select: { id: true },
+      });
+      if (node) {
+        throw new BadRequestException(
+          'Elimination matches cannot end in a draw — break the tie with a penalty shootout.',
+        );
+      }
+    }
   }
 
   async findOne(id: string) {
@@ -263,7 +276,7 @@ export class MatchesService {
     ]);
 
     if (updateData.status === 'COMPLETED' && existing.status !== 'COMPLETED') {
-      this.assertResultValidForCompletion(existing);
+      await this.assertCompletionAllowed(existing);
     }
 
     const match = await prisma.match.update({
@@ -295,9 +308,9 @@ export class MatchesService {
         'Match completed',
         `Final: ${matchSideName(match.home_team)} ${scoreLine} ${matchSideName(match.away_team)}`,
       );
+      await this.resolvePositionalSlots(match.division_id);
       await this.advanceBracketFromMatch(match);
       await this.resolveDependentSlots(match);
-      await this.resolvePositionalSlots(match.division_id);
     }
 
     this.gateway.emitScoreUpdate(id, match.home_score, match.away_score);
@@ -511,7 +524,9 @@ export class MatchesService {
       status: existing.status,
     };
 
-    this.assertResultValidIfCompleted(candidate);
+    if (existing.status === 'COMPLETED') {
+      await this.assertCompletionAllowed(candidate);
+    }
 
     const match = await prisma.match.update({
       where: { id },
@@ -730,6 +745,9 @@ export class MatchesService {
     });
     if (pending.length === 0) return;
 
+    const excludedMatchIds =
+      await standingsExcludedMatchIdsForDivision(divisionId);
+
     for (const m of pending) {
       const data: Prisma.MatchUncheckedUpdateInput = {};
       if (m.home_team_id == null && m.home_source_rank != null) {
@@ -737,6 +755,7 @@ export class MatchesService {
           divisionId,
           m.home_source_group_id,
           m.home_source_rank,
+          excludedMatchIds,
         );
         if (teamId) data.home_team_id = teamId;
       }
@@ -745,6 +764,7 @@ export class MatchesService {
           divisionId,
           m.away_source_group_id,
           m.away_source_rank,
+          excludedMatchIds,
         );
         if (teamId) data.away_team_id = teamId;
       }
@@ -772,12 +792,14 @@ export class MatchesService {
     divisionId: string,
     groupId: string | null,
     rank: number,
+    excludedMatchIds: Set<string>,
   ): Promise<string | null> {
+    const excluded = [...excludedMatchIds];
     const remaining = await prisma.match.count({
       where: {
         division_id: divisionId,
         ...(groupId ? { group_id: groupId } : {}),
-        // Only count decisive round-robin fixtures (both teams known).
+        ...(excluded.length > 0 ? { id: { notIn: excluded } } : {}),
         home_team_id: { not: null },
         away_team_id: { not: null },
         status: { not: 'COMPLETED' },
@@ -844,12 +866,22 @@ export class MatchesService {
   }
 
   async remove(id: string) {
+    const existing = await prisma.match.findUnique({
+      where: { id },
+      select: { status: true, division_id: true },
+    });
+    if (!existing) throw new NotFoundException('Match not found');
+
     await prisma.bracketNode.updateMany({
       where: { match_id: id },
       data: { match_id: null },
     });
     try {
-      return await prisma.match.delete({ where: { id } });
+      const deleted = await prisma.match.delete({ where: { id } });
+      if (existing.status === 'COMPLETED') {
+        await this.gateway.refreshStandings(existing.division_id);
+      }
+      return deleted;
     } catch (err) {
       const code = (err as { code?: string })?.code;
       if (code === 'P2003') {
