@@ -17,26 +17,11 @@ jest.mock('../../prisma/prisma', () => ({
   },
 }));
 
-jest.mock('../matches/match-outcome', () => {
-  const actual =
-    jest.requireActual<typeof import('../matches/match-outcome')>(
-      '../matches/match-outcome',
-    );
-  return {
-    ...actual,
-    standingsExcludedMatchIdsForDivision: jest.fn().mockResolvedValue(new Set()),
-  };
-});
-
 import prisma from '../../prisma/prisma';
 import { asMockedPrisma } from '../../test-utils/prisma-mock';
 import { StandingsService } from './standings.service';
-import { standingsExcludedMatchIdsForDivision } from '../matches/match-outcome';
 
 const mockPrisma = asMockedPrisma(prisma);
-const mockExcludedIds = standingsExcludedMatchIdsForDivision as jest.MockedFunction<
-  typeof standingsExcludedMatchIdsForDivision
->;
 
 const standardFormat = {
   id: 'pf-standard',
@@ -82,7 +67,7 @@ describe('StandingsService', () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    mockExcludedIds.mockResolvedValue(new Set());
+    mockPrisma.bracketNode.findMany.mockResolvedValue([]);
     mockPrisma.teamDivision.findMany.mockResolvedValue([
       { team_id: 'home', group_id: null },
       { team_id: 'away', group_id: null },
@@ -124,7 +109,9 @@ describe('StandingsService', () => {
   });
 
   it('excludes elimination matches from standings', async () => {
-    mockExcludedIds.mockResolvedValue(new Set(['ko-1']));
+    mockPrisma.bracketNode.findMany.mockResolvedValue([
+      { match_id: 'ko-1' },
+    ] as never);
     mockPrisma.match.findMany.mockResolvedValue([
       {
         id: 'ko-1',
@@ -153,7 +140,7 @@ describe('StandingsService', () => {
   });
 
   it('counts pool matches for grouped divisions even when knockout placeholders exist', async () => {
-    mockExcludedIds.mockResolvedValue(new Set());
+    mockPrisma.bracketNode.findMany.mockResolvedValue([]);
     mockPrisma.teamDivision.findMany.mockResolvedValue([
       { team_id: 'home', group_id: 'pool-a' },
       { team_id: 'away', group_id: 'pool-a' },
@@ -186,7 +173,9 @@ describe('StandingsService', () => {
   });
 
   it('excludes bracket knockout fixtures from grouped standings', async () => {
-    mockExcludedIds.mockResolvedValue(new Set(['ko-1']));
+    mockPrisma.bracketNode.findMany.mockResolvedValue([
+      { match_id: 'ko-1' },
+    ] as never);
     mockPrisma.teamDivision.findMany.mockResolvedValue([
       { team_id: 'home', group_id: 'pool-a' },
       { team_id: 'away', group_id: 'pool-a' },
