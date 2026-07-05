@@ -12,8 +12,8 @@ export const bracketsService = {
   randomize: (divisionId: string) =>
     apiClient.post<BracketNode[]>(`/brackets/${divisionId}/randomize`),
 
-  advance: (nodeId: string, winner_id: string) =>
-    apiClient.patch<BracketNode>(`/brackets/nodes/${nodeId}/advance`, { winner_id }),
+  // Winners are recorded by completing the linked match, which advances the
+  // bracket automatically — there is no manual "advance" call from the bracket.
 
   placeTeam: (nodeId: string, team_id: string, slot: 'home' | 'away') =>
     apiClient.patch<BracketNode>(`/brackets/nodes/${nodeId}/place`, { team_id, slot }),

@@ -1,7 +1,6 @@
 import { Check, X } from 'lucide-react';
 import { m } from 'motion/react';
 import { cn } from '@/lib/utils';
-import { configureTeamDrag } from '@/lib/bracket-utils';
 import type { Team } from '@/types';
 
 interface MatchTeamRowProps {
@@ -12,10 +11,7 @@ interface MatchTeamRowProps {
   isWinner: boolean;
   isLoser: boolean;
   locked: boolean;
-  canPickWinner: boolean;
-  advancePending: boolean;
   onDragStart: (team: Team, from: { nodeId: string; slot: 'home' | 'away' }, e: React.DragEvent) => void;
-  onPickWinner?: () => void;
   onRemove?: () => void;
 }
 
@@ -27,18 +23,10 @@ export function MatchTeamRow({
   isWinner,
   isLoser,
   locked,
-  canPickWinner,
-  advancePending,
   onDragStart,
-  onPickWinner,
   onRemove,
 }: MatchTeamRowProps) {
-  const pickable = canPickWinner && !advancePending;
   const draggable = !locked;
-
-  const handlePickWinner = () => {
-    if (pickable) onPickWinner?.();
-  };
 
   return (
     <div
@@ -46,22 +34,8 @@ export function MatchTeamRow({
         'group relative flex min-h-[44px] items-center gap-2.5 px-3 py-2 transition-colors duration-[var(--motion-fast)]',
         isWinner && 'bg-emerald-500/10',
         isLoser && 'opacity-55',
-        pickable && 'cursor-pointer hover:bg-primary/5',
       )}
-      onClick={pickable ? handlePickWinner : undefined}
-      onKeyDown={
-        pickable
-          ? (e) => {
-              if (e.key === 'Enter' || e.key === ' ') {
-                e.preventDefault();
-                handlePickWinner();
-              }
-            }
-          : undefined
-      }
-      role={pickable ? 'button' : undefined}
-      tabIndex={pickable ? 0 : undefined}
-      aria-label={pickable ? `Select ${team.name} as winner` : team.name}
+      aria-label={team.name}
     >
       <div
         className={cn(

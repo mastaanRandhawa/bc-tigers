@@ -19,7 +19,6 @@ interface MatchCardProps {
   dragOver: { nodeId: string; slot: "home" | "away" } | null;
   dragState: { teamId: string } | null;
   selectedTeamId: string | null;
-  advancePending: boolean;
   onMatchDragStart: (nodeId: string) => void;
   onMatchDragOver: (nodeId: string) => void;
   onMatchDragLeave: () => void;
@@ -35,7 +34,6 @@ interface MatchCardProps {
   onDrop: (e: React.DragEvent, nodeId: string, slot: "home" | "away") => void;
   onSlotClick: (node: BracketNode, slot: "home" | "away") => void;
   onRemoveSlot: (node: BracketNode, slot: "home" | "away") => void;
-  onAdvance: (node: BracketNode, winnerId: string) => void;
 }
 
 function matchStatus(node: BracketNode): {
@@ -61,7 +59,6 @@ export function MatchCard({
   dragOver,
   dragState,
   selectedTeamId,
-  advancePending,
   onMatchDragStart,
   onMatchDragOver,
   onMatchDragLeave,
@@ -73,16 +70,14 @@ export function MatchCard({
   onDrop,
   onSlotClick,
   onRemoveSlot,
-  onAdvance,
 }: MatchCardProps) {
   const slotLocked = structureLocked || !allowPlacement;
   const status = matchStatus(node);
   const isDecided = !!node.winner_id;
   const isAutoAdvanced = node.auto_advanced || node.status === "AUTO_ADVANCED";
-  const nodeReady =
-    !node.status || node.status === "READY" || node.status === "IN_PROGRESS";
-  const canPickWinner =
-    nodeReady &&
+  // Both teams are set and the game hasn't been decided yet — the admin records
+  // the winner by completing the actual match, not from the bracket.
+  const awaitingResult =
     !!(node.home_team_id && node.away_team_id && !node.winner_id) &&
     !isByeSlot(node, "home") &&
     !isByeSlot(node, "away") &&
@@ -124,10 +119,7 @@ export function MatchCard({
           isWinner={isWinner}
           isLoser={isLoser}
           locked={slotLocked}
-          canPickWinner={canPickWinner}
-          advancePending={advancePending}
           onDragStart={onDragStartFromSlot}
-          onPickWinner={() => onAdvance(node, team.id)}
           onRemove={allowPlacement ? () => onRemoveSlot(node, slot) : undefined}
         />
       );
@@ -246,10 +238,10 @@ export function MatchCard({
         </footer>
       )}
 
-      {canPickWinner && (
+      {awaitingResult && (
         <footer className="border-t border-border/60 bg-muted/20 px-3 py-2">
           <p className="text-[10px] text-muted-foreground">
-            Click a team, then confirm to record the winner
+            Record this match’s result to set the winner and advance
           </p>
         </footer>
       )}

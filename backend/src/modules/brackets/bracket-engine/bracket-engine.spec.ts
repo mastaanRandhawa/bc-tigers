@@ -1,4 +1,4 @@
-import { propagateByes, setWinner } from './progression';
+import { clearWinner, propagateByes, setWinner } from './progression';
 import { validateBracket } from './validation';
 import type { EngineNode } from './types';
 import { planBracket, planToNodeDrafts } from '../scheduling/bracket-planner';
@@ -143,6 +143,35 @@ describe('bracket-engine', () => {
     expect(
       sfAfterAway?.home_team_id === home || sfAfterAway?.away_team_id === home,
     ).toBe(false);
+  });
+
+  it('clearWinner un-advances a node and clears its downstream slot', () => {
+    const { nodes } = buildBracket(8);
+    const qf = nodes.find(
+      (n) => n.stage === 'QUARTER_FINAL' && n.home_team_id && n.away_team_id,
+    )!;
+    const home = qf.home_team_id!;
+
+    setWinner(nodes, qf.id, home, 'manual');
+    const sf = nodes.find((n) => n.id === qf.next_node_id)!;
+    expect(sf.home_team_id === home || sf.away_team_id === home).toBe(true);
+
+    const cleared = clearWinner(nodes, qf.id);
+    expect(cleared).toBe(true);
+    expect(qf.winner_id).toBeNull();
+    expect(qf.completed_at).toBeNull();
+    // The winner it had fed into the semi is gone again.
+    expect(sf.home_team_id === home || sf.away_team_id === home).toBe(false);
+    expect(sf.winner_id).toBeNull();
+    expect(validateBracket(nodes).valid).toBe(true);
+  });
+
+  it('clearWinner returns false when there was nothing to clear', () => {
+    const { nodes } = buildBracket(8);
+    const qf = nodes.find(
+      (n) => n.stage === 'QUARTER_FINAL' && n.home_team_id && n.away_team_id,
+    )!;
+    expect(clearWinner(nodes, qf.id)).toBe(false);
   });
 
   it('routes semi-final loser to third place', () => {

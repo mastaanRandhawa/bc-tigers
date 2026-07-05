@@ -31,15 +31,6 @@ export function useRandomizeBracket() {
   });
 }
 
-export function useAdvanceBracket() {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: ({ nodeId, winnerId }: { nodeId: string; winnerId: string }) =>
-      bracketsService.advance(nodeId, winnerId),
-    onSuccess: () => invalidateBrackets(qc),
-  });
-}
-
 export function usePlaceBracketTeam() {
   const qc = useQueryClient();
   return useMutation({

@@ -258,7 +258,7 @@ export class MatchesService {
 
     // If a chosen source match is already completed, fill the slot right away so
     // a late-added dependent isn't left as a permanent placeholder.
-    await this.resolveSlotsFromCompletedSources(match.id);
+    await this.reconcileOwnSlots(match.id);
     return this.findOne(match.id);
   }
 
@@ -309,9 +309,16 @@ export class MatchesService {
         `Final: ${matchSideName(match.home_team)} ${scoreLine} ${matchSideName(match.away_team)}`,
       );
       await this.resolvePositionalSlots(match.division_id);
-      await this.advanceBracketFromMatch(match);
-      await this.resolveDependentSlots(match);
     }
+
+    // Keep the bracket and placeholder slots in sync on every edit, not just on
+    // completion: the bracket must advance when this match is completed and
+    // un-advance when it is re-opened; this match's own slots may have been
+    // re-pointed at a different (already finished) source; and any match
+    // depending on this one must reflect a changed result or swapped teams.
+    await this.syncBracketFromMatch(match);
+    await this.reconcileOwnSlots(id);
+    await this.reconcileDependentSlots(match);
 
     this.gateway.emitScoreUpdate(id, match.home_score, match.away_score);
     return attachSlotLabels(match);
@@ -539,33 +546,46 @@ export class MatchesService {
     if (match.status === 'COMPLETED') {
       await this.gateway.refreshStandings(match.division_id);
       await this.resolvePositionalSlots(match.division_id);
-      await this.advanceBracketFromMatch(match);
-      await this.resolveDependentSlots(match);
     }
+
+    // A score edit can flip the winner, decide a shootout, or turn a decided game
+    // back into a draw — keep the bracket and every dependent slot in step. Both
+    // are no-ops while the game is not yet COMPLETED.
+    await this.syncBracketFromMatch(match);
+    await this.reconcileDependentSlots(match);
 
     return attachSlotLabels(match);
   }
 
-  private async advanceBracketFromMatch(
-    match: MatchOutcomeFields & { division_id: string },
+  /**
+   * Keep the bracket in step with its linked match — the match is the single
+   * source of truth. When the match is COMPLETED with a decisive result the node
+   * advances (setWinner handles flips by clearing the old downstream first); when
+   * the match is re-opened or otherwise no longer decisive, the node's winner and
+   * everything downstream are cleared. BYE nodes are engine-managed and left
+   * alone. No-op for matches that aren't linked to a bracket node.
+   */
+  private async syncBracketFromMatch(
+    match: MatchOutcomeFields & { division_id: string; status: string },
   ) {
     const node = await prisma.bracketNode.findFirst({
       where: { match_id: match.id },
+      select: { id: true, winner_id: true, auto_advanced: true },
     });
-    if (!node) return;
+    if (!node || node.auto_advanced) return;
 
-    const outcome = resolveAdvancingTeams(match);
-    if (!outcome) return;
+    const outcome =
+      match.status === 'COMPLETED' ? resolveAdvancingTeams(match) : null;
 
     try {
-      await this.bracketsService.advance(node.id, outcome.winnerId, 'match');
-      this.gateway.emitBracketUpdated(match.division_id, {
-        divisionId: match.division_id,
-        nodeId: node.id,
-        winnerId: outcome.winnerId,
-      });
+      if (outcome) {
+        await this.bracketsService.advance(node.id, outcome.winnerId, 'match');
+      } else if (node.winner_id) {
+        // The match is no longer a decided game — un-advance the bracket.
+        await this.bracketsService.clearNodeWinner(node.id);
+      }
     } catch (err) {
-      this.logger.error(`Failed to advance bracket for match ${match.id}`, err);
+      this.logger.error(`Failed to sync bracket for match ${match.id}`, err);
     }
   }
 
@@ -666,54 +686,143 @@ export class MatchesService {
   }
 
   /**
-   * After a source match completes decisively, fill the team slots of every
-   * match that points at it via a Winner/Loser placeholder, then broadcast.
+   * Winner/loser of a source game, but only once that game is actually finished.
+   * A slot never resolves off a game that is still SCHEDULED/LIVE/etc. — until
+   * then its dependents stay unresolved placeholders.
    */
-  private async resolveDependentSlots(
-    completed: MatchOutcomeFields & { division_id: string },
+  private advancingIfComplete(
+    source: MatchOutcomeFields & { status: string },
+  ): { winnerId: string; loserId: string } | null {
+    if (source.status !== 'COMPLETED') return null;
+    return resolveAdvancingTeams(source);
+  }
+
+  /**
+   * Reconcile the team slots of every match that references `source` via a
+   * Winner/Loser placeholder. A slot with a source pointer is *always derived*:
+   * it holds the winner/loser while the source is a completed, decisive game, and
+   * otherwise reverts to null (an unresolved placeholder). This means re-opening,
+   * re-scoring to a draw, or clearing a source's teams never leaves a stale team
+   * behind. Cascades one dependent at a time into any dependent that is itself a
+   * completed source, guarded against cycles. Broadcasts each changed dependent.
+   */
+  private async reconcileDependentSlots(
+    source: MatchOutcomeFields & { division_id: string; status: string },
+    visited: Set<string> = new Set(),
   ) {
-    const result = resolveAdvancingTeams(completed);
-    if (!result) return;
+    if (visited.has(source.id)) return;
+    visited.add(source.id);
+
+    const result = this.advancingIfComplete(source);
+    const winnerId = result?.winnerId ?? null;
+    const loserId = result?.loserId ?? null;
 
     const dependents = await prisma.match.findMany({
       where: {
         OR: [
-          { home_source_match_id: completed.id },
-          { away_source_match_id: completed.id },
+          { home_source_match_id: source.id },
+          { away_source_match_id: source.id },
         ],
       },
-      select: {
-        id: true,
-        division_id: true,
-        home_source_match_id: true,
-        home_source_outcome: true,
-        away_source_match_id: true,
-        away_source_outcome: true,
-      },
+      include: MATCH_DETAIL_INCLUDE,
     });
 
     for (const dep of dependents) {
       const data: Prisma.MatchUncheckedUpdateInput = {};
-      if (dep.home_source_match_id === completed.id) {
-        data.home_team_id =
-          dep.home_source_outcome === 'WINNER'
-            ? result.winnerId
-            : result.loserId;
+      if (dep.home_source_match_id === source.id) {
+        const next = dep.home_source_outcome === 'WINNER' ? winnerId : loserId;
+        if (next !== dep.home_team_id) data.home_team_id = next;
       }
-      if (dep.away_source_match_id === completed.id) {
-        data.away_team_id =
-          dep.away_source_outcome === 'WINNER'
-            ? result.winnerId
-            : result.loserId;
+      if (dep.away_source_match_id === source.id) {
+        const next = dep.away_source_outcome === 'WINNER' ? winnerId : loserId;
+        if (next !== dep.away_team_id) data.away_team_id = next;
       }
+      if (Object.keys(data).length === 0) continue;
 
       const updated = await prisma.match.update({
         where: { id: dep.id },
         data,
         include: MATCH_DETAIL_INCLUDE,
       });
-      this.gateway.emitMatchUpdated(dep.id, dep.division_id, updated);
+      this.gateway.emitMatchUpdated(
+        dep.id,
+        dep.division_id,
+        attachSlotLabels(updated),
+      );
+
+      // Filling this dependent may change the winner it, in turn, feeds onward.
+      if (updated.status === 'COMPLETED') {
+        await this.reconcileDependentSlots(updated, visited);
+      }
     }
+  }
+
+  /**
+   * Reconcile a single match's *own* placeholder slots against the current state
+   * of the games they point at — used on create and on edit so re-pointing a slot
+   * at an already-finished game fills it, and pointing at an unfinished game (or
+   * clearing the pointer) leaves/returns it to a placeholder.
+   */
+  private async reconcileOwnSlots(matchId: string) {
+    const match = await prisma.match.findUnique({
+      where: { id: matchId },
+      select: {
+        home_team_id: true,
+        away_team_id: true,
+        home_source_match_id: true,
+        home_source_outcome: true,
+        away_source_match_id: true,
+        away_source_outcome: true,
+      },
+    });
+    if (!match) return;
+
+    const sourceIds = [
+      match.home_source_match_id,
+      match.away_source_match_id,
+    ].filter((id): id is string => !!id);
+    if (sourceIds.length === 0) return;
+
+    const sources = await prisma.match.findMany({
+      where: { id: { in: sourceIds } },
+    });
+    const byId = new Map(sources.map((s) => [s.id, s]));
+
+    const teamFor = (
+      sourceId: string | null,
+      outcome: MatchSlotOutcome | null,
+    ): string | null => {
+      if (!sourceId) return null;
+      const source = byId.get(sourceId);
+      const result = source ? this.advancingIfComplete(source) : null;
+      if (!result) return null;
+      return outcome === 'WINNER' ? result.winnerId : result.loserId;
+    };
+
+    const data: Prisma.MatchUncheckedUpdateInput = {};
+    const nextHome = teamFor(
+      match.home_source_match_id,
+      match.home_source_outcome,
+    );
+    if (nextHome !== match.home_team_id) data.home_team_id = nextHome;
+    const nextAway = teamFor(
+      match.away_source_match_id,
+      match.away_source_outcome,
+    );
+    if (nextAway !== match.away_team_id) data.away_team_id = nextAway;
+
+    if (Object.keys(data).length === 0) return;
+
+    const updated = await prisma.match.update({
+      where: { id: matchId },
+      data,
+      include: MATCH_DETAIL_INCLUDE,
+    });
+    this.gateway.emitMatchUpdated(
+      matchId,
+      updated.division_id,
+      attachSlotLabels(updated),
+    );
   }
 
   /**
@@ -812,36 +921,6 @@ export class MatchesService {
       select: { team_id: true },
     });
     return standing?.team_id ?? null;
-  }
-
-  /**
-   * On create, if a chosen source match is already completed, fill the slot
-   * immediately instead of leaving a permanent placeholder.
-   */
-  private async resolveSlotsFromCompletedSources(matchId: string) {
-    const match = await prisma.match.findUnique({
-      where: { id: matchId },
-      select: {
-        home_source_match_id: true,
-        home_source_outcome: true,
-        away_source_match_id: true,
-        away_source_outcome: true,
-      },
-    });
-    if (!match) return;
-
-    const sourceIds = [
-      match.home_source_match_id,
-      match.away_source_match_id,
-    ].filter((id): id is string => !!id);
-    if (sourceIds.length === 0) return;
-
-    const sources = await prisma.match.findMany({
-      where: { id: { in: sourceIds }, status: 'COMPLETED' },
-    });
-    for (const source of sources) {
-      await this.resolveDependentSlots(source);
-    }
   }
 
   private async emailAdmins(

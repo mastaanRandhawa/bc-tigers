@@ -3,7 +3,6 @@ import {
   useBracket,
   useGenerateBracket,
   useRandomizeBracket,
-  useAdvanceBracket,
   usePlaceBracketTeam,
   useRestoreBracket,
   useSetBracketLock,
@@ -39,7 +38,6 @@ import { BracketStatusBanner } from "@/components/admin/bracket/BracketStatusBan
 import { BracketTree } from "@/components/admin/bracket/BracketTree";
 import { TeamPool } from "@/components/admin/bracket/TeamPool";
 import { TournamentToolbar } from "@/components/admin/bracket/TournamentToolbar";
-import { ConfirmDialog } from "@/components/admin/inline/ConfirmDialog";
 import type { DragState } from "@/components/admin/bracket/types";
 
 interface BracketCanvasProps {
@@ -69,7 +67,6 @@ export function BracketCanvas({
   } = useBracket(divisionId);
   const generateMutation = useGenerateBracket();
   const randomizeMutation = useRandomizeBracket();
-  const advanceMutation = useAdvanceBracket();
   const placeMutation = usePlaceBracketTeam();
   const restoreMutation = useRestoreBracket();
   const lockMutation = useSetBracketLock();
@@ -100,11 +97,6 @@ export function BracketCanvas({
   const [undoStack, setUndoStack] = useState<BracketSnapshot[]>([]);
   const [redoStack, setRedoStack] = useState<BracketSnapshot[]>([]);
   const [randomizing, setRandomizing] = useState(false);
-  const [advanceConfirm, setAdvanceConfirm] = useState<{
-    node: BracketNode;
-    winnerId: string;
-    teamName: string;
-  } | null>(null);
 
   const playedMatches = hasPlayedMatches(nodes);
   const structureLocked = isStructureLocked(
@@ -368,30 +360,6 @@ export function BracketCanvas({
     }
   };
 
-  const requestAdvance = (node: BracketNode, winnerId: string) => {
-    const team =
-      winnerId === node.home_team_id ? node.home_team : node.away_team;
-    setAdvanceConfirm({
-      node,
-      winnerId,
-      teamName: team?.name ?? "Team",
-    });
-  };
-
-  const handleAdvanceConfirm = async () => {
-    if (!advanceConfirm) return;
-    const { node, winnerId } = advanceConfirm;
-    const before = snapshotFromNodes(nodes);
-    setError("");
-    try {
-      await advanceMutation.mutateAsync({ nodeId: node.id, winnerId });
-      recordHistory(before);
-      setAdvanceConfirm(null);
-    } catch (err) {
-      setError(getApiErrorMessage(err, "Failed to advance winner"));
-    }
-  };
-
   const handleGenerate = async () => {
     setError("");
     try {
@@ -443,7 +411,6 @@ export function BracketCanvas({
     generateMutation.isPending ||
     randomizeMutation.isPending ||
     placeMutation.isPending ||
-    advanceMutation.isPending ||
     restoreMutation.isPending ||
     lockMutation.isPending ||
     finalizeMutation.isPending ||
@@ -542,7 +509,6 @@ export function BracketCanvas({
               dragOver={dragOver}
               dragState={dragState}
               selectedTeamId={selectedTeam?.id ?? null}
-              advancePending={advanceMutation.isPending}
               onMatchDragStart={(nodeId) => setMatchDragId(nodeId)}
               onMatchDragOver={(nodeId) => setMatchDropId(nodeId)}
               onMatchDragLeave={() => setMatchDropId(null)}
@@ -568,28 +534,10 @@ export function BracketCanvas({
               onDrop={handleDrop}
               onSlotClick={handleSlotClick}
               onRemoveSlot={handleRemove}
-              onAdvance={requestAdvance}
             />
           </div>
         )}
       </QueryState>
-
-      <ConfirmDialog
-        open={!!advanceConfirm}
-        onOpenChange={(open) => {
-          if (!open) setAdvanceConfirm(null);
-        }}
-        title="Confirm match winner"
-        description={
-          advanceConfirm
-            ? `Record ${advanceConfirm.teamName} as the winner? They will advance to the next round but will not be marked as the winner of that match until you confirm it there.`
-            : undefined
-        }
-        confirmLabel="Confirm winner"
-        confirmVariant="default"
-        pendingLabel="Saving…"
-        onConfirm={handleAdvanceConfirm}
-      />
 
       <BracketGenerateSheet
         open={showGenerate}

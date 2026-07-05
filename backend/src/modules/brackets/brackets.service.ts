@@ -18,7 +18,17 @@ import {
   buildFirstRoundSlots,
   shuffleTeamIds,
   type EligibleTeam,
+  type BracketNodeDraft,
 } from './scheduling';
+
+/** Stage progression order — feeders always sort before the games they feed. */
+const STAGE_ORDER: BracketStage[] = [
+  'ROUND_OF_16',
+  'QUARTER_FINAL',
+  'SEMI_FINAL',
+  'FINAL',
+  'THIRD_PLACE',
+];
 
 @Injectable()
 export class BracketsService {
@@ -146,6 +156,7 @@ export class BracketsService {
   async generate(divisionId: string): Promise<BracketNodeDetail[]> {
     const division = await prisma.division.findUnique({
       where: { id: divisionId },
+      include: { tournament: true },
     });
     if (!division) throw new BadRequestException('Division not found');
 
@@ -167,18 +178,162 @@ export class BracketsService {
     }
 
     const nodeDrafts = planToNodeDrafts(plan);
+
+    // Regenerating replaces the whole tree — drop the old nodes and the knockout
+    // games we auto-created for them so no orphaned fixtures linger. Round-robin
+    // matches are untouched (they were never linked to a bracket node).
+    const priorNodes = await prisma.bracketNode.findMany({
+      where: { division_id: divisionId, match_id: { not: null } },
+      select: { match_id: true },
+    });
+    const priorMatchIds = priorNodes
+      .map((n) => n.match_id)
+      .filter((id): id is string => id != null);
+
     await prisma.bracketNode.deleteMany({ where: { division_id: divisionId } });
+    if (priorMatchIds.length > 0) {
+      await prisma.match.deleteMany({ where: { id: { in: priorMatchIds } } });
+    }
+
     await this.engine.createNodes(nodeDrafts);
+    await this.createNodeMatches(division, nodeDrafts);
 
     const result = await this.getByDivisionId(divisionId);
     await this.audit.log({
       action: 'BRACKET_GENERATION',
       entity: 'Division',
       entityId: divisionId,
-      metadata: { nodes: result.length },
+      metadata: { nodes: result.length, matches: nodeDrafts.length },
     });
     this.emitBracketUpdated(divisionId);
     return result;
+  }
+
+  /**
+   * Create one linked, playable knockout Match per bracket node. First-round
+   * games carry the node's placed teams; later rounds carry "Winner/Loser of
+   * Game X" source pointers to their feeder games, so scoring a game both
+   * advances the bracket and fills the next game's slot (via
+   * MatchesService placeholder resolution). Games are numbered after any existing
+   * round-robin fixtures so numbering never collides.
+   */
+  private async createNodeMatches(
+    division: {
+      id: string;
+      tournament_id: string;
+      tournament: { start_date: Date };
+    },
+    drafts: BracketNodeDraft[],
+  ) {
+    if (drafts.length === 0) return;
+
+    const matchIdByNode = new Map<string, string>();
+    for (const d of drafts) matchIdByNode.set(d.id!, crypto.randomUUID());
+
+    // Which feeder game (and which outcome of it) fills each downstream slot.
+    type Src = { matchId: string; outcome: 'WINNER' | 'LOSER' };
+    const sources = new Map<string, { home?: Src; away?: Src }>();
+    const addSource = (nodeId: string, slot: 'home' | 'away', src: Src) => {
+      const cur = sources.get(nodeId) ?? {};
+      cur[slot] = src;
+      sources.set(nodeId, cur);
+    };
+    for (const f of drafts) {
+      const feederMatchId = matchIdByNode.get(f.id!)!;
+      if (f.next_node_id && f.next_slot) {
+        addSource(f.next_node_id, f.next_slot, {
+          matchId: feederMatchId,
+          outcome: 'WINNER',
+        });
+      }
+      if (f.loser_next_node_id && f.loser_next_slot) {
+        addSource(f.loser_next_node_id, f.loser_next_slot, {
+          matchId: feederMatchId,
+          outcome: 'LOSER',
+        });
+      }
+    }
+
+    const agg = await prisma.match.aggregate({
+      where: { division_id: division.id },
+      _max: { round: true },
+    });
+    let nextRound = (agg._max.round ?? 0) + 1;
+
+    const stageIdx = (s: BracketStage) => STAGE_ORDER.indexOf(s);
+    // Create feeders before the games that reference them (FK ordering).
+    const ordered = [...drafts].sort(
+      (a, b) => stageIdx(a.stage) - stageIdx(b.stage) || a.position - b.position,
+    );
+
+    const start = new Date(division.tournament.start_date);
+
+    const matchCreates = ordered.map((d) => {
+      const src = sources.get(d.id!) ?? {};
+      return prisma.match.create({
+        data: {
+          id: matchIdByNode.get(d.id!)!,
+          tournament_id: division.tournament_id,
+          division_id: division.id,
+          home_team_id: d.home_team_id ?? null,
+          away_team_id: d.away_team_id ?? null,
+          home_source_match_id: src.home?.matchId ?? null,
+          home_source_outcome: src.home?.outcome ?? null,
+          away_source_match_id: src.away?.matchId ?? null,
+          away_source_outcome: src.away?.outcome ?? null,
+          scheduled_start: start,
+          status: 'SCHEDULED',
+          match_type: 'Knockout',
+          round: nextRound++,
+        },
+      });
+    });
+
+    const nodeLinks = ordered.map((d) =>
+      prisma.bracketNode.update({
+        where: { id: d.id! },
+        data: { match_id: matchIdByNode.get(d.id!)! },
+      }),
+    );
+
+    await prisma.$transaction([...matchCreates, ...nodeLinks]);
+  }
+
+  /**
+   * Mirror each node's teams onto its linked knockout Match. The bracket engine
+   * is the source of truth for who plays (seeding, BYEs, advancement); this keeps
+   * the playable Match rows and their placeholder labels in step after any node
+   * change. Teams only — a match's own status/score is never touched here.
+   */
+  private async syncNodeMatches(divisionId: string) {
+    const nodes = await prisma.bracketNode.findMany({
+      where: { division_id: divisionId, match_id: { not: null } },
+      select: {
+        match_id: true,
+        home_team_id: true,
+        away_team_id: true,
+        match: { select: { home_team_id: true, away_team_id: true } },
+      },
+    });
+
+    const updates = nodes
+      .filter(
+        (n) =>
+          n.match_id != null &&
+          (n.home_team_id !== n.match?.home_team_id ||
+            n.away_team_id !== n.match?.away_team_id),
+      )
+      .map((n) =>
+        prisma.match.update({
+          where: { id: n.match_id! },
+          data: {
+            home_team_id: n.home_team_id,
+            away_team_id: n.away_team_id,
+          },
+        }),
+      );
+
+    if (updates.length > 0) await prisma.$transaction(updates);
   }
 
   async randomize(divisionId: string): Promise<BracketNodeDetail[]> {
@@ -233,6 +388,7 @@ export class BracketsService {
     });
 
     await this.engine.runPropagateByes(divisionId, firstStage);
+    await this.syncNodeMatches(divisionId);
     const result = await this.getByDivisionId(divisionId);
     this.emitBracketUpdated(divisionId);
     return result;
@@ -307,22 +463,51 @@ export class BracketsService {
 
     this.engine.recomputeAllStatuses(nodes);
     await this.engine.persistNodes(nodes);
+    await this.syncNodeMatches(target.division_id);
     const result = await this.getNode(nodeId);
     this.emitBracketUpdated(target.division_id);
     return result;
   }
 
+  /**
+   * Record a node's winner and advance. Winners are NOT set by hand from the
+   * bracket — the match is the single source of truth, so this only accepts the
+   * internal 'match' (a completed match result) and 'bye' (auto-advance) sources.
+   */
   async advance(
     nodeId: string,
     winnerId: string,
     source: 'manual' | 'match' | 'bye' = 'manual',
   ) {
+    if (source === 'manual') {
+      throw new BadRequestException(
+        'Winners are recorded by completing the match — set the result on the match and the bracket advances automatically.',
+      );
+    }
     await this.engine.applySetWinner(nodeId, winnerId, source);
     const node = await prisma.bracketNode.findUniqueOrThrow({
       where: { id: nodeId },
       select: { division_id: true },
     });
+    await this.syncNodeMatches(node.division_id);
     const result = await this.getNode(nodeId);
+    this.emitBracketUpdated(node.division_id);
+    return result;
+  }
+
+  /**
+   * Un-advance a node whose linked match no longer has a decisive result (it was
+   * re-opened or reset). Clears the node's winner and everything downstream, then
+   * mirrors the cleared slots back onto the linked matches. Driven by
+   * MatchesService — not an admin-facing action.
+   */
+  async clearNodeWinner(nodeId: string) {
+    const result = await this.engine.clearNodeWinner(nodeId);
+    const node = await prisma.bracketNode.findUniqueOrThrow({
+      where: { id: nodeId },
+      select: { division_id: true },
+    });
+    await this.syncNodeMatches(node.division_id);
     this.emitBracketUpdated(node.division_id);
     return result;
   }
@@ -389,6 +574,7 @@ export class BracketsService {
     const nodes = await this.engine.loadNodesRaw(divisionId);
     replaySavedWinners(nodes);
     await this.engine.persistNodes(nodes);
+    await this.syncNodeMatches(divisionId);
 
     const result = await this.getByDivisionId(divisionId);
     this.emitBracketUpdated(divisionId);
@@ -424,6 +610,10 @@ export class BracketsService {
       );
     }
 
+    // Swap the teams, not the linked games: each node keeps its own match (and
+    // thus its schedule, game number and feeder source pointers) — only who plays
+    // in that slot moves. syncNodeMatches mirrors the swapped teams onto the two
+    // matches below.
     await prisma.$transaction([
       prisma.bracketNode.update({
         where: { id: a.id },
@@ -431,7 +621,6 @@ export class BracketsService {
           home_team_id: b.home_team_id,
           away_team_id: b.away_team_id,
           winner_id: null,
-          match_id: b.match_id,
           auto_advanced: false,
           completed_at: null,
           status: 'PENDING',
@@ -443,7 +632,6 @@ export class BracketsService {
           home_team_id: a.home_team_id,
           away_team_id: a.away_team_id,
           winner_id: null,
-          match_id: a.match_id,
           auto_advanced: false,
           completed_at: null,
           status: 'PENDING',
@@ -453,6 +641,7 @@ export class BracketsService {
 
     const firstStage = a.stage;
     await this.engine.runPropagateByes(a.division_id, firstStage);
+    await this.syncNodeMatches(a.division_id);
     const result = await this.getByDivisionId(a.division_id);
     this.emitBracketUpdated(a.division_id);
     return result;
@@ -513,6 +702,7 @@ export class BracketsService {
     });
 
     await this.engine.runPropagateByes(divisionId, firstStage);
+    await this.syncNodeMatches(divisionId);
     const nodesResult = await this.getByDivisionId(divisionId);
     this.emitBracketUpdated(divisionId);
     return nodesResult;

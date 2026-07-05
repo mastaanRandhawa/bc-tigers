@@ -19,7 +19,6 @@ interface BracketTreeProps {
   dragOver: { nodeId: string; slot: 'home' | 'away' } | null;
   dragState: DragState | null;
   selectedTeamId: string | null;
-  advancePending: boolean;
   onMatchDragStart: (nodeId: string) => void;
   onMatchDragOver: (nodeId: string) => void;
   onMatchDragLeave: () => void;
@@ -31,7 +30,6 @@ interface BracketTreeProps {
   onDrop: (e: React.DragEvent, nodeId: string, slot: 'home' | 'away') => void;
   onSlotClick: (node: BracketNode, slot: 'home' | 'away') => void;
   onRemoveSlot: (node: BracketNode, slot: 'home' | 'away') => void;
-  onAdvance: (node: BracketNode, winnerId: string) => void;
 }
 
 export function BracketTree({
@@ -45,7 +43,6 @@ export function BracketTree({
   dragOver,
   dragState,
   selectedTeamId,
-  advancePending,
   onMatchDragStart,
   onMatchDragOver,
   onMatchDragLeave,
@@ -57,7 +54,6 @@ export function BracketTree({
   onDrop,
   onSlotClick,
   onRemoveSlot,
-  onAdvance,
 }: BracketTreeProps) {
   const presentStages = STAGE_ORDER.filter((stage) => nodes.some((n) => n.stage === stage));
   const mainStages = presentStages.filter((s) => s !== 'THIRD_PLACE');
@@ -106,7 +102,6 @@ export function BracketTree({
                     dragOver={dragOver}
                     dragState={dragState}
                     selectedTeamId={selectedTeamId}
-                    advancePending={advancePending}
                     onMatchDragStart={onMatchDragStart}
                     onMatchDragOver={onMatchDragOver}
                     onMatchDragLeave={onMatchDragLeave}
@@ -118,7 +113,6 @@ export function BracketTree({
                     onDrop={onDrop}
                     onSlotClick={onSlotClick}
                     onRemoveSlot={onRemoveSlot}
-                    onAdvance={onAdvance}
                   />
                 </m.div>
               ))}
@@ -134,7 +128,7 @@ export function BracketTree({
       <div className="mb-5">
         <h2 className="font-display text-lg font-semibold tracking-tight text-foreground">Knockout bracket</h2>
         <p className="mt-1 text-sm text-muted-foreground">
-          Place teams in the first round, then click and confirm winners to advance through the tree.
+          Place teams in the first round. Winners advance automatically when you record each match result — the match is the source of truth.
         </p>
       </div>
 

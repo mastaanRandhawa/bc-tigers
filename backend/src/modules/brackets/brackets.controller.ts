@@ -59,14 +59,9 @@ export class BracketsController {
     return this.service.assignTeamsToFirstRound(divisionId, body.team_ids);
   }
 
-  @Patch('nodes/:nodeId/advance')
-  @AdminOnly()
-  advance(
-    @Param('nodeId') nodeId: string,
-    @Body() body: { winner_id: string },
-  ) {
-    return this.service.advance(nodeId, body.winner_id);
-  }
+  // Winners are recorded by completing the linked match (the single source of
+  // truth), which advances the bracket automatically — there is intentionally no
+  // manual "advance winner" endpoint on the bracket.
 
   @Patch('nodes/:nodeId/place')
   @AdminOnly()

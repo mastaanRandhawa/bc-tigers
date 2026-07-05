@@ -7,6 +7,7 @@ import {
   type BracketNodeDetail,
 } from './bracket-node.types';
 import {
+  clearWinner,
   propagateByes,
   resetDownstreamTeams,
   setWinner,
@@ -194,6 +195,33 @@ export class BracketEngine {
     }
     await this.persistNodes(nodes);
     return nodes.find((n) => n.id === nodeId)!;
+  }
+
+  /**
+   * Clear a node's winner and everything downstream — the un-advance path used
+   * when a linked match is re-opened or reset to a non-decisive result. Persists
+   * the whole division so downstream slots are cleared consistently.
+   */
+  async clearNodeWinner(nodeId: string): Promise<EngineNode | null> {
+    const node = await prisma.bracketNode.findUniqueOrThrow({
+      where: { id: nodeId },
+      select: { division_id: true },
+    });
+    await this.assertResultsEditable(node.division_id);
+
+    const nodes = await this.loadNodes(node.division_id);
+    const changed = clearWinner(nodes, nodeId);
+    if (!changed) return nodes.find((n) => n.id === nodeId) ?? null;
+
+    const validation = validateBracket(nodes);
+    if (!validation.valid) {
+      throw new BadRequestException({
+        message: 'Bracket validation failed',
+        errors: validation.errors,
+      });
+    }
+    await this.persistNodes(nodes);
+    return nodes.find((n) => n.id === nodeId) ?? null;
   }
 
   async finalizeBracket(divisionId: string) {

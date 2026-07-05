@@ -171,6 +171,28 @@ export function setWinner(
   return { changed: true, nodes };
 }
 
+/**
+ * Un-advance a node: clear its own winner (and BYE auto-advance) and everything
+ * fed downstream from it. Used when the linked match is re-opened or reset so it
+ * no longer has a decisive result. Returns true when something was cleared.
+ */
+export function clearWinner(nodes: EngineNode[], nodeId: string): boolean {
+  const map = nodeMap(nodes);
+  const node = map.get(nodeId);
+  if (!node) return false;
+
+  const hadWinner = node.winner_id != null || node.auto_advanced;
+
+  clearDownstream(nodes, nodeId);
+
+  node.winner_id = null;
+  node.auto_advanced = false;
+  node.completed_at = null;
+  node.status = computeNodeStatus(node);
+
+  return hadWinner;
+}
+
 /** Auto-advance first-round BYEs only; later rounds wait for both feeders. */
 export function propagateByes(nodes: EngineNode[]): boolean {
   const firstStage = firstStageInBracket(nodes);

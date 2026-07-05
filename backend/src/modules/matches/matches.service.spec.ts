@@ -78,7 +78,7 @@ describe('MatchesService tied-score completion', () => {
     emitMatchUpdated: jest.fn(),
     refreshStandings: jest.fn(),
   };
-  const bracketsService = { advance: jest.fn() };
+  const bracketsService = { advance: jest.fn(), clearNodeWinner: jest.fn() };
   const mailService = { send: jest.fn() };
   const service = new MatchesService(
     gateway as never,
@@ -266,6 +266,299 @@ describe('MatchesService tied-score completion', () => {
           }),
         }),
       );
+    });
+  });
+
+  describe('placeholder slot reconciliation', () => {
+    // A dependent game whose HOME slot is "Winner of match-1".
+    const dependent = {
+      ...baseMatch,
+      id: 'dep-1',
+      home_team_id: 'home', // already resolved to the previous winner
+      away_team_id: 'other',
+      home_source_match_id: 'match-1',
+      home_source_outcome: 'WINNER' as const,
+      away_source_match_id: null,
+      away_source_outcome: null,
+      status: 'SCHEDULED' as const,
+    };
+
+    // Return dependents only for the reconcile query; [] for positional/other.
+    const onlyDependents = (dep: unknown[]) => {
+      mockPrisma.match.findMany.mockImplementation(async (args?: unknown) => {
+        const where = (args as { where?: { OR?: Array<Record<string, unknown>> } })
+          ?.where;
+        const isDependentQuery = where?.OR?.some(
+          (c) => 'home_source_match_id' in c || 'away_source_match_id' in c,
+        );
+        return isDependentQuery ? dep : [];
+      });
+    };
+
+    it('fills a dependent slot with the winner when the source completes decisively', async () => {
+      mockPrisma.match.findUnique.mockResolvedValue({
+        ...baseMatch,
+        status: 'COMPLETED',
+      });
+      mockPrisma.match.update.mockResolvedValue({
+        ...baseMatch,
+        status: 'COMPLETED',
+        home_score: 3,
+        away_score: 1, // home wins
+      });
+      onlyDependents([{ ...dependent, home_team_id: null }]);
+
+      await service.updateScore('match-1', 3, 1);
+
+      expect(mockPrisma.match.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: 'dep-1' },
+          data: expect.objectContaining({ home_team_id: 'home' }),
+        }),
+      );
+    });
+
+    it('flips a dependent slot to the new winner when the source result changes', async () => {
+      mockPrisma.match.findUnique.mockResolvedValue({
+        ...baseMatch,
+        status: 'COMPLETED',
+      });
+      mockPrisma.match.update.mockResolvedValue({
+        ...baseMatch,
+        status: 'COMPLETED',
+        home_score: 1,
+        away_score: 3, // away now wins
+      });
+      onlyDependents([dependent]); // was resolved to 'home'
+
+      await service.updateScore('match-1', 1, 3);
+
+      expect(mockPrisma.match.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: 'dep-1' },
+          data: expect.objectContaining({ home_team_id: 'away' }),
+        }),
+      );
+    });
+
+    it('reverts a dependent slot to a placeholder when the source is no longer decisive', async () => {
+      mockPrisma.match.findUnique.mockResolvedValue({
+        ...baseMatch,
+        status: 'COMPLETED',
+      });
+      mockPrisma.match.update.mockResolvedValue({
+        ...baseMatch,
+        status: 'COMPLETED',
+        home_score: 2,
+        away_score: 2,
+        tie_resolution: 'DRAW', // draw → no winner
+      });
+      onlyDependents([dependent]); // currently resolved to 'home'
+
+      await service.updateScore('match-1', 2, 2, { tie_resolution: 'DRAW' });
+
+      expect(mockPrisma.match.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: 'dep-1' },
+          data: expect.objectContaining({ home_team_id: null }),
+        }),
+      );
+    });
+
+    it('does not resolve a dependent off a source that is not yet COMPLETED', async () => {
+      mockPrisma.match.findUnique.mockResolvedValue({
+        ...baseMatch,
+        status: 'LIVE',
+      });
+      mockPrisma.match.update.mockResolvedValue({
+        ...baseMatch,
+        status: 'LIVE',
+        home_score: 3,
+        away_score: 1,
+      });
+      onlyDependents([{ ...dependent, home_team_id: null }]);
+
+      await service.updateScore('match-1', 3, 1);
+
+      // The dependent slot must stay null while the source game is still live.
+      expect(mockPrisma.match.update).not.toHaveBeenCalledWith(
+        expect.objectContaining({ where: { id: 'dep-1' } }),
+      );
+    });
+
+    it('fills this match’s own slot on update when it points at an already-completed source', async () => {
+      // findOne(self) → self with a placeholder home slot; reconcileOwnSlots then
+      // reads self again and its completed source, and fills the slot.
+      mockPrisma.match.findUnique.mockImplementation(async (args?: unknown) => {
+        const id = (args as { where?: { id?: string } })?.where?.id;
+        if (id === 'source-1') {
+          return {
+            ...baseMatch,
+            id: 'source-1',
+            status: 'COMPLETED',
+            home_team_id: 'home',
+            away_team_id: 'away',
+            home_score: 4,
+            away_score: 0, // home wins
+          };
+        }
+        // self ('dep-1'): a game whose home side is "Winner of source-1".
+        return {
+          ...baseMatch,
+          id: 'dep-1',
+          home_team_id: null,
+          home_source_match_id: 'source-1',
+          home_source_outcome: 'WINNER',
+        };
+      });
+      mockPrisma.match.findMany.mockResolvedValue([
+        {
+          ...baseMatch,
+          id: 'source-1',
+          status: 'COMPLETED',
+          home_team_id: 'home',
+          away_team_id: 'away',
+          home_score: 4,
+          away_score: 0,
+        },
+      ]);
+      mockPrisma.match.update.mockResolvedValue({ ...baseMatch, id: 'dep-1' });
+
+      await service.update('dep-1', { scheduled_start: baseMatch.scheduled_start });
+
+      expect(mockPrisma.match.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: 'dep-1' },
+          data: expect.objectContaining({ home_team_id: 'home' }),
+        }),
+      );
+    });
+  });
+
+  describe('bracket sync from match (match is the source of truth)', () => {
+    it('advances the linked bracket node when the match is completed decisively', async () => {
+      mockPrisma.match.findUnique.mockResolvedValue({
+        ...baseMatch,
+        home_score: 3,
+        away_score: 1,
+      });
+      mockPrisma.match.update.mockResolvedValue({
+        ...baseMatch,
+        status: 'COMPLETED',
+        home_score: 3,
+        away_score: 1, // home wins
+      });
+      mockPrisma.bracketNode.findFirst.mockResolvedValue({
+        id: 'node-1',
+        winner_id: null,
+        auto_advanced: false,
+      });
+
+      await service.update('match-1', { status: 'COMPLETED' });
+
+      expect(bracketsService.advance).toHaveBeenCalledWith(
+        'node-1',
+        'home',
+        'match',
+      );
+      expect(bracketsService.clearNodeWinner).not.toHaveBeenCalled();
+    });
+
+    it('un-advances the bracket node when a decided match is re-opened', async () => {
+      mockPrisma.match.findUnique.mockResolvedValue({
+        ...baseMatch,
+        status: 'COMPLETED',
+        home_score: 3,
+        away_score: 1,
+      });
+      mockPrisma.match.update.mockResolvedValue({
+        ...baseMatch,
+        status: 'LIVE',
+        home_score: 3,
+        away_score: 1,
+      });
+      mockPrisma.bracketNode.findFirst.mockResolvedValue({
+        id: 'node-1',
+        winner_id: 'home', // was decided
+        auto_advanced: false,
+      });
+
+      await service.update('match-1', { status: 'LIVE' });
+
+      expect(bracketsService.clearNodeWinner).toHaveBeenCalledWith('node-1');
+      expect(bracketsService.advance).not.toHaveBeenCalled();
+    });
+
+    it('re-advances to the new winner when a completed match result is flipped', async () => {
+      mockPrisma.match.findUnique.mockResolvedValue({
+        ...baseMatch,
+        status: 'COMPLETED',
+        home_score: 3,
+        away_score: 1,
+      });
+      mockPrisma.match.update.mockResolvedValue({
+        ...baseMatch,
+        status: 'COMPLETED',
+        home_score: 1,
+        away_score: 4, // away now wins
+      });
+      mockPrisma.bracketNode.findFirst.mockResolvedValue({
+        id: 'node-1',
+        winner_id: 'home',
+        auto_advanced: false,
+      });
+
+      await service.updateScore('match-1', 1, 4);
+
+      expect(bracketsService.advance).toHaveBeenCalledWith(
+        'node-1',
+        'away',
+        'match',
+      );
+    });
+
+    it('never touches a BYE (auto-advanced) node from a match', async () => {
+      mockPrisma.match.findUnique.mockResolvedValue({
+        ...baseMatch,
+        home_score: 3,
+        away_score: 1,
+      });
+      mockPrisma.match.update.mockResolvedValue({
+        ...baseMatch,
+        status: 'COMPLETED',
+        home_score: 3,
+        away_score: 1,
+      });
+      mockPrisma.bracketNode.findFirst.mockResolvedValue({
+        id: 'node-bye',
+        winner_id: 'home',
+        auto_advanced: true,
+      });
+
+      await service.update('match-1', { status: 'COMPLETED' });
+
+      expect(bracketsService.advance).not.toHaveBeenCalled();
+      expect(bracketsService.clearNodeWinner).not.toHaveBeenCalled();
+    });
+
+    it('does nothing for a match not linked to any bracket node', async () => {
+      mockPrisma.match.findUnique.mockResolvedValue({
+        ...baseMatch,
+        home_score: 3,
+        away_score: 1,
+      });
+      mockPrisma.match.update.mockResolvedValue({
+        ...baseMatch,
+        status: 'COMPLETED',
+        home_score: 3,
+        away_score: 1,
+      });
+      mockPrisma.bracketNode.findFirst.mockResolvedValue(null);
+
+      await service.update('match-1', { status: 'COMPLETED' });
+
+      expect(bracketsService.advance).not.toHaveBeenCalled();
+      expect(bracketsService.clearNodeWinner).not.toHaveBeenCalled();
     });
   });
 
