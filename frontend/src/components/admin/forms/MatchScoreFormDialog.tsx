@@ -93,7 +93,9 @@ export default function MatchScoreFormDialog({
     watchedHome !== undefined &&
     watchedAway !== undefined &&
     Number(watchedHome) === Number(watchedAway);
-  const showPenalties = regulationTied && watchedTieResolution === "PENALTIES";
+  const completing = watchedStatus === "COMPLETED";
+  const needsTieDecision = regulationTied && completing;
+  const showPenalties = needsTieDecision && watchedTieResolution === "PENALTIES";
 
   useEffect(() => {
     if (!open || !match) return;
@@ -104,18 +106,21 @@ export default function MatchScoreFormDialog({
         match.home_penalties != null ? String(match.home_penalties) : "",
       away_penalties:
         match.away_penalties != null ? String(match.away_penalties) : "",
-      tie_resolution: inferTieResolution(match),
+      tie_resolution:
+        match.status === "COMPLETED" ? inferTieResolution(match) : undefined,
       status: match.status,
     });
   }, [open, match, form]);
 
   useEffect(() => {
-    if (!regulationTied && watchedTieResolution) {
+    if (!needsTieDecision && watchedTieResolution) {
       form.setValue("tie_resolution", undefined);
       form.setValue("home_penalties", "");
       form.setValue("away_penalties", "");
+      form.clearErrors("tie_resolution");
+      form.clearErrors("home_penalties");
     }
-  }, [regulationTied, watchedTieResolution, form]);
+  }, [needsTieDecision, watchedTieResolution, form]);
 
   const onSubmit = form.handleSubmit(async (values) => {
     if (!match) return;
@@ -123,11 +128,17 @@ export default function MatchScoreFormDialog({
     const home = Number(values.home_score);
     const away = Number(values.away_score);
     const tied = home === away;
-    const tieResolution = tied ? values.tie_resolution : null;
+    const markingComplete = values.status === "COMPLETED";
+    const tieResolution = tied && markingComplete ? values.tie_resolution : undefined;
     const homePenalties = parseOptionalPenalty(values.home_penalties);
     const awayPenalties = parseOptionalPenalty(values.away_penalties);
+    const statusChanging = Boolean(values.status && values.status !== match.status);
+    const reopening =
+      statusChanging &&
+      match.status === "COMPLETED" &&
+      values.status !== "COMPLETED";
 
-    if (tied && values.status === "COMPLETED" && !tieResolution) {
+    if (tied && markingComplete && !tieResolution) {
       form.setError("tie_resolution", {
         message: "Choose how to handle the tied score before completing the match.",
       });
@@ -137,7 +148,7 @@ export default function MatchScoreFormDialog({
     if (
       tied &&
       tieResolution === "PENALTIES" &&
-      values.status === "COMPLETED" &&
+      markingComplete &&
       (homePenalties == null ||
         awayPenalties == null ||
         homePenalties === awayPenalties)
@@ -148,18 +159,34 @@ export default function MatchScoreFormDialog({
       return;
     }
 
+    const scorePayload = {
+      id: match.id,
+      home,
+      away,
+      tie_resolution: tied
+        ? markingComplete
+          ? (tieResolution ?? null)
+          : undefined
+        : null,
+      home_penalties:
+        tied && tieResolution === "PENALTIES" && markingComplete
+          ? homePenalties
+          : undefined,
+      away_penalties:
+        tied && tieResolution === "PENALTIES" && markingComplete
+          ? awayPenalties
+          : undefined,
+    };
+
     try {
-      await scoreMutation.mutateAsync({
-        id: match.id,
-        home,
-        away,
-        tie_resolution: tied ? (tieResolution ?? null) : null,
-        home_penalties:
-          tied && tieResolution === "PENALTIES" ? homePenalties : null,
-        away_penalties:
-          tied && tieResolution === "PENALTIES" ? awayPenalties : null,
-      });
-      if (values.status && values.status !== match.status) {
+      if (reopening) {
+        await updateMutation.mutateAsync({
+          id: match.id,
+          data: { status: values.status },
+        });
+      }
+      await scoreMutation.mutateAsync(scorePayload);
+      if (statusChanging && !reopening) {
         await updateMutation.mutateAsync({
           id: match.id,
           data: { status: values.status },
@@ -199,7 +226,7 @@ export default function MatchScoreFormDialog({
         />
       </div>
 
-      {regulationTied && (
+      {needsTieDecision && (
         <div className="space-y-3 rounded-lg border border-border/60 bg-muted/30 p-3">
           <div>
             <p className="text-sm font-medium text-foreground">Tied score</p>
@@ -287,7 +314,7 @@ export default function MatchScoreFormDialog({
         </div>
       )}
 
-      {regulationTied && watchedStatus === "COMPLETED" && !watchedTieResolution && (
+      {needsTieDecision && !watchedTieResolution && (
         <p className="text-xs text-muted-foreground">
           Select draw or penalty shootout before marking this match completed.
         </p>

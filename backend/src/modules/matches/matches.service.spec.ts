@@ -267,6 +267,21 @@ describe('MatchesService tied-score completion', () => {
         }),
       );
     });
+
+    it('allows tied score on live knockout match without tie resolution', async () => {
+      mockPrisma.match.findUnique.mockResolvedValue({
+        ...baseMatch,
+        status: 'LIVE',
+        home_score: 0,
+        away_score: 0,
+      });
+      mockPrisma.bracketNode.findFirst.mockResolvedValue({
+        id: 'node-1',
+        match_id: 'match-1',
+      });
+
+      await expect(service.updateScore('match-1', 1, 1)).resolves.toBeDefined();
+    });
   });
 
   describe('placeholder slot reconciliation', () => {

@@ -1,10 +1,11 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import AdminLayout from '@/components/AdminLayout';
 import AdminTable from '@/components/AdminTable';
 import QueryState from '@/components/shared/QueryState';
 import MatchFormDialog from '@/components/admin/forms/MatchFormDialog';
 import MatchScoreFormDialog from '@/components/admin/forms/MatchScoreFormDialog';
 import MatchEventFormDialog from '@/components/admin/forms/MatchEventFormDialog';
+import AdminMatchFilters from '@/components/admin/AdminMatchFilters';
 import { ConfirmDialog } from '@/components/admin/inline/ConfirmDialog';
 import { AdminMatchMobileRow } from '@/components/admin/AdminMatchMobileRow';
 import { useFormDialog } from '@/hooks/useFormDialog';
@@ -15,6 +16,12 @@ import { Button } from '@/components/ui/button';
 import { formatDate, formatTime, getMatchStatusBadgeVariant, matchSideName, matchVenueLabel } from '@/lib/utils';
 import { getApiErrorMessage } from '@/lib/errors';
 import { matchSearchText } from '@/lib/search-text';
+import {
+  DEFAULT_MATCH_LIST_FILTERS,
+  filterMatches,
+  matchListFiltersKey,
+  type MatchListFilters,
+} from '@/lib/match-filters';
 import { PlusCircle } from 'lucide-react';
 import { SoccerBallIcon } from '@/components/icons/SoccerBallIcon';
 import { toast } from 'sonner';
@@ -102,13 +109,18 @@ export default function AdminMatches() {
   const [scoreMatch, setScoreMatch] = useState<Match | null>(null);
   const [eventMatch, setEventMatch] = useState<Match | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<Match | null>(null);
+  const [filters, setFilters] = useState<MatchListFilters>(DEFAULT_MATCH_LIST_FILTERS);
+  const filteredMatches = useMemo(
+    () => filterMatches(matches, filters),
+    [matches, filters],
+  );
 
   return (
     <AdminLayout title="Matches">
       <QueryState isLoading={isLoading} isError={isError} onRetry={() => refetch()}>
         <AdminTable
           title="All Matches"
-          data={matches}
+          data={filteredMatches}
           columns={columns(setScoreMatch, setEventMatch)}
           mobileRender={(m) => (
             <AdminMatchMobileRow
@@ -121,6 +133,15 @@ export default function AdminMatches() {
           onEdit={formDialog.openEdit}
           onDelete={(m) => setDeleteTarget(m)}
           getSearchText={matchSearchText}
+          searchPlaceholder="Search teams, venue, division…"
+          filtersKey={matchListFiltersKey(filters)}
+          filterBar={
+            <AdminMatchFilters
+              matches={matches}
+              value={filters}
+              onChange={setFilters}
+            />
+          }
         />
       </QueryState>
 

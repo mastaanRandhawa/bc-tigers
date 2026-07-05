@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Search,
   Plus,
@@ -80,6 +80,10 @@ interface AdminTableProps<T extends { id: string }> {
   onScopeChange?: (scope: RecordScope) => void;
   /** Card layout for viewports below `md` (table still used on desktop). */
   mobileRender?: (row: T) => React.ReactNode;
+  /** Optional row rendered below the title bar (e.g. list filters). */
+  filterBar?: React.ReactNode;
+  /** Reset pagination when filters change. */
+  filtersKey?: string;
 }
 
 export default function AdminTable<T extends { id: string }>({
@@ -100,11 +104,17 @@ export default function AdminTable<T extends { id: string }>({
   scope,
   onScopeChange,
   mobileRender,
+  filterBar,
+  filtersKey,
 }: AdminTableProps<T>) {
   const hasActions = !!(onEdit || onDelete || onHistory || onRestore || onPurge);
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
   const pageSize = 10;
+
+  useEffect(() => {
+    setPage(1);
+  }, [filtersKey]);
 
   const q = search.trim().toLowerCase();
   const filtered =
@@ -233,6 +243,12 @@ export default function AdminTable<T extends { id: string }>({
           )}
         </div>
       </div>
+
+      {filterBar && (
+        <div className="border-b border-border px-4 py-3 sm:px-5">
+          {filterBar}
+        </div>
+      )}
 
       {paginated.length === 0 ? (
         <EmptyState title="No records found" message="Try adjusting your search or add a new record." />
