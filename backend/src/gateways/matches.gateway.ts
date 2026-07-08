@@ -10,7 +10,6 @@ import {
 import { Server, Socket } from 'socket.io';
 import { Logger } from '@nestjs/common';
 import { StandingsService } from '../modules/standings/standings.service';
-import { BracketsService } from '../modules/brackets/brackets.service';
 import { getCorsOrigins } from '../common/cors-origins';
 
 export const SOCKET_EVENTS = {
@@ -36,10 +35,7 @@ export class MatchesGateway
 
   private readonly logger = new Logger(MatchesGateway.name);
 
-  constructor(
-    private standingsService: StandingsService,
-    private bracketsService: BracketsService,
-  ) {}
+  constructor(private standingsService: StandingsService) {}
 
   handleConnection(client: Socket) {
     this.logger.log(`Client connected: ${client.id}`);

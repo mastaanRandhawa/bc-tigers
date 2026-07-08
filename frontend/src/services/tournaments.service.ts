@@ -35,6 +35,11 @@ export const tournamentsService = {
   update: (id: string, data: Partial<Tournament>) =>
     apiClient.patch<Tournament>(`/tournaments/${id}`, data),
 
+  complete: (id: string) => apiClient.post<Tournament>(`/tournaments/${id}/complete`),
+
+  enableEditing: (id: string) =>
+    apiClient.post<Tournament>(`/tournaments/${id}/enable-editing`),
+
   /** Soft delete (decommission). */
   delete: (id: string) => apiClient.delete<Tournament>(`/tournaments/${id}`),
 

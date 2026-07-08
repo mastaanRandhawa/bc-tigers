@@ -1,13 +1,16 @@
 import {
   BadRequestException,
+  Inject,
   Injectable,
   NotFoundException,
+  forwardRef,
 } from '@nestjs/common';
 import type { MatchStatus, Prisma } from '@prisma/client';
 import prisma from '../../prisma/prisma';
 import { pickAllowed } from '../../common/pick';
 import { AuditLogService } from '../audit-log/audit-log.service';
 import { AuditableService, asAuditable } from '../audit-log/auditable.service';
+import { BracketsService } from '../brackets/brackets.service';
 
 const ENTITY = 'Tournament';
 
@@ -62,6 +65,8 @@ export class TournamentsService {
   constructor(
     private readonly auditable: AuditableService,
     private readonly audit: AuditLogService,
+    @Inject(forwardRef(() => BracketsService))
+    private readonly bracketsService: BracketsService,
   ) {}
 
   /** List is auto-scoped by the soft-delete extension (active/deleted/all via request scope). */
@@ -207,6 +212,77 @@ export class TournamentsService {
       id,
       pickAllowed(data, TOURNAMENT_FIELDS),
     );
+  }
+
+  async complete(id: string) {
+    const existing = await prisma.tournament.findUnique({
+      where: { id },
+      include: { divisions: { select: { id: true } } },
+    });
+    if (!existing) throw new NotFoundException('Tournament not found');
+    if (existing.status === 'COMPLETED') {
+      throw new BadRequestException('Tournament is already completed');
+    }
+
+    for (const division of existing.divisions) {
+      const nodes = await prisma.bracketNode.count({
+        where: { division_id: division.id },
+      });
+      if (nodes > 0) {
+        try {
+          await this.bracketsService.finalizeBracket(division.id);
+        } catch {
+          // Division may lack a valid bracket — completion still proceeds.
+        }
+      }
+    }
+
+    const tournament = await this.auditable.updateAudited(
+      (tx) => asAuditable(tx.tournament),
+      ENTITY,
+      id,
+      {
+        status: 'COMPLETED',
+        completed_at: new Date(),
+        admin_editing_enabled: false,
+      },
+    );
+
+    await this.audit.log({
+      action: 'TOURNAMENT_COMPLETED',
+      entity: ENTITY,
+      entityId: id,
+    });
+
+    return tournament;
+  }
+
+  async enableEditing(id: string) {
+    const existing = await prisma.tournament.findUnique({ where: { id } });
+    if (!existing) throw new NotFoundException('Tournament not found');
+    if (existing.status !== 'COMPLETED') {
+      throw new BadRequestException(
+        'Only completed tournaments can have editing re-enabled',
+      );
+    }
+    if (existing.admin_editing_enabled) {
+      return existing;
+    }
+
+    const tournament = await this.auditable.updateAudited(
+      (tx) => asAuditable(tx.tournament),
+      ENTITY,
+      id,
+      { admin_editing_enabled: true },
+    );
+
+    await this.audit.log({
+      action: 'TOURNAMENT_EDITING_ENABLED',
+      entity: ENTITY,
+      entityId: id,
+    });
+
+    return tournament;
   }
 
   /** Soft delete (decommission) — never removes the row. */

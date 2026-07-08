@@ -73,7 +73,10 @@ export function ConfirmDialog({
             onClick={handle}
             disabled={pending}
           >
-            {pending ? (pendingLabel ?? "Deleting…") : confirmLabel}
+            {pending
+              ? (pendingLabel ??
+                (confirmLabel === "Delete" ? "Deleting…" : `${confirmLabel}…`))
+              : confirmLabel}
           </Button>
         </DialogFooter>
       </DialogContent>

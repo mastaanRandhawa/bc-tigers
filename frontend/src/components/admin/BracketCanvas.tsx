@@ -4,6 +4,7 @@ import {
   useGenerateBracket,
   useRandomizeBracket,
   usePlaceBracketTeam,
+  usePlaceBracketSlotSource,
   useRestoreBracket,
   useSetBracketLock,
   useFinalizeBracket,
@@ -12,6 +13,7 @@ import {
   useAssignBracketTeams,
   useValidateBracket,
 } from "@/hooks/useBrackets";
+import BracketView from "@/components/BracketView";
 import QueryState from "@/components/shared/QueryState";
 import {
   BracketGenerateSheet,
@@ -38,6 +40,8 @@ import { BracketStatusBanner } from "@/components/admin/bracket/BracketStatusBan
 import { BracketTree } from "@/components/admin/bracket/BracketTree";
 import { TeamPool } from "@/components/admin/bracket/TeamPool";
 import { TournamentToolbar } from "@/components/admin/bracket/TournamentToolbar";
+import { BracketSlotPicker } from "@/components/admin/bracket/BracketSlotPicker";
+import { useMatches } from "@/hooks/useMatches";
 import type { DragState } from "@/components/admin/bracket/types";
 
 interface BracketCanvasProps {
@@ -48,6 +52,7 @@ interface BracketCanvasProps {
   teams?: Team[];
   adminBracketLocked?: boolean;
   adminBracketFinalized?: boolean;
+  viewOnly?: boolean;
 }
 
 export function BracketCanvas({
@@ -58,6 +63,7 @@ export function BracketCanvas({
   tournamentName,
   adminBracketLocked = false,
   adminBracketFinalized = false,
+  viewOnly = false,
 }: BracketCanvasProps) {
   const {
     data: nodes = [],
@@ -68,6 +74,7 @@ export function BracketCanvas({
   const generateMutation = useGenerateBracket();
   const randomizeMutation = useRandomizeBracket();
   const placeMutation = usePlaceBracketTeam();
+  const placeSourceMutation = usePlaceBracketSlotSource();
   const restoreMutation = useRestoreBracket();
   const lockMutation = useSetBracketLock();
   const finalizeMutation = useFinalizeBracket();
@@ -97,6 +104,14 @@ export function BracketCanvas({
   const [undoStack, setUndoStack] = useState<BracketSnapshot[]>([]);
   const [redoStack, setRedoStack] = useState<BracketSnapshot[]>([]);
   const [randomizing, setRandomizing] = useState(false);
+  const [slotPicker, setSlotPicker] = useState<{
+    node: BracketNode;
+    slot: "home" | "away";
+  } | null>(null);
+
+  const { data: divisionMatches = [] } = useMatches(
+    divisionId ? { divisionId, limit: 200 } : undefined,
+  );
 
   const playedMatches = hasPlayedMatches(nodes);
   const structureLocked = isStructureLocked(
@@ -212,14 +227,13 @@ export function BracketCanvas({
   };
 
   const handleSlotClick = async (node: BracketNode, slot: "home" | "away") => {
-    if (
-      !selectedTeam ||
-      structureLocked ||
-      !canManuallyPlaceInNode(node, firstStage)
-    )
-      return;
+    if (structureLocked || !canManuallyPlaceInNode(node, firstStage)) return;
     if (isByeSlot(node, slot)) return;
-    await placeTeam(node.id, slot, selectedTeam.id);
+    if (selectedTeam) {
+      await placeTeam(node.id, slot, selectedTeam.id);
+      return;
+    }
+    setSlotPicker({ node, slot });
   };
 
   const handlePoolClick = (team: Team, multi: boolean) => {
@@ -360,10 +374,10 @@ export function BracketCanvas({
     }
   };
 
-  const handleGenerate = async () => {
+  const handleGenerate = async (bracketSize: number) => {
     setError("");
     try {
-      await generateMutation.mutateAsync(divisionId);
+      await generateMutation.mutateAsync({ divisionId, bracketSize });
       setUndoStack([]);
       setRedoStack([]);
       setShowGenerate(false);
@@ -416,7 +430,8 @@ export function BracketCanvas({
     finalizeMutation.isPending ||
     unfinalizeMutation.isPending ||
     swapMutation.isPending ||
-    assignMutation.isPending;
+    assignMutation.isPending ||
+    placeSourceMutation.isPending;
 
   return (
     <div className="space-y-8">
@@ -448,10 +463,18 @@ export function BracketCanvas({
         isEmpty={false}
       >
         {nodes.length === 0 ? (
-          <BracketEmptyState
-            teamCount={teams.length}
-            onCreate={() => setShowGenerate(true)}
-          />
+          viewOnly ? (
+            <div className="rounded-xl border border-dashed border-border py-16 text-center text-sm text-muted-foreground">
+              No bracket for this division.
+            </div>
+          ) : (
+            <BracketEmptyState
+              teamCount={teams.length}
+              onCreate={() => setShowGenerate(true)}
+            />
+          )
+        ) : viewOnly ? (
+          <BracketView nodes={nodes} />
         ) : (
           <div className="space-y-8">
             <BracketStatusBanner
@@ -547,6 +570,43 @@ export function BracketCanvas({
         isRegenerate={nodes.length > 0}
         pending={generateMutation.isPending}
         onGenerate={handleGenerate}
+      />
+
+      <BracketSlotPicker
+        open={!!slotPicker}
+        onOpenChange={(open) => !open && setSlotPicker(null)}
+        node={slotPicker?.node ?? null}
+        slot={slotPicker?.slot ?? null}
+        teams={teams}
+        divisionMatches={divisionMatches}
+        selectedTeamId={selectedTeam?.id}
+        pending={placeMutation.isPending || placeSourceMutation.isPending}
+        onPlaceTeam={async (nodeId, slot, teamId) => {
+          setError("");
+          try {
+            await placeTeam(nodeId, slot, teamId);
+            setSelectedTeam(null);
+          } catch (err) {
+            setError(getApiErrorMessage(err, "Failed to place team"));
+            throw err;
+          }
+        }}
+        onPlaceSource={async (nodeId, slot, sourceMatchId, outcome) => {
+          setError("");
+          const before = snapshotFromNodes(nodes);
+          try {
+            await placeSourceMutation.mutateAsync({
+              nodeId,
+              slot,
+              sourceMatchId,
+              outcome,
+            });
+            recordHistory(before);
+          } catch (err) {
+            setError(getApiErrorMessage(err, "Failed to set placeholder"));
+            throw err;
+          }
+        }}
       />
     </div>
   );

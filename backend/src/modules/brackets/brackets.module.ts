@@ -4,9 +4,14 @@ import { BracketsService } from './brackets.service';
 import { BracketEngine } from './bracket-engine';
 import { GatewaysModule } from '../../gateways/gateways.module';
 import { AuditLogModule } from '../audit-log/audit-log.module';
+import { MatchesModule } from '../matches/matches.module';
 
 @Module({
-  imports: [forwardRef(() => GatewaysModule), AuditLogModule],
+  imports: [
+    forwardRef(() => GatewaysModule),
+    AuditLogModule,
+    forwardRef(() => MatchesModule),
+  ],
   controllers: [BracketsController],
   providers: [BracketsService, BracketEngine],
   exports: [BracketsService, BracketEngine],

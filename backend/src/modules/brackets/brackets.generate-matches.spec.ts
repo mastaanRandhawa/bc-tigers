@@ -2,6 +2,13 @@ jest.mock('../../prisma/prisma', () => ({
   __esModule: true,
   default: {
     division: { findUnique: jest.fn() },
+    tournament: {
+      findUnique: jest.fn().mockResolvedValue({
+        status: 'ACTIVE',
+        admin_editing_enabled: true,
+        name: 'Cup',
+      }),
+    },
     teamDivision: { findMany: jest.fn() },
     bracketNode: {
       findMany: jest.fn(),
@@ -49,10 +56,14 @@ describe('BracketsService.generate — auto-created linked matches', () => {
     createNodes: jest.fn().mockResolvedValue(undefined),
     getFullBracket: jest.fn().mockResolvedValue([]),
   };
+  const matchesService = {
+    reconcileMatchSlots: jest.fn(),
+  };
   const service = new BracketsService(
     gateway as never,
     audit as never,
     engine as never,
+    matchesService as never,
   );
 
   beforeEach(() => {

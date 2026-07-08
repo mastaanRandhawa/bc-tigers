@@ -10,13 +10,14 @@ import {
   useRestoreTournament,
   usePurgeTournament,
   useRestoreTournamentVersion,
+  useCompleteTournament,
 } from '@/hooks/useTournaments';
 import type { RecordScope, Tournament } from '@/types';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { formatDate } from '@/lib/utils';
 import { useNavigate } from 'react-router-dom';
-import { ExternalLink } from 'lucide-react';
+import { ExternalLink, CheckCircle2 } from 'lucide-react';
 import { ConfirmDialog } from '@/components/admin/inline/ConfirmDialog';
 import { useState } from 'react';
 import { toast } from 'sonner';
@@ -32,11 +33,13 @@ export default function AdminTournaments() {
   const restoreMutation = useRestoreTournament();
   const purgeMutation = usePurgeTournament();
   const restoreVersionMutation = useRestoreTournamentVersion();
+  const completeMutation = useCompleteTournament();
 
   const formDialog = useFormDialog<Tournament>();
   const [deleteTarget, setDeleteTarget] = useState<Tournament | null>(null);
   const [purgeTarget, setPurgeTarget] = useState<Tournament | null>(null);
   const [historyTarget, setHistoryTarget] = useState<Tournament | null>(null);
+  const [completeTarget, setCompleteTarget] = useState<Tournament | null>(null);
 
   const columns = [
     {
@@ -82,18 +85,34 @@ export default function AdminTournaments() {
       key: 'workspace',
       label: 'Workspace',
       render: (t: Tournament) => (
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={(e) => {
-            e.stopPropagation();
-            navigate(`/admin/tournaments/${t.id}`);
-          }}
-          className="gap-1.5"
-        >
-          <ExternalLink className="h-3.5 w-3.5" />
-          Open
-        </Button>
+        <div className="flex flex-wrap gap-1.5">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={(e) => {
+              e.stopPropagation();
+              navigate(`/admin/tournaments/${t.id}`);
+            }}
+            className="gap-1.5"
+          >
+            <ExternalLink className="h-3.5 w-3.5" />
+            Open
+          </Button>
+          {!t.is_deleted && t.status !== 'COMPLETED' && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={(e) => {
+                e.stopPropagation();
+                setCompleteTarget(t);
+              }}
+              className="gap-1.5"
+            >
+              <CheckCircle2 className="h-3.5 w-3.5" />
+              Complete
+            </Button>
+          )}
+        </div>
       ),
     },
   ];
@@ -127,6 +146,26 @@ export default function AdminTournaments() {
         open={formDialog.open}
         onOpenChange={(open) => (open ? formDialog.setOpen(true) : formDialog.close())}
         tournament={formDialog.editing}
+      />
+
+      <ConfirmDialog
+        open={!!completeTarget}
+        onOpenChange={(open) => !open && setCompleteTarget(null)}
+        title={`Complete "${completeTarget?.name}"?`}
+        description="The tournament will be marked completed and locked for viewing. You can re-enable editing later from the workspace."
+        confirmLabel="Complete tournament"
+        onConfirm={async () => {
+          if (!completeTarget) return;
+          try {
+            await completeMutation.mutateAsync(completeTarget.id);
+            toast.success('Tournament completed.');
+            refetch();
+            setCompleteTarget(null);
+          } catch (err) {
+            toast.error(getApiErrorMessage(err, 'Failed to complete tournament'));
+            throw err;
+          }
+        }}
       />
 
       <ConfirmDialog

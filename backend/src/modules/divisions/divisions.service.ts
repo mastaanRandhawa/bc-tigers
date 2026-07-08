@@ -7,6 +7,10 @@ import { Prisma } from '@prisma/client';
 import prisma from '../../prisma/prisma';
 import { roundRobinPairs } from '../../common/round-robin';
 import { pickAllowed } from '../../common/pick';
+import {
+  assertDivisionEditable,
+  assertTournamentEditable,
+} from '../../common/assert-tournament-editable';
 import { AuditLogService } from '../audit-log/audit-log.service';
 import { StandingsService } from '../standings/standings.service';
 import { MEMBERSHIP_INCLUDE, teamFromMembership } from '../teams/team-membership';
@@ -209,17 +213,20 @@ export class DivisionsService {
     return divisions[0];
   }
 
-  create(data: unknown) {
+  async create(data: unknown) {
+    const picked = pickAllowed<Prisma.DivisionUncheckedCreateInput>(
+      data,
+      DIVISION_FIELDS,
+    );
+    await assertTournamentEditable(String(picked.tournament_id));
     return prisma.division.create({
-      data: pickAllowed<Prisma.DivisionUncheckedCreateInput>(
-        data,
-        DIVISION_FIELDS,
-      ),
+      data: picked,
       include: DIVISION_INCLUDE,
     });
   }
 
   async update(id: string, data: unknown) {
+    await assertDivisionEditable(id);
     const existing = await prisma.division.findUnique({ where: { id } });
     if (!existing) throw new NotFoundException('Division not found');
 
@@ -250,6 +257,7 @@ export class DivisionsService {
   }
 
   async remove(id: string) {
+    await assertDivisionEditable(id);
     const existing = await prisma.division.findUnique({ where: { id } });
     if (!existing) throw new NotFoundException('Division not found');
 

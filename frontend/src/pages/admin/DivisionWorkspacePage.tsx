@@ -22,8 +22,10 @@ import { useTeams, useDeleteTeam } from '@/hooks/useTeams';
 import { useMatches, useDeleteMatch, useUpdateMatch } from '@/hooks/useMatches';
 import { useFormDialog } from '@/hooks/useFormDialog';
 import { getDivisionTheme } from '@/lib/division-theme';
-import { formatDate, formatTime, matchVenueLabel } from '@/lib/utils';
+import { formatDate, formatTime, matchVenueLabel, getMatchStatusBadgeVariant } from '@/lib/utils';
+import { Badge } from '@/components/ui/badge';
 import { matchSearchText } from '@/lib/search-text';
+import { isTournamentViewOnly } from '@/lib/tournament-view-mode';
 import { getApiErrorMessage } from '@/lib/errors';
 import { toast } from 'sonner';
 import { Calendar, GitBranch, Pencil, Shield, Users, Zap, PlusCircle, BarChart3 } from 'lucide-react';
@@ -60,6 +62,7 @@ export default function DivisionWorkspacePage() {
 
   const theme = division ? getDivisionTheme(division) : null;
   const liveMatches = matches.filter((m) => m.status === 'LIVE');
+  const isViewOnly = isTournamentViewOnly(division?.tournament);
 
   const handleStatusChange = async (match: Match, status: string) => {
     try {
@@ -130,38 +133,51 @@ export default function DivisionWorkspacePage() {
     {
       key: 'status',
       label: 'Status',
-      render: (m: Match) => (
-        <select
-          value={m.status}
-          onChange={(e) => handleStatusChange(m, e.target.value)}
-          className="rounded-md border border-border bg-background px-2 py-1 text-xs text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary"
-          onClick={(e) => e.stopPropagation()}
-        >
-          {MATCH_STATUS_OPTIONS.map((s) => (
-            <option key={s} value={s}>{s}</option>
-          ))}
-        </select>
-      ),
+      render: (m: Match) =>
+        isViewOnly ? (
+          <Badge variant={getMatchStatusBadgeVariant(m.status)}>{m.status}</Badge>
+        ) : (
+          <select
+            value={m.status}
+            onChange={(e) => handleStatusChange(m, e.target.value)}
+            className="rounded-md border border-border bg-background px-2 py-1 text-xs text-foreground focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {MATCH_STATUS_OPTIONS.map((s) => (
+              <option key={s} value={s}>{s}</option>
+            ))}
+          </select>
+        ),
     },
     {
       key: 'score',
       label: 'Score',
       render: (m: Match) => (
         <div className="flex items-center gap-1.5">
-          <button
-            type="button"
-            onClick={(e) => { e.stopPropagation(); setScoreMatch(m); }}
-            className="font-semibold text-sm text-foreground hover:text-primary transition-colors min-w-[40px]"
-            title="Click to update score"
-          >
-            {m.status !== 'SCHEDULED' ? `${m.home_score}–${m.away_score}` : '—'}
-          </button>
-          <Button size="sm" variant="outline" className="h-6 w-6 p-0" onClick={(e) => { e.stopPropagation(); setScoreMatch(m); }}>
-            <SoccerBallIcon className="h-3 w-3" />
-          </Button>
-          <Button size="sm" variant="outline" className="h-6 w-6 p-0" onClick={(e) => { e.stopPropagation(); setEventMatch(m); }}>
-            <PlusCircle className="h-3 w-3" />
-          </Button>
+          {!isViewOnly ? (
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); setScoreMatch(m); }}
+              className="font-semibold text-sm text-foreground hover:text-primary transition-colors min-w-[40px]"
+              title="Click to update score"
+            >
+              {m.status !== 'SCHEDULED' ? `${m.home_score}–${m.away_score}` : '—'}
+            </button>
+          ) : (
+            <span className="font-semibold text-sm text-foreground min-w-[40px]">
+              {m.status !== 'SCHEDULED' ? `${m.home_score}–${m.away_score}` : '—'}
+            </span>
+          )}
+          {!isViewOnly && (
+            <>
+              <Button size="sm" variant="outline" className="h-6 w-6 p-0" onClick={(e) => { e.stopPropagation(); setScoreMatch(m); }}>
+                <SoccerBallIcon className="h-3 w-3" />
+              </Button>
+              <Button size="sm" variant="outline" className="h-6 w-6 p-0" onClick={(e) => { e.stopPropagation(); setEventMatch(m); }}>
+                <PlusCircle className="h-3 w-3" />
+              </Button>
+            </>
+          )}
         </div>
       ),
     },
@@ -173,7 +189,7 @@ export default function DivisionWorkspacePage() {
       title={division?.name ?? 'Division Workspace'}
       description={division ? `${division.format} · ${division.age_group ?? ''} ${division.gender}` : ''}
       action={
-        division && (
+        division && !isViewOnly && (
           <div className="flex items-center gap-2">
             <Button variant="outline" size="sm" onClick={() => setEditDivisionOpen(true)}>
               <Pencil className="h-3.5 w-3.5 mr-1" />
@@ -208,6 +224,12 @@ export default function DivisionWorkspacePage() {
       >
         {division && (
           <>
+            {isViewOnly && (
+              <div className="mb-5 rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-900 dark:text-amber-100">
+                This tournament is completed — viewing only. Enable editing from the tournament workspace to make changes.
+              </div>
+            )}
+
             <AdminStatGrid
               className="mb-5"
               items={[
@@ -255,30 +277,34 @@ export default function DivisionWorkspacePage() {
 
               {/* TEAMS TAB */}
               <TabsContent value="teams">
-                <div className="mb-4 flex justify-end">
-                  <Button onClick={() => teamDialog.openCreate()} className="w-full sm:w-auto">
-                    <PlusCircle className="h-4 w-4 mr-1.5" />
-                    Add Team
-                  </Button>
-                </div>
+                {!isViewOnly && (
+                  <div className="mb-4 flex justify-end">
+                    <Button onClick={() => teamDialog.openCreate()} className="w-full sm:w-auto">
+                      <PlusCircle className="h-4 w-4 mr-1.5" />
+                      Add Team
+                    </Button>
+                  </div>
+                )}
                 <AdminTable
                   title=""
                   data={teams}
                   columns={teamColumns}
-                  onEdit={teamDialog.openEdit}
-                  onDelete={(t) => setDeleteTarget({ type: 'team', id: t.id, label: t.name })}
+                  onEdit={isViewOnly ? undefined : teamDialog.openEdit}
+                  onDelete={isViewOnly ? undefined : (t) => setDeleteTarget({ type: 'team', id: t.id, label: t.name })}
                   searchKeys={['name', 'city']}
                 />
               </TabsContent>
 
               {/* MATCHES TAB */}
               <TabsContent value="matches">
-                <div className="mb-4 flex justify-end">
-                  <Button onClick={() => matchDialog.openCreate()} className="w-full sm:w-auto">
-                    <PlusCircle className="h-4 w-4 mr-1.5" />
-                    Add Match
-                  </Button>
-                </div>
+                {!isViewOnly && (
+                  <div className="mb-4 flex justify-end">
+                    <Button onClick={() => matchDialog.openCreate()} className="w-full sm:w-auto">
+                      <PlusCircle className="h-4 w-4 mr-1.5" />
+                      Add Match
+                    </Button>
+                  </div>
+                )}
                 <AdminTable
                   title=""
                   data={matches}
@@ -286,14 +312,14 @@ export default function DivisionWorkspacePage() {
                   mobileRender={(m) => (
                     <AdminMatchMobileRow
                       match={m}
-                      onScore={setScoreMatch}
-                      onEvent={setEventMatch}
-                      onStatusChange={handleStatusChange}
+                      onScore={isViewOnly ? undefined : setScoreMatch}
+                      onEvent={isViewOnly ? undefined : setEventMatch}
+                      onStatusChange={isViewOnly ? undefined : handleStatusChange}
                       statusOptions={MATCH_STATUS_OPTIONS}
                     />
                   )}
-                  onEdit={matchDialog.openEdit}
-                  onDelete={(m) => setDeleteTarget({ type: 'match', id: m.id, label: `${m.home_team?.name} vs ${m.away_team?.name}` })}
+                  onEdit={isViewOnly ? undefined : matchDialog.openEdit}
+                  onDelete={isViewOnly ? undefined : (m) => setDeleteTarget({ type: 'match', id: m.id, label: `${m.home_team?.name} vs ${m.away_team?.name}` })}
                   getSearchText={matchSearchText}
                   searchPlaceholder="Search teams, venue…"
                 />
@@ -350,6 +376,7 @@ export default function DivisionWorkspacePage() {
                   teams={teams}
                   adminBracketLocked={division.bracket_locked ?? false}
                   adminBracketFinalized={division.bracket_finalized ?? false}
+                  viewOnly={isViewOnly}
                 />
               </TabsContent>
             </Tabs>

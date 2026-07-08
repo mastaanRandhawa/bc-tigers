@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import {
   Sheet,
   SheetContent,
@@ -7,8 +8,14 @@ import {
   SheetBody,
 } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
-import { bracketFormatLabel, bracketSizeForTeamCount } from '@/lib/bracket-utils';
+import {
+  bracketFormatLabel,
+  bracketSizeForTeamCount,
+  VALID_BRACKET_SIZES,
+  type ValidBracketSize,
+} from '@/lib/bracket-utils';
 import { GitBranch } from 'lucide-react';
+import { cn } from '@/lib/utils';
 
 interface BracketGenerateSheetProps {
   open: boolean;
@@ -20,10 +27,12 @@ interface BracketGenerateSheetProps {
     warnings: string[];
     excluded: Array<{ teamName: string; reason: string }>;
     eligibleCount: number;
+    bracketSize?: number;
+    suggestedBracketSize?: number;
   };
   isRegenerate?: boolean;
   pending?: boolean;
-  onGenerate: () => void;
+  onGenerate: (bracketSize: ValidBracketSize) => void;
 }
 
 export function BracketGenerateSheet({
@@ -35,7 +44,17 @@ export function BracketGenerateSheet({
   pending,
   onGenerate,
 }: BracketGenerateSheetProps) {
-  const bracketSize = bracketSizeForTeamCount(teamCount);
+  const suggestedSize = bracketSizeForTeamCount(teamCount) as ValidBracketSize;
+  const [bracketSize, setBracketSize] = useState<ValidBracketSize>(suggestedSize);
+
+  useEffect(() => {
+    if (!open) return;
+    const next =
+      (validation?.suggestedBracketSize as ValidBracketSize | undefined) ??
+      suggestedSize;
+    setBracketSize(next);
+  }, [open, suggestedSize, validation?.suggestedBracketSize]);
+
   const byeCount = Math.max(0, bracketSize - teamCount);
   const canGenerate = teamCount >= 2 && (validation?.valid ?? true);
 
@@ -45,12 +64,41 @@ export function BracketGenerateSheet({
         <SheetHeader>
           <SheetTitle>{isRegenerate ? 'Regenerate bracket' : 'Create bracket'}</SheetTitle>
           <SheetDescription>
-            {teamCount} team{teamCount !== 1 ? 's' : ''} · {bracketFormatLabel(teamCount)}
-            {byeCount > 0 && ` · up to ${byeCount} BYE${byeCount > 1 ? 's' : ''} after placement`}
+            {teamCount} team{teamCount !== 1 ? 's' : ''} · {bracketFormatLabel(bracketSize)}
+            {byeCount > 0 && ` · ${byeCount} empty slot${byeCount > 1 ? 's' : ''}`}
           </SheetDescription>
         </SheetHeader>
 
         <SheetBody className="space-y-3 pt-2">
+          <div className="space-y-2">
+            <p className="text-xs font-medium text-foreground">Bracket size</p>
+            <div className="grid grid-cols-4 gap-2">
+              {VALID_BRACKET_SIZES.map((size) => (
+                <button
+                  key={size}
+                  type="button"
+                  disabled={size < teamCount}
+                  onClick={() => setBracketSize(size)}
+                  className={cn(
+                    'rounded-lg border px-2 py-2 text-sm font-semibold transition-colors',
+                    bracketSize === size
+                      ? 'border-primary bg-primary/10 text-primary'
+                      : 'border-border bg-muted/30 text-foreground hover:border-primary/40',
+                    size < teamCount && 'cursor-not-allowed opacity-40',
+                  )}
+                >
+                  {size}
+                </button>
+              ))}
+            </div>
+            {teamCount > 2 && teamCount < 8 && (
+              <p className="text-xs text-muted-foreground">
+                {teamCount} teams → choose 8 for a quarter-final bracket ({8 - teamCount} BYE
+                {8 - teamCount > 1 ? 's' : ''})
+              </p>
+            )}
+          </div>
+
           {validation?.warnings.map((w) => (
             <p key={w} className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-800 dark:text-amber-200">
               {w}
@@ -86,8 +134,8 @@ export function BracketGenerateSheet({
 
           <Button
             className="w-full"
-            disabled={pending || !canGenerate}
-            onClick={onGenerate}
+            disabled={pending || !canGenerate || bracketSize < teamCount}
+            onClick={() => onGenerate(bracketSize)}
           >
             <GitBranch className="mr-1.5 h-4 w-4" />
             {isRegenerate ? 'Regenerate bracket' : 'Create bracket'}

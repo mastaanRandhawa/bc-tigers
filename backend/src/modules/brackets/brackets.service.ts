@@ -6,8 +6,11 @@ import {
 } from '@nestjs/common';
 import { MatchesGateway } from '../../gateways/matches.gateway';
 import { AuditLogService } from '../audit-log/audit-log.service';
-import type { BracketStage } from '@prisma/client';
+import type { BracketStage, MatchSlotOutcome } from '@prisma/client';
 import prisma from '../../prisma/prisma';
+import { assertDivisionEditable } from '../../common/assert-tournament-editable';
+import { MatchesService } from '../matches/matches.service';
+import { attachSlotLabels } from '../matches/slot-labels';
 import { BracketEngine } from './bracket-engine';
 import { replaySavedWinners } from './bracket-engine/repair';
 import type { BracketNodeDetail } from './bracket-engine/bracket-node.types';
@@ -17,6 +20,7 @@ import {
   selectEligibleTeams,
   buildFirstRoundSlots,
   shuffleTeamIds,
+  bracketSizeForTeamCount,
   type EligibleTeam,
   type BracketNodeDraft,
 } from './scheduling';
@@ -37,14 +41,32 @@ export class BracketsService {
     private readonly gateway: MatchesGateway,
     private readonly audit: AuditLogService,
     private readonly engine: BracketEngine,
+    @Inject(forwardRef(() => MatchesService))
+    private readonly matchesService: MatchesService,
   ) {}
 
   private emitBracketUpdated(divisionId: string, payload?: unknown) {
     this.gateway.emitBracketUpdated(divisionId, payload ?? { divisionId });
   }
 
+  private async assertEditable(divisionId: string) {
+    await assertDivisionEditable(divisionId);
+  }
+
   getByDivisionId(divisionId: string): Promise<BracketNodeDetail[]> {
-    return this.engine.getFullBracket(divisionId);
+    return this.engine.getFullBracket(divisionId).then(
+      (nodes) =>
+        nodes.map((node) =>
+          node.match
+            ? {
+                ...node,
+                match: attachSlotLabels(
+                  node.match as Parameters<typeof attachSlotLabels>[0],
+                ),
+              }
+            : node,
+        ) as BracketNodeDetail[],
+    );
   }
 
   private async loadDivisionTeams(divisionId: string) {
@@ -76,7 +98,7 @@ export class BracketsService {
     return eligible;
   }
 
-  async validateGeneration(divisionId: string) {
+  async validateGeneration(divisionId: string, bracketSize?: number) {
     const division = await prisma.division.findUnique({
       where: { id: divisionId },
     });
@@ -91,10 +113,15 @@ export class BracketsService {
       teams,
       locked: structureLocked,
       minPlayersPerTeam: 0,
+      bracketSize,
     });
+
+    const autoSize = bracketSizeForTeamCount(eligible.length);
 
     return {
       ...validation,
+      bracketSize: bracketSize ?? autoSize,
+      suggestedBracketSize: autoSize,
       eligibleTeams: eligible.map((t) => ({ id: t.id, name: t.name })),
     };
   }
@@ -117,6 +144,7 @@ export class BracketsService {
   }
 
   async setBracketLock(divisionId: string, locked: boolean) {
+    await this.assertEditable(divisionId);
     const flags = await this.engine.loadDivisionFlags(divisionId);
     if (flags.bracket_finalized) {
       throw new BadRequestException(
@@ -153,7 +181,11 @@ export class BracketsService {
     return division;
   }
 
-  async generate(divisionId: string): Promise<BracketNodeDetail[]> {
+  async generate(
+    divisionId: string,
+    options?: { bracket_size?: number },
+  ): Promise<BracketNodeDetail[]> {
+    await this.assertEditable(divisionId);
     const division = await prisma.division.findUnique({
       where: { id: divisionId },
       include: { tournament: true },
@@ -167,6 +199,7 @@ export class BracketsService {
     const plan = planBracket({
       divisionId,
       teams: eligible,
+      bracketSize: options?.bracket_size,
     });
 
     if (!plan.validation.valid) {
@@ -336,7 +369,49 @@ export class BracketsService {
     if (updates.length > 0) await prisma.$transaction(updates);
   }
 
+  /** Copy resolved team ids from a linked match onto its bracket node. */
+  async syncNodeTeamsFromMatch(nodeId: string) {
+    const node = await prisma.bracketNode.findUnique({
+      where: { id: nodeId },
+      include: {
+        match: { select: { home_team_id: true, away_team_id: true } },
+      },
+    });
+    if (!node?.match) return;
+
+    if (
+      node.home_team_id === node.match.home_team_id &&
+      node.away_team_id === node.match.away_team_id
+    ) {
+      return;
+    }
+
+    const nodes = await this.engine.loadNodes(node.division_id);
+    const engineNode = nodes.find((n) => n.id === nodeId);
+    if (!engineNode) return;
+
+    engineNode.home_team_id = node.match.home_team_id;
+    engineNode.away_team_id = node.match.away_team_id;
+    if (!node.match.home_team_id || !node.match.away_team_id) {
+      engineNode.winner_id = null;
+      engineNode.auto_advanced = false;
+      engineNode.completed_at = null;
+    }
+
+    this.engine.recomputeAllStatuses(nodes);
+    await this.engine.persistNodes(nodes);
+  }
+
+  async syncNodeTeamsFromMatchByMatchId(matchId: string) {
+    const node = await prisma.bracketNode.findFirst({
+      where: { match_id: matchId },
+      select: { id: true },
+    });
+    if (node) await this.syncNodeTeamsFromMatch(node.id);
+  }
+
   async randomize(divisionId: string): Promise<BracketNodeDetail[]> {
+    await this.assertEditable(divisionId);
     await this.engine.assertStructureEditable(divisionId);
 
     const nodes = await this.getByDivisionId(divisionId);
@@ -399,6 +474,7 @@ export class BracketsService {
       where: { id: nodeId },
     });
 
+    await this.assertEditable(target.division_id);
     await this.engine.assertStructureEditable(target.division_id);
 
     const nodes = await this.engine.loadNodes(target.division_id);
@@ -463,7 +539,100 @@ export class BracketsService {
 
     this.engine.recomputeAllStatuses(nodes);
     await this.engine.persistNodes(nodes);
+
+    if (targetNode.match_id) {
+      await prisma.match.update({
+        where: { id: targetNode.match_id },
+        data:
+          slot === 'home'
+            ? {
+                home_source_match_id: null,
+                home_source_outcome: null,
+                home_source_group_id: null,
+                home_source_rank: null,
+              }
+            : {
+                away_source_match_id: null,
+                away_source_outcome: null,
+                away_source_group_id: null,
+                away_source_rank: null,
+              },
+      });
+    }
+
     await this.syncNodeMatches(target.division_id);
+    const result = await this.getNode(nodeId);
+    this.emitBracketUpdated(target.division_id);
+    return result;
+  }
+
+  async placeSlotSource(
+    nodeId: string,
+    slot: 'home' | 'away',
+    sourceMatchId: string,
+    outcome: MatchSlotOutcome,
+  ) {
+    const target = await prisma.bracketNode.findUniqueOrThrow({
+      where: { id: nodeId },
+    });
+
+    await this.assertEditable(target.division_id);
+    await this.engine.assertStructureEditable(target.division_id);
+
+    if (!target.match_id) {
+      throw new BadRequestException('Bracket node has no linked match');
+    }
+
+    const nodes = await this.engine.loadNodes(target.division_id);
+    const targetNode = nodes.find((n) => n.id === nodeId)!;
+
+    if (targetNode.winner_id) {
+      throw new BadRequestException(
+        'Cannot modify a match that already has a winner',
+      );
+    }
+
+    const firstStage = this.earliestStageFromEngine(nodes);
+    if (!firstStage) {
+      throw new BadRequestException('Invalid bracket');
+    }
+    if (targetNode.stage !== firstStage) {
+      throw new BadRequestException(
+        'Placeholders can only be set in the first knockout round',
+      );
+    }
+
+    await prisma.match.update({
+      where: { id: target.match_id },
+      data:
+        slot === 'home'
+          ? {
+              home_team_id: null,
+              home_source_match_id: sourceMatchId,
+              home_source_outcome: outcome,
+              home_source_group_id: null,
+              home_source_rank: null,
+            }
+          : {
+              away_team_id: null,
+              away_source_match_id: sourceMatchId,
+              away_source_outcome: outcome,
+              away_source_group_id: null,
+              away_source_rank: null,
+            },
+    });
+
+    if (slot === 'home') targetNode.home_team_id = null;
+    else targetNode.away_team_id = null;
+    targetNode.winner_id = null;
+    targetNode.auto_advanced = false;
+    targetNode.completed_at = null;
+
+    this.engine.recomputeAllStatuses(nodes);
+    await this.engine.persistNodes(nodes);
+    await this.matchesService.reconcileMatchSlots(target.match_id);
+    await this.syncNodeTeamsFromMatch(nodeId);
+
     const result = await this.getNode(nodeId);
     this.emitBracketUpdated(target.division_id);
     return result;
@@ -523,6 +692,7 @@ export class BracketsService {
     const node = await prisma.bracketNode.findUniqueOrThrow({
       where: { id: nodeId },
     });
+    await this.assertEditable(node.division_id);
     await this.engine.assertStructureEditable(node.division_id);
 
     return prisma.bracketNode.update({
@@ -553,6 +723,7 @@ export class BracketsService {
       winner_id?: string | null;
     }>,
   ): Promise<BracketNodeDetail[]> {
+    await this.assertEditable(divisionId);
     await this.engine.assertStructureEditable(divisionId);
 
     await prisma.$transaction(
@@ -603,6 +774,7 @@ export class BracketsService {
         'Matches must be in the same round to swap',
       );
     }
+    await this.assertEditable(a.division_id);
     await this.engine.assertStructureEditable(a.division_id);
     if (a.winner_id || b.winner_id) {
       throw new BadRequestException(
@@ -651,6 +823,7 @@ export class BracketsService {
     divisionId: string,
     teamIds: string[],
   ): Promise<BracketNodeDetail[]> {
+    await this.assertEditable(divisionId);
     await this.engine.assertStructureEditable(divisionId);
 
     const nodes = await this.getByDivisionId(divisionId);

@@ -1,8 +1,10 @@
 import type { EligibleTeam, TeamExclusion, ValidationReport } from './types';
 import {
   MAX_SUPPORTED_TEAMS,
+  VALID_BRACKET_SIZES,
   bracketSizeForTeamCount,
   byeCountForTeamCount,
+  isValidBracketSize,
 } from './bye-calculator';
 
 export interface EligibilityInput {
@@ -16,6 +18,7 @@ export interface EligibilityInput {
   }>;
   minPlayersPerTeam?: number;
   locked?: boolean;
+  bracketSize?: number;
 }
 
 export function validateBracketGeneration(
@@ -76,12 +79,40 @@ export function validateBracketGeneration(
     );
   }
 
-  const bracketSize = bracketSizeForTeamCount(eligible.length);
-  const byes = byeCountForTeamCount(eligible.length);
+  const autoSize = bracketSizeForTeamCount(eligible.length);
+  const bracketSize =
+    input.bracketSize != null ? input.bracketSize : autoSize;
+
+  if (input.bracketSize != null && !isValidBracketSize(input.bracketSize)) {
+    errors.push(
+      `Bracket size must be one of ${VALID_BRACKET_SIZES.join(', ')}`,
+    );
+  }
+
+  if (eligible.length > 0 && bracketSize < eligible.length) {
+    errors.push(
+      `Need at least ${eligible.length} bracket slots for ${eligible.length} teams (selected size: ${bracketSize})`,
+    );
+  }
+
+  const byes = Math.max(0, bracketSize - eligible.length);
   if (byes > 0) {
     warnings.push(
-      `${byes} BYE${byes > 1 ? 's' : ''} may apply (${eligible.length} teams → ${bracketSize}-team bracket). Place teams manually or use Random draw.`,
+      `${byes} empty slot${byes > 1 ? 's' : ''} in this ${bracketSize}-team bracket — place teams manually or use Random draw.`,
     );
+  } else if (input.bracketSize != null && input.bracketSize > eligible.length) {
+    warnings.push(
+      `${input.bracketSize - eligible.length} extra empty slot${input.bracketSize - eligible.length > 1 ? 's' : ''} — fill manually or leave as BYEs.`,
+    );
+  }
+
+  if (eligible.length > 0 && input.bracketSize == null) {
+    const autoByes = byeCountForTeamCount(eligible.length);
+    if (autoByes > 0) {
+      warnings.push(
+        `${autoByes} BYE${autoByes > 1 ? 's' : ''} may apply (${eligible.length} teams → ${autoSize}-team bracket). Place teams manually or use Random draw.`,
+      );
+    }
   }
 
   if (eligible.length > 0) {

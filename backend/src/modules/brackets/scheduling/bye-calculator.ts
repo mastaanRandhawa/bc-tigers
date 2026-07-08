@@ -21,3 +21,10 @@ export function byeCountForTeamCount(teamCount: number): number {
 
 /** Max teams supported by current BracketStage enum (ROUND_OF_16 = 16 slots). */
 export const MAX_SUPPORTED_TEAMS = 16;
+
+export const VALID_BRACKET_SIZES = [2, 4, 8, 16] as const;
+export type ValidBracketSize = (typeof VALID_BRACKET_SIZES)[number];
+
+export function isValidBracketSize(size: number): size is ValidBracketSize {
+  return (VALID_BRACKET_SIZES as readonly number[]).includes(size);
+}

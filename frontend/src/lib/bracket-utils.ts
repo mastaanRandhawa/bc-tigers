@@ -5,6 +5,9 @@ export function bracketSizeForTeamCount(count: number): number {
   return Math.min(size, 16);
 }
 
+export const VALID_BRACKET_SIZES = [2, 4, 8, 16] as const;
+export type ValidBracketSize = (typeof VALID_BRACKET_SIZES)[number];
+
 export function byeCountForTeamCount(count: number): number {
   return bracketSizeForTeamCount(count) - count;
 }

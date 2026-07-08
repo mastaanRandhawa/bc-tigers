@@ -70,6 +70,22 @@ export function useDeleteTournament() {
   });
 }
 
+export function useCompleteTournament() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => tournamentsService.complete(id),
+    onSuccess: () => invalidateTournamentQueries(qc),
+  });
+}
+
+export function useEnableTournamentEditing() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) => tournamentsService.enableEditing(id),
+    onSuccess: () => invalidateTournamentQueries(qc),
+  });
+}
+
 /** Admin list with active/deleted/all scope (gated to admins). */
 export function useManagedTournaments(scope: RecordScope) {
   const canAdmin = useCanAdminEdit();

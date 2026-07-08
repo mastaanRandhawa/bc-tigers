@@ -9,6 +9,13 @@ jest.mock('../../prisma/prisma', () => ({
       count: jest.fn(),
     },
     bracketNode: { findFirst: jest.fn(), findMany: jest.fn(), updateMany: jest.fn() },
+    tournament: {
+      findUnique: jest.fn().mockResolvedValue({
+        status: 'ACTIVE',
+        admin_editing_enabled: true,
+        name: 'Cup',
+      }),
+    },
     matchEvent: { findMany: jest.fn() },
     user: { findMany: jest.fn().mockResolvedValue([]) },
     standing: { findFirst: jest.fn() },
@@ -78,7 +85,11 @@ describe('MatchesService tied-score completion', () => {
     emitMatchUpdated: jest.fn(),
     refreshStandings: jest.fn(),
   };
-  const bracketsService = { advance: jest.fn(), clearNodeWinner: jest.fn() };
+  const bracketsService = {
+    advance: jest.fn(),
+    clearNodeWinner: jest.fn(),
+    syncNodeTeamsFromMatchByMatchId: jest.fn(),
+  };
   const mailService = { send: jest.fn() };
   const service = new MatchesService(
     gateway as never,
@@ -193,9 +204,6 @@ describe('MatchesService tied-score completion', () => {
           data: expect.objectContaining({
             home_score: 1,
             away_score: 1,
-            tie_resolution: 'DRAW',
-            home_penalties: null,
-            away_penalties: null,
           }),
         }),
       );
@@ -260,9 +268,6 @@ describe('MatchesService tied-score completion', () => {
           data: expect.objectContaining({
             home_score: 3,
             away_score: 1,
-            tie_resolution: null,
-            home_penalties: null,
-            away_penalties: null,
           }),
         }),
       );

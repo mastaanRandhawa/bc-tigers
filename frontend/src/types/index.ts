@@ -76,6 +76,8 @@ export interface Tournament {
   tournament_type: TournamentType;
   logo?: string;
   rules?: string;
+  completed_at?: string | null;
+  admin_editing_enabled?: boolean;
   created_by: string;
   divisions?: Division[];
   // Soft-delete / lifecycle (admin)

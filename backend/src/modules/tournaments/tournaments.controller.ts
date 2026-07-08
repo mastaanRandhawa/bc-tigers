@@ -81,6 +81,18 @@ export class TournamentsController {
     return this.service.update(id, body);
   }
 
+  @Post(':id/complete')
+  @AdminOnly()
+  complete(@Param('id') id: string) {
+    return this.service.complete(id);
+  }
+
+  @Post(':id/enable-editing')
+  @AdminOnly()
+  enableEditing(@Param('id') id: string) {
+    return this.service.enableEditing(id);
+  }
+
   @Post(':id/restore')
   @AdminOnly()
   restore(@Param('id') id: string) {

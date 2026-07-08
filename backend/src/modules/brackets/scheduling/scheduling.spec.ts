@@ -140,6 +140,41 @@ describe('planBracket', () => {
       plan.stages.indexOf('THIRD_PLACE'),
     );
   });
+
+  it('honours an explicit bracket size larger than team count', () => {
+    const plan = planBracket({
+      divisionId: 'div-1',
+      teams: mockTeams(6),
+      bracketSize: 8,
+    });
+    expect(plan.validation.valid).toBe(true);
+    expect(plan.bracketSize).toBe(8);
+    expect(plan.byeCount).toBe(2);
+    expect(plan.firstRound).toHaveLength(4);
+    expect(plan.firstStage).toBe('QUARTER_FINAL');
+  });
+
+  it('rejects explicit bracket size smaller than team count', () => {
+    const plan = planBracket({
+      divisionId: 'div-1',
+      teams: mockTeams(6),
+      bracketSize: 4,
+    });
+    expect(plan.validation.valid).toBe(false);
+    expect(plan.validation.errors.some((e) => e.includes('6'))).toBe(true);
+  });
+
+  it('rejects invalid bracket sizes', () => {
+    const plan = planBracket({
+      divisionId: 'div-1',
+      teams: mockTeams(4),
+      bracketSize: 6,
+    });
+    expect(plan.validation.valid).toBe(false);
+    expect(plan.validation.errors.some((e) => e.includes('2, 4, 8, 16'))).toBe(
+      true,
+    );
+  });
 });
 
 describe('standardSeedPairs', () => {

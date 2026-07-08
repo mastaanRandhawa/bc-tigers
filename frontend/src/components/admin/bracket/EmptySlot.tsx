@@ -57,7 +57,7 @@ export function EmptySlot({
     >
       <Plus className={cn('h-3.5 w-3.5 shrink-0', isOver && 'scale-110')} aria-hidden />
       <span className="text-xs font-medium">
-        {isOver ? 'Release to place' : isClickTarget ? 'Click to place' : 'Drop team here'}
+        {isOver ? 'Release to place' : isClickTarget ? 'Click to configure' : 'Drop team here'}
       </span>
     </m.div>
   );

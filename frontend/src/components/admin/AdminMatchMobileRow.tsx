@@ -7,8 +7,8 @@ import { SoccerBallIcon } from '@/components/icons/SoccerBallIcon';
 
 interface AdminMatchMobileRowProps {
   match: Match;
-  onScore: (m: Match) => void;
-  onEvent: (m: Match) => void;
+  onScore?: (m: Match) => void;
+  onEvent?: (m: Match) => void;
   onStatusChange?: (m: Match, status: string) => void;
   statusOptions?: readonly string[];
   showDivision?: boolean;
@@ -77,36 +77,40 @@ export function AdminMatchMobileRow({
           <Badge variant={getMatchStatusBadgeVariant(match.status)}>{match.status}</Badge>
         )}
 
-        <div className="ml-auto flex items-center gap-1.5">
-          <button
-            type="button"
-            onClick={() => onScore(match)}
-            className="flex min-h-9 min-w-[3rem] items-center justify-center rounded-md border border-border bg-background px-2.5 text-sm font-semibold text-foreground transition-colors hover:border-primary hover:text-primary"
-            title="Update score"
-          >
-            {hasScore ? `${match.home_score}–${match.away_score}` : '—'}
-          </button>
-          <Button
-            type="button"
-            size="sm"
-            variant="outline"
-            className="h-9 w-9 shrink-0 p-0"
-            onClick={() => onScore(match)}
-            aria-label="Update score"
-          >
-            <SoccerBallIcon className="h-3.5 w-3.5" />
-          </Button>
-          <Button
-            type="button"
-            size="sm"
-            variant="outline"
-            className="h-9 w-9 shrink-0 p-0"
-            onClick={() => onEvent(match)}
-            aria-label="Add match event"
-          >
-            <PlusCircle className="h-3.5 w-3.5" />
-          </Button>
-        </div>
+        {onScore && (
+          <div className="ml-auto flex items-center gap-1.5">
+            <button
+              type="button"
+              onClick={() => onScore(match)}
+              className="flex min-h-9 min-w-[3rem] items-center justify-center rounded-md border border-border bg-background px-2.5 text-sm font-semibold text-foreground transition-colors hover:border-primary hover:text-primary"
+              title="Update score"
+            >
+              {hasScore ? `${match.home_score}–${match.away_score}` : '—'}
+            </button>
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              className="h-9 w-9 shrink-0 p-0"
+              onClick={() => onScore(match)}
+              aria-label="Update score"
+            >
+              <SoccerBallIcon className="h-3.5 w-3.5" />
+            </Button>
+            {onEvent && (
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                className="h-9 w-9 shrink-0 p-0"
+                onClick={() => onEvent(match)}
+                aria-label="Add match event"
+              >
+                <PlusCircle className="h-3.5 w-3.5" />
+              </Button>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

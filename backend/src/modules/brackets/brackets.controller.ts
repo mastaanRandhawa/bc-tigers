@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Patch, Param, Body } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Param, Body, Query } from '@nestjs/common';
 import { BracketsService } from './brackets.service';
 import { AdminOnly } from '../auth/admin.decorator';
 
@@ -8,8 +8,18 @@ export class BracketsController {
 
   @Get('validate/:divisionId')
   @AdminOnly()
-  validate(@Param('divisionId') divisionId: string) {
-    return this.service.validateGeneration(divisionId);
+  validate(
+    @Param('divisionId') divisionId: string,
+    @Query('bracket_size') bracketSize?: string,
+  ) {
+    const parsed =
+      bracketSize != null && bracketSize !== ''
+        ? parseInt(bracketSize, 10)
+        : undefined;
+    return this.service.validateGeneration(
+      divisionId,
+      Number.isFinite(parsed) ? parsed : undefined,
+    );
   }
 
   @Get('division/:divisionId')
@@ -19,8 +29,11 @@ export class BracketsController {
 
   @Post(':divisionId/generate')
   @AdminOnly()
-  generate(@Param('divisionId') divisionId: string) {
-    return this.service.generate(divisionId);
+  generate(
+    @Param('divisionId') divisionId: string,
+    @Body() body: { bracket_size?: number },
+  ) {
+    return this.service.generate(divisionId, body);
   }
 
   @Post(':divisionId/randomize')
@@ -70,6 +83,25 @@ export class BracketsController {
     @Body() body: { team_id: string; slot: 'home' | 'away' },
   ) {
     return this.service.placeTeam(nodeId, body.slot, body.team_id);
+  }
+
+  @Patch('nodes/:nodeId/place-source')
+  @AdminOnly()
+  placeSlotSource(
+    @Param('nodeId') nodeId: string,
+    @Body()
+    body: {
+      slot: 'home' | 'away';
+      source_match_id: string;
+      outcome: 'WINNER' | 'LOSER';
+    },
+  ) {
+    return this.service.placeSlotSource(
+      nodeId,
+      body.slot,
+      body.source_match_id,
+      body.outcome,
+    );
   }
 
   @Patch('nodes/swap')

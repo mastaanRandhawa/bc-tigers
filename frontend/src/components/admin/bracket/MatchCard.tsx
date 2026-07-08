@@ -1,6 +1,6 @@
 import { GripVertical, Trophy } from "lucide-react";
 import { m } from "motion/react";
-import { cn } from "@/lib/utils";
+import { cn, matchSideName } from "@/lib/utils";
 import { configureMatchDrag, isByeSlot } from "@/lib/bracket-utils";
 import type { BracketNode, BracketStage, Team } from "@/types";
 import { STAGE_LABELS } from "./constants";
@@ -89,10 +89,13 @@ export function MatchCard({
 
   const renderSlot = (slot: "home" | "away") => {
     const team = slot === "home" ? node.home_team : node.away_team;
+    const label =
+      slot === "home" ? node.match?.home_label : node.match?.away_label;
+    const displayName = matchSideName(team, label);
     const bye = isByeSlot(node, slot);
     const isOver = dragOver?.nodeId === node.id && dragOver.slot === slot;
     const isClickTarget =
-      !!selectedTeamId && allowPlacement && !isByeSlot(node, slot);
+      allowPlacement && !isByeSlot(node, slot) && (!!selectedTeamId || !team);
     const isWinner =
       !!node.winner_id &&
       node.winner_id ===
@@ -122,6 +125,24 @@ export function MatchCard({
           onDragStart={onDragStartFromSlot}
           onRemove={allowPlacement ? () => onRemoveSlot(node, slot) : undefined}
         />
+      );
+    }
+
+    if (label) {
+      return (
+        <div className="px-2 py-1.5">
+          <button
+            type="button"
+            disabled={slotLocked}
+            onClick={() => onSlotClick(node, slot)}
+            className={cn(
+              "flex min-h-[44px] w-full items-center rounded-lg border border-dashed border-border/70 bg-muted/20 px-3 py-2 text-left text-xs font-medium italic text-muted-foreground transition-colors",
+              !slotLocked && "hover:border-primary/40 hover:bg-primary/5 hover:text-primary",
+            )}
+          >
+            {displayName}
+          </button>
+        </div>
       );
     }
 

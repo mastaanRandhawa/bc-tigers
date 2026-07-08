@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import type { BracketNode } from '@/types';
-import { cn } from '@/lib/utils';
+import { cn, matchSideName } from '@/lib/utils';
 import { Trophy } from 'lucide-react';
 import { getMatchPath } from '@/lib/division-routes';
 
@@ -72,13 +72,13 @@ function BracketMatch({ node }: BracketMatchProps) {
   const inner = (
     <div className={cn('bracket-match', isFinal && 'bracket-match-final')}>
       <BracketTeamRow
-        name={node.home_team?.name ?? 'TBD'}
+        name={matchSideName(node.home_team, node.match?.home_label)}
         logo={node.home_team?.logo}
         score={node.match?.home_score}
         isWinner={homeWins}
       />
       <BracketTeamRow
-        name={node.away_team?.name ?? 'TBD'}
+        name={matchSideName(node.away_team, node.match?.away_label)}
         logo={node.away_team?.logo}
         score={node.match?.away_score}
         isWinner={awayWins}

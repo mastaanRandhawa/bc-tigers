@@ -12,6 +12,7 @@ import { MatchesGateway } from '../../gateways/matches.gateway';
 import { BracketsService } from '../brackets/brackets.service';
 import { MailService } from '../mail/mail.service';
 import { pickAllowed } from '../../common/pick';
+import { assertDivisionEditable, assertTournamentEditable } from '../../common/assert-tournament-editable';
 import {
   assertCoachCanAddGoalEvent,
   assertCoachCanDeleteGoalEvent,
@@ -36,7 +37,7 @@ import {
   standingsExcludedMatchIdsForDivision,
   type MatchOutcomeFields,
 } from './match-outcome';
-import type { TieResolution } from '@prisma/client';
+import type { TieResolution } from './match-outcome';
 
 export type MatchEventActor = { userId: string; role: string };
 
@@ -245,6 +246,7 @@ export class MatchesService {
       data,
       MATCH_FIELDS,
     );
+    await assertTournamentEditable(String(createData.tournament_id));
     await this.validateSources(createData, createData.division_id);
     await assertTeamsInDivision(String(createData.division_id), [
       createData.home_team_id,
@@ -264,6 +266,7 @@ export class MatchesService {
 
   async update(id: string, data: unknown) {
     const existing = await this.findOne(id);
+    await assertTournamentEditable(existing.tournament_id);
     const updateData = pickAllowed<Prisma.MatchUncheckedUpdateInput>(
       data,
       MATCH_FIELDS,
@@ -299,9 +302,6 @@ export class MatchesService {
       const scoreLine = formatMatchResultLine(
         match.home_score,
         match.away_score,
-        match.home_penalties,
-        match.away_penalties,
-        match.tie_resolution,
       );
       await this.emailAdmins(
         match.tournament_id,
@@ -338,6 +338,9 @@ export class MatchesService {
   }
 
   async addEvent(matchId: string, data: unknown, actor?: MatchEventActor) {
+    const match = await this.findOne(matchId);
+    await assertTournamentEditable(match.tournament_id);
+
     const eventData = pickAllowed<Prisma.MatchEventUncheckedCreateInput>(
       data,
       MATCH_EVENT_FIELDS,
@@ -353,7 +356,6 @@ export class MatchesService {
       include: { player: true, team: true },
     });
 
-    const match = await this.findOne(matchId);
     await this.syncScoreFromEvents(matchId);
 
     this.gateway.emitMatchEvent({
@@ -372,6 +374,9 @@ export class MatchesService {
     data: unknown,
     actor?: MatchEventActor,
   ) {
+    const match = await this.findOne(matchId);
+    await assertTournamentEditable(match.tournament_id);
+
     const existing = await prisma.matchEvent.findFirst({
       where: { id: eventId, match_id: matchId },
     });
@@ -398,7 +403,6 @@ export class MatchesService {
       include: { player: true, team: true },
     });
 
-    const match = await this.findOne(matchId);
     await this.syncScoreFromEvents(matchId);
 
     this.gateway.emitMatchEvent({
@@ -412,6 +416,9 @@ export class MatchesService {
   }
 
   async deleteEvent(matchId: string, eventId: string, actor?: MatchEventActor) {
+    const match = await this.findOne(matchId);
+    await assertTournamentEditable(match.tournament_id);
+
     const existing = await prisma.matchEvent.findFirst({
       where: { id: eventId, match_id: matchId },
     });
@@ -424,8 +431,8 @@ export class MatchesService {
     await prisma.matchEvent.delete({ where: { id: eventId } });
 
     await this.syncScoreFromEvents(matchId);
-    const match = await this.findOne(matchId);
-    this.gateway.emitScoreUpdate(matchId, match.home_score, match.away_score);
+    const refreshed = await this.findOne(matchId);
+    this.gateway.emitScoreUpdate(matchId, refreshed.home_score, refreshed.away_score);
 
     return { id: eventId };
   }
@@ -465,6 +472,7 @@ export class MatchesService {
   ) {
     const existing = await prisma.match.findUnique({ where: { id } });
     if (!existing) throw new NotFoundException('Match not found');
+    await assertTournamentEditable(existing.tournament_id);
 
     const tied = homeScore === awayScore;
     const data: Prisma.MatchUncheckedUpdateInput = {
@@ -472,62 +480,13 @@ export class MatchesService {
       away_score: awayScore,
     };
 
-    if (tied) {
-      if (options?.tie_resolution !== undefined) {
-        data.tie_resolution = options.tie_resolution;
-      }
-      const resolution =
-        (data.tie_resolution as TieResolution | null | undefined) ??
-        existing.tie_resolution;
-
-      if (resolution === 'DRAW') {
-        data.home_penalties = null;
-        data.away_penalties = null;
-      } else if (resolution === 'PENALTIES') {
-        if (options?.home_penalties !== undefined) {
-          data.home_penalties = options.home_penalties;
-        }
-        if (options?.away_penalties !== undefined) {
-          data.away_penalties = options.away_penalties;
-        }
-      } else if (options?.home_penalties !== undefined) {
-        data.home_penalties = options.home_penalties;
-        data.away_penalties = options.away_penalties ?? null;
-      }
-    } else {
-      data.home_penalties = null;
-      data.away_penalties = null;
-      data.tie_resolution = null;
-    }
-
-    const effectiveResolution = tied
-      ? ((data.tie_resolution as TieResolution | null | undefined) ??
-        existing.tie_resolution)
-      : null;
-
-    let effectiveHomePenalties: number | null = null;
-    let effectiveAwayPenalties: number | null = null;
-    if (tied) {
-      if (effectiveResolution === 'DRAW') {
-        effectiveHomePenalties = null;
-        effectiveAwayPenalties = null;
-      } else {
-        effectiveHomePenalties =
-          (data.home_penalties as number | null | undefined) ??
-          existing.home_penalties;
-        effectiveAwayPenalties =
-          (data.away_penalties as number | null | undefined) ??
-          existing.away_penalties;
-      }
-    }
-
     const candidate: MatchOutcomeFields & { status: string } = {
       ...existing,
       home_score: homeScore,
       away_score: awayScore,
-      home_penalties: effectiveHomePenalties,
-      away_penalties: effectiveAwayPenalties,
-      tie_resolution: effectiveResolution,
+      home_penalties: tied ? (options?.home_penalties ?? null) : null,
+      away_penalties: tied ? (options?.away_penalties ?? null) : null,
+      tie_resolution: tied ? (options?.tie_resolution ?? null) : null,
       status: existing.status,
     };
 
@@ -541,6 +500,13 @@ export class MatchesService {
       include: MATCH_DETAIL_INCLUDE,
     });
 
+    const matchWithOutcome: MatchOutcomeFields & typeof match = {
+      ...match,
+      home_penalties: candidate.home_penalties,
+      away_penalties: candidate.away_penalties,
+      tie_resolution: candidate.tie_resolution,
+    };
+
     this.gateway.emitScoreUpdate(id, homeScore, awayScore);
 
     if (match.status === 'COMPLETED') {
@@ -551,10 +517,10 @@ export class MatchesService {
     // A score edit can flip the winner, decide a shootout, or turn a decided game
     // back into a draw — keep the bracket and every dependent slot in step. Both
     // are no-ops while the game is not yet COMPLETED.
-    await this.syncBracketFromMatch(match);
-    await this.reconcileDependentSlots(match);
+    await this.syncBracketFromMatch(matchWithOutcome);
+    await this.reconcileDependentSlots(matchWithOutcome);
 
-    return attachSlotLabels(match);
+    return attachSlotLabels(matchWithOutcome);
   }
 
   /**
@@ -750,6 +716,8 @@ export class MatchesService {
         attachSlotLabels(updated),
       );
 
+      await this.bracketsService.syncNodeTeamsFromMatchByMatchId(updated.id);
+
       // Filling this dependent may change the winner it, in turn, feeds onward.
       if (updated.status === 'COMPLETED') {
         await this.reconcileDependentSlots(updated, visited);
@@ -823,6 +791,13 @@ export class MatchesService {
       updated.division_id,
       attachSlotLabels(updated),
     );
+    await this.bracketsService.syncNodeTeamsFromMatchByMatchId(matchId);
+  }
+
+  /** Public entry for bracket slot placeholder reconciliation + node sync. */
+  async reconcileMatchSlots(matchId: string) {
+    await this.reconcileOwnSlots(matchId);
+    return this.findOne(matchId);
   }
 
   /**
@@ -947,9 +922,10 @@ export class MatchesService {
   async remove(id: string) {
     const existing = await prisma.match.findUnique({
       where: { id },
-      select: { status: true, division_id: true },
+      select: { status: true, division_id: true, tournament_id: true },
     });
     if (!existing) throw new NotFoundException('Match not found');
+    await assertTournamentEditable(existing.tournament_id);
 
     await prisma.bracketNode.updateMany({
       where: { match_id: id },

@@ -18,7 +18,13 @@ function invalidateBrackets(qc: ReturnType<typeof useQueryClient>) {
 export function useGenerateBracket() {
   const qc = useQueryClient();
   return useMutation({
-    mutationFn: (divisionId: string) => bracketsService.generate(divisionId),
+    mutationFn: ({
+      divisionId,
+      bracketSize,
+    }: {
+      divisionId: string;
+      bracketSize?: number;
+    }) => bracketsService.generate(divisionId, { bracket_size: bracketSize }),
     onSuccess: () => invalidateBrackets(qc),
   });
 }
@@ -43,6 +49,24 @@ export function usePlaceBracketTeam() {
       teamId: string;
       slot: 'home' | 'away';
     }) => bracketsService.placeTeam(nodeId, teamId, slot),
+    onSuccess: () => invalidateBrackets(qc),
+  });
+}
+
+export function usePlaceBracketSlotSource() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      nodeId,
+      slot,
+      sourceMatchId,
+      outcome,
+    }: {
+      nodeId: string;
+      slot: 'home' | 'away';
+      sourceMatchId: string;
+      outcome: 'WINNER' | 'LOSER';
+    }) => bracketsService.placeSlotSource(nodeId, slot, sourceMatchId, outcome),
     onSuccess: () => invalidateBrackets(qc),
   });
 }
@@ -113,10 +137,10 @@ export function useAssignBracketTeams() {
   });
 }
 
-export function useValidateBracket(divisionId?: string) {
+export function useValidateBracket(divisionId?: string, bracketSize?: number) {
   return useQuery({
-    queryKey: ['brackets', 'validate', divisionId ?? ''],
-    queryFn: async () => (await bracketsService.validate(divisionId!)).data,
+    queryKey: ['brackets', 'validate', divisionId ?? '', bracketSize ?? 'auto'],
+    queryFn: async () => (await bracketsService.validate(divisionId!, bracketSize)).data,
     enabled: !!divisionId,
   });
 }

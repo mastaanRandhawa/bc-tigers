@@ -62,12 +62,6 @@ enum MatchSlotOutcome {
   LOSER
 }
 
-/// How a tied regulation score is finalized when the match is completed.
-enum TieResolution {
-  DRAW
-  PENALTIES
-}
-
 enum BracketStage {
   ROUND_OF_16
   QUARTER_FINAL
@@ -132,13 +126,15 @@ model Tournament {
   start_date      DateTime
   end_date        DateTime
   location        String
-  status          TournamentStatus @default(UPCOMING)
-  tournament_type TournamentType   @default(ROUND_ROBIN)
-  logo            String?
-  rules           String?
-  created_by      String
-  created_at      DateTime         @default(now())
-  updated_at      DateTime         @updatedAt
+  status                 TournamentStatus @default(UPCOMING)
+  tournament_type        TournamentType   @default(ROUND_ROBIN)
+  logo                   String?
+  rules                  String?
+  completed_at           DateTime?
+  admin_editing_enabled  Boolean          @default(true)
+  created_by             String
+  created_at             DateTime         @default(now())
+  updated_at             DateTime         @updatedAt
 
   // ─── Soft-delete / lifecycle (shared pattern; copy to all auditable models) ───
   deleted_at    DateTime?
@@ -380,9 +376,6 @@ model Match {
   match_type      String?
   home_score      Int         @default(0)
   away_score      Int         @default(0)
-  home_penalties  Int?
-  away_penalties  Int?
-  tie_resolution  TieResolution?
   stream_url      String?
   created_at      DateTime    @default(now())
   updated_at      DateTime    @updatedAt

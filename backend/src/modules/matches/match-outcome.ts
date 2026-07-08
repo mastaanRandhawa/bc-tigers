@@ -2,7 +2,8 @@ import prisma from '../../prisma/prisma';
 import { resolveKnockoutMatch } from '../../engine/knockout';
 import { USFA_TOURNAMENT_CONFIG } from '../../engine/config';
 import type { MatchResult } from '../../engine/types';
-import type { TieResolution } from '@prisma/client';
+
+export type TieResolution = 'DRAW' | 'PENALTIES';
 
 export type MatchOutcomeFields = {
   id: string;

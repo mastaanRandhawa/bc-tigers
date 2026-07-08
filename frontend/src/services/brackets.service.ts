@@ -6,8 +6,8 @@ export const bracketsService = {
   getByDivisionId: (divisionId: string) =>
     apiClient.get<BracketNode[]>(`/brackets/division/${divisionId}`),
 
-  generate: (divisionId: string) =>
-    apiClient.post<BracketNode[]>(`/brackets/${divisionId}/generate`),
+  generate: (divisionId: string, options?: { bracket_size?: number }) =>
+    apiClient.post<BracketNode[]>(`/brackets/${divisionId}/generate`, options ?? {}),
 
   randomize: (divisionId: string) =>
     apiClient.post<BracketNode[]>(`/brackets/${divisionId}/randomize`),
@@ -17,6 +17,18 @@ export const bracketsService = {
 
   placeTeam: (nodeId: string, team_id: string, slot: 'home' | 'away') =>
     apiClient.patch<BracketNode>(`/brackets/nodes/${nodeId}/place`, { team_id, slot }),
+
+  placeSlotSource: (
+    nodeId: string,
+    slot: 'home' | 'away',
+    source_match_id: string,
+    outcome: 'WINNER' | 'LOSER',
+  ) =>
+    apiClient.patch<BracketNode>(`/brackets/nodes/${nodeId}/place-source`, {
+      slot,
+      source_match_id,
+      outcome,
+    }),
 
   updateNode: (nodeId: string, data: { home_team_id?: string | null; away_team_id?: string | null }) =>
     apiClient.patch<BracketNode>(`/brackets/nodes/${nodeId}`, data),
@@ -42,13 +54,17 @@ export const bracketsService = {
   assignTeams: (divisionId: string, teamIds: string[]) =>
     apiClient.post<BracketNode[]>(`/brackets/${divisionId}/assign-teams`, { team_ids: teamIds }),
 
-  validate: (divisionId: string) =>
+  validate: (divisionId: string, bracketSize?: number) =>
     apiClient.get<{
       valid: boolean;
       errors: string[];
       warnings: string[];
       excluded: Array<{ teamId: string; teamName: string; reason: string }>;
       eligibleCount: number;
+      bracketSize: number;
+      suggestedBracketSize: number;
       eligibleTeams: Array<{ id: string; name: string }>;
-    }>(`/brackets/validate/${divisionId}`),
+    }>(`/brackets/validate/${divisionId}`, {
+      params: bracketSize != null ? { bracket_size: bracketSize } : undefined,
+    }),
 };

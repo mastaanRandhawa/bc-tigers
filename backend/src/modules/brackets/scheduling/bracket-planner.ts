@@ -3,6 +3,7 @@ import type { BracketNodeDraft, BracketPlan, EligibleTeam } from './types';
 import {
   bracketSizeForTeamCount,
   byeCountForTeamCount,
+  isValidBracketSize,
 } from './bye-calculator';
 import {
   validateBracketGeneration,
@@ -53,6 +54,7 @@ export interface PlanBracketInput {
   divisionId: string;
   teams: EligibleTeam[];
   locked?: boolean;
+  bracketSize?: number;
 }
 
 export function planBracket(input: PlanBracketInput): BracketPlan {
@@ -65,7 +67,10 @@ export function planBracket(input: PlanBracketInput): BracketPlan {
     locked: input.locked,
   };
 
-  const validation = validateBracketGeneration(eligibilityInput);
+  const validation = validateBracketGeneration({
+    ...eligibilityInput,
+    bracketSize: input.bracketSize,
+  });
   if (!validation.valid) {
     return {
       divisionId: input.divisionId,
@@ -79,8 +84,11 @@ export function planBracket(input: PlanBracketInput): BracketPlan {
     };
   }
 
-  const bracketSize = bracketSizeForTeamCount(input.teams.length);
-  const byeCount = byeCountForTeamCount(input.teams.length);
+  const bracketSize =
+    input.bracketSize != null && isValidBracketSize(input.bracketSize)
+      ? input.bracketSize
+      : bracketSizeForTeamCount(input.teams.length);
+  const byeCount = bracketSize - input.teams.length;
   const firstStage = firstStageForSize(bracketSize);
   const stages = stagesForSize(bracketSize);
 

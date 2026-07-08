@@ -2,6 +2,11 @@ import { BadRequestException, Injectable, NotFoundException } from '@nestjs/comm
 import prisma from '../../prisma/prisma';
 import { pickAllowed } from '../../common/pick';
 import { handlePrismaError } from '../../common/prisma-errors';
+import {
+  assertDivisionEditable,
+  assertTeamEditable,
+  assertTournamentEditable,
+} from '../../common/assert-tournament-editable';
 import { AuditLogService } from '../audit-log/audit-log.service';
 import { AuditableService, asAuditable } from '../audit-log/auditable.service';
 import {
@@ -182,6 +187,10 @@ export class TeamsService {
       throw new BadRequestException('At least one division_id is required');
     }
 
+    for (const divisionId of divisionIds) {
+      await assertDivisionEditable(divisionId);
+    }
+
     const coachUserId = payload.coach_user_id as string | null | undefined;
     if (coachUserId) {
       await validateCoachCanBeAssigned(coachUserId);
@@ -227,6 +236,7 @@ export class TeamsService {
   }
 
   async update(id: string, data: unknown) {
+    await assertTeamEditable(id);
     const payload = pickAllowed(data, TEAM_FIELDS);
     const coachUserId = payload.coach_user_id as string | null | undefined;
 
@@ -300,7 +310,8 @@ export class TeamsService {
   }
 
   /** Soft delete (decommission) — never removes the row. */
-  remove(id: string) {
+  async remove(id: string) {
+    await assertTeamEditable(id);
     return this.auditable.softDelete((tx) => asAuditable(tx.team), ENTITY, id);
   }
 

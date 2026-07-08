@@ -17,7 +17,7 @@ import { AdminMatchMobileRow } from '@/components/admin/AdminMatchMobileRow';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { useTournamentById } from '@/hooks/useTournaments';
+import { useTournamentById, useCompleteTournament, useEnableTournamentEditing } from '@/hooks/useTournaments';
 import { useDivisions, useDeleteDivision } from '@/hooks/useDivisions';
 import { useTeams, useDeleteTeam } from '@/hooks/useTeams';
 import { useMatches, useDeleteMatch } from '@/hooks/useMatches';
@@ -25,6 +25,7 @@ import { useFormDialog } from '@/hooks/useFormDialog';
 import { getDivisionTheme, themeChipStyle } from '@/lib/division-theme';
 import { formatDate, formatTime, getMatchStatusBadgeVariant, matchVenueLabel } from '@/lib/utils';
 import { getApiErrorMessage } from '@/lib/errors';
+import { isTournamentViewOnly } from '@/lib/tournament-view-mode';
 import { toast } from 'sonner';
 import { matchSearchText } from '@/lib/search-text';
 import {
@@ -38,6 +39,8 @@ import {
   PlusCircle,
   Flag,
   Layers,
+  CheckCircle2,
+  Unlock,
 } from 'lucide-react';
 import { SoccerBallIcon } from '@/components/icons/SoccerBallIcon';
 import type { Division, Match, Team } from '@/types';
@@ -45,6 +48,8 @@ import type { Division, Match, Team } from '@/types';
 export default function TournamentWorkspacePage() {
   const { id } = useParams<{ id: string }>();
   const { data: tournament, isLoading, isError, refetch } = useTournamentById(id);
+  const completeMutation = useCompleteTournament();
+  const enableEditingMutation = useEnableTournamentEditing();
   const { data: divisions = [] } = useDivisions();
   const { data: allTeams = [] } = useTeams();
   const { data: matches = [] } = useMatches({ tournamentId: id, limit: 1000 });
@@ -61,6 +66,9 @@ export default function TournamentWorkspacePage() {
   const [scoreMatch, setScoreMatch] = useState<Match | null>(null);
   const [eventMatch, setEventMatch] = useState<Match | null>(null);
   const [deleteId, setDeleteId] = useState<{ type: 'division' | 'team' | 'match'; id: string; label: string } | null>(null);
+  const [completeOpen, setCompleteOpen] = useState(false);
+
+  const isViewOnly = isTournamentViewOnly(tournament);
 
   const tournamentDivisions = divisions.filter((d) => d.tournament_id === id);
   const divisionIds = new Set(tournamentDivisions.map((d) => d.id));
@@ -144,12 +152,16 @@ export default function TournamentWorkspacePage() {
           <span className="font-semibold text-sm">
             {m.status !== 'SCHEDULED' ? `${m.home_score} – ${m.away_score}` : '–'}
           </span>
-          <Button size="sm" variant="outline" className="h-6 w-6 p-0" onClick={(e) => { e.stopPropagation(); setScoreMatch(m); }}>
-            <SoccerBallIcon className="h-3 w-3" />
-          </Button>
-          <Button size="sm" variant="outline" className="h-6 w-6 p-0" onClick={(e) => { e.stopPropagation(); setEventMatch(m); }}>
-            <PlusCircle className="h-3 w-3" />
-          </Button>
+          {!isViewOnly && (
+            <>
+              <Button size="sm" variant="outline" className="h-6 w-6 p-0" onClick={(e) => { e.stopPropagation(); setScoreMatch(m); }}>
+                <SoccerBallIcon className="h-3 w-3" />
+              </Button>
+              <Button size="sm" variant="outline" className="h-6 w-6 p-0" onClick={(e) => { e.stopPropagation(); setEventMatch(m); }}>
+                <PlusCircle className="h-3 w-3" />
+              </Button>
+            </>
+          )}
         </div>
       ),
     },
@@ -161,11 +173,43 @@ export default function TournamentWorkspacePage() {
       description={tournament ? `${tournament.location} · ${formatDate(tournament.start_date)} – ${formatDate(tournament.end_date)}` : ''}
       action={
         tournament && (
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={() => setEditTournament(true)}>
-              <Pencil className="h-3.5 w-3.5 mr-1" />
-              Edit
-            </Button>
+          <div className="flex flex-wrap items-center gap-2">
+            {tournament.status !== 'COMPLETED' && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCompleteOpen(true)}
+                disabled={completeMutation.isPending}
+              >
+                <CheckCircle2 className="h-3.5 w-3.5 mr-1" />
+                Complete tournament
+              </Button>
+            )}
+            {tournament.status === 'COMPLETED' && !tournament.admin_editing_enabled && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={async () => {
+                  try {
+                    await enableEditingMutation.mutateAsync(tournament.id);
+                    toast.success('Editing enabled for this tournament.');
+                    refetch();
+                  } catch (err) {
+                    toast.error(getApiErrorMessage(err, 'Failed to enable editing'));
+                  }
+                }}
+                disabled={enableEditingMutation.isPending}
+              >
+                <Unlock className="h-3.5 w-3.5 mr-1" />
+                Enable editing
+              </Button>
+            )}
+            {!isViewOnly && (
+              <Button variant="outline" size="sm" onClick={() => setEditTournament(true)}>
+                <Pencil className="h-3.5 w-3.5 mr-1" />
+                Edit
+              </Button>
+            )}
           </div>
         )
       }
@@ -181,6 +225,12 @@ export default function TournamentWorkspacePage() {
       <QueryState isLoading={isLoading} isError={isError} onRetry={() => refetch()}>
         {tournament && (
           <>
+            {isViewOnly && (
+              <div className="mb-5 rounded-lg border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-sm text-amber-900 dark:text-amber-100">
+                This tournament is completed — viewing only. Enable editing to make changes.
+              </div>
+            )}
+
             <AdminStatGrid
               className="mb-6"
               items={[
@@ -212,11 +262,13 @@ export default function TournamentWorkspacePage() {
 
               {/* DIVISIONS TAB */}
               <TabsContent value="divisions">
-                <div className="mb-4 flex justify-end">
-                  <Button onClick={() => divisionDialog.openCreate()} className="w-full sm:w-auto">
-                    Add Division
-                  </Button>
-                </div>
+                {!isViewOnly && (
+                  <div className="mb-4 flex justify-end">
+                    <Button onClick={() => divisionDialog.openCreate()} className="w-full sm:w-auto">
+                      Add Division
+                    </Button>
+                  </div>
+                )}
 
                 {tournamentDivisions.length === 0 ? (
                   <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed border-border py-16 text-center">
@@ -256,21 +308,25 @@ export default function TournamentWorkspacePage() {
                               <ExternalLink className="h-3 w-3" />
                               Open Workspace
                             </Link>
-                            <Button variant="outline" size="sm" onClick={() => divisionDialog.openEdit(division)}>
-                              <Pencil className="h-3 w-3 mr-1" />
-                              Edit
-                            </Button>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              className="text-destructive"
-                              onClick={() =>
-                                setDeleteId({ type: 'division', id: division.id, label: division.name })
-                              }
-                            >
-                              <Trash2 className="h-3 w-3 mr-1" />
-                              Delete
-                            </Button>
+                            {!isViewOnly && (
+                              <Button variant="outline" size="sm" onClick={() => divisionDialog.openEdit(division)}>
+                                <Pencil className="h-3 w-3 mr-1" />
+                                Edit
+                              </Button>
+                            )}
+                            {!isViewOnly && (
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="text-destructive"
+                                onClick={() =>
+                                  setDeleteId({ type: 'division', id: division.id, label: division.name })
+                                }
+                              >
+                                <Trash2 className="h-3 w-3 mr-1" />
+                                Delete
+                              </Button>
+                            )}
                           </div>
                         </div>
                       );
@@ -281,28 +337,32 @@ export default function TournamentWorkspacePage() {
 
               {/* TEAMS TAB */}
               <TabsContent value="teams">
-                <div className="mb-4 flex justify-end">
-                  <Button onClick={() => teamDialog.openCreate()} className="w-full sm:w-auto">
-                    Add Team
-                  </Button>
-                </div>
+                {!isViewOnly && (
+                  <div className="mb-4 flex justify-end">
+                    <Button onClick={() => teamDialog.openCreate()} className="w-full sm:w-auto">
+                      Add Team
+                    </Button>
+                  </div>
+                )}
                 <AdminTable
                   title=""
                   data={tournamentTeams}
                   columns={teamColumns}
-                  onEdit={teamDialog.openEdit}
-                  onDelete={(t) => setDeleteId({ type: 'team', id: t.id, label: t.name })}
+                  onEdit={isViewOnly ? undefined : teamDialog.openEdit}
+                  onDelete={isViewOnly ? undefined : (t) => setDeleteId({ type: 'team', id: t.id, label: t.name })}
                   searchKeys={['name', 'city']}
                 />
               </TabsContent>
 
               {/* MATCHES TAB */}
               <TabsContent value="matches">
-                <div className="mb-4 flex justify-end">
-                  <Button onClick={() => matchDialog.openCreate()} className="w-full sm:w-auto">
-                    Add Match
-                  </Button>
-                </div>
+                {!isViewOnly && (
+                  <div className="mb-4 flex justify-end">
+                    <Button onClick={() => matchDialog.openCreate()} className="w-full sm:w-auto">
+                      Add Match
+                    </Button>
+                  </div>
+                )}
                 <AdminTable
                   title=""
                   data={matches}
@@ -310,13 +370,13 @@ export default function TournamentWorkspacePage() {
                   mobileRender={(m) => (
                     <AdminMatchMobileRow
                       match={m}
-                      onScore={setScoreMatch}
-                      onEvent={setEventMatch}
+                      onScore={isViewOnly ? undefined : setScoreMatch}
+                      onEvent={isViewOnly ? undefined : setEventMatch}
                       showDivision
                     />
                   )}
-                  onEdit={matchDialog.openEdit}
-                  onDelete={(m) => setDeleteId({ type: 'match', id: m.id, label: `${m.home_team?.name ?? 'TBD'} vs ${m.away_team?.name ?? 'TBD'}` })}
+                  onEdit={isViewOnly ? undefined : matchDialog.openEdit}
+                  onDelete={isViewOnly ? undefined : (m) => setDeleteId({ type: 'match', id: m.id, label: `${m.home_team?.name ?? 'TBD'} vs ${m.away_team?.name ?? 'TBD'}` })}
                   getSearchText={matchSearchText}
                   searchPlaceholder="Search teams, venue…"
                 />
@@ -360,6 +420,25 @@ export default function TournamentWorkspacePage() {
       <TeamRosterSheet
         team={rosterTeam}
         onOpenChange={(open) => !open && setRosterTeam(null)}
+      />
+      <ConfirmDialog
+        open={completeOpen}
+        onOpenChange={setCompleteOpen}
+        title={`Complete "${tournament?.name}"?`}
+        description="The tournament will be marked completed and locked for viewing. Division brackets will be finalized. You can re-enable editing later if needed."
+        confirmLabel="Complete tournament"
+        onConfirm={async () => {
+          if (!tournament) return;
+          try {
+            await completeMutation.mutateAsync(tournament.id);
+            toast.success('Tournament completed.');
+            refetch();
+            setCompleteOpen(false);
+          } catch (err) {
+            toast.error(getApiErrorMessage(err, 'Failed to complete tournament'));
+            throw err;
+          }
+        }}
       />
       <ConfirmDialog
         open={!!deleteId}
